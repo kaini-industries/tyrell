@@ -1,0 +1,20 @@
+# Local connection details and credentials
+.env
+.env.*
+!.env.example
+
+# Generated build inputs and outputs
+artifacts/
+backups/
+device-results/
+build/
+work/
+deploy/
+vendor/
+*.img
+*.img.xz
+*.deb
+*.log
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tyrell Status
+Comment=Uptime, memory, battery and network status
+Exec=/usr/bin/tyrell-status
+Icon=tyrell-status
+Terminal=false
+Categories=Utility;System;
+StartupNotify=false

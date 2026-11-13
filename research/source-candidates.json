@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "kind": "research-source-candidates",
+  "researched_on": "2026-11-13",
+  "status": "Research only. Not a complete or executable build lock; no images downloaded or built.",
+  "proposed_initial_baseline": "installed-factory-compatible",
+  "installed_device": {
+    "evidence": "Read-only SSH; /etc/rpi-issue, /etc/cardputerzero-dtoverlays.commit, dpkg-query, uname",
+    "pi_gen_repository": "https://github.com/CardputerZero/pi-gen",
+    "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+    "pi_gen_stage": "stage4",
+    "drivers_repository": "https://github.com/m5stack/m5stack-linux-dtoverlays",
+    "drivers_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "kernel_release": "6.18.39+rpt-rpi-v8",
+    "kernel_package_version": "1:6.18.39-1+rpt1",
+    "applaunch_version": "0.6.105",
+    "hardware_id_raw": "0x06",
+    "overlay_profile": "cardputerzero-v5-overlay"
+  },
+  "current_upstream_candidate": {
+    "selected_for_initial_build": false,
+    "pi_gen_branch": "cardputerzero_v1.0",
+    "pi_gen_commit": "e3b4e323782a59a426b92356248f5bc09a098be1",
+    "drivers_commit": "4f7aeee9fc103ebb03d22cac476bb191ecfb321e",
+    "applaunch_version": "0.6.106",
+    "kernel_package_version": "1:6.18.39-1+rpt1"
+  },
+  "vendor_image_references": [
+    {
+      "release_url": "https://github.com/CardputerZero/pi-gen/releases/tag/20260929-070146-5f4c44f",
+      "metadata_source": "https://api.github.com/repos/CardputerZero/pi-gen/releases/tags/20260929-070146-5f4c44f",
+      "tag": "20260929-070146-5f4c44f",
+      "prerelease": false,
+      "published_at": "2026-09-29T07:02:28Z",
+      "assets": [
+        {
+          "name": "2026-09-29-cardputerzero-trixie-arm64.img.xz",
+          "url": "https://github.com/CardputerZero/pi-gen/releases/download/20260929-070146-5f4c44f/2026-09-29-cardputerzero-trixie-arm64.img.xz",
+          "bytes": 1786957924,
+          "reported_digest": "sha256:b37a702aea8b5d75015b48c99b8c969efc2636b82757282fb27cf03056788c91"
+        },
+        {
+          "name": "build-info.json",
+          "url": "https://github.com/CardputerZero/pi-gen/releases/download/20260929-070146-5f4c44f/build-info.json",
+          "bytes": 235,
+          "reported_digest": "sha256:5a16075fadea4b10cf34f1aaec14d3a89a1fb33a1f35a14d22c6d8e49c0aaf1e"
+        }
+      ],
+      "verification": "Digest reported by GitHub release metadata; artifact not downloaded or locally hashed."
+    },
+    {
+      "release_url": "https://github.com/CardputerZero/pi-gen/releases/tag/20261113-033903-e3b4e32",
+      "metadata_source": "https://api.github.com/repos/CardputerZero/pi-gen/releases/tags/20261113-033903-e3b4e32",
+      "tag": "20261113-033903-e3b4e32",
+      "prerelease": true,
+      "published_at": "2026-11-13T03:40:03Z",
+      "assets": [
+        {
+          "name": "2026-11-13-cardputerzero-trixie-arm64.img.xz",
+          "url": "https://github.com/CardputerZero/pi-gen/releases/download/20261113-033903-e3b4e32/2026-11-13-cardputerzero-trixie-arm64.img.xz",
+          "bytes": 1796348296,
+          "reported_digest": "sha256:e1de0a3db4f0916dec4036b726530aa98e2d6b33949bdcfcbc970e3b012d83c7"
+        },
+        {
+          "name": "build-info.json",
+          "url": "https://github.com/CardputerZero/pi-gen/releases/download/20261113-033903-e3b4e32/build-info.json",
+          "bytes": 235,
+          "reported_digest": "sha256:c94220a043905e9537e7a154c6c299a6188f8de5a4aada8fcef560be0415b239"
+        }
+      ],
+      "verification": "Digest reported by GitHub release metadata; artifact not downloaded or locally hashed."
+    }
+  ],
+  "recovery_usbboot": {
+    "repository": "https://github.com/raspberrypi/usbboot",
+    "vendor_documented_commit": "61c482663c9b2a61ee86ba491f131ba4ca90e4ea",
+    "source": "https://docs.m5stack.com/en/compute/cardputerzero/image",
+    "status": "Optional recovery reference; not installed or tested."
+  },
+  "incomplete_locks": [
+    "Template, launcher and application source commits and downloadable .deb hashes",
+    "Compiler, CMake, vcpkg, BSP/sysroot version and archive hashes",
+    "Linux builder base image digest and package versions",
+    "Debian, Raspberry Pi and vendor APT package snapshots or retained artifacts",
+    "Boot firmware, display/splash assets and licensing inventory",
+    "IOE1/PY32 firmware version (preserve existing; do not update initially)"
+  ]
+}

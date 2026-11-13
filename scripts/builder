@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""Manage Tyrell's isolated ARM64 Lima VM; never connect to the handheld."""
+import argparse
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tarfile
+
+ROOT = Path(__file__).resolve().parents[1]
+STATE = ROOT / 'build'
+INSTANCE = 'tyrell-build'
+GUEST_INPUT = '/var/tmp/tyrell-input'
+GUEST_OUTPUT = '/var/tmp/tyrell-build/artifacts'
+ENV = os.environ.copy()
+ENV['LIMA_HOME'] = str(STATE / 'lima')
+
+
+def run(args, **kwargs):
+    return subprocess.run(args, check=True, env=ENV, **kwargs)
+
+
+def lima(*args, **kwargs):
+    return run(['limactl', *args], **kwargs)
+
+
+def guest(*args, **kwargs):
+    return lima('shell', '--workdir=/tmp', INSTANCE, *args, **kwargs)
+
+
+def inputs():
+    return json.loads((ROOT / 'locks/build-inputs.json').read_text())
+
+
+def digest(path):
+    h = hashlib.sha256()
+    with path.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def fetch():
+    source = inputs()['lvgl']
+    expected = source['sha256']
+    if not expected or len(expected) != 64:
+        raise RuntimeError('LVGL archive must have a locked SHA-256 before fetching')
+    archive = STATE / 'downloads' / ('lvgl-' + source['commit'] + '.tar.gz')
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    if archive.exists():
+        if digest(archive) != expected:
+            raise RuntimeError('Cached LVGL archive checksum mismatch; preserve it for inspection')
+        return archive
+    partial = archive.with_suffix('.partial')
+    try:
+        run(['curl', '--fail', '--location', '--retry', '2', '--connect-timeout', '15',
+             '--output', str(partial), source['url']])
+        if digest(partial) != expected:
+            raise RuntimeError('Downloaded LVGL checksum mismatch')
+        partial.replace(archive)
+    finally:
+        partial.unlink(missing_ok=True)
+    return archive
+
+
+def up():
+    STATE.mkdir(exist_ok=True)
+    instance_config = STATE / 'lima' / INSTANCE / 'lima.yaml'
+    if instance_config.exists():
+        lima('start', '--tty=false', INSTANCE)
+    else:
+        lima('start', '--name=' + INSTANCE, '--tty=false', str(ROOT / 'builder/lima.yaml'))
+
+
+def bundle():
+    archive = fetch()
+    selected = []
+    for base in [ROOT / 'packages/tyrell-status', ROOT / 'builder', ROOT / 'locks']:
+        for path in sorted(base.rglob('*')):
+            if '__pycache__' in path.parts or path.suffix in {'.pyc', '.pyo'} or path.name == '.DS_Store':
+                continue
+            if path.is_symlink():
+                raise RuntimeError('Symlinks are not allowed in builder inputs: ' + str(path))
+            if path.is_file():
+                if path.name.startswith('.env'):
+                    raise RuntimeError('Credential file is not a build input')
+                selected.append(path)
+    selected.append(ROOT / 'scripts/builder')
+    if not any(p.name == 'CMakeLists.txt' for p in selected):
+        raise RuntimeError('Application CMakeLists.txt is missing')
+    source_files = {str(p.relative_to(ROOT)): digest(p) for p in selected}
+    source_hash = hashlib.sha256(json.dumps(source_files, sort_keys=True).encode()).hexdigest()
+    metadata = {
+        'version': inputs()['version'], 'source_revision': 'src-' + source_hash[:12],
+        'source_sha256': source_hash, 'source_files': source_files,
+        'source_date_epoch': inputs()['source_date_epoch'],
+        'device_access': 'None: build inputs do not include .env or device credentials.',
+    }
+    metadata_path = STATE / 'source-manifest.json'
+    metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
+    tar_path = STATE / 'builder-input.tar'
+    with tarfile.open(tar_path, 'w') as tar:
+        for path in selected:
+            tar.add(path, arcname=str(path.relative_to(ROOT)), recursive=False)
+        tar.add(metadata_path, arcname='source-manifest.json')
+        tar.add(archive, arcname='downloads/' + archive.name)
+    return tar_path
+
+
+def build():
+    tar_path = bundle()
+    up()
+    guest('python3', '-c', "import shutil; from pathlib import Path; p=Path('/var/tmp/tyrell-input'); shutil.rmtree(p, ignore_errors=True); p.mkdir()")
+    lima('copy', '--backend=scp', str(tar_path), INSTANCE + ':/var/tmp/tyrell-input.tar')
+    guest('tar', '-xf', '/var/tmp/tyrell-input.tar', '-C', GUEST_INPUT)
+    guest('bash', GUEST_INPUT + '/builder/build-package.sh', GUEST_INPUT)
+    output_tar = STATE / 'artifacts.tar'
+    with output_tar.open('wb') as stream:
+        guest('tar', '-C', GUEST_OUTPUT, '-cf', '-', '.', stdout=stream)
+    destination = ROOT / 'artifacts'
+    if destination.is_symlink():
+        raise RuntimeError('Refusing to replace a symlinked artifacts directory')
+    staging = STATE / 'exported-artifacts'
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir()
+    with tarfile.open(output_tar) as tar:
+        for member in tar.getmembers():
+            path = staging / member.name
+            if member.issym() or member.islnk() or not path.resolve().is_relative_to(staging.resolve()):
+                raise RuntimeError('Unsafe artifact archive path: ' + member.name)
+            if not member.isfile() and not member.isdir():
+                raise RuntimeError('Unexpected artifact type: ' + member.name)
+        tar.extractall(staging, filter='data')
+    for line in (staging / 'SHA256SUMS').read_text().splitlines():
+        expected, name = line.split('  ', 1)
+        path = staging / name
+        if not path.resolve().is_relative_to(staging.resolve()) or digest(path) != expected:
+            raise RuntimeError('Exported artifact checksum mismatch: ' + name)
+    previous = None
+    if destination.exists():
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+        previous = STATE / ('previous-artifacts-' + stamp)
+        destination.rename(previous)
+    try:
+        staging.rename(destination)
+    except OSError:
+        if previous is not None:
+            previous.rename(destination)
+        raise
+    print('Artifacts copied to ' + str(destination))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['up', 'info', 'stop', 'fetch', 'build', 'shell'])
+    parser.add_argument('command', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    if not shutil.which('limactl'):
+        raise RuntimeError('Install Lima 2.x before using this builder')
+    if args.action == 'up':
+        up()
+    elif args.action == 'info':
+        lima('list')
+    elif args.action == 'stop':
+        lima('stop', INSTANCE)
+    elif args.action == 'fetch':
+        print(fetch())
+    elif args.action == 'build':
+        build()
+    elif args.action == 'shell':
+        guest(*(args.command or ['bash']))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (RuntimeError, subprocess.CalledProcessError) as error:
+        print('builder: ' + str(error), file=sys.stderr)
+        sys.exit(1)
