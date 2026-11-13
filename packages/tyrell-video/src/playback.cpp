@@ -1,5 +1,6 @@
 #include "playback.h"
 #include "outputs.h"
+#include "json_string.h"
 
 #include <algorithm>
 #include <atomic>
@@ -27,24 +28,6 @@ constexpr unsigned text_flag = 1U << 2;
 constexpr unsigned visualization_flag = 1U << 3;
 constexpr int lcd_width = 320;
 constexpr int lcd_height = 170;
-
-std::string json_string(const std::string& value) {
-    std::ostringstream out;
-    out << '"';
-    for(unsigned char c : value) {
-        switch(c) {
-            case '"': out << "\\\""; break;
-            case '\\': out << "\\\\"; break;
-            case '\n': out << "\\n"; break;
-            case '\r': out << "\\r"; break;
-            case '\t': out << "\\t"; break;
-            default:
-                if(c < 32) out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned>(c) << std::dec;
-                else out << static_cast<char>(c);
-        }
-    }
-    return out.str() + '"';
-}
 
 std::string tag_string(const GstTagList* tags, const char* tag) {
     gchar* value = nullptr;
@@ -158,6 +141,7 @@ struct Playback::Impl {
     mutable std::mutex frame_mutex;
     std::shared_ptr<const Frame> frame;
     std::atomic<std::uint64_t> received{0};
+    std::atomic<std::uint64_t> video_buffers_delivered{0};
     std::atomic<bool> subtitles_enabled{false};
     std::atomic<bool> bitmap_blocked{false};
     bool bitmap_notice_shown = false;
@@ -189,6 +173,20 @@ struct Playback::Impl {
         frame.reset();
     }
 
+    struct Restart {
+        double position;
+        int audio_track;
+        int subtitle_track;
+    };
+
+    Restart restart_target() const {
+        // Preroll queries describe the new pipeline's initial position, before
+        // the queued seek and track selections have been applied.
+        return pending_preroll ? Restart{restart_position, restart_audio_track, restart_subtitle_track}
+                               : Restart{state.position, restart_audio_track >= 0 ? restart_audio_track : state.audio_track,
+                                         state.subtitle_track};
+    }
+
     void destroy_pipeline() {
         if(pipeline) {
             // NULL joins the streaming tasks before releasing our callback data.
@@ -214,6 +212,17 @@ struct Playback::Impl {
     }
     static GstFlowReturn preroll_ready(GstAppSink* sink, gpointer data) {
         return static_cast<Impl*>(data)->accept_sample(gst_app_sink_pull_preroll(sink));
+    }
+
+    static GstPadProbeReturn video_delivery(GstPad*, GstPadProbeInfo* info, gpointer data) {
+        auto& player = *static_cast<Impl*>(data);
+        if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
+            GstBufferList* buffers = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+            if(buffers) player.video_buffers_delivered.fetch_add(gst_buffer_list_length(buffers));
+        } else if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) {
+            player.video_buffers_delivered.fetch_add(1);
+        }
+        return GST_PAD_PROBE_OK;
     }
 
     static void subtitle_silent_changed(GObject* element, GParamSpec*, gpointer data) {
@@ -319,12 +328,12 @@ struct Playback::Impl {
                 hdmi.release();
                 return nullptr;
             }
-            const auto mode = hdmi.mode();
-            width = mode.width;
-            height = mode.height;
-            format = "BGRx";
             g_object_set(sink, "fd", hdmi.fd(), "connector-id", static_cast<int>(hdmi.connector_id()),
-                         "force-modesetting", TRUE, "sync", TRUE, "qos", TRUE, nullptr);
+                         "plane-id", static_cast<int>(hdmi.plane_id()),
+                         "force-modesetting", FALSE, "can-scale", TRUE,
+                         // VC4's atomic plane commit already waits for vblank.
+                         // GStreamer still synchronizes frames to its A/V clock.
+                         "skip-vsync", TRUE, "sync", TRUE, "qos", TRUE, nullptr);
             if(g_object_class_find_property(G_OBJECT_GET_CLASS(sink), "restore-crtc"))
                 g_object_set(sink, "restore-crtc", TRUE, nullptr);
         } else {
@@ -336,9 +345,19 @@ struct Playback::Impl {
             gst_app_sink_set_callbacks(GST_APP_SINK(sink), &callbacks, this, nullptr);
         }
         g_object_set(scale, "add-borders", TRUE, nullptr);
-        GstCaps* caps = gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, format,
-                                           "width", G_TYPE_INT, width, "height", G_TYPE_INT, height,
-                                           "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr);
+        // Keep HDMI video at its native size when possible. The owned KMS
+        // overlay scales and letterboxes it; CPU upscaling to the TV mode can
+        // reduce the Zero to a few frames per second. BT.709 limited matches
+        // the overlay's explicitly configured YUV conversion properties.
+        GstCaps* caps = output == Output::Hdmi
+            ? gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "NV12",
+                                  "colorimetry", G_TYPE_STRING, "bt709",
+                                  "width", GST_TYPE_INT_RANGE, 2, 1920,
+                                  "height", GST_TYPE_INT_RANGE, 2, 1080,
+                                  "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr)
+            : gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, format,
+                                  "width", G_TYPE_INT, width, "height", G_TYPE_INT, height,
+                                  "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr);
         g_object_set(filter, "caps", caps, nullptr);
         gst_caps_unref(caps);
         gst_bin_add_many(GST_BIN(bin), convert, scale, filter, sink, nullptr);
@@ -357,6 +376,14 @@ struct Playback::Impl {
             gst_object_unref(bin);
             hdmi.release();
             return nullptr;
+        }
+        // Count actual video payloads at either final sink. This survives
+        // pause/segment/flush resets of GstBaseSink's rendering statistics.
+        if(GstPad* sink_pad = gst_element_get_static_pad(sink, "sink")) {
+            gst_pad_add_probe(sink_pad,
+                static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                video_delivery, this, nullptr);
+            gst_object_unref(sink_pad);
         }
         return bin;
     }
@@ -513,7 +540,8 @@ struct Playback::Impl {
     void query() {
         if(!pipeline) return;
         gint64 value = 0;
-        if(gst_element_query_position(pipeline, GST_FORMAT_TIME, &value) && value >= 0) state.position = static_cast<double>(value) / GST_SECOND;
+        if(!pending_preroll && gst_element_query_position(pipeline, GST_FORMAT_TIME, &value) && value >= 0)
+            state.position = static_cast<double>(value) / GST_SECOND;
         if(gst_element_query_duration(pipeline, GST_FORMAT_TIME, &value) && value >= 0) state.duration = static_cast<double>(value) / GST_SECOND;
         refresh_tracks();
         int current = 0;
@@ -548,6 +576,7 @@ struct Playback::Impl {
         state.decoded_frames = std::max(received.load(), qos_processed);
         state.dropped_frames = qos_dropped;
         state.received_frames = received.load();
+        state.video_buffers_delivered = video_buffers_delivered.load();
         state.qos_processed = qos_processed;
         if(state.video_decoder.empty()) {
             GstIterator* iterator = gst_bin_iterate_recurse(GST_BIN(pipeline));
@@ -578,7 +607,8 @@ struct Playback::Impl {
         apply_subtitle_selection(restart_subtitle_track);
         if(restart_position > 0 && !gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
                 static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
-                static_cast<gint64>(restart_position * GST_SECOND))) state.notice = "This file cannot seek; playback starts at the beginning";
+                static_cast<gint64>(restart_position * GST_SECOND)))
+            state.notice = "This file cannot seek; playback starts at the beginning";
         gst_element_set_state(pipeline, desired_playing ? GST_STATE_PLAYING : GST_STATE_PAUSED);
         state.buffering = false;
         state.paused = !desired_playing;
@@ -608,6 +638,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     p.state.path = absolute.string();
     p.state.loaded = true;
     p.received = 0;
+    p.video_buffers_delivered = 0;
     p.qos_processed = p.qos_dropped = 0;
     p.bitmap_blocked = false;
     p.bitmap_notice_shown = false;
@@ -691,11 +722,12 @@ void Playback::poll() {
         if(fatal) {
             if(p.state.output == Output::Hdmi) {
                 const auto before = p.state;
+                const auto target = p.restart_target();
                 p.destroy_pipeline();
                 p.state.output = Output::Lcd;
                 p.state.error.clear();
                 p.state.notice = before.error + "; paused on LCD";
-                if(!p.create_pipeline(before.position, false, before.audio_track, before.subtitle_track))
+                if(!p.create_pipeline(target.position, false, target.audio_track, target.subtitle_track))
                     p.state.error = "HDMI failed and LCD recovery failed: " + p.state.error;
             } else p.destroy_pipeline();
             return;
@@ -751,10 +783,12 @@ bool Playback::seek(double seconds) {
     if(!p.pipeline || !std::isfinite(seconds)) return false;
     seconds = std::max(0.0, seconds);
     if(p.state.duration > 0) seconds = std::min(seconds, std::max(0.0, p.state.duration - 0.01));
-    if(p.pending_preroll) { p.restart_position = seconds; return true; }
+    if(p.pending_preroll) { p.restart_position = seconds; p.state.position = seconds; p.ended = false; return true; }
     const bool result = gst_element_seek_simple(p.pipeline, GST_FORMAT_TIME,
         static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE), static_cast<gint64>(seconds * GST_SECOND));
-    if(result) { p.state.position = seconds; p.ended = false; p.clear_frame(); }
+    // Keep the previous immutable snapshot until the streaming thread replaces
+    // it. A fast paused preroll can already be published before seek returns.
+    if(result) { p.state.position = seconds; p.ended = false; }
     else p.state.notice = "This file does not support seeking";
     return result;
 }
@@ -766,16 +800,17 @@ bool Playback::set_output(Output output) {
     if(!p.pipeline) { p.state.output = output; return true; }
     p.query();
     const auto before = p.state;
+    const auto target = p.restart_target();
     const bool autoplay = p.desired_playing;
     p.destroy_pipeline();
     p.state.output = output;
     p.state.error.clear();
-    if(p.create_pipeline(before.position, autoplay, before.audio_track, before.subtitle_track)) return true;
+    if(p.create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) return true;
     const std::string failure = p.state.error;
     p.state.output = before.output;
     p.state.error.clear();
     p.state.notice = failure;
-    if(!p.create_pipeline(before.position, autoplay, before.audio_track, before.subtitle_track)) p.state.error = failure + "; previous output also failed: " + p.state.error;
+    if(!p.create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) p.state.error = failure + "; previous output also failed: " + p.state.error;
     return false;
 }
 
@@ -816,12 +851,11 @@ bool Playback::set_audio_sink(const std::string& sink_name) {
         std::string destination = sink_name;
         if(destination.empty()) {
             const auto inventory = inspect_outputs(true);
-            const auto match = std::find_if(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& item) {
-                return item.available && (p.state.output == Output::Hdmi ? item.hdmi : item.onboard);
-            });
-            if(match != inventory.audio.end()) destination = match->name;
+            destination = choose_audio_route(inventory.audio, p.state.output == Output::Hdmi, {}).sink_name;
         }
-        g_object_set(p.audio_sink, "device", destination.empty() ? nullptr : destination.c_str(), nullptr);
+        // pulsesink moves an existing stream with PulseAudio's by-name API,
+        // which rejects NULL. The server resolves its default via this name.
+        g_object_set(p.audio_sink, "device", destination.empty() ? "@DEFAULT_SINK@" : destination.c_str(), nullptr);
         p.state.audio_output = destination.empty() ? "System default" : destination;
     }
     return true;
@@ -865,6 +899,7 @@ std::string Playback::diagnostics_json() const {
         << ",\"output\":" << json_string(p.state.output == Output::Lcd ? "lcd" : "hdmi")
         << ",\"path\":" << json_string(p.state.path) << ",\"position_seconds\":" << p.state.position
         << ",\"duration_seconds\":" << p.state.duration << ",\"received_frames\":" << p.received.load()
+        << ",\"video_buffers_delivered\":" << p.video_buffers_delivered.load()
         << ",\"video_decoder\":" << json_string(p.state.video_decoder) << ",\"fake_audio\":" << (p.options.fake_audio ? "true" : "false")
         << ",\"audio_output\":" << json_string(p.state.audio_output)
         << ",\"subtitle_renderer_count\":" << subtitle_renderer_count

@@ -110,7 +110,7 @@ def main():
             parser.error('duration must be positive and finite')
         generate(args.directory, args.duration, args.baseline_only, args.size)
     else:
-        width, height = (320, 170) if args.profile == 'handheld' else (1280, 720)
+        width, height = (320, 170) if args.profile == 'handheld' else (640, 360)
         ffmpeg(['-i', str(args.source), '-map', '0:v:0', '-map', '0:a:0?',
                 '-vf', conversion_filter(width, height),
                 '-r', '24', '-c:v', 'libx264', '-preset', 'medium', '-crf', '23',

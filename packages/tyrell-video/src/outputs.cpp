@@ -1,4 +1,5 @@
 #include "outputs.h"
+#include "json_string.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -6,6 +7,7 @@
 #include <cctype>
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 #include <sstream>
 #include <set>
 #include <thread>
@@ -52,7 +54,9 @@ std::optional<DisplayMode> choose_hdmi_mode(const std::vector<DisplayMode>& mode
 
 #if defined(__linux__)
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <unistd.h>
+#include <drm_fourcc.h>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
 #include <pulse/pulseaudio.h>
@@ -63,26 +67,6 @@ namespace {
 std::string lower(std::string text) {
     std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return text;
-}
-
-std::string quoted(const std::string& value) {
-    std::ostringstream out;
-    out << '"';
-    for(unsigned char c : value) {
-        switch(c) {
-            case '"': out << "\\\""; break;
-            case '\\': out << "\\\\"; break;
-            case '\n': out << "\\n"; break;
-            case '\r': out << "\\r"; break;
-            case '\t': out << "\\t"; break;
-            default:
-                if(c < 32) {
-                    constexpr char hex[] = "0123456789abcdef";
-                    out << "\\u00" << hex[c >> 4] << hex[c & 15];
-                } else out << static_cast<char>(c);
-        }
-    }
-    return out.str() + '"';
 }
 
 DisplayMode describe(const drmModeModeInfo& mode) {
@@ -203,8 +187,8 @@ std::string output_inventory_json(const OutputInventory& inventory) {
     for(const auto& connector : inventory.hdmi) {
         if(comma) out << ',';
         comma = true;
-        out << "{\"device\":" << quoted(connector.device) << ",\"connector_id\":" << connector.connector_id
-            << ",\"name\":" << quoted(connector.name) << ",\"connected\":" << (connector.connected ? "true" : "false") << ",\"modes\":[";
+        out << "{\"device\":" << json_string(connector.device) << ",\"connector_id\":" << connector.connector_id
+            << ",\"name\":" << json_string(connector.name) << ",\"connected\":" << (connector.connected ? "true" : "false") << ",\"modes\":[";
         bool mode_comma = false;
         for(const auto& mode : connector.modes) {
             if(mode_comma) out << ',';
@@ -219,21 +203,182 @@ std::string output_inventory_json(const OutputInventory& inventory) {
     for(const auto& sink : inventory.audio) {
         if(comma) out << ',';
         comma = true;
-        out << "{\"name\":" << quoted(sink.name) << ",\"description\":" << quoted(sink.description)
+        out << "{\"name\":" << json_string(sink.name) << ",\"description\":" << json_string(sink.description)
             << ",\"hdmi\":" << (sink.hdmi ? "true" : "false") << ",\"onboard\":" << (sink.onboard ? "true" : "false")
             << ",\"available\":" << (sink.available ? "true" : "false") << '}';
     }
-    out << "],\"audio_error\":" << quoted(inventory.audio_error) << ",\"display_error\":" << quoted(inventory.display_error) << '}';
+    out << "],\"audio_error\":" << json_string(inventory.audio_error) << ",\"display_error\":" << json_string(inventory.display_error) << '}';
     return out.str();
 }
 
 struct HdmiSession::Impl {
     struct SavedCrtc { drmModeCrtc* crtc = nullptr; std::vector<std::uint32_t> connectors; };
+    struct SavedPlaneProperty { std::uint32_t id; std::uint64_t value; };
     int fd = -1;
     std::string path;
     std::uint32_t connector = 0;
+    std::uint32_t plane = 0;
+    std::uint32_t background_handle = 0;
+    std::uint32_t background_fb = 0;
+    bool modeset_attempted = false;
     DisplayMode selected;
     std::vector<SavedCrtc> saved;
+    std::vector<SavedPlaneProperty> plane_properties;
+
+    bool configure_color(std::string& error) {
+        auto* properties = drmModeObjectGetProperties(fd, plane, DRM_MODE_OBJECT_PLANE);
+        if(!properties) { error = "Cannot inspect HDMI overlay color properties"; return false; }
+        bool ok = true;
+        for(std::uint32_t i = 0; i < properties->count_props && ok; ++i) {
+            auto* property = drmModeGetProperty(fd, properties->props[i]);
+            if(!property) { error = "Cannot inspect HDMI overlay property"; ok = false; break; }
+            const char* target = nullptr;
+            if(std::strcmp(property->name, "COLOR_ENCODING") == 0) target = "ITU-R BT.709 YCbCr";
+            if(std::strcmp(property->name, "COLOR_RANGE") == 0) target = "YCbCr limited range";
+            if(target) {
+                const auto* value = property->count_enums > 0 ? std::find_if(property->enums, property->enums + property->count_enums,
+                    [&](const drm_mode_property_enum& item) { return std::strcmp(item.name, target) == 0; })
+                    : nullptr;
+                if(!value || value == property->enums + property->count_enums) {
+                    error = "HDMI overlay does not support BT.709 limited-range video"; ok = false;
+                } else if(value->value != properties->prop_values[i]) {
+                    plane_properties.push_back({property->prop_id, properties->prop_values[i]});
+                    if(drmModeObjectSetProperty(fd, plane, DRM_MODE_OBJECT_PLANE, property->prop_id, value->value) != 0) {
+                        error = "Cannot configure HDMI overlay color: " + std::string(std::strerror(errno)); ok = false;
+                    }
+                }
+            }
+            drmModeFreeProperty(property);
+        }
+        drmModeFreeObjectProperties(properties);
+        return ok;
+    }
+
+    bool configure(drmModeConnector* output, drmModeRes* resources, std::string& error) {
+        if(output->connection != DRM_MODE_CONNECTED) { error = "HDMI disconnected during setup"; return false; }
+        std::vector<DisplayMode> candidates;
+        for(int i = 0; i < output->count_modes; ++i) candidates.push_back(describe(output->modes[i]));
+        const auto mode = choose_hdmi_mode(candidates);
+        if(!mode) { error = "Monitor has no supported progressive mode at or below 1080p"; return false; }
+        selected = *mode;
+        auto* timing = &output->modes[std::distance(candidates.begin(),
+            std::find_if(candidates.begin(), candidates.end(), [&](const DisplayMode& item) {
+                return item.width == selected.width && item.height == selected.height;
+            }))];
+
+        // Keep every original CRTC and connector route for rollback. The SPI
+        // LCD is on a different DRM card and is never touched here.
+        for(int i = 0; i < resources->count_crtcs; ++i) {
+            auto* crtc = drmModeGetCrtc(fd, resources->crtcs[i]);
+            if(!crtc) { error = "Cannot save HDMI CRTC state"; return false; }
+            saved.push_back({crtc, {}});
+            for(int j = 0; j < resources->count_connectors; ++j) {
+                auto* other = drmModeGetConnector(fd, resources->connectors[j]);
+                if(!other) { error = "Cannot save HDMI connector state"; return false; }
+                auto* encoder = other->encoder_id ? drmModeGetEncoder(fd, other->encoder_id) : nullptr;
+                const bool missing_encoder = other->encoder_id && !encoder;
+                if(encoder && encoder->crtc_id == crtc->crtc_id) saved.back().connectors.push_back(other->connector_id);
+                if(encoder) drmModeFreeEncoder(encoder);
+                drmModeFreeConnector(other);
+                if(missing_encoder) { error = "Cannot save HDMI encoder state"; return false; }
+            }
+        }
+
+        std::uint32_t compatible = 0, current = 0;
+        for(int i = 0; i < output->count_encoders; ++i) {
+            auto* encoder = drmModeGetEncoder(fd, output->encoders[i]);
+            if(!encoder) { error = "Cannot inspect HDMI encoder"; return false; }
+            compatible |= encoder->possible_crtcs;
+            if(encoder->encoder_id == output->encoder_id) current = encoder->crtc_id;
+            drmModeFreeEncoder(encoder);
+        }
+        std::vector<int> crtc_order;
+        // Prefer the connector's own CRTC, otherwise use a disabled one. Do
+        // not take a CRTC that also drives another connector.
+        for(int pass = 0; pass < 2; ++pass) for(int i = 0; i < resources->count_crtcs && i < 32; ++i) {
+            const auto& previous = saved[i];
+            if(!(compatible & (std::uint32_t{1} << i))) continue;
+            if(std::any_of(previous.connectors.begin(), previous.connectors.end(), [&](std::uint32_t id) { return id != connector; })) continue;
+            if(pass == 0 ? previous.crtc->crtc_id == current :
+               previous.crtc->crtc_id != current && !previous.crtc->mode_valid && previous.crtc->buffer_id == 0)
+                crtc_order.push_back(i);
+        }
+        if(crtc_order.empty()) { error = "HDMI has no unused compatible CRTC"; return false; }
+        if(drmSetClientCap(fd, DRM_CLIENT_CAP_UNIVERSAL_PLANES, 1) != 0) {
+            error = "Cannot inspect HDMI planes: " + std::string(std::strerror(errno)); return false;
+        }
+        auto* planes = drmModeGetPlaneResources(fd);
+        if(!planes) { error = "Cannot inspect HDMI planes"; return false; }
+        int crtc_index = -1;
+        for(const int index : crtc_order) {
+            for(std::uint32_t i = 0; i < planes->count_planes && !plane; ++i) {
+                auto* candidate = drmModeGetPlane(fd, planes->planes[i]);
+                if(!candidate) continue;
+                bool overlay = false, plain = true;
+                auto* properties = drmModeObjectGetProperties(fd, candidate->plane_id, DRM_MODE_OBJECT_PLANE);
+                if(properties) {
+                    for(std::uint32_t j = 0; j < properties->count_props; ++j) {
+                        auto* property = drmModeGetProperty(fd, properties->props[j]);
+                        if(property && std::strcmp(property->name, "type") == 0)
+                            overlay = properties->prop_values[j] == DRM_PLANE_TYPE_OVERLAY;
+                        if(property && std::strcmp(property->name, "rotation") == 0)
+                            plain = plain && properties->prop_values[j] == DRM_MODE_ROTATE_0;
+                        if(property && std::strcmp(property->name, "alpha") == 0)
+                            plain = plain && properties->prop_values[j] == 0xffff;
+                        if(property) drmModeFreeProperty(property);
+                    }
+                    drmModeFreeObjectProperties(properties);
+                }
+                const bool nv12 = candidate->count_formats > 0 && std::find(candidate->formats, candidate->formats + candidate->count_formats,
+                                            DRM_FORMAT_NV12) != candidate->formats + candidate->count_formats;
+                if(overlay && plain && nv12 && !candidate->fb_id && !candidate->crtc_id &&
+                   (candidate->possible_crtcs & (std::uint32_t{1} << index))) {
+                    plane = candidate->plane_id;
+                    crtc_index = index;
+                }
+                drmModeFreePlane(candidate);
+            }
+            if(plane) break;
+        }
+        drmModeFreePlaneResources(planes);
+        if(!plane) { error = "HDMI has no unused NV12 overlay plane"; return false; }
+        if(!configure_color(error)) return false;
+
+        // Establish the bounded display mode independently of the movie's
+        // dimensions. kmssink can then use the overlay/HVS to scale native
+        // NV12 frames instead of forcing a software upscale to the mode size.
+        drm_mode_create_dumb create{};
+        create.width = selected.width;
+        create.height = selected.height;
+        create.bpp = 32;
+        if(drmIoctl(fd, DRM_IOCTL_MODE_CREATE_DUMB, &create) != 0) {
+            error = "Cannot allocate HDMI background: " + std::string(std::strerror(errno)); return false;
+        }
+        background_handle = create.handle;
+        drm_mode_map_dumb map{};
+        map.handle = background_handle;
+        if(drmIoctl(fd, DRM_IOCTL_MODE_MAP_DUMB, &map) != 0) {
+            error = "Cannot map HDMI background: " + std::string(std::strerror(errno)); return false;
+        }
+        void* pixels = mmap(nullptr, create.size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, map.offset);
+        if(pixels == MAP_FAILED) {
+            error = "Cannot clear HDMI background: " + std::string(std::strerror(errno)); return false;
+        }
+        std::memset(pixels, 0, create.size);
+        munmap(pixels, create.size);
+        const std::uint32_t handles[4] = {background_handle, 0, 0, 0};
+        const std::uint32_t pitches[4] = {create.pitch, 0, 0, 0};
+        const std::uint32_t offsets[4] = {};
+        if(drmModeAddFB2(fd, selected.width, selected.height, DRM_FORMAT_XRGB8888,
+                         handles, pitches, offsets, &background_fb, 0) != 0) {
+            error = "Cannot create HDMI background: " + std::string(std::strerror(errno)); return false;
+        }
+        modeset_attempted = true;
+        if(drmModeSetCrtc(fd, resources->crtcs[crtc_index], background_fb, 0, 0, &connector, 1, timing) != 0) {
+            error = "Cannot set HDMI display mode: " + std::string(std::strerror(errno)); return false;
+        }
+        return true;
+    }
 };
 
 HdmiSession::HdmiSession() : impl_(std::make_unique<Impl>()) {}
@@ -241,6 +386,7 @@ HdmiSession::~HdmiSession() { release(); }
 
 bool HdmiSession::acquire(std::string& error) {
     release();
+    error.clear();
     const auto inventory = inspect_outputs(false);
     for(const auto& item : inventory.hdmi) {
         if(!item.connected) continue;
@@ -258,37 +404,14 @@ bool HdmiSession::acquire(std::string& error) {
             if(resources) drmModeFreeResources(resources);
             drmDropMaster(fd); close(fd); error = "Cannot inspect HDMI resources"; continue;
         }
-        std::vector<DisplayMode> candidates;
-        for(int i = 0; i < connector->count_modes; ++i) candidates.push_back(describe(connector->modes[i]));
-        const auto selected = choose_hdmi_mode(candidates);
-        if(!selected) {
-            drmModeFreeConnector(connector); drmModeFreeResources(resources);
-            drmDropMaster(fd); close(fd); error = "Monitor has no supported progressive mode at or below 1080p"; continue;
-        }
         impl_->fd = fd;
         impl_->path = item.device;
         impl_->connector = item.connector_id;
-        impl_->selected = *selected;
-        // Snapshot every CRTC on this HDMI card because kmssink selects a CRTC
-        // from the connector's encoder mask. The SPI LCD is a different card.
-        for(int i = 0; i < resources->count_crtcs; ++i) {
-            Impl::SavedCrtc saved;
-            saved.crtc = drmModeGetCrtc(fd, resources->crtcs[i]);
-            if(!saved.crtc) continue;
-            for(int j = 0; j < resources->count_connectors; ++j) {
-                drmModeConnector* other = drmModeGetConnector(fd, resources->connectors[j]);
-                if(other) {
-                    drmModeEncoder* encoder = other->encoder_id ? drmModeGetEncoder(fd, other->encoder_id) : nullptr;
-                    if(encoder && encoder->crtc_id == saved.crtc->crtc_id) saved.connectors.push_back(other->connector_id);
-                    if(encoder) drmModeFreeEncoder(encoder);
-                    drmModeFreeConnector(other);
-                }
-            }
-            impl_->saved.push_back(std::move(saved));
-        }
+        const bool configured = impl_->configure(connector, resources, error);
         drmModeFreeConnector(connector);
         drmModeFreeResources(resources);
-        return true;
+        if(configured) return true;
+        release();
     }
     if(error.empty()) error = inventory.display_error.empty() ? "No connected HDMI display" : inventory.display_error;
     return false;
@@ -296,33 +419,57 @@ bool HdmiSession::acquire(std::string& error) {
 
 void HdmiSession::release() {
     if(impl_->fd >= 0) {
+        if(impl_->modeset_attempted && impl_->plane &&
+           drmModeSetPlane(impl_->fd, impl_->plane, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) != 0)
+            std::cerr << "Tyrell HDMI: cannot disable owned overlay: " << std::strerror(errno) << '\n';
+        for(const auto& property : impl_->plane_properties) {
+            if(drmModeObjectSetProperty(impl_->fd, impl_->plane, DRM_MODE_OBJECT_PLANE, property.id, property.value) != 0)
+                std::cerr << "Tyrell HDMI: cannot restore overlay property: " << std::strerror(errno) << '\n';
+        }
         for(auto& saved : impl_->saved) {
             const auto* crtc = saved.crtc;
-            if(crtc->mode_valid && !saved.connectors.empty())
-                drmModeSetCrtc(impl_->fd, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y,
-                               saved.connectors.data(), static_cast<int>(saved.connectors.size()), &saved.crtc->mode);
-            else drmModeSetCrtc(impl_->fd, crtc->crtc_id, 0, 0, 0, nullptr, 0, nullptr);
+            if(impl_->modeset_attempted) {
+                const int result = crtc->mode_valid && !saved.connectors.empty()
+                    ? drmModeSetCrtc(impl_->fd, crtc->crtc_id, crtc->buffer_id, crtc->x, crtc->y,
+                                      saved.connectors.data(), static_cast<int>(saved.connectors.size()), &saved.crtc->mode)
+                    : drmModeSetCrtc(impl_->fd, crtc->crtc_id, 0, 0, 0, nullptr, 0, nullptr);
+                if(result != 0) std::cerr << "Tyrell HDMI: cannot restore CRTC " << crtc->crtc_id
+                                        << ": " << std::strerror(errno) << '\n';
+            }
             drmModeFreeCrtc(saved.crtc);
+        }
+        if(impl_->background_fb) drmModeRmFB(impl_->fd, impl_->background_fb);
+        if(impl_->background_handle) {
+            drm_mode_destroy_dumb destroy{};
+            destroy.handle = impl_->background_handle;
+            drmIoctl(impl_->fd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy);
         }
         drmDropMaster(impl_->fd);
         close(impl_->fd);
     }
     impl_->saved.clear();
+    impl_->plane_properties.clear();
     impl_->fd = -1;
     impl_->connector = 0;
+    impl_->plane = impl_->background_handle = impl_->background_fb = 0;
+    impl_->modeset_attempted = false;
     impl_->path.clear();
     impl_->selected = {};
 }
 
 bool HdmiSession::connected() const {
     if(impl_->fd < 0) return false;
-    drmModeConnector* connector = drmModeGetConnector(impl_->fd, impl_->connector);
+    // Poll the status maintained by kernel hotplug detection. GetConnector()
+    // forces a blocking EDID probe while we hold DRM master; doing that every
+    // 500 ms can stall the controller and make the HDMI picture flicker.
+    drmModeConnector* connector = drmModeGetConnectorCurrent(impl_->fd, impl_->connector);
     const bool result = connector && connector->connection == DRM_MODE_CONNECTED;
     if(connector) drmModeFreeConnector(connector);
     return result;
 }
 int HdmiSession::fd() const { return impl_->fd; }
 std::uint32_t HdmiSession::connector_id() const { return impl_->connector; }
+std::uint32_t HdmiSession::plane_id() const { return impl_->plane; }
 DisplayMode HdmiSession::mode() const { return impl_->selected; }
 std::string HdmiSession::device() const { return impl_->path; }
 
@@ -345,6 +492,7 @@ void HdmiSession::release() {}
 bool HdmiSession::connected() const { return false; }
 int HdmiSession::fd() const { return -1; }
 std::uint32_t HdmiSession::connector_id() const { return 0; }
+std::uint32_t HdmiSession::plane_id() const { return 0; }
 DisplayMode HdmiSession::mode() const { return {}; }
 std::string HdmiSession::device() const { return {}; }
 } // namespace tyrell::video

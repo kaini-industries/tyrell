@@ -1,5 +1,6 @@
 #include "browser.h"
 #include "frame_image.h"
+#include "json_string.h"
 #include "outputs.h"
 #include "playback.h"
 #include "lvgl.h"
@@ -87,13 +88,22 @@ lv_obj_t* label(lv_obj_t* parent, const std::string& text, int x, int y, int w, 
     auto* obj = lv_label_create(parent);
     lv_obj_set_pos(obj, x, y); lv_obj_set_width(obj, w);
     lv_label_set_long_mode(obj, LV_LABEL_LONG_MODE_DOTS);
-    lv_obj_set_style_text_font(obj, large ? &lv_font_montserrat_14 : &lv_font_montserrat_12, 0);
+    const auto* font = large ? &lv_font_montserrat_14 : &lv_font_montserrat_12;
+    lv_obj_set_style_text_font(obj, font, 0);
+    lv_obj_set_height(obj, lv_font_get_line_height(font));
     lv_obj_set_style_text_color(obj, lv_color_hex(color), 0);
+    // DOTS temporarily truncates LVGL's own string. Keep the full value so an
+    // unchanged long filename does not reset and redraw on every UI iteration.
+    auto* original = new std::string(text);
+    lv_obj_set_user_data(obj, original);
+    lv_obj_add_event_cb(obj, [](lv_event_t* event) { delete static_cast<std::string*>(lv_event_get_user_data(event)); }, LV_EVENT_DELETE, original);
     lv_label_set_text(obj, text.c_str());
     return obj;
 }
 void set_label(lv_obj_t* obj, const std::string& value) {
-    if(obj && value != lv_label_get_text(obj)) lv_label_set_text(obj, value.c_str());
+    if(!obj) return;
+    auto* original = static_cast<std::string*>(lv_obj_get_user_data(obj));
+    if(value != *original) { *original = value; lv_label_set_text(obj, value.c_str()); }
 }
 
 enum class Page { Browser, Player, Menu, Error };
@@ -451,17 +461,6 @@ void write_ppm(const std::string& path, const std::vector<std::uint32_t>& pixels
     if(!out) throw std::runtime_error("Failed writing screenshot: " + path);
 }
 
-std::string json_string(const std::string& value) {
-    std::ostringstream out; out << '"';
-    constexpr char hex[] = "0123456789abcdef";
-    for(const unsigned char c : value) {
-        if(c == '"' || c == '\\') out << '\\' << static_cast<char>(c);
-        else if(c < 32) out << "\\u00" << hex[c >> 4] << hex[c & 15];
-        else out << static_cast<char>(c);
-    }
-    out << '"'; return out.str();
-}
-
 std::pair<double, double> cpu_times() {
 #if defined(__unix__) || defined(__APPLE__)
     struct rusage usage{};
@@ -505,6 +504,7 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
         << ",\"position_seconds\":" << s.position << ",\"duration_seconds\":" << s.duration
         << ",\"source_width\":" << s.source_width << ",\"source_height\":" << s.source_height
         << ",\"received_frames\":" << s.received_frames << ",\"qos_processed\":" << s.qos_processed
+        << ",\"video_buffers_delivered\":" << s.video_buffers_delivered
         << ",\"qos_dropped\":" << s.dropped_frames << ",\"video_decoder\":" << json_string(s.video_decoder)
         << ",\"audio_output\":" << json_string(s.audio_output)
         << ",\"error\":" << json_string(s.error.empty() ? app.error : s.error) << ",\"notice\":" << json_string(s.notice) << "}\n";

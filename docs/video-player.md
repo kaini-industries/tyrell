@@ -17,8 +17,8 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-Copy `artifacts/video/tyrell-video_0.1.0-1_arm64.deb` to the device. Install with
-`sudo apt install ./tyrell-video_0.1.0-1_arm64.deb` from its containing directory,
+Copy `artifacts/video/tyrell-video_0.1.1-1_arm64.deb` to the device. Install with
+`sudo apt install ./tyrell-video_0.1.1-1_arm64.deb` from its containing directory,
 then select **Tyrell Video** in APPLaunch. APT resolves the declared media plugin
 and font dependencies. No network connection is needed during playback.
 
@@ -74,6 +74,17 @@ can own it. The app reports an unavailable/busy output instead of stopping
 services, switching virtual terminals, or requesting root. The previous HDMI
 state is restored on normal cleanup. No active-desktop video backend is included.
 
+The attached-TV test found that software upscaling to the HDMI mode was too
+slow. HDMI now uses an owned background and VC4 overlay scaling, retaining
+native-sized NV12 video where possible. See the [TV validation report](video-hdmi-validation.md)
+for measured geometry, performance and the ten-minute stability result.
+
+On the tested stock image, LightDM owns HDMI and its audio card does not expose
+a working HDMI PulseAudio sink by default. Dedicated playback needs the desktop
+temporarily released and a working HDMI sink. The TV validation report records
+the temporary ALSA HDMI bridge used for testing; it leaves the system default
+onboard. This setup is separate from package installation.
+
 Audio selection changes the app's stream, not the system default. HDMI playback
 prefers HDMI audio when exposed by the current audio session; otherwise it uses
 the onboard output. The board driver handles speaker/headphone switching. If
@@ -118,7 +129,9 @@ python3 scripts/video-fixtures.py convert input.mkv output-hdmi.mp4 --profile hd
 ```
 
 The presets use aspect-preserving, even-sized H.264/yuv420p at 24 fps with AAC
-stereo. The handheld bounds are 320 × 170; HDMI bounds are 1280 × 720. The tool
+stereo. The handheld bounds are 320 × 170; HDMI bounds are 640 × 360, matching
+the smooth attached-TV test. The TV mode remains 1280 × 720, with hardware
+scaling. Tested 720p/1080p sources dropped frames in this release. The tool
 refuses to overwrite an existing destination. It selects the first video and
 audio tracks; subtitles remain separate rather than being burned in.
 

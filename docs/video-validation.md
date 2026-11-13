@@ -1,8 +1,15 @@
 # Tyrell Video validation
 
+The subsequent [attached-TV test](video-hdmi-validation.md) records HDMI
+hardware results and the performance correction found during that test.
+
 Implementation and validation date: November 13, 2026. This report separates
 automated checks, live observations, and physical acceptance. A successful build
 or codec probe does not establish smooth playback on the handheld.
+
+The subsequent [adversarial review](video-adversarial-review.md) records fixes,
+new verification and the then-pending HDMI hardware tests. Package hashes and
+results below describe the original implementation build.
 
 ## Live starting inventory
 

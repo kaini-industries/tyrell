@@ -1,4 +1,5 @@
 #include "playback.h"
+#include "json_string.h"
 
 #include <chrono>
 #include <cmath>
@@ -10,19 +11,6 @@
 
 using namespace tyrell::video;
 using Clock = std::chrono::steady_clock;
-
-static std::string quote(const std::string& value) {
-    std::string out = "\"";
-    for(unsigned char c : value) {
-        if(c == '"' || c == '\\') { out += '\\'; out += static_cast<char>(c); }
-        else if(c == '\n') out += "\\n";
-        else if(c == '\r') out += "\\r";
-        else if(c == '\t') out += "\\t";
-        else if(c < 32) out += '?';
-        else out += static_cast<char>(c);
-    }
-    return out + '"';
-}
 
 static double cpu_seconds(const rusage& r) {
     return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
@@ -80,11 +68,12 @@ int main(int argc, char** argv) {
                     check_error = "Invalid LCD frame dimensions/stride/storage"; ok = false; break;
                 }
             }
-            if(exercise_started == Clock::time_point{} && status.playing && unique_frames)
+            const bool video_delivered = output == "lcd" ? unique_frames > 0 : status.video_buffers_delivered > 0;
+            if(exercise_started == Clock::time_point{} && status.playing && video_delivered)
                 exercise_started = Clock::now();
             const double elapsed = exercise_started == Clock::time_point{} ? -1.0 :
                 std::chrono::duration<double>(Clock::now() - exercise_started).count();
-            if(exercise && !pause_checked && elapsed >= 0.8 && unique_frames) {
+            if(exercise && !pause_checked && elapsed >= 0.8 && video_delivered) {
                 ok = player.pause(); pause_checked = true;
                 player.set_volume(0.3); player.set_muted(true);
                 if(!ok) check_error = "Pause failed";
@@ -123,15 +112,18 @@ int main(int argc, char** argv) {
         const double wall = std::chrono::duration<double>(Clock::now() - started).count();
         const bool output_achieved = status.output == (output == "hdmi" ? Output::Hdmi : Output::Lcd);
         if(!output_achieved) { ok = false; check_error = "Requested display was unavailable; fallback is not an HDMI pass"; }
-        if(!observed_playing) { ok = false; check_error = "Pipeline never reached playing state"; }
+        if(!observed_playing) { ok = false; if(check_error.empty()) check_error = "Pipeline never reached playing state"; }
         if(output == "lcd" && unique_frames == 0) { ok = false; check_error = "No video frames delivered"; }
+        if(output == "hdmi" && status.video_buffers_delivered == 0) {
+            ok = false; if(check_error.empty()) check_error = "No video buffers delivered to the HDMI sink";
+        }
         if(exercise && !(pause_checked && resumed && seek_checked && track_checked)) {
             ok = false;
             if(check_error.empty()) check_error = "Control exercise did not complete";
         }
         if(!status.error.empty()) ok = false;
         std::cout << "{\"ok\":" << (ok ? "true" : "false")
-            << ",\"measurement\":\"decoder delivery; no LCD presentation or physical audio verification\""
+            << ",\"measurement\":\"GStreamer video delivery; no physical display or audio verification\""
             << ",\"fake_audio\":" << (fake_audio ? "true" : "false")
             << ",\"output_achieved\":" << (output_achieved ? "true" : "false")
             << ",\"observed_playing\":" << (observed_playing ? "true" : "false")
@@ -145,7 +137,7 @@ int main(int argc, char** argv) {
 #endif
             << ",\"unique_frames_consumed\":" << unique_frames
             << ",\"control_exercise\":" << (exercise ? "true" : "false")
-            << ",\"check_error\":" << quote(check_error)
+            << ",\"check_error\":" << json_string(check_error)
             << ",\"playback\":" << player.diagnostics_json() << "}\n";
         player.stop();
         return ok ? 0 : 1;

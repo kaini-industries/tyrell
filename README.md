@@ -22,9 +22,18 @@ on the handheld. Build its separate ARM64 package with `make package APP=video`;
 outputs are under `artifacts/video/`. The default package command still builds
 Tyrell Status.
 
-See the [player guide](docs/video-player.md) and
-[validation record](docs/video-validation.md). HDMI hardware testing is pending
-because no external monitor was available.
+An attached-TV test confirmed smooth low-resolution H.264/AAC playback for ten
+minutes, correct aspect fitting and captions, matching flash/beep timing, and
+paused LCD fallback after unplugging HDMI. The player uses hardware scaling to
+a 1280 × 720 HDMI signal. Tested 720p/1080p source files dropped frames; smooth
+HD-source playback is not yet qualified.
+
+Dedicated HDMI playback requires the desktop or other display owner to release
+the output. TV sound also requires a configured HDMI sink in the user's
+PulseAudio-compatible audio session; the tested stock image needed a temporary
+ALSA HDMI bridge. Package installation does not perform this setup. See the
+[player guide](docs/video-player.md), [original validation record](docs/video-validation.md),
+and [attached-TV validation](docs/video-hdmi-validation.md) for setup and results.
 
 ## Requirements
 

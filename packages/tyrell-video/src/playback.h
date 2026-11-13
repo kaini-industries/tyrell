@@ -48,6 +48,7 @@ struct Status {
     std::uint64_t decoded_frames = 0;
     std::uint64_t dropped_frames = 0;
     std::uint64_t received_frames = 0;
+    std::uint64_t video_buffers_delivered = 0; // Buffers reaching the final sink, not physical scanout.
     std::uint64_t qos_processed = 0;
     std::string video_decoder;
     std::string audio_output;

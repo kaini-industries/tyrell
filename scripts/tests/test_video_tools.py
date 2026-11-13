@@ -106,6 +106,22 @@ class VideoToolsTests(unittest.TestCase):
                             '-f', 'lavfi', '-i', 'testsrc2=size=720x576:rate=24', '-t', '0.5',
                             '-vf', 'setsar=16/15', '-c:v', 'libx264', '-preset', 'ultrafast', str(source)],
                            check=True, capture_output=True)
+            hdmi_destination = root / 'hdmi.mp4'
+            subprocess.run([sys.executable, str(SCRIPTS / 'video-fixtures.py'), 'convert',
+                            str(source), str(hdmi_destination), '--profile', 'hdmi'],
+                           check=True, capture_output=True)
+            hdmi = json.loads(subprocess.check_output(
+                ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries',
+                 'stream=width,height,sample_aspect_ratio,pix_fmt,r_frame_rate',
+                 '-of', 'json', str(hdmi_destination)], text=True))['streams'][0]
+            self.assertLessEqual(hdmi['width'], 640)
+            self.assertLessEqual(hdmi['height'], 360)
+            self.assertAlmostEqual(hdmi['width'] / hdmi['height'], 4 / 3, delta=0.01)
+            self.assertEqual(hdmi['sample_aspect_ratio'], '1:1')
+            self.assertEqual(hdmi['pix_fmt'], 'yuv420p')
+            self.assertEqual(hdmi['r_frame_rate'], '24/1')
+            self.assertEqual(hdmi['width'] % 2, 0)
+            self.assertEqual(hdmi['height'] % 2, 0)
             command = [sys.executable, str(SCRIPTS / 'video-fixtures.py'), 'convert', str(source), str(destination)]
             subprocess.run(command, check=True, capture_output=True)
             probe = subprocess.check_output(['ffprobe', '-v', 'error', '-select_streams', 'v:0',

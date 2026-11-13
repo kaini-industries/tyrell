@@ -16,9 +16,8 @@ struct DisplayMode {
     bool interlaced = false;
 };
 
-// kmssink 1.26 chooses the first EDID mode with matching dimensions. Retain
-// that order so a later progressive entry cannot disguise an interlaced first
-// match. Prefer <=720p; accept <=1080p only when no smaller mode is available.
+// Retain the conservative first-mode-per-dimensions EDID policy. Prefer
+// <=720p; accept <=1080p only when no smaller progressive mode is available.
 std::optional<DisplayMode> choose_hdmi_mode(const std::vector<DisplayMode>& modes);
 
 struct HdmiConnector {
@@ -65,11 +64,14 @@ public:
     ~HdmiSession();
     HdmiSession(const HdmiSession&) = delete;
     HdmiSession& operator=(const HdmiSession&) = delete;
+    // Prepare a bounded display mode and an unused NV12 overlay under DRM
+    // master. Stop every sink borrowing fd() before release() restores it.
     bool acquire(std::string& error);
     void release();
     bool connected() const;
     int fd() const;
     std::uint32_t connector_id() const;
+    std::uint32_t plane_id() const;
     DisplayMode mode() const;
     std::string device() const;
 

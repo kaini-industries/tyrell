@@ -42,13 +42,15 @@ struct TemporaryDirectory {
 
 int main(int argc, char** argv) {
     try {
-        require(argc == 2, "Pass the generated media-baseline.mp4 fixture");
+        require(argc == 2 || (argc == 3 && std::string(argv[2]) == "--real-audio"),
+                "Pass the generated media-baseline.mp4 fixture and optional --real-audio");
+        const bool real_audio = argc == 3;
         TemporaryDirectory temporary;
         const auto subtitle = temporary.path / "captions.srt";
         std::ofstream(subtitle) << "1\n00:00:00,000 --> 00:00:20,000\nTyrell subtitles\nA second readable line\n\n";
         const auto corrupt = temporary.path / "corrupt.mp4";
         std::ofstream(corrupt) << "This is not a media container";
-        Playback player(PlaybackOptions{true});
+        Playback player(PlaybackOptions{!real_audio});
         require(!player.set_audio_sink("tyrell-nonexistent-audio-output"), "A new invalid audio output selection must be rejected");
 
         require(!player.load((temporary.path / "missing.mp4").string()), "Missing media unexpectedly loaded");
@@ -62,16 +64,27 @@ int main(int argc, char** argv) {
         player.stop();
 
         require(player.load(argv[1], subtitle.string()), "Fixture load failed: " + player.status().error);
-        require(wait_for(player, [&] { return player.status().playing && player.latest_frame() && player.status().duration > 0; }),
+        // The Zero can need longer for initial decoder/font/audio setup than
+        // the VM. Remain inside the application's 15-second startup deadline.
+        require(wait_for(player, [&] { return player.status().playing && player.latest_frame() && player.status().duration > 0; }, 12),
                 "Fixture never became playable: " + player.status().error);
+        require(wait_for(player, [&] { return player.status().video_buffers_delivered > 0; }),
+                "Final video sink did not receive video buffers");
         require(player.status().subtitle_track == -1, "Subtitles must start disabled");
         require(wait_for(player, [&] { return !player.status().subtitle_tracks.empty(); }), "External SRT stream was not discovered while disabled");
         require(!player.set_audio_track(99) && !player.set_subtitle_track(99), "Out-of-range track selection unexpectedly succeeded");
         auto held = player.latest_frame();
         const auto saved = held->pixels;
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-        require(player.latest_frame()->serial > held->serial && held->pixels == saved,
+        require(wait_for(player, [&] { auto frame = player.latest_frame(); return frame && frame->serial > held->serial; }) && held->pixels == saved,
                 "Latest-frame publication must advance without modifying an outstanding snapshot");
+        if(real_audio) {
+            const auto before_auto = player.latest_frame()->serial;
+            require(player.set_audio_sink(""), "Automatic live audio routing failed");
+            require(wait_for(player, [&] {
+                auto frame = player.latest_frame();
+                return player.status().playing && frame && frame->serial > before_auto + 3;
+            }), "Automatic audio routing interrupted playback: " + player.status().error);
+        }
 
         require(player.pause(), "Pause failed");
         require(wait_for(player, [&] { return player.status().paused; }), "Pause did not settle");
@@ -81,10 +94,17 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         player.poll();
         require(std::abs(player.status().position - paused_at) < 0.08, "The paused media clock continued advancing");
+        require(player.status().video_buffers_delivered > 0, "Pausing reset video delivery evidence");
 
         auto serial = player.latest_frame()->serial;
+        const auto delivered_before_seek = player.status().video_buffers_delivered;
         require(player.seek(1.0), "Paused accurate seek failed");
-        require(wait_for(player, [&] { auto frame = player.latest_frame(); return frame && frame->serial > serial && std::abs(frame->position - 1.0) < 0.03; }), "Paused seek did not publish a new preroll frame at the requested timestamp");
+        require(static_cast<bool>(player.latest_frame()), "A seek must retain a snapshot until its replacement arrives");
+        require(wait_for(player, [&] {
+            auto frame = player.latest_frame();
+            return frame && frame->serial > serial && std::abs(frame->position - 1.0) < 0.03 &&
+                   player.status().video_buffers_delivered > delivered_before_seek;
+        }), "Paused seek did not publish a new target frame and advance video delivery evidence");
         const auto without_subtitle = player.latest_frame();
         serial = without_subtitle->serial;
         require(player.set_subtitle_track(0), "Enabling the external subtitle track failed");
@@ -110,15 +130,30 @@ int main(int argc, char** argv) {
         if(!connected_hdmi) {
             require(!player.set_output(Output::Hdmi), "Absent HDMI unexpectedly became active");
             require(player.status().output == Output::Lcd, "Failed HDMI selection did not retain LCD output");
-            require(wait_for(player, [&] { return player.latest_frame() && !player.status().buffering; }), "LCD did not recover after absent HDMI selection");
+            // The fallback has not prerolled yet. A queued seek must survive
+            // another output request before its ASYNC_DONE is polled.
+            require(player.seek(2.0), "Queued seek during output recovery failed");
+            require(player.seek_relative(0.5) && std::abs(player.status().position - 2.5) < 0.03,
+                    "Relative seeking did not advance the queued target during preroll");
+            require(player.seek_relative(-0.5), "Could not return the queued target to two seconds");
+            require(!player.set_output(Output::Hdmi), "Repeated absent HDMI unexpectedly became active");
+            require(wait_for(player, [&] {
+                auto frame = player.latest_frame();
+                return frame && std::abs(frame->position - 2.0) < 0.03 && !player.status().buffering;
+            }), "LCD recovery lost the pending seek target");
             require(player.status().subtitle_track == -1 && player.status().paused, "Output recovery did not preserve pause/subtitle state");
         }
 
         const double duration = player.status().duration;
+        const auto delivered_before_eos = player.status().video_buffers_delivered;
         require(player.seek(duration - 0.2) && player.play(), "Could not seek near EOS");
         const bool ended = wait_for(player, [&] { const auto s = player.status(); return s.paused && !s.playing && s.position >= duration - 0.08; });
         require(ended, "EOS did not settle in paused end state: " + player.status().error + " / " + player.status().notice +
                 " position=" + std::to_string(player.status().position) + " duration=" + std::to_string(duration));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        player.poll();
+        require(player.status().video_buffers_delivered >= delivered_before_eos && player.status().video_buffers_delivered > 0,
+                "EOS reset video delivery evidence");
         require(player.play(), "Replay after EOS failed");
         require(wait_for(player, [&] { const auto s = player.status(); return s.playing && s.position < 1.0; }), "Replay did not restart the file");
         player.stop();
