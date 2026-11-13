@@ -1,12 +1,13 @@
-# Proposed development workflow
+# Development workflow
 
-Original research date: 2026-11-13. The application and dedicated Linux ARM64
-package builder have since been implemented; see [current build instructions](building.md).
-The broader image/recovery workflow below remains a proposal. No OS image or
-firmware replacement has been made. A separately authorized live installation
-and device test of the app is now complete; see [device validation](device-validation.md).
-Builder installation/removal tests and the original proposed recovery work are
-distinct from that later app-only deployment.
+Original research date: 2026-11-13. The application/package loop and native
+Linux ARM64 image workflow are implemented. The first vendor-based Debian image
+contains the tested Tyrell Status package and passed 134 offline checks; see
+[image validation](image-validation.md). It has not been physically booted.
+The app alone was installed and tested on the stock installation; see
+[device validation](device-validation.md). Recovery-media preparation and
+spare-card image acceptance remain pending. The original firmware and SD card
+have not been replaced.
 
 ## Starting point
 
@@ -15,18 +16,19 @@ The SSH inspection found Debian 13.7 (trixie), kernel 6.18.39, a preloaded
 352 MiB usable RAM and 91 MiB swap in use. These observations describe the
 running installation, not the capacity available to a build machine.
 
-The development host is macOS arm64. Docker CLI has a `desktop-linux` context;
-that configuration does not establish that image builds will work. Lima has an
-unrelated, stopped `nmt-build` VM with 4 CPUs, 8 GiB RAM and a 64 GiB disk. Leave
-that VM alone; provision a dedicated builder if this plan is implemented.
+The development host is macOS arm64. Builds use the dedicated `tyrell-build`
+Lima VM, with native Debian ARM64, 4 CPUs, 4 GiB RAM and a 64 GiB virtual disk.
+Its backing disk and image artifacts are on dedicated external storage in the
+initial environment. See [builder instructions](building.md) for reproducible
+setup and explicit RAM overrides. The unrelated `nmt-build` VM is not used.
 
 ## Separate the development loops
 
-| Work | Proposed environment | Deliverable |
+| Work | Environment | Deliverable |
 | --- | --- | --- |
 | Edit and preview the interface | Native macOS SDL/LVGL simulator | Desktop executable and screenshots |
 | Compile and package device applications | Pinned Debian Linux builder | arm64 `.deb` |
-| Assemble the operating system | Dedicated Debian arm64 Linux VM or Linux host | Versioned `.img.xz` |
+| Assemble the operating system | Existing native Debian ARM64 Lima VM | Versioned `.img.xz` and offline verification |
 | Accept a release | Physical CardputerZero with a development microSD | Recorded hardware results |
 
 The official [application template](https://github.com/CardputerZero/Template)
@@ -35,12 +37,11 @@ and `cmake --workflow --preset cp0-cross-package`. Its maintainers recommend a
 Debian-based Linux host for reliable CPack dependency discovery. The simulator
 previews application behavior; it does not validate physical peripherals.
 
-Start image work from the [vendor pi-gen fork](https://github.com/CardputerZero/pi-gen),
-branch `cardputerzero_v1.0`, pinned to a reviewed commit. Its Docker workflow needs
-Linux kernel facilities including loop devices and binfmt. Use a Linux filesystem
-inside the dedicated builder for build work; validate the builder there before
-claiming macOS Docker compatibility. A Linux arm64 builder is the proposed path,
-not a verified build configuration.
+The image recipe uses the [vendor pi-gen fork](https://github.com/CardputerZero/pi-gen),
+pinned to the factory baseline commit `5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4`.
+Construction and read-only loop-mount inspection run on the guest's Linux
+filesystem. This native ARM64 VM path has produced the first image; macOS
+Docker image construction has not been validated.
 
 ## Two outputs, shared customization
 
@@ -49,11 +50,12 @@ same versioned packages into images. This makes an application change testable
 without rebuilding the entire OS and prevents manual device edits from becoming
 the only record of the intended system.
 
-Proposed profiles:
+Profiles:
 
 - **stock-compatible:** retain the vendor kernel, overlays, firmware, launcher and
-  hardware services; add project metadata and selected custom packages. Establish
-  this baseline before trimming the existing stage4-derived environment.
+  hardware services; add project metadata and selected custom packages. This
+  stage4-derived image has been built and checked offline. Hardware acceptance
+  remains a prerequisite for treating it as a known-good baseline.
 - **minimal-debian:** later produce a smaller userspace while retaining every
   required hardware driver, configuration and service. Measure each removal on
   the device; do not assume a generic Raspberry Pi Lite image supports the board.
@@ -61,6 +63,11 @@ Proposed profiles:
   and keeps a documented maintenance and recovery path.
 
 ## Milestones and acceptance
+
+Current status: baseline inventory and app package/live-launch checks are
+complete; the stock-compatible image is built and offline validated. Offline
+whole-card recovery media and spare-card boot/peripheral acceptance are pending.
+Profile trimming and releases follow those hardware checks.
 
 1. **Baseline and recovery assets.** Save sanitized package versions, boot
    configuration, device-tree choices, loaded modules, service configuration and
@@ -85,7 +92,9 @@ Proposed profiles:
 
 ## Lock inputs and preserve provenance
 
-A proposed `locks/sources.json` should record:
+Existing locks and per-image metadata record these inputs through
+`locks/build-inputs.json`, `image/baseline-apps.json`,
+`image/camera-packages.json`, `locks/image-apt.json`, and exported manifests:
 
 - Exact pi-gen, application, launcher and driver source commit IDs.
 - Builder OS/image digest, architecture and toolchain versions.

@@ -5,6 +5,7 @@
 
 # Generated build inputs and outputs
 artifacts/
+image-artifacts
 backups/
 device-results/
 build/

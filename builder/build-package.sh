@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 umask 022
+# Share the guest lock with detached image jobs, including direct script runs.
+test ! -L /var/tmp/tyrell-locks
+install -d -m 700 /var/tmp/tyrell-locks
+test -O /var/tmp/tyrell-locks
+test ! -L /var/tmp/tyrell-locks/builder.lock
+exec 9>>/var/tmp/tyrell-locks/builder.lock
+flock -n 9 || { printf 'The Tyrell builder is busy.\n' >&2; exit 1; }
 input=${1:?Usage: build-package.sh source-directory}
 work=/var/tmp/tyrell-build
 test "$(dpkg --print-architecture)" = arm64

@@ -9,7 +9,7 @@ authorized SSH installation and live test has now been completed; see
 ## Environment
 
 - Host: Apple Silicon macOS, Lima 2.2.0, Python 3.12+ and `curl`.
-- Guest: pinned Debian 13 ARM64 cloud image, VZ virtualization, 4 CPUs, 6 GiB RAM,
+- Guest: pinned Debian 13 ARM64 cloud image, VZ virtualization, 4 CPUs, 4 GiB RAM by default,
   64 GiB sparse virtual disk; native GCC 14 toolchain and CMake.
 - VM name: `tyrell-build`; state lives under ignored `build/lima/` through a
   project-specific `LIMA_HOME`. The unrelated `nmt-build` VM is not used.
@@ -35,12 +35,23 @@ make builder-up     # Download/provision on first use; start on subsequent use
 make package        # Clean native ARM64 build, tests, packaging and VM smoke test
 make builder-info   # List only this project's Lima instances
 make builder-stop   # Release VM CPU/RAM while retaining its disk and toolchain
+python3 scripts/builder image-deps         # Explicitly provision image tools on an existing VM
+python3 scripts/builder image-deps --check # Check image tools without updating/installing packages
 ```
 
 `make package` also starts the VM if necessary. Initial setup needs Internet
 access for the Debian cloud image, APT packages and locked LVGL archive.
 Subsequent builds use the cached, checksum-verified archive and installed
 toolchain. Nothing is published or deployed automatically.
+
+New VMs also receive image-building tools from the single canonical
+`builder/image-dependencies.txt` list. The wrapper renders that list into a
+generated Lima template under ignored `build/`; use `make builder-up` to create
+the VM. Existing VMs retain their provisioning until `image-deps` is invoked.
+That command shares both build locks, refuses an active image before copying
+its unique provisioning inputs, and installs only builder tool packages. The
+builder APT/toolchain environment is recorded separately from the frozen image
+APT repository.
 
 New exports are checksum-verified before replacing `artifacts/`. The previous
 export is preserved under `build/previous-artifacts-*`, so older files do not
@@ -57,12 +68,25 @@ python3 scripts/builder shell bash
 Always use this wrapper or set `LIMA_HOME` explicitly to the project's
 `build/lima` directory. Plain global `limactl` commands use a different inventory.
 Changing the checked-in VM template does not automatically migrate an existing
-instance; update it deliberately while stopped or create a separately named
-instance. Do not delete a VM that holds work you have not exported.
+instance. To explicitly set RAM on a stopped VM:
+
+```sh
+TYRELL_BUILDER_MEMORY=4GiB make builder-up
+```
+
+The override accepts `MiB` or `GiB`, from 2–32 GiB in 256 MiB increments. A
+different allocation is rejected while the VM is running; no override preserves
+an existing VM's RAM. The tool leaves at least 2 GiB physical RAM for the host
+and checks a 4 GiB internal storage reserve plus metadata space before starting.
+This capacity check does not guarantee currently free RAM. Stop other memory
+heavy work if the host is under pressure. Do not delete a VM that holds work
+you have not exported.
 
 ## Build and package behavior
 
-The host helper verifies the LVGL archive and copies an allowlisted source
+Package and image jobs share a host lock and guest `flock`. A package build or
+builder stop refuses an active detached image job before replacing source
+inputs or removing output. The host helper verifies the LVGL archive and copies an allowlisted source
 bundle into `/var/tmp/tyrell-input` in the VM. The guest build script recreates
 its own generated build/dependency/artifact directories, compiles for ARMv8-A
 with Cortex-A53 tuning, and records a source-content revision. It never uses
@@ -118,6 +142,8 @@ keyboard, battery, charging or launcher handoff.
 
 Source and cloud-image inputs are pinned; APT remains a recorded moving input.
 The per-build package inventory supports comparison, but byte-identical builds
-and a fully frozen toolchain are not yet claimed. Hardware installation belongs
-on a spare development microSD after backup/recovery preparation. Building and
-testing a full factory-compatible OS image remains the next image milestone.
+and a fully frozen toolchain are not yet claimed. The vendor-based image has
+been built with Tyrell Status and passed 134 offline checks; see
+[image building](image-building.md) and [image validation](image-validation.md).
+Physical image boot and hardware acceptance remain pending on a spare
+development microSD after backup/recovery preparation.

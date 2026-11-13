@@ -1,4 +1,4 @@
-.PHONY: builder-up builder-info builder-stop package
+.PHONY: builder-up builder-info builder-stop package image
 
 builder-up:
 	python3 scripts/builder up
@@ -11,3 +11,6 @@ builder-stop:
 
 package:
 	python3 scripts/builder build
+
+image:
+	python3 scripts/builder image

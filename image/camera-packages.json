@@ -1,0 +1,425 @@
+{
+  "schema_version": 1,
+  "policy": "Baseline libcamera/rpicam/PipeWire family retained from the official Raspberry Pi pool; exact package versions and content hashes.",
+  "packages": [
+    {
+      "package": "libcamera0.7",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "libcamera0.7_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera0.7_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "c7dfaadcf9cd3b03fc41f0d457c88736d2638fa79d1cca11fc3637777cdae3c9",
+      "bytes": 822694,
+      "preinstall": true
+    },
+    {
+      "package": "libcamera-ipa",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "libcamera-ipa_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera-ipa_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "0de238bc7f0a23bf4ab90604d232c88e92c0b5fa724272d555fdc570ca4d30f4",
+      "bytes": 1112702,
+      "preinstall": true
+    },
+    {
+      "package": "libcamera-tools",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "libcamera-tools_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera-tools_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "18855a1bea82fd1b1af60c2d5e7b474cfa83b55d28c08eb68ee53efee09361cd",
+      "bytes": 134650,
+      "preinstall": true
+    },
+    {
+      "package": "libcamera-v4l2",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "libcamera-v4l2_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera-v4l2_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "a12834031a92d5dc22b67f0e6fd6d5d331a0b97f780098794502050ca89be368",
+      "bytes": 58892,
+      "preinstall": true
+    },
+    {
+      "package": "libcamera-dev",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "libcamera-dev_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera-dev_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "b799340d3f753563f583f705af26411b45d8426b6f13d0b734b4da0872bb3b62",
+      "bytes": 40498,
+      "preinstall": true
+    },
+    {
+      "package": "python3-libcamera",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "python3-libcamera_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/python3-libcamera_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "ab1f0b080cd18ab0c13dfda86b23517031d53436169452a5ba325d23e1e3ef7f",
+      "bytes": 395334,
+      "preinstall": true
+    },
+    {
+      "package": "librpicam-app1",
+      "version": "1.13.0-1",
+      "architecture": "arm64",
+      "name": "librpicam-app1_1.13.0-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/librpicam-app1_1.13.0-1_arm64.deb",
+      "sha256": "b9a986ad459aa70f88699da5df4776fa8c33070eb59a4320c29d30d0a9b8067b",
+      "bytes": 284836,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps",
+      "version": "1.13.0-1",
+      "architecture": "all",
+      "name": "rpicam-apps_1.13.0-1_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps_1.13.0-1_all.deb",
+      "sha256": "718b081ca26dab2b690dc1065b78faea2a7ee9025a30fbe07e40440bd7213684",
+      "bytes": 5484,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps-core",
+      "version": "1.13.0-1",
+      "architecture": "arm64",
+      "name": "rpicam-apps-core_1.13.0-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps-core_1.13.0-1_arm64.deb",
+      "sha256": "4a7f55330564b02aabd409725174b4c64354ff6f3cf396e823af92a342b8e1ea",
+      "bytes": 264056,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps-encoder",
+      "version": "1.13.0-1",
+      "architecture": "arm64",
+      "name": "rpicam-apps-encoder_1.13.0-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps-encoder_1.13.0-1_arm64.deb",
+      "sha256": "d93da92e5e87054d1f47dce03508dcd840c1c29867f37f70f6f85de3f79677ff",
+      "bytes": 33142,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps-lite",
+      "version": "1.13.0-1",
+      "architecture": "all",
+      "name": "rpicam-apps-lite_1.13.0-1_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps-lite_1.13.0-1_all.deb",
+      "sha256": "142d0370a43e8b9bf0bf175c5cd989953af7e503df7cec0259f8a799daefc99b",
+      "bytes": 4994,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps-opencv-postprocess",
+      "version": "1.13.0-1",
+      "architecture": "arm64",
+      "name": "rpicam-apps-opencv-postprocess_1.13.0-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps-opencv-postprocess_1.13.0-1_arm64.deb",
+      "sha256": "e479b0e3b387fcc35efd3442e3cf039e04b05c0bd69d6c8ed00cca5ea6ec2db3",
+      "bytes": 71284,
+      "preinstall": true
+    },
+    {
+      "package": "rpicam-apps-preview",
+      "version": "1.13.0-1",
+      "architecture": "arm64",
+      "name": "rpicam-apps-preview_1.13.0-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/rpicam-apps/rpicam-apps-preview_1.13.0-1_arm64.deb",
+      "sha256": "943dd940879338100091f3020561b84bfacad3cd6e51b99a1c47516c0fba6092",
+      "bytes": 48036,
+      "preinstall": true
+    },
+    {
+      "package": "python3-picamera2",
+      "version": "0.3.37-1",
+      "architecture": "all",
+      "name": "python3-picamera2_0.3.37-1_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/picamera2/python3-picamera2_0.3.37-1_all.deb",
+      "sha256": "ce409345b92f3aeac7c72d8a67ee39935ab07617afd63089e7c10a7383100953",
+      "bytes": 120246,
+      "preinstall": true
+    },
+    {
+      "package": "libpipewire-0.3-0t64",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libpipewire-0.3-0t64_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libpipewire-0.3-0t64_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "f3d28a400581cdb628e34d4d3e1ab461e5fdd6308bc2d69dc2510fa3abdb9b2d",
+      "bytes": 409162,
+      "preinstall": true,
+      "depends": "libspa-0.2-modules (= 1.4.2-1+rpt3), libc6 (>= 2.38)"
+    },
+    {
+      "package": "libpipewire-0.3-common",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "all",
+      "name": "libpipewire-0.3-common_1.4.2-1+rpt3_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libpipewire-0.3-common_1.4.2-1+rpt3_all.deb",
+      "sha256": "081bfab8580de3644205e711e06f4001936c4241c874d03a8a7f0f0936aadea7",
+      "bytes": 127904,
+      "preinstall": false,
+      "depends": ""
+    },
+    {
+      "package": "libpipewire-0.3-dev",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libpipewire-0.3-dev_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libpipewire-0.3-dev_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "115cd644f8492e36d6c9ef7f82a5889b45b4c1b7fbe65e09e3676f40aa0c38cb",
+      "bytes": 87960,
+      "preinstall": false,
+      "depends": "libpipewire-0.3-0t64 (= 1.4.2-1+rpt3), libspa-0.2-dev (= 1.4.2-1+rpt3)"
+    },
+    {
+      "package": "libpipewire-0.3-modules",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libpipewire-0.3-modules_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libpipewire-0.3-modules_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "0f7d2ec329488bca95838b546a22f37111d0f2118680298c705b83464e56835c",
+      "bytes": 1588136,
+      "preinstall": true,
+      "depends": "libavahi-client3 (>= 0.6.16), libavahi-common3 (>= 0.6.16), libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libffado2 (>= 2.4.9), libglib2.0-0t64 (>= 2.32.0), libopus0 (>= 1.3.1-2~), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3), libpulse0 (>= 0.99.1), libroc0.4 (>= 0.4.0), libselinux1 (>= 3.1~), libssl3t64 (>= 3.0.0), libsystemd0"
+    },
+    {
+      "package": "libpipewire-0.3-modules-x11",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libpipewire-0.3-modules-x11_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libpipewire-0.3-modules-x11_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "273ff639606cc05cd1ba9d831780f5754fc2a0f10a6da1e077b87b4657f12044",
+      "bytes": 26516,
+      "preinstall": false,
+      "depends": "libcanberra-pulse, libc6 (>= 2.17), libcanberra0 (>= 0.2), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3), libx11-6 (>= 2:1.7.0), libxfixes3 (>= 1:6.0.0)"
+    },
+    {
+      "package": "libspa-0.2-dev",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libspa-0.2-dev_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libspa-0.2-dev_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "05d75aec602309f4515c07e47275058c38e78af1f3f68942dba4a44985b886ee",
+      "bytes": 140654,
+      "preinstall": false,
+      "depends": ""
+    },
+    {
+      "package": "libspa-0.2-modules",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libspa-0.2-modules_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libspa-0.2-modules_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "20f77bfb5f72e45d485713a0dae65d4fbe05d9adf0bb59ecf193569c3c156438",
+      "bytes": 1998248,
+      "preinstall": true,
+      "depends": "libasound2t64 (>= 1.2.10), libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libebur128-1 (>= 1.2.0), libfftw3-single3 (>= 3.3.10), libgcc-s1 (>= 3.0), liblilv-0-0 (>= 0.14.2~dfsg0), libmysofa1 (>= 0.6~), libsndfile1 (>= 1.0.20), libstdc++6 (>= 12), libsystemd0, libudev1 (>= 183), libwebrtc-audio-processing-1-3 (>= 1.3)"
+    },
+    {
+      "package": "pipewire-doc",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "all",
+      "name": "pipewire-doc_1.4.2-1+rpt3_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-doc_1.4.2-1+rpt3_all.deb",
+      "sha256": "2d8a12fa0613c4d980f425277c8372255c2a37de97cf384e89b3daf0b760634d",
+      "bytes": 4128244,
+      "preinstall": false,
+      "depends": ""
+    },
+    {
+      "package": "pipewire",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "6b5faa171861a1bf40cb27ace8a992da5eeed64a5c8924dd2a28ce84d30e59bd",
+      "bytes": 117936,
+      "preinstall": true,
+      "depends": "adduser, libpipewire-0.3-modules (= 1.4.2-1+rpt3), pipewire-bin (= 1.4.2-1+rpt3), init-system-helpers (>= 1.52)"
+    },
+    {
+      "package": "pipewire-bin",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-bin_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-bin_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "293c5662721764141864d48cd09041137dbf2a53c8aa4d736e56694f3a257f36",
+      "bytes": 869174,
+      "preinstall": true,
+      "depends": "libpipewire-0.3-modules (= 1.4.2-1+rpt3), libasound2t64 (>= 1.2.6), libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libncursesw6 (>= 6), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3), libreadline8t64 (>= 6.0), libsndfile1 (>= 1.0.20), libtinfo6 (>= 6)"
+    },
+    {
+      "package": "pipewire-pulse",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-pulse_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-pulse_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "d5c7c65bb81c638c9373b918a2a2a937c1f6bf8b012384cfce9224c21be72251",
+      "bytes": 25710,
+      "preinstall": true,
+      "depends": "pipewire (= 1.4.2-1+rpt3), dconf-gsettings-backend | gsettings-backend, init-system-helpers (>= 1.52)"
+    },
+    {
+      "package": "pipewire-alsa",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-alsa_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-alsa_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "74043ab1dd346eecbf6c831f6fa138097ce5c258ff98e38a70b7e4ac2d69a6b5",
+      "bytes": 81872,
+      "preinstall": false,
+      "depends": "pipewire (= 1.4.2-1+rpt3), libasound2t64 (>= 1.2.6), libc6 (>= 2.38), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3)"
+    },
+    {
+      "package": "pipewire-jack",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-jack_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-jack_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "9fc60f017064d14152266a00be6d64c7e213c989273c2c58a3134ff3cf6af2b1",
+      "bytes": 224050,
+      "preinstall": false,
+      "depends": "pipewire (= 1.4.2-1+rpt3), libc6 (>= 2.38), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3)"
+    },
+    {
+      "package": "pipewire-v4l2",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-v4l2_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-v4l2_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "463d64351ab691d970b0dd15690e2545f690ee43f6a8b297e690374568aa5524",
+      "bytes": 60678,
+      "preinstall": false,
+      "depends": "pipewire (= 1.4.2-1+rpt3), libc6 (>= 2.38), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3)"
+    },
+    {
+      "package": "pipewire-tests",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "pipewire-tests_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-tests_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "9af841159a2c7a8d0eaa09327854e6bb32ada4ea1fa90ca273de9b2af006cb9e",
+      "bytes": 1884752,
+      "preinstall": false,
+      "depends": "pipewire (= 1.4.2-1+rpt3), libasound2t64 (>= 1.2.6), libc6 (>= 2.38), libglib2.0-0t64 (>= 2.36.0), libjack-jackd2-0 (>= 1.9.10+20150825) | libjack-0.125, libpipewire-0.3-0t64 (= 1.4.2-1+rpt3), libsdl2-2.0-0 (>= 2.0.12)"
+    },
+    {
+      "package": "gstreamer1.0-pipewire",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "gstreamer1.0-pipewire_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/gstreamer1.0-pipewire_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "6a5c366692ffc427c70b1844f920c7c190a7f9336cb785574957c2365282458f",
+      "bytes": 106954,
+      "preinstall": false,
+      "depends": "pipewire (= 1.4.2-1+rpt3), libc6 (>= 2.38), libglib2.0-0t64 (>= 2.80.0), libgstreamer-plugins-base1.0-0 (>= 1.23.1), libgstreamer1.0-0 (>= 1.16.0), libpipewire-0.3-0t64 (= 1.4.2-1+rpt3)"
+    },
+    {
+      "package": "libspa-0.2-bluetooth",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libspa-0.2-bluetooth_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libspa-0.2-bluetooth_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "7a10d6631272de396ba61cdf8055753320f7a1d99541d36d2a0cec797af23785",
+      "bytes": 641452,
+      "preinstall": true,
+      "depends": "libspa-0.2-modules (= 1.4.2-1+rpt3), libbluetooth3 (>= 4.91), libc6 (>= 2.38), libdbus-1-3 (>= 1.10), libfreeaptx0 (>= 0.1.1), libglib2.0-0t64 (>= 2.83.0), liblc3-1 (>= 1.0.1), libldacbt-abr2 (>= 2.0.2), libldacbt-enc2 (>= 2.0.2), libopus0 (>= 1.1), libsbc1 (>= 2.1), libusb-1.0-0 (>= 2:1.0.16)"
+    },
+    {
+      "package": "libspa-0.2-jack",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libspa-0.2-jack_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libspa-0.2-jack_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "4c75f06d0c75e5abe528d6592e4d6d880510a5098c77c9ff28e1a1de461789a3",
+      "bytes": 111138,
+      "preinstall": false,
+      "depends": "libspa-0.2-modules (= 1.4.2-1+rpt3), libc6 (>= 2.38), libjack-jackd2-0 (>= 1.9.10+20150825) | libjack-0.125"
+    },
+    {
+      "package": "libspa-0.2-libcamera",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "arm64",
+      "name": "libspa-0.2-libcamera_1.4.2-1+rpt3_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/libspa-0.2-libcamera_1.4.2-1+rpt3_arm64.deb",
+      "sha256": "b6a9b2f2114dcde444be0dd6fb1983231eff95a2700e017ac194e4e13c0cd041",
+      "bytes": 85284,
+      "preinstall": true,
+      "depends": "libspa-0.2-modules (= 1.4.2-1+rpt3), libc6 (>= 2.32), libcamera0.7 (>= 0.7.0+rpt20260202), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)"
+    },
+    {
+      "package": "pipewire-audio-client-libraries",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "all",
+      "name": "pipewire-audio-client-libraries_1.4.2-1+rpt3_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-audio-client-libraries_1.4.2-1+rpt3_all.deb",
+      "sha256": "5f82db7bc11a07193cda9c8a8f4b00b3bda1b37f064fc8e3658c7b73d7adabb4",
+      "bytes": 19684,
+      "preinstall": false,
+      "depends": "pipewire-alsa, pipewire-jack"
+    },
+    {
+      "package": "pipewire-audio",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "all",
+      "name": "pipewire-audio_1.4.2-1+rpt3_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-audio_1.4.2-1+rpt3_all.deb",
+      "sha256": "d74cfd6d0ae953f16e3f5afee4c9ac79ad85046a25f51c29199dddaf53324647",
+      "bytes": 19888,
+      "preinstall": false,
+      "depends": "libspa-0.2-bluetooth, pipewire-alsa, pipewire-pulse, wireplumber (>= 0.5.0)"
+    },
+    {
+      "package": "pipewire-libcamera",
+      "version": "1.4.2-1+rpt3",
+      "architecture": "all",
+      "name": "pipewire-libcamera_1.4.2-1+rpt3_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/p/pipewire/pipewire-libcamera_1.4.2-1+rpt3_all.deb",
+      "sha256": "29354d7b4abf8338a33ec994d311cc6f62b93ee22c1f81f6f516976aef0debec",
+      "bytes": 19664,
+      "preinstall": true,
+      "depends": "libspa-0.2-libcamera"
+    },
+    {
+      "package": "gstreamer1.0-libcamera",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "arm64",
+      "name": "gstreamer1.0-libcamera_0.7.2+rpt20260817-1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/gstreamer1.0-libcamera_0.7.2+rpt20260817-1_arm64.deb",
+      "sha256": "5f06e0c09aca106f1613897355f718482a244fa1aa8976cd0d523a1e9ca91795",
+      "bytes": 78672,
+      "preinstall": false,
+      "depends": "libc6 (>= 2.32), libcamera0.7 (>= 0.7.2+rpt20260817), libgcc-s1 (>= 3.0), libglib2.0-0t64 (>= 2.80.0), libgstreamer-plugins-base1.0-0 (>= 1.22.0), libgstreamer1.0-0 (>= 1.18.0), libstdc++6 (>= 13.1)"
+    },
+    {
+      "package": "libcamera-doc",
+      "version": "0.7.2+rpt20260817-1",
+      "architecture": "all",
+      "name": "libcamera-doc_0.7.2+rpt20260817-1_all.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/libc/libcamera/libcamera-doc_0.7.2+rpt20260817-1_all.deb",
+      "sha256": "9826d8b24919c1d9f2cbb72f00d94f5e5dfb3bdfae88cba2d0ac81142a9d1498",
+      "bytes": 30513792,
+      "preinstall": false,
+      "depends": "libjs-jquery, libjs-sphinxdoc, libjs-underscore"
+    },
+    {
+      "package": "libtensorflow-lite2.20.0",
+      "version": "2.20.0-1+rpt1",
+      "architecture": "arm64",
+      "name": "libtensorflow-lite2.20.0_2.20.0-1+rpt1_arm64.deb",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/t/tensorflow/libtensorflow-lite2.20.0_2.20.0-1+rpt1_arm64.deb",
+      "sha256": "147f938692eb5856ac95f94e6b65c85eb30f9d5e6ee3f39e358b47869d24202b",
+      "bytes": 1427832,
+      "preinstall": true,
+      "depends": "libabsl20240722 (>= 20240722.0-1), libc6 (>= 2.38), libcpuinfo0 (>= 0.0~git20220617.082deff-2), libfarmhash0 (>= 0~git20190513.0d859a8), libgcc-s1 (>= 4.0), libstdc++6 (>= 13.1)"
+    }
+  ],
+  "excluded_packages": [
+    "libcamera0.8"
+  ],
+  "selection": "Preinstall the observed factory runtime family plus compatible development headers. Additional same-source outputs are retained in the local repository and pinned, without installing them unless dependencies request them."
+}
