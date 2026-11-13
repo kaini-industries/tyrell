@@ -35,6 +35,9 @@ ALSA HDMI bridge. Package installation does not perform this setup. See the
 [player guide](docs/video-player.md), [original validation record](docs/video-validation.md),
 and [attached-TV validation](docs/video-hdmi-validation.md) for setup and results.
 
+Prebuilt ARM64 packages and checksums are available in the
+[Tyrell Video 0.1.1 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.1).
+
 ## Requirements
 
 The automated builder currently supports **Apple Silicon macOS 13 or newer** with:

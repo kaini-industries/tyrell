@@ -153,3 +153,22 @@ Raw evidence is kept locally in ignored
 `device-results/video-hdmi-television-evidence/`, including the native report,
 resource samples, profile comparisons, DRM snapshots and restoration checks.
 Temporary test files were removed from the device after collection.
+
+## Release 0.1.1
+
+The rebuilt ARM64 package is `tyrell-video_0.1.1-1_arm64.deb`, source
+`src-c388ca9ecd83`, SHA-256
+`06ff072275a893755ec26c3c73f9b1709c6d20c41f7a29779019ad92d393b623`.
+Its ten native source files match the HDMI-tested `src-8432c1ea6942` build; the
+release adds version/documentation metadata and the conservative computer-side
+conversion preset. The fresh build passed all 19 CTests and package
+install/remove checks; all 26 host checks passed.
+
+Version 0.1.1 was installed on the Zero and verified using its version output,
+package integrity check, diagnostics and a deterministic UI preview. All 12
+protected hashes, the kernel and APPLaunch process remained unchanged. The
+normal launcher entry and starting desktop/audio setup remain in place.
+
+The [GitHub release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.1)
+provides the Debian package, checksums, build/source manifests, validation
+summary and computer-side conversion tool.
