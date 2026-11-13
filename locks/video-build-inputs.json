@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "package": "tyrell-video",
+  "version": "0.1.0",
+  "source_date_epoch": 1794528000,
+  "media_dependencies": {
+    "gstreamer_minimum": "1.26",
+    "policy": "Debian 13 runtime/development packages; versions recorded in builder-packages.tsv. Hardware decoder availability is discovered at runtime, not assumed."
+  }
+}

@@ -73,7 +73,7 @@ class BuilderResourceTests(unittest.TestCase):
                 patch.object(builder, 'up'), patch.object(builder, 'guest', return_value=active) as guest, \
                 patch.object(builder, 'bundle') as bundle:
             with self.assertRaisesRegex(RuntimeError, 'image build is running'):
-                builder.build()
+                builder.build('video')
             bundle.assert_not_called()
             self.assertEqual(guest.call_count, 1)
 

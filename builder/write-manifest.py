@@ -26,17 +26,22 @@ for ppm in root.glob('*.ppm'):
     ppm.with_suffix('.png').write_bytes(png)
 files={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.iterdir()) if p.is_file() and p.name not in {'manifest.json','SHA256SUMS'}}
 source=json.loads((root/'source-manifest.json').read_text())
+tests=json.loads((root/'test-inventory.json').read_text())
 manifest={
-    'package': 'tyrell-status', 'version': '0.1.0-1', 'architecture': 'arm64',
+    'package': source.get('package','tyrell-status'),
+    'version': source.get('debian_version',source['version']+'-1'), 'architecture': 'arm64',
     'source': source, 'builder_os': Path('/etc/os-release').read_text(),
     'builder_machine': platform.machine(),
     'compiler': subprocess.check_output(['c++','--version'],text=True).splitlines()[0],
     'cmake': subprocess.check_output(['cmake','--version'],text=True).splitlines()[0],
     'verification': {
-        'telemetry_fixture_tests': 'passed', 'cli_tests': 'passed',
+        'automated_tests': {'result': 'passed', 'log': 'tests.txt',
+                            'detail_log': 'ctest-detail.txt',
+                            'names': [test['name'] for test in tests['tests']]},
         'headless_render': 'passed', 'install_remove_in_builder': 'passed',
         'device_installation': 'not performed', 'physical_display_keyboard': 'not tested',
         'cardputer_firmware': 'untouched; no device access by the build workflow',
+        'video_performance_audio_hdmi': 'not tested on hardware',
     },
     'sha256': files,
 }

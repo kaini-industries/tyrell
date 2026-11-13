@@ -14,6 +14,18 @@ The first image passed 134 offline checks. The image workflow now includes froze
 - JSON output, offline fixtures, and headless LVGL screenshots for testing.
 - A Debian package containing only the app, launcher entries, icon, and documentation.
 
+## Tyrell Video
+
+Tyrell Video adds a local-file video player with a keyboard-controlled browser,
+audio/subtitle track selection, and a dedicated HDMI movie output with controls
+on the handheld. Build its separate ARM64 package with `make package APP=video`;
+outputs are under `artifacts/video/`. The default package command still builds
+Tyrell Status.
+
+See the [player guide](docs/video-player.md) and
+[validation record](docs/video-validation.md). HDMI hardware testing is pending
+because no external monitor was available.
+
 ## Requirements
 
 The automated builder currently supports **Apple Silicon macOS 13 or newer** with:

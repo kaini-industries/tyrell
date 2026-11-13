@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tyrell Video
+Comment=Local video, text subtitles and dedicated HDMI playback
+Exec=/usr/bin/tyrell-video
+Icon=tyrell-video
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupNotify=false

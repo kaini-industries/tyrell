@@ -8,11 +8,11 @@ import os
 from pathlib import Path
 import runpy
 import re
-import uuid
 import shutil
 import subprocess
 import sys
 import tarfile
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE = ROOT / 'build'
@@ -35,8 +35,13 @@ def guest(*args, **kwargs):
     return lima('shell', '--workdir=/tmp', INSTANCE, *args, **kwargs)
 
 
-def inputs():
-    return json.loads((ROOT / 'locks/build-inputs.json').read_text())
+def inputs(app='status'):
+    locked = json.loads((ROOT / 'locks/build-inputs.json').read_text())
+    if app == 'video':
+        locked.update(json.loads((ROOT / 'locks/video-build-inputs.json').read_text()))
+    elif app != 'status':
+        raise RuntimeError('Unknown application: ' + app)
+    return locked
 
 
 def digest(path):
@@ -45,6 +50,14 @@ def digest(path):
         for chunk in iter(lambda: stream.read(1024 * 1024), b''):
             h.update(chunk)
     return h.hexdigest()
+
+
+def require_space(path, needed, purpose):
+    available = shutil.disk_usage(path).free
+    reserve = 128 * 1024**2
+    if available < needed + reserve:
+        raise RuntimeError(f'{purpose} needs {(needed + reserve) / 1024**2:.0f} MiB free '
+                           f'on {path}; only {available / 1024**2:.0f} MiB is available')
 
 
 def fetch():
@@ -172,10 +185,11 @@ def image_deps(check_only=False):
               'bash', destination + '/ensure-image-deps.sh', '--check' if check_only else 'install')
 
 
-def bundle():
+def bundle(app='status'):
     archive = fetch()
+    locked = inputs(app)
     selected = []
-    for base in [ROOT / 'packages/tyrell-status', ROOT / 'builder', ROOT / 'locks']:
+    for base in [ROOT / ('packages/' + locked['package']), ROOT / 'builder', ROOT / 'locks']:
         for path in sorted(base.rglob('*')):
             if '__pycache__' in path.parts or path.suffix in {'.pyc', '.pyo'} or path.name == '.DS_Store':
                 continue
@@ -186,44 +200,100 @@ def bundle():
                     raise RuntimeError('Credential file is not a build input')
                 selected.append(path)
     selected.append(ROOT / 'scripts/builder')
+    if app == 'video':
+        for name in ['video-fixtures.py', 'video-matrix.py', 'video-inventory.py']:
+            path = ROOT / 'scripts' / name
+            if path.is_symlink() or not path.is_file():
+                raise RuntimeError('Missing or unsafe video validation tool: ' + str(path))
+            selected.append(path)
     if not any(p.name == 'CMakeLists.txt' for p in selected):
         raise RuntimeError('Application CMakeLists.txt is missing')
     source_files = {str(p.relative_to(ROOT)): digest(p) for p in selected}
     source_hash = hashlib.sha256(json.dumps(source_files, sort_keys=True).encode()).hexdigest()
     metadata = {
-        'version': inputs()['version'], 'source_revision': 'src-' + source_hash[:12],
+        'application': app, 'package': locked['package'],
+        'version': locked['version'], 'debian_version': locked['version'] + '-1',
+        'source_revision': 'src-' + source_hash[:12],
         'source_sha256': source_hash, 'source_files': source_files,
-        'source_date_epoch': inputs()['source_date_epoch'],
+        'source_date_epoch': locked['source_date_epoch'],
         'device_access': 'None: build inputs do not include .env or device credentials.',
     }
     metadata_path = STATE / 'source-manifest.json'
     metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')
     tar_path = STATE / 'builder-input.tar'
-    with tarfile.open(tar_path, 'w') as tar:
-        for path in selected:
-            tar.add(path, arcname=str(path.relative_to(ROOT)), recursive=False)
-        tar.add(metadata_path, arcname='source-manifest.json')
-        tar.add(archive, arcname='downloads/' + archive.name)
+    # This archive is a generated transfer, not a source cache. Reclaim any
+    # interrupted transfer before checking space; never unpack LVGL on the host.
+    tar_path.unlink(missing_ok=True)
+    estimated_size = archive.stat().st_size + sum(path.stat().st_size + 4096 for path in selected) + 1024**2
+    require_space(STATE, estimated_size, 'The source transfer')
+    try:
+        with tarfile.open(tar_path, 'w') as tar:
+            for path in selected:
+                tar.add(path, arcname=str(path.relative_to(ROOT)), recursive=False)
+            tar.add(metadata_path, arcname='source-manifest.json')
+            tar.add(archive, arcname='downloads/' + archive.name)
+    except BaseException:
+        tar_path.unlink(missing_ok=True)
+        raise
     return tar_path
 
 
-def build():
+def publish_artifacts(staging, destination, app):
+    """Replace one app's export, retaining the other app and a rollback copy."""
+    if destination.is_symlink():
+        raise RuntimeError('Refusing to replace a symlinked artifacts directory')
+    preserved = destination / 'video' if app == 'status' else None
+    if preserved is not None and preserved.is_symlink():
+        raise RuntimeError('Refusing to move a symlinked video artifacts directory')
+    previous = None
+    if destination.exists():
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+        previous = STATE / ('previous-' + app + '-artifacts-' + stamp)
+        destination.rename(previous)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if preserved is not None and previous is not None and (previous / 'video').exists():
+            (previous / 'video').rename(staging / 'video')
+        staging.rename(destination)
+    except OSError:
+        if previous is not None:
+            if preserved is not None and (staging / 'video').exists():
+                (staging / 'video').rename(previous / 'video')
+            previous.rename(destination)
+        raise
+
+
+def build(app='status'):
     with shared_lock():
-        _build_locked()
+        _build_locked(app)
 
 
-def _build_locked():
+def _build_locked(app='status'):
     up()
     assert_guest_idle()
-    tar_path = bundle()
+    tar_path = bundle(app)
     guest('python3', '-c', "import shutil; from pathlib import Path; p=Path('/var/tmp/tyrell-input'); shutil.rmtree(p, ignore_errors=True); p.mkdir()")
-    lima('copy', '--backend=scp', str(tar_path), INSTANCE + ':/var/tmp/tyrell-input.tar')
+    try:
+        lima('copy', '--backend=scp', str(tar_path), INSTANCE + ':/var/tmp/tyrell-input.tar')
+    finally:
+        # Release the approximately 97 MiB LVGL transfer before the VM builds.
+        tar_path.unlink(missing_ok=True)
     guest('tar', '-xf', '/var/tmp/tyrell-input.tar', '-C', GUEST_INPUT)
     guest('bash', GUEST_INPUT + '/builder/build-package.sh', GUEST_INPUT)
     output_tar = STATE / 'artifacts.tar'
-    with output_tar.open('wb') as stream:
-        guest('tar', '-C', GUEST_OUTPUT, '-cf', '-', '.', stdout=stream)
-    destination = ROOT / 'artifacts'
+    output_tar.unlink(missing_ok=True)
+    sizes = guest('python3', '-c', "from pathlib import Path; print(sum(p.stat().st_size + 4096 for p in Path('/var/tmp/tyrell-build/artifacts').rglob('*') if p.is_file()))",
+                  stdout=subprocess.PIPE, text=True)
+    require_space(STATE, 2 * int(sizes.stdout.strip()) + 1024**2, 'Artifact transfer and extraction')
+    try:
+        with output_tar.open('wb') as stream:
+            guest('tar', '-C', GUEST_OUTPUT, '-cf', '-', '.', stdout=stream)
+    except BaseException:
+        output_tar.unlink(missing_ok=True)
+        raise
+    destination = ROOT / 'artifacts' if app == 'status' else ROOT / 'artifacts/video'
+    if (ROOT / 'artifacts').is_symlink():
+        raise RuntimeError('Refusing to export through a symlinked artifacts directory')
     if destination.is_symlink():
         raise RuntimeError('Refusing to replace a symlinked artifacts directory')
     staging = STATE / 'exported-artifacts'
@@ -243,17 +313,8 @@ def _build_locked():
         path = staging / name
         if not path.resolve().is_relative_to(staging.resolve()) or digest(path) != expected:
             raise RuntimeError('Exported artifact checksum mismatch: ' + name)
-    previous = None
-    if destination.exists():
-        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-        previous = STATE / ('previous-artifacts-' + stamp)
-        destination.rename(previous)
-    try:
-        staging.rename(destination)
-    except OSError:
-        if previous is not None:
-            previous.rename(destination)
-        raise
+    publish_artifacts(staging, destination, app)
+    output_tar.unlink(missing_ok=True)
     print('Artifacts copied to ' + str(destination))
 
 
@@ -263,7 +324,8 @@ def parse_args(argv=None):
     actions = parser.add_subparsers(dest='action', required=True)
     for name in ['up', 'info', 'stop', 'fetch']:
         actions.add_parser(name)
-    actions.add_parser('build')
+    app_build = actions.add_parser('build')
+    app_build.add_argument('--app', choices=['status', 'video'], default='status')
     actions.add_parser('image-deps').add_argument('--check', action='store_true')
     for name in ['image', 'shell']:
         actions.add_parser(name).add_argument('command', nargs=argparse.REMAINDER)
@@ -293,7 +355,7 @@ def main():
     elif args.action == 'fetch':
         print(fetch())
     elif args.action == 'build':
-        build()
+        build(args.app)
     elif args.action == 'image-deps':
         image_deps(args.check)
     elif args.action == 'image':

@@ -31,7 +31,11 @@ provision:
       apt-get update
       apt-get install -y --no-install-recommends \
         build-essential cmake ninja-build dpkg-dev file binutils \
-        python3 git curl ca-certificates pkg-config
+        python3 git curl ca-certificates pkg-config \
+        libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libdrm-dev libpulse-dev \
+        gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+        gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-x \
+        fonts-dejavu-core ffmpeg
       # TYRELL_IMAGE_DEPENDENCIES
 probes:
   - mode: readiness
