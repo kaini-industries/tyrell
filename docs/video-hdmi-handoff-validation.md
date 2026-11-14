@@ -76,6 +76,10 @@ restored brightness to 100%, with the synthetic movie visible on the LCD. No
 backlight or console-mode workaround was added to the app. The user then
 confirmed both the TV movie and handheld controller were visible together
 after reconnecting HDMI and selecting O through the normal launcher session.
+The user also confirmed unplugging HDMI moved the movie to the handheld and
+paused it. The panel remained at brightness 100% and the desktop console returned.
+Reconnecting HDMI, selecting O and resuming with Space returned playback to the
+TV; the user confirmed that cycle worked.
 
 These short tests exercise the new ownership path. They do not replace the
 previous release's ten-minute codec/scaling qualification. The native hardware
