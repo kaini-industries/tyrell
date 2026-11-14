@@ -59,6 +59,25 @@ specific observed layout as well as the ordinary matching layout, then validates
 the actual console descriptor. The probe established that both execution and
 recovery receive it with the single expected capability.
 
+Completed checks on the actual Zero, with HDMI disconnected:
+
+- 0.1.5-to-0.1.6 package upgrade and migration of the root-owned 0700 runtime
+  directory and 0600 lease lock to the helper account.
+- A normal video-group client acquired and released the console; a second
+  client was rejected without interrupting the first. Every completed case
+  restored tty7 after using tty1.
+- Killing the client restored the desktop console. Killing the helper delivered
+  socket EOF and its nonroot `ExecStopPost` restored the console. A subsequent
+  lease succeeded. An account outside `video` was denied socket access.
+- The helper's real, effective, saved and filesystem UIDs were all 111 (the
+  allocated nonroot account on this device). Effective, permitted, bounding and
+  ambient capability masks were all `0000000004000000`, only the console bit.
+
+The closed device policy must explicitly allow `/dev/tty0 r`: systemd opens
+`OpenFile` inside the unit's device cgroup before passing it onward. The device
+test caught an initial missing allow rule; package validation now checks both
+that exact rule and `char-drm rw`, as well as the read-only `OpenFile` setting.
+
 TV playback testing of 0.1.6 is pending: HDMI is disconnected and the user asked
 to finish without a TV test. Earlier playback, audio and hotplug qualifications
 apply to the unchanged playback engine, not to physical validation of this new

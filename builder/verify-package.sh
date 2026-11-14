@@ -51,7 +51,17 @@ allowed={f'usr/bin/{name}',f'usr/share/APPLaunch/applications/{name}.desktop',f'
 if name == 'tyrell-video':
     allowed.update({'usr/lib/tyrell-video/tyrell-video-hdmi-session', 'usr/lib/tyrell-video/tyrell-video-audio-session', 'usr/lib/systemd/system/tyrell-video-hdmi.socket', 'usr/lib/systemd/system/tyrell-video-hdmi@.service'})
     unit=configparser.ConfigParser(interpolation=None)
-    unit.read(root/'usr/lib/systemd/system/tyrell-video-hdmi@.service')
+    unit_text=(root/'usr/lib/systemd/system/tyrell-video-hdmi@.service').read_text()
+    device_rules=[]
+    config_lines=[]
+    for line in unit_text.splitlines():
+        key, _, value=line.partition('=')
+        if key.strip() == 'DeviceAllow':
+            device_rules.append(value.strip())
+        else:
+            config_lines.append(line)
+    # DeviceAllow is intentionally repeated; reject duplicate singleton options.
+    unit.read_string('\n'.join(config_lines))
     service=unit['Service']
     for key in ('User', 'Group'):
         if service.get(key) != 'tyrell-video-hdmi':
@@ -62,6 +72,11 @@ if name == 'tyrell-video':
     helper='/usr/lib/tyrell-video/tyrell-video-hdmi-session'
     if service.get('ExecStart') != helper or service.get('ExecStopPost') != helper+' --recover':
         raise SystemExit('Unexpected HDMI helper command or privilege override')
+    if (service.get('DevicePolicy') != 'closed' or
+            sorted(device_rules) != ['/dev/tty0 r', 'char-drm rw'] or
+            service.get('OpenFile') != '/dev/tty0:console:read-only' or
+            service.get('StandardInput') != 'socket' or service.get('NoNewPrivileges') != 'yes'):
+        raise SystemExit('Unexpected HDMI helper console access or sandbox policy')
 else:
     allowed.update({f'usr/share/applications/{name}.desktop',f'usr/share/icons/hicolor/80x80/apps/{name}.png'})
 for path in root.rglob('*'):

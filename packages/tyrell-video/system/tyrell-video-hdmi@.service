@@ -34,4 +34,5 @@ LockPersonality=yes
 RestrictRealtime=yes
 RestrictNamespaces=yes
 DevicePolicy=closed
+DeviceAllow=/dev/tty0 r
 DeviceAllow=char-drm rw
