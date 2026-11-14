@@ -143,3 +143,9 @@ were copied temporarily rather than installed as OS packages.
 The before/after package inventory records the Video upgrade and an additional
 Screen installation during the test window. Screen is not a Video dependency;
 it was left in place rather than treating it as an app-owned package.
+
+The final normal APPLaunch check also passed: the user opened the original movie
+and confirmed smooth TV playback with TV sound. PulseAudio-compatible runtime
+inspection showed the player's active six-channel 48 kHz stream targeting the
+temporary HDMI sink, while the system default remained onboard. The movie was
+left playing; this final user session was not terminated for another crash test.
