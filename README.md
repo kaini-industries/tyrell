@@ -132,7 +132,7 @@ The isolated Debian package/image builder currently supports
 **Apple Silicon macOS 13 or newer** with:
 
 - [Lima](https://lima-vm.io/) 2.x; tested with 2.2.0.
-- Python 3.12 or newer, `make`, and `curl`.
+- Python 3.12 or newer, `make`, and `curl`; stock-image builds also require `xz` on the host (`brew install xz`).
 - Internet access for the initial Debian image, toolchain packages, and LVGL source download.
 
 The dedicated Debian ARM64 VM defaults to 4 CPUs, 4 GiB RAM, and a 64 GiB sparse virtual disk. Its state lives in the ignored `build/lima/` directory. It has no shared host folders or forwarded SSH agent. Only selected build inputs are copied into it. Existing VMs retain their configuration; set `TYRELL_BUILDER_MEMORY=4GiB` while the VM is stopped to resize it explicitly.
@@ -175,6 +175,52 @@ See [build instructions](docs/building.md) for dependency locking and the full a
 
 ## Build a Debian image
 
+Two image modes are available. **Stock-derived builds** carry the official
+kernel, drivers, firmware, launcher, apps, and Debian packages forward together,
+then install Tyrell Status offline. **Source builds** retain the existing
+pi-gen recipe and frozen APT inputs for deeper OS customization.
+
+### Build from an official stock image
+
+After building or retaining a verified Tyrell Status package, provision the
+image tools once and build using the checked-in stock lock:
+
+```sh
+python3 scripts/builder image-deps
+make stock-check
+make image-stock
+```
+
+`stock-check` reports the latest official stable release without changing the
+active lock or downloading the large image. To adopt a later release, create
+and review a separate candidate, then select it explicitly:
+
+```sh
+python3 image/stock-image.py refresh --output build/stock-candidate.json
+make image-stock STOCK_LOCK=build/stock-candidate.json
+```
+
+Keep the selected lock in version control for later rebuilds. Prereleases
+require `--include-prereleases`. An unsupported newer stock release fails
+explicitly instead of silently selecting an older image. Normal builds consume
+their saved lock and never resolve “latest.”
+
+Stock builds verify the official image's size and SHA-256, install Tyrell
+without live APT, preserve protected vendor files (including permissions,
+ownership, and firmware alternative routes) and all stock package versions,
+and apply first-boot provisioning with SSH and bootstrap passwords disabled.
+Both the host volume and the VM's own free space are checked
+before large writes. Each job retains independent inputs and preservation
+evidence; it does not reuse or overwrite source-build work.
+
+See the [stock-image workflow](docs/stock-image-updates.md),
+[validation results](docs/stock-image-validation.md), and
+[adversarial review](docs/stock-image-adversarial-review.md). Physical boot and
+peripheral acceptance on a spare card remain required for a newly adopted stock
+release. No build command flashes a card or updates the handheld.
+
+### Build from source with frozen APT inputs
+
 After building or retaining the verified Tyrell Status package, select an
 existing storage directory with enough free space. Replace the example drive
 path with your own. Materialize the checked-in lock once into a new directory:
@@ -186,7 +232,7 @@ python3 image/apt-lock.py materialize --lock locks/image-apt.json \
 make image
 ```
 
-The default profile verifies **1,679 OS package identities and their bytes**.
+The source-build profile verifies **1,679 OS package identities and their bytes**.
 Tyrell Status is verified separately, so app iteration does not require the
 original app binary. Later builds reuse the repository; missing or changed
 inputs fail explicitly. New VMs receive the required image tools automatically.
@@ -204,6 +250,8 @@ It has not been physically booted. See the [image validation report](docs/image-
 The subsequent [workflow hardening and adversarial review](docs/image-hardening-validation.md)
 passed regression tests and real ARM64 builder checks. A complete image rebuild
 using the hardened workflow has not yet been run.
+
+### Manage image jobs
 
 Image jobs retain independent inputs and durable results. Inspect, reconnect,
 or export completed output without starting another build:

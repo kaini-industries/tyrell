@@ -12,6 +12,19 @@ spec.loader.exec_module(resources)
 
 
 class ResourceTests(unittest.TestCase):
+    def test_stock_guest_budget_includes_transfer_extraction_and_both_outputs(self):
+        gib = resources.GIB
+        self.assertEqual(resources.stock_guest_requirement(gib, gib, 7 * gib), 17 * gib)
+        with self.assertRaisesRegex(RuntimeError, 'inside the Linux VM'):
+            resources.check_stock_guest_space(5 * gib, gib, gib, 7 * gib)
+        self.assertEqual(resources.check_stock_guest_space(17 * gib, gib, gib, 7 * gib),
+                         {'required_bytes': 17 * gib, 'free_bytes': 17 * gib})
+
+    def test_stock_size_claims_must_be_positive_integers(self):
+        for value in (0, -1, True, 1.5, '1000', None):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                resources.stock_guest_requirement(100, 100, value)
+
     def test_same_volume_reservations_are_added(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory)

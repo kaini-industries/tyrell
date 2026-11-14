@@ -20,4 +20,9 @@ PY
 }
 trap finish EXIT
 printf '%s  %s\n' "$bundle_sha" "${input%/input}/image-input.tar" | sha256sum -c -
-/bin/bash "$input/builder/build-image.sh" "$input" "$mode"
+build_mode=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("build_mode", "source"))' "$input/image-metadata.json")
+case "$build_mode" in
+    source) /bin/bash "$input/builder/build-image.sh" "$input" "$mode" ;;
+    stock-image) /bin/bash "$input/builder/build-stock-image.sh" "$input" "$mode" ;;
+    *) printf 'Unsupported image build mode: %s\n' "$build_mode" >&2; exit 1 ;;
+esac

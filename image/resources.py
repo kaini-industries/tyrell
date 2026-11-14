@@ -11,6 +11,28 @@ HOST_RESERVE = 4 * GIB
 STATE_BUDGET = 256 * 1024 ** 2
 IMAGE_BUDGET = 15 * GIB
 VM_BUDGET = 35 * GIB
+STOCK_GUEST_RESERVE = GIB
+
+
+def stock_guest_requirement(bundle_bytes, unpacked_bytes, raw_bytes):
+    """Budget both input copies and simultaneous raw/compressed output in VM."""
+    for value in (bundle_bytes, unpacked_bytes, raw_bytes):
+        if type(value) is not int or value <= 0:
+            raise ValueError('Stock guest byte sizes must be positive integers')
+    # A compressed output can approach the raw input's size. Retain a full raw
+    # equivalent plus 1 GiB for compression framing, metadata and VM services.
+    return bundle_bytes + unpacked_bytes + 2 * raw_bytes + STOCK_GUEST_RESERVE
+
+
+def check_stock_guest_space(free_bytes, bundle_bytes, unpacked_bytes, raw_bytes):
+    if type(free_bytes) is not int or free_bytes < 0:
+        raise ValueError('Guest free space must be a nonnegative integer')
+    needed = stock_guest_requirement(bundle_bytes, unpacked_bytes, raw_bytes)
+    if free_bytes < needed:
+        raise RuntimeError(f'Stock build needs {needed / GIB:.2f} GiB free inside the Linux VM; '
+                           f'only {free_bytes / GIB:.2f} GiB available. Preserve or export '
+                           'retained image jobs before freeing their generated guest files.')
+    return {'required_bytes': needed, 'free_bytes': free_bytes}
 
 
 def existing_parent(path):

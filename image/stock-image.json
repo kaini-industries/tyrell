@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "kind": "cardputerzero-stock-image",
+  "upstream": {
+    "repository": "CardputerZero/pi-gen",
+    "release_id": 398892510,
+    "tag": "20260929-070146-5f4c44f",
+    "prerelease": false,
+    "published_at": "2026-09-29T07:02:28Z",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/tag/20260929-070146-5f4c44f"
+  },
+  "image": {
+    "id": 597525962,
+    "name": "2026-09-29-cardputerzero-trixie-arm64.img.xz",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/download/20260929-070146-5f4c44f/2026-09-29-cardputerzero-trixie-arm64.img.xz",
+    "bytes": 1786957924,
+    "sha256": "b37a702aea8b5d75015b48c99b8c969efc2636b82757282fb27cf03056788c91"
+  },
+  "build_info": {
+    "id": 597527148,
+    "name": "build-info.json",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/download/20260929-070146-5f4c44f/build-info.json",
+    "bytes": 235,
+    "sha256": "5a16075fadea4b10cf34f1aaec14d3a89a1fb33a1f35a14d22c6d8e49c0aaf1e",
+    "fields": {
+      "pigen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+      "launcher_version": "0.6.105",
+      "launcher_release": "unknown",
+      "kernel_version": "1:6.18.39-1+rpt1",
+      "driver_commit": "7551854",
+      "config_cardputero_v0_5": true
+    }
+  },
+  "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+  "drivers_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+  "kernel_release": "6.18.39+rpt-rpi-v8",
+  "kernel_package_version": "1:6.18.39-1+rpt1",
+  "applaunch_version": "0.6.105",
+  "board": "v5"
+}

@@ -1,5 +1,10 @@
 # Building the Debian image
 
+To incorporate a newer official stock OS as a complete vendor-tested base, use
+the separate [stock-image update workflow](stock-image-updates.md):
+`make stock-check`, then `make image-stock`. The source-build workflow below
+continues to use its explicitly frozen baseline.
+
 `make image` builds a new image file from the CardputerZero vendor `pi-gen`
 source, with the verified Tyrell Status package preinstalled. All construction
 and inspection happen in the existing native ARM64 Linux builder. The workflow
