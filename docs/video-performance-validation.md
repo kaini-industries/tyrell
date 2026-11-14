@@ -148,3 +148,10 @@ launcher and provenance hashes match, and the kernel is unchanged. The final
 movie is restored for observation. User confirmation of normal APPLaunch launch
 and physical LCD/TV appearance for 0.1.4 remains pending; the earlier 0.1.3
 physical HDMI/audio acceptance is recorded in the linked report.
+
+During restored final HDMI movie playback, a twenty-second process sample used
+20.1% of one core. RSS decreased from 54.7 to 47.8 MiB, descriptors stayed at
+35, and sampled CMA free remained about 20.5–20.9 MiB. The foreground console
+was tty1. The app's six-channel 48 kHz stream targeted its temporary Tyrell HDMI
+sink, while the system default remained the onboard stereo sink. These resource
+and routing observations do not substitute for a physical sound/picture check.
