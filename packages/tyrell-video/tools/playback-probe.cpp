@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         if(file.empty() || !std::isfinite(seconds) || seconds <= 0 || seconds > 86400 ||
            (output != "lcd" && output != "hdmi")) throw std::runtime_error("Invalid file, runtime or output; use --help");
         rusage before{}; getrusage(RUSAGE_SELF, &before);
-        Playback player(PlaybackOptions{fake_audio});
+        Playback player(PlaybackOptions{fake_audio, false});
         bool ok = output != "hdmi" || player.set_output(Output::Hdmi);
         if(ok) ok = player.load(file, subtitle);
         const auto started = Clock::now();

@@ -31,6 +31,7 @@ struct Status {
     bool playing = false;
     bool paused = false;
     bool buffering = false;
+    bool output_switching = false; // HDMI desktop handoff is pending; LCD controls remain live.
     bool muted = false;
     double position = 0;
     double duration = 0;
@@ -57,6 +58,8 @@ struct Status {
 struct PlaybackOptions {
     // Explicit test-only audio output; normal playback always uses PulseAudio.
     bool fake_audio = false;
+    // Simulators/probes can use an already free DRM output without taking a desktop lease.
+    bool desktop_handoff = true;
 };
 
 // Call control methods and poll() on the UI thread. GStreamer streaming threads

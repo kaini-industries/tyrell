@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+case "$1" in
+    remove|upgrade|deconfigure)
+        if [ -d /run/systemd/system ]; then
+            # Revoke existing leases before helper replacement/removal. Socket
+            # closure tells the app to stop DRM before ExecStopPost restores VT.
+            deb-systemd-invoke stop tyrell-video-hdmi.socket >/dev/null || true
+            systemctl stop 'tyrell-video-hdmi@*.service' || true
+        fi
+        ;;
+esac

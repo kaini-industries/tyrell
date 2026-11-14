@@ -1,0 +1,25 @@
+[Unit]
+Description=Tyrell Video temporary HDMI console lease
+After=systemd-logind.service
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/tyrell-video-hdmi-session
+ExecStopPost=/usr/libexec/tyrell-video-hdmi-session --recover
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+RuntimeDirectory=tyrell-video-hdmi
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=yes
+TimeoutStopSec=8
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=yes
+LockPersonality=yes

@@ -271,7 +271,7 @@ struct App {
         if(down) playback->set_volume(status.volume - 0.05);
         if(code == 'm' || code == 'M') playback->set_muted(!status.muted);
         if(code == 'o' || code == 'O') {
-            const auto output = status.output == Output::Hdmi ? Output::Lcd : Output::Hdmi;
+            const auto output = status.output == Output::Hdmi || status.output_switching ? Output::Lcd : Output::Hdmi;
             if(!playback->set_output(output)) {
                 const auto failed = playback->status(); seen_error = failed.error;
                 notice(!failed.error.empty() ? failed.error : !failed.notice.empty() ? failed.notice : "HDMI is unavailable");
@@ -360,7 +360,7 @@ struct App {
             set_label(message, !local_notice.empty() ? display_text(local_notice) : (!browser.error().empty() ? browser.error() : ""));
         } else if(page == Page::Player) {
             set_label(heading, display_text(fs::path(status.path).filename().string()));
-            const auto state = status.buffering ? "Loading" : status.playing ? "Playing" : "Paused";
+            const auto state = status.output_switching ? "HDMI setup" : status.buffering ? "Loading" : status.playing ? "Playing" : "Paused";
             set_label(timing, std::string(state) + "  " + format_time(status.position) + " / " + format_time(status.duration));
             set_label(volume, status.muted ? "Muted" : "Vol " + std::to_string(static_cast<int>(status.volume * 100 + 0.5)) + "%");
             const auto note = !local_notice.empty() ? local_notice : !status.notice.empty() ? status.notice : status.output == Output::Hdmi ? "HDMI video / handheld controls" : "A/D Seek 10s    W/S Volume    O HDMI";
@@ -374,7 +374,7 @@ struct App {
                     lv_obj_set_pos(image, (width - frame->width) / 2, (height - frame->height) / 2);
                 }
             }
-            const bool show = preview || controls || status.output == Output::Hdmi || status.buffering || !status.loaded || !status.error.empty();
+            const bool show = preview || controls || status.output == Output::Hdmi || status.output_switching || status.buffering || !status.loaded || !status.error.empty();
             if(show) { lv_obj_remove_flag(top, LV_OBJ_FLAG_HIDDEN); lv_obj_remove_flag(bottom, LV_OBJ_FLAG_HIDDEN); }
             else { lv_obj_add_flag(top, LV_OBJ_FLAG_HIDDEN); lv_obj_add_flag(bottom, LV_OBJ_FLAG_HIDDEN); }
         } else if(page == Page::Menu) {
@@ -563,7 +563,7 @@ int gui(const Options& options) {
         }
         if(options.page == "error") app.show_error("This file needs a video decoder that is not installed, or could not be opened.");
     } else {
-        app.playback = std::make_unique<Playback>();
+        app.playback = std::make_unique<Playback>(PlaybackOptions{false, !options.simulator});
         if(options.output == "hdmi") app.playback->set_output(Output::Hdmi);
         else if(options.output == "auto" && !options.simulator) {
             const auto inventory = inspect_outputs(false);

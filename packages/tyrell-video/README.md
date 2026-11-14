@@ -5,10 +5,12 @@ Start **Tyrell Video** through APPLaunch so the launcher yields display/input
 ownership and resumes after the player exits.
 
 The built-in screen uses the existing 320×170 framebuffer. Dedicated HDMI
-playback keeps controls on the handheld. HDMI must be free of another desktop
-or factory application; the player never stops services or takes another
-process's display ownership. It changes neither boot settings nor system-wide
-audio defaults.
+playback keeps controls on the handheld. On the stock LightDM/labwc desktop,
+the installed HDMI lease helper temporarily switches to an unused virtual console
+so the desktop releases HDMI without logging out. The desktop returns when HDMI
+playback ends, including after a player crash. The player remains unprivileged;
+it changes neither boot settings nor system-wide audio defaults. Other display
+owners that do not release DRM ownership still produce a clear LCD fallback.
 
 | Action | Keys |
 | --- | --- |
@@ -43,7 +45,8 @@ HDMI pauses and returns video to LCD at the same position. Press Space to resume
 HDMI sound is preferred for external playback when the user's PulseAudio-compatible
 audio session exposes a working HDMI sink, with onboard output as fallback.
 The tested stock image needed a temporary ALSA HDMI bridge for TV sound; package
-installation does not configure that sink or release the desktop's display.
+installation does not configure that audio sink. The packaged console lease
+automates the desktop display handoff.
 The board's existing headphone detection controls speaker muting.
 
 An attached-TV test confirmed ten minutes of smooth low-resolution H.264/AAC

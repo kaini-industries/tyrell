@@ -1,5 +1,6 @@
 #include "playback.h"
 #include "outputs.h"
+#include "hdmi_lease.h"
 #include "json_string.h"
 
 #include <algorithm>
@@ -134,6 +135,8 @@ struct Playback::Impl {
     GstBus* bus = nullptr;
     GstElement* audio_sink = nullptr; // borrowed from the pipeline
     HdmiSession hdmi;
+    HdmiDesktopLease desktop_lease;
+    bool pending_hdmi = false;
     std::string external_subtitle;
     std::string requested_audio_sink;
     std::string subtitle_font;
@@ -166,7 +169,7 @@ struct Playback::Impl {
         if(error) g_error_free(error);
     }
 
-    ~Impl() { destroy_pipeline(); }
+    ~Impl() { destroy_pipeline(); desktop_lease.release(); }
 
     void clear_frame() {
         std::lock_guard<std::mutex> lock(frame_mutex);
@@ -598,6 +601,48 @@ struct Playback::Impl {
         }
     }
 
+    bool fallback_to_lcd(std::string notice) {
+        // Lease loss and unplug are terminal for the owned HDMI session. A
+        // failed LCD recovery must never roll back onto a display we no longer
+        // own, or keep the desktop helper waiting for our DRM master fd.
+        query();
+        const auto target = restart_target();
+        destroy_pipeline();
+        desktop_lease.release();
+        pending_hdmi = false;
+        state.output_switching = false;
+        state.output = Output::Lcd;
+        state.error.clear();
+        state.notice = std::move(notice);
+        if(create_pipeline(target.position, false, target.audio_track, target.subtitle_track)) return true;
+        state.error = "HDMI ended and LCD recovery failed: " + state.error;
+        return false;
+    }
+
+    bool change_output(Output output) {
+        if(output == state.output) return true;
+        if(!pipeline) { state.output = output; return true; }
+        query();
+        const auto before = state;
+        const auto target = restart_target();
+        const bool autoplay = desired_playing;
+        destroy_pipeline();
+        state.output = output;
+        state.error.clear();
+        if(create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) {
+            if(output == Output::Lcd) desktop_lease.release();
+            return true;
+        }
+        const std::string failure = state.error;
+        state.output = before.output;
+        state.error.clear();
+        state.notice = failure;
+        if(!create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track))
+            state.error = failure + "; previous output also failed: " + state.error;
+        if(state.output == Output::Lcd || !pipeline) desktop_lease.release();
+        return false;
+    }
+
     void preroll_finished() {
         if(!pending_preroll || !pipeline) return;
         pending_preroll = false;
@@ -627,8 +672,10 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
         p.state.error = "Media file is missing or unreadable";
         return false;
     }
+    const Output output = p.pending_hdmi ? Output::Hdmi : p.state.output;
+    p.pending_hdmi = false;
     p.destroy_pipeline();
-    const Output output = p.state.output;
+    if(output == Output::Lcd) p.desktop_lease.release();
     const double volume = p.state.volume;
     const bool muted = p.state.muted;
     p.state = {};
@@ -648,20 +695,54 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
         if(!error && std::filesystem::is_regular_file(subtitle, error)) p.external_subtitle = subtitle.string();
         else p.state.notice = "External subtitle file is unavailable";
     }
+    // Open on LCD while the helper asks the desktop to relinquish DRM master.
+    // No root operation runs on the controller thread, and a failed handoff
+    // leaves an immediately usable handheld player.
+    if(output == Output::Hdmi && p.options.desktop_handoff &&
+       p.desktop_lease.state() != HdmiDesktopLease::State::Ready) {
+        p.state.output = Output::Lcd;
+        if(!p.create_pipeline(0, true, -1, -1)) {
+            p.state.loaded = false;
+            p.desktop_lease.release();
+            return false;
+        }
+        set_output(Output::Hdmi);
+        return true;
+    }
     if(p.create_pipeline(0, true, -1, -1)) return true;
     if(output == Output::Hdmi) {
         const auto hdmi_error = p.state.error;
         p.state.output = Output::Lcd;
         p.state.error.clear();
         p.state.notice = hdmi_error + "; using LCD";
+        p.desktop_lease.release();
         if(p.create_pipeline(0, true, -1, -1)) return true;
     }
     p.state.loaded = false;
+    p.desktop_lease.release();
     return false;
 }
 
 void Playback::poll() {
     auto& p = *impl_;
+    if(p.pending_hdmi) {
+        const auto lease = p.desktop_lease.poll();
+        if(lease == HdmiDesktopLease::State::Ready) {
+            p.pending_hdmi = false;
+            p.state.output_switching = false;
+            p.state.notice.clear();
+            p.change_output(Output::Hdmi);
+        } else if(lease == HdmiDesktopLease::State::Failed) {
+            p.pending_hdmi = false;
+            p.state.output_switching = false;
+            p.state.notice = p.desktop_lease.error() + "; using LCD";
+            p.desktop_lease.release();
+        }
+    } else if(p.state.output == Output::Hdmi && p.desktop_lease.state() == HdmiDesktopLease::State::Ready &&
+              p.desktop_lease.poll() == HdmiDesktopLease::State::Failed) {
+        const auto error = p.desktop_lease.error();
+        p.fallback_to_lcd(error + "; paused on LCD");
+    }
     if(!p.pipeline) return;
     while(GstMessage* message = gst_bus_pop(p.bus)) {
         bool fatal = false;
@@ -721,15 +802,13 @@ void Playback::poll() {
         gst_message_unref(message);
         if(fatal) {
             if(p.state.output == Output::Hdmi) {
-                const auto before = p.state;
-                const auto target = p.restart_target();
+                p.fallback_to_lcd(p.state.error + "; paused on LCD");
+            } else {
                 p.destroy_pipeline();
-                p.state.output = Output::Lcd;
-                p.state.error.clear();
-                p.state.notice = before.error + "; paused on LCD";
-                if(!p.create_pipeline(target.position, false, target.audio_track, target.subtitle_track))
-                    p.state.error = "HDMI failed and LCD recovery failed: " + p.state.error;
-            } else p.destroy_pipeline();
+                p.pending_hdmi = false;
+                p.state.output_switching = false;
+                p.desktop_lease.release();
+            }
             return;
         }
     }
@@ -743,14 +822,16 @@ void Playback::poll() {
         p.state.playing = false;
         p.state.buffering = false;
         p.destroy_pipeline();
+        p.pending_hdmi = false;
+        p.state.output_switching = false;
+        p.desktop_lease.release();
         return;
     }
     if(now - p.last_query >= std::chrono::milliseconds(250)) { p.query(); p.last_query = now; }
     if(p.state.output == Output::Hdmi && now - p.last_hotplug >= std::chrono::milliseconds(500)) {
         p.last_hotplug = now;
         if(!p.hdmi.connected()) {
-            pause();
-            if(set_output(Output::Lcd)) p.state.notice = "HDMI disconnected; paused on LCD. Press Space to resume";
+            p.fallback_to_lcd("HDMI disconnected; paused on LCD. Press Space to resume");
         }
     }
 }
@@ -796,22 +877,40 @@ bool Playback::seek_relative(double seconds) { return seek(impl_->state.position
 
 bool Playback::set_output(Output output) {
     auto& p = *impl_;
+    if(output == Output::Lcd) {
+        const bool cancelled = p.pending_hdmi;
+        p.pending_hdmi = false;
+        p.state.output_switching = false;
+        const bool result = p.change_output(output);
+        if(p.state.output == Output::Lcd) p.desktop_lease.release();
+        if(cancelled) p.state.notice = "HDMI setup cancelled; using LCD";
+        return result;
+    }
     if(output == p.state.output) return true;
     if(!p.pipeline) { p.state.output = output; return true; }
-    p.query();
-    const auto before = p.state;
-    const auto target = p.restart_target();
-    const bool autoplay = p.desired_playing;
-    p.destroy_pipeline();
-    p.state.output = output;
-    p.state.error.clear();
-    if(p.create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) return true;
-    const std::string failure = p.state.error;
-    p.state.output = before.output;
-    p.state.error.clear();
-    p.state.notice = failure;
-    if(!p.create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) p.state.error = failure + "; previous output also failed: " + p.state.error;
-    return false;
+    if(p.pending_hdmi) return true;
+    if(p.options.desktop_handoff && p.desktop_lease.state() != HdmiDesktopLease::State::Ready) {
+        const auto inventory = inspect_outputs(false);
+        if(std::none_of(inventory.hdmi.begin(), inventory.hdmi.end(), [](const HdmiConnector& item) {
+            return item.connected && !item.modes.empty();
+        })) {
+            p.state.notice = "No connected HDMI display; using LCD";
+            return false;
+        }
+        if(p.desktop_lease.begin()) {
+            p.pending_hdmi = true;
+            p.state.output_switching = true;
+            p.state.notice = "Preparing HDMI; O cancels";
+            return true;
+        }
+        // An older/non-systemd installation can still use a free display.
+        // A busy display remains untouched and reports both actionable causes.
+        const auto handoff_error = p.desktop_lease.error();
+        if(p.change_output(output)) return true;
+        p.state.notice = handoff_error + "; " + p.state.notice;
+        return false;
+    }
+    return p.change_output(output);
 }
 
 bool Playback::set_audio_track(int index) {
@@ -873,6 +972,9 @@ void Playback::set_muted(bool muted) {
 void Playback::stop() {
     auto& p = *impl_;
     p.destroy_pipeline();
+    p.desktop_lease.release();
+    p.pending_hdmi = false;
+    p.state.output_switching = false;
     p.state.loaded = p.state.playing = p.state.paused = p.state.buffering = false;
     p.state.path.clear();
     p.state.position = p.state.duration = 0;
@@ -897,6 +999,7 @@ std::string Playback::diagnostics_json() const {
     out << "{\"gstreamer\":" << json_string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(micro))
         << ",\"loaded\":" << (p.state.loaded ? "true" : "false") << ",\"playing\":" << (p.state.playing ? "true" : "false")
         << ",\"output\":" << json_string(p.state.output == Output::Lcd ? "lcd" : "hdmi")
+        << ",\"output_switching\":" << (p.state.output_switching ? "true" : "false")
         << ",\"path\":" << json_string(p.state.path) << ",\"position_seconds\":" << p.state.position
         << ",\"duration_seconds\":" << p.state.duration << ",\"received_frames\":" << p.received.load()
         << ",\"video_buffers_delivered\":" << p.video_buffers_delivered.load()

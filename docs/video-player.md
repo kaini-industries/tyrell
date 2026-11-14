@@ -17,8 +17,8 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-Copy `artifacts/video/tyrell-video_0.1.1-1_arm64.deb` to the device. Install with
-`sudo apt install ./tyrell-video_0.1.1-1_arm64.deb` from its containing directory,
+Copy `artifacts/video/tyrell-video_0.1.2-1_arm64.deb` to the device. Install with
+`sudo apt install ./tyrell-video_0.1.2-1_arm64.deb` from its containing directory,
 then select **Tyrell Video** in APPLaunch. APT resolves the declared media plugin
 and font dependencies. No network connection is needed during playback.
 
@@ -69,10 +69,20 @@ The LCD becomes the controller while HDMI shows the movie. Connecting a cable
 during playback does not interrupt it; use O to switch. Removing active HDMI
 pauses and returns video to the LCD at the same position. Space resumes.
 
-HDMI is a dedicated display path using DRM/KMS. A desktop or factory precheck
-can own it. The app reports an unavailable/busy output instead of stopping
-services, switching virtual terminals, or requesting root. The previous HDMI
-state is restored on normal cleanup. No active-desktop video backend is included.
+HDMI uses DRM/KMS. When selecting HDMI, the packaged console lease temporarily
+switches from the desktop to an unused virtual console. The stock LightDM/labwc
+desktop releases the display while its session and applications remain running.
+The original console returns after switching to LCD, returning to the browser,
+exiting, or a player crash. Only the small socket-activated helper runs as root;
+the video player runs as the normal user. No desktop service is stopped and no
+boot setting changes. See the [desktop handoff validation](video-hdmi-handoff-validation.md)
+for recovery tests and deployment details.
+
+The helper socket is restricted to the local video group and authenticates the
+installed player. It grants one lease at a time. Preparation is asynchronous:
+LCD playback and controls remain available. Unsupported owners, missing helpers
+and handoff failures keep playback on the LCD with an explanation. The helper
+also recovers the console after an abnormal helper exit.
 
 The attached-TV test found that software upscaling to the HDMI mode was too
 slow. HDMI now uses an owned background and VC4 overlay scaling, retaining
@@ -80,10 +90,10 @@ native-sized NV12 video where possible. See the [TV validation report](video-hdm
 for measured geometry, performance and the ten-minute stability result.
 
 On the tested stock image, LightDM owns HDMI and its audio card does not expose
-a working HDMI PulseAudio sink by default. Dedicated playback needs the desktop
-temporarily released and a working HDMI sink. The TV validation report records
-the temporary ALSA HDMI bridge used for testing; it leaves the system default
-onboard. This setup is separate from package installation.
+a working HDMI PulseAudio sink by default. The app now releases the desktop
+automatically for video playback. TV sound still needs a working HDMI sink;
+the TV validation report records the temporary ALSA HDMI bridge used for testing.
+Without one, the existing onboard audio fallback remains available.
 
 Audio selection changes the app's stream, not the system default. HDMI playback
 prefers HDMI audio when exposed by the current audio session; otherwise it uses

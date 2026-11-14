@@ -1,0 +1,284 @@
+#!/usr/bin/python3 -I
+"""A fixed, socket-lifetime VT lease for the installed Tyrell Video executable.
+
+No caller arguments, paths, environment, shell commands or service names are
+accepted. The desktop stays running on its original VT. systemd runs recovery
+on every exit, including SIGKILL, using a root-owned write-ahead marker.
+"""
+import array
+import fcntl
+import grp
+import json
+import os
+import re
+from pathlib import Path
+import select
+import socket
+import stat
+import struct
+import sys
+import time
+
+RUNTIME = Path('/run/tyrell-video-hdmi')
+VT_GETSTATE = 0x5603
+VT_OPENQRY = 0x5600
+VT_ACTIVATE = 0x5606
+VT_DISALLOCATE = 0x5608
+READY_TIMEOUT = 3.0
+DRM_RELEASE_TIMEOUT = 3.0
+
+
+class LeaseError(Exception):
+    pass
+
+
+class LeaseBusy(LeaseError):
+    pass
+
+
+class DrmBusy(LeaseError):
+    pass
+
+
+class Console:
+    def __init__(self):
+        self.fd = os.open('/dev/tty0', os.O_RDWR | os.O_CLOEXEC | os.O_NOCTTY)
+
+    def active(self):
+        state = array.array('H', [0, 0, 0])
+        fcntl.ioctl(self.fd, VT_GETSTATE, state, True)
+        return state[0]
+
+    def unused(self):
+        value = array.array('i', [0])
+        fcntl.ioctl(self.fd, VT_OPENQRY, value, True)
+        if not 1 <= value[0] <= 63:
+            raise LeaseError('No free console for HDMI; close another console and retry')
+        return value[0]
+
+    def activate(self, number):
+        fcntl.ioctl(self.fd, VT_ACTIVATE, number)
+
+    def wait_active(self, number):
+        deadline = time.monotonic() + READY_TIMEOUT
+        while self.active() != number:
+            if time.monotonic() >= deadline:
+                raise LeaseError('Desktop did not release its console; use the handheld and retry HDMI')
+            time.sleep(0.05)
+
+    def disallocate(self, number):
+        try:
+            fcntl.ioctl(self.fd, VT_DISALLOCATE, number)
+        except OSError:
+            # A getty or later explicit user owns it; never remove that console.
+            pass
+
+    def close(self):
+        os.close(self.fd)
+
+
+def authenticate(peer):
+    pid, uid, gid = struct.unpack('3i', peer.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+    # The socket mode also enforces this. Check process credentials again before
+    # looking at its executable; no caller-supplied PID is ever used.
+    info = Path(f'/proc/{pid}/status').read_text()
+    fields = dict(line.split(':', 1) for line in info.splitlines() if ':' in line)
+    uids = [int(item) for item in fields['Uid'].split()]
+    groups = [int(item) for item in fields['Groups'].split()]
+    video = grp.getgrnam('video').gr_gid
+    if any(item != uid for item in uids) or (uid != 0 and video not in [gid, *groups]):
+        raise LeaseError('HDMI console access requires the local video group')
+    expected = Path('/usr/bin/tyrell-video')
+    if os.readlink(f'/proc/{pid}/exe') != str(expected):
+        raise LeaseError('HDMI console access is only available to installed Tyrell Video')
+    installed = expected.stat()
+    if installed.st_uid != 0 or installed.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
+        raise LeaseError('Installed Tyrell Video has unsafe ownership or permissions')
+
+
+def open_lock():
+    RUNTIME.mkdir(mode=0o700, exist_ok=True)
+    directory = RUNTIME.stat()
+    if directory.st_uid != 0 or directory.st_mode & 0o077:
+        raise LeaseError('Unsafe HDMI recovery directory')
+    fd = os.open(RUNTIME / 'lease.lock', os.O_CREAT | os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        raise LeaseBusy('HDMI is already in use by another Tyrell Video session')
+    return fd
+
+
+def save_marker(original, takeover, granted=False):
+    # Persist intent before changing foreground VT so ExecStopPost can recover
+    # after termination at any point in acquisition.
+    temporary = RUNTIME / 'restore.json.new'
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, 'w') as output:
+        json.dump({'original': original, 'takeover': takeover, 'granted': granted}, output)
+        output.flush()
+        os.fsync(output.fileno())
+    os.replace(temporary, RUNTIME / 'restore.json')
+
+
+def wait_drm_release():
+    # The client releases DRM before closing normally. If the helper was killed,
+    # socket EOF must first reach the client. Give that cleanup time before
+    # activating the old desktop; never touch the separate SPI display card.
+    cards = set()
+    for connector in Path('/sys/class/drm').glob('card*-HDMI-*'):
+        match = re.fullmatch(r'(card[0-9]+)-HDMI-[A-Za-z0-9-]+', connector.name)
+        if match:
+            cards.add(Path('/dev/dri') / match[1])
+    deadline = time.monotonic() + DRM_RELEASE_TIMEOUT
+    while True:
+        busy = False
+        for card in cards:
+            fd = None
+            try:
+                fd = os.open(card, os.O_RDWR | os.O_CLOEXEC)
+                fcntl.ioctl(fd, 0x641e)  # DRM_IOCTL_SET_MASTER
+                fcntl.ioctl(fd, 0x641f)  # DRM_IOCTL_DROP_MASTER
+            except FileNotFoundError:
+                continue
+            except OSError:
+                busy = True
+            finally:
+                if fd is not None:
+                    os.close(fd)
+        if not busy:
+            return
+        if time.monotonic() >= deadline:
+            raise DrmBusy('HDMI player has not released DRM; recovery retained for retry')
+        time.sleep(0.05)
+
+
+def restore(console):
+    marker = RUNTIME / 'restore.json'
+    if not marker.exists():
+        return
+    saved = json.loads(marker.read_text())
+    original, takeover = saved['original'], saved['takeover']
+    if type(original) is not int or type(takeover) is not int or not (1 <= original <= 63 and 1 <= takeover <= 63):
+        raise LeaseError('Invalid HDMI recovery record')
+    # Respect any later explicit console switch by the user or administrator.
+    if console.active() == takeover:
+        if saved.get('granted', False):
+            try:
+                wait_drm_release()
+            except DrmBusy as error:
+                # Never strand the foreground on a blank console indefinitely.
+                # A non-VT factory owner may hold DRM independently of the app.
+                print('Tyrell HDMI: ' + str(error) + '; restoring original console', file=sys.stderr)
+        console.activate(original)
+        console.wait_active(original)
+    console.disallocate(takeover)
+    marker.unlink()
+
+
+def run_lease(peer):
+    authenticate(peer)
+    lock = open_lock()
+    console = None
+    try:
+        console = Console()
+        restore(console)
+        original = console.active()
+        takeover = console.unused()
+        if takeover == original:
+            raise LeaseError('Cannot reserve a separate HDMI console')
+        save_marker(original, takeover)
+        console.activate(takeover)
+        console.wait_active(takeover)
+        wait_drm_release()
+        save_marker(original, takeover, granted=True)
+        peer.sendall(b'READY\n')
+        # A connection is the lease. Bytes are not commands; reject them. EOF
+        # covers ordinary exit, crash, kill and failed DRM acquisition.
+        while True:
+            readable, _, _ = select.select([peer], [], [], 0.25)
+            if readable:
+                if peer.recv(1):
+                    raise LeaseError('Unexpected HDMI lease data')
+                break
+            if console.active() != takeover:
+                raise LeaseError('Foreground console changed; HDMI returned to the handheld')
+    except (OSError, ValueError, KeyError, LeaseError) as error:
+        send_error(peer, error)
+        raise
+    finally:
+        # systemd retains accepted socket descriptors until ExecStopPost ends.
+        # Explicit shutdown sends EOF immediately even while copies remain open.
+        shutdown_peer(peer)
+        try:
+            if console is not None:
+                try:
+                    restore(console)
+                finally:
+                    console.close()
+        finally:
+            os.close(lock)
+
+
+def recovery():
+    try:
+        lock = open_lock()
+    except LeaseBusy:
+        # Another live instance owns the lock and must keep its own VT lease.
+        return
+    console = None
+    try:
+        if (RUNTIME / 'restore.json').exists():
+            console = Console()
+            restore(console)
+    finally:
+        if console is not None:
+            console.close()
+        os.close(lock)
+
+
+def shutdown_peer(peer):
+    try:
+        peer.shutdown(socket.SHUT_RDWR)
+    except OSError:
+        pass
+
+
+def send_error(peer, error):
+    message = str(error).replace('\r', ' ').replace('\n', ' ')[:240]
+    print('Tyrell HDMI: ' + message, file=sys.stderr)
+    try:
+        peer.sendall(('ERROR ' + message + '\n').encode('utf-8', errors='replace'))
+    except OSError:
+        pass
+
+
+def main():
+    if os.geteuid() != 0:
+        raise LeaseError('HDMI console helper requires its system service')
+    if sys.argv[1:] == ['--recover']:
+        # Revoke even when the main helper was SIGKILLed. systemd may still
+        # retain its copy of the accepted socket until this command completes.
+        try:
+            peer = socket.socket(fileno=0)
+        except OSError:
+            pass
+        else:
+            shutdown_peer(peer)
+            peer.close()
+        recovery()
+        return
+    if sys.argv[1:]:
+        raise LeaseError('Unexpected HDMI helper argument')
+    peer = socket.socket(fileno=0)
+    try:
+        run_lease(peer)
+    except (OSError, ValueError, KeyError, LeaseError) as error:
+        send_error(peer, error)
+    finally:
+        peer.close()
+
+
+if __name__ == '__main__':
+    main()

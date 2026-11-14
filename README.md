@@ -28,15 +28,17 @@ paused LCD fallback after unplugging HDMI. The player uses hardware scaling to
 a 1280 × 720 HDMI signal. Tested 720p/1080p source files dropped frames; smooth
 HD-source playback is not yet qualified.
 
-Dedicated HDMI playback requires the desktop or other display owner to release
-the output. TV sound also requires a configured HDMI sink in the user's
+The packaged HDMI console lease temporarily switches away from the stock
+desktop during video playback and restores it afterward, preserving its running
+applications. TV sound requires a configured HDMI sink in the user's
 PulseAudio-compatible audio session; the tested stock image needed a temporary
-ALSA HDMI bridge. Package installation does not perform this setup. See the
-[player guide](docs/video-player.md), [original validation record](docs/video-validation.md),
+ALSA HDMI bridge. Otherwise sound uses the onboard output. See the
+[player guide](docs/video-player.md), [desktop handoff validation](docs/video-hdmi-handoff-validation.md),
+[original validation record](docs/video-validation.md),
 and [attached-TV validation](docs/video-hdmi-validation.md) for setup and results.
 
 Prebuilt ARM64 packages and checksums are available in the
-[Tyrell Video 0.1.1 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.1).
+[Tyrell Video 0.1.2 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.2).
 
 ## Requirements
 

@@ -4,6 +4,10 @@ November 13, 2026, on the existing Debian 13 ARM64 CardputerZero and an LG TV
 SSCR2. This is the first attached-display qualification; earlier reports marked
 HDMI hardware testing pending.
 
+Version 0.1.2 adds an automatic desktop console handoff; see the
+[follow-up validation](video-hdmi-handoff-validation.md). The setup below records
+the earlier 0.1.1 qualification conditions.
+
 ## Findings and correction
 
 The TV advertised progressive 720p60 and 1080p modes. The normal user could open

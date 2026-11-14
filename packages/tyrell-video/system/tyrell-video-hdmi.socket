@@ -1,0 +1,14 @@
+[Unit]
+Description=Tyrell Video HDMI console handoff socket
+
+[Socket]
+ListenStream=/run/tyrell-video-hdmi.sock
+SocketUser=root
+SocketGroup=video
+SocketMode=0660
+Accept=yes
+MaxConnections=4
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

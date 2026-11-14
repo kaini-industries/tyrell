@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+case "$1" in
+    configure)
+        deb-systemd-helper unmask tyrell-video-hdmi.socket >/dev/null || true
+        if deb-systemd-helper --quiet was-enabled tyrell-video-hdmi.socket; then
+            deb-systemd-helper enable tyrell-video-hdmi.socket >/dev/null || true
+        else
+            deb-systemd-helper update-state tyrell-video-hdmi.socket >/dev/null || true
+        fi
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            deb-systemd-invoke start tyrell-video-hdmi.socket >/dev/null || true
+        fi
+        ;;
+esac
