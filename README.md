@@ -1,8 +1,13 @@
 # Tyrell
 
-Custom applications and firmware-development tooling for the **M5Stack CardputerZero**, a Raspberry Pi Compute Module 0 Linux handheld.
+Native applications, a C++17 3D multiplayer game framework, and firmware-development tooling for the **M5Stack CardputerZero**, a Raspberry Pi Compute Module 0 Linux handheld.
 
-**Tyrell Status** is a small system-monitor app packaged for ARM64 Debian and tested on the stock firmware through APPLaunch. The project also builds custom Debian images from the pinned vendor `pi-gen` baseline, with Tyrell Status preinstalled.
+**Tyrell Status** provides system monitoring, **Tyrell Video** plays local media,
+and the **Tyrell Game Framework** supplies shared rendering, input, timing, and
+networking for **Sandline Tanks** and **Beacon Arena**. Status and Video have
+verified ARM64 Debian packages; Sandline has a native test package integrated
+with the stock APPLaunch launcher. The project also builds custom Debian images
+from the pinned vendor `pi-gen` baseline, with Tyrell Status preinstalled.
 
 The first image passed 134 offline checks. The image workflow now includes frozen package inputs, recoverable build jobs, and archived provenance. Physical boot on a spare card remains pending; the original firmware and SD card are preserved.
 
@@ -41,8 +46,10 @@ handheld playback. It also preserves fresh playback time when pausing before a
 caption change. See the [native display report](docs/video-lcd-refresh-validation.md).
 
 Version 0.1.6 replaces the root HDMI helper with a dedicated nonroot service
-and Store-compatible install paths. See the [policy validation](docs/video-store-policy-validation.md);
-TV playback testing of this helper is pending.
+and Store-compatible install paths. On-device console access, upgrade migration,
+and crash recovery passed with HDMI disconnected. See the
+[policy validation](docs/video-store-policy-validation.md); TV playback testing
+of this helper is pending.
 
 The [0.1.6 Store submission draft](store/tyrell-video/0.1.6/README.md) includes
 the listing, icon, UI previews, permission declarations, review notes and a local
@@ -69,9 +76,10 @@ The previous Video version is also available in the
 
 [Tyrell Game Framework](packages/tyrell-game/README.md) provides reusable C++17
 runtime, 3D rendering, fixed-step timing, input, and ENet transport modules.
-It supports desktop, native CardputerZero LCD, and headless software builds.
-Sandline now consumes these modules; the independent Beacon Arena example has
-its own simulation and packet schema.
+It supports desktop, native CardputerZero LCD, and headless software builds,
+using pinned raylib 6.2 and ENet 1.3.18 sources. Sandline consumes these modules;
+the independent Beacon Arena example has its own simulation and packet schema.
+The following commands build, test, and run Beacon Arena on the desktop:
 
 ```sh
 make game-deps
@@ -80,25 +88,48 @@ make game-test
 python3 scripts/game run
 ```
 
-Use `GAME_BACKEND=headless`, `network`, or `core` for smaller builds and tests.
+Make targets accept `GAME_BACKEND=headless`, `network`, or `core` for smaller
+builds and tests. Direct script commands use `--backend`; for example:
+
+```sh
+python3 scripts/game deps --backend headless
+python3 scripts/game build --backend headless
+python3 scripts/game test --backend headless
+python3 scripts/game run --backend headless -- --autoplay --frames 30
+```
+
+The `native` backend builds on Linux for the Zero's 320 × 170 LCD and keyboard.
 Public targets are `Tyrell::GameCore`, `Tyrell::GameRender`,
 `Tyrell::GameRuntime`, and `Tyrell::GameNetwork`. See the
 [architecture and ownership guide](docs/game-framework.md).
 
+Desktop, headless, native ARM64, real UDP, sanitizer, and native package checks
+passed. The [validation record](docs/game-framework-validation.md) and
+[adversarial review](docs/game-framework-adversarial-review.md) document the
+test matrix, confirmed defects and fixes, and hardware acceptance limits.
+
 ## Sandline / Tyrell Tanks prototype
 
-The [tank game](packages/tyrell-tanks/README.md) is a standalone C++17 desktop
-prototype using raylib 6.2 and ENet: four-player LAN hosting/joining, a low-poly
-arena, independent turrets, shells, damage and respawning. Build with
+The [tank game](packages/tyrell-tanks/README.md) is a C++17 framework consumer
+supporting desktop, native LCD, and headless builds: four-player LAN
+hosting/joining, a low-poly arena, independent turrets, shells, damage and
+respawning. Build the desktop game with
 `python3 scripts/tanks deps` followed by `make tanks`; run with
 `python3 scripts/tanks run`. It includes separate native Linux software/GLES2
 [display benchmarks](docs/tanks-display-benchmark.md) for the CardputerZero.
-The native-LCD game is packaged for ARM64 as **Sandline Tanks** in APPLaunch;
-see the [installation validation](docs/tanks-install-validation.md).
+The native-LCD game is packaged for ARM64 as **Sandline Tanks** in APPLaunch.
+The [installation validation](docs/tanks-install-validation.md) covers the
+earlier installed test binary. The reviewed framework build passed ARM64
+memory-rendering tests and still needs its own physical hardware acceptance.
 
 ## Requirements
 
-The automated builder currently supports **Apple Silicon macOS 13 or newer** with:
+Game and framework development builds directly on macOS or Linux with CMake
+3.25+, a C/C++ toolchain, Python 3.12+, and curl. Linux desktop builds also need
+GLFW's development dependencies; see the [game build guide](packages/tyrell-tanks/README.md#build-on-macos-or-linux).
+
+The isolated Debian package/image builder currently supports
+**Apple Silicon macOS 13 or newer** with:
 
 - [Lima](https://lima-vm.io/) 2.x; tested with 2.2.0.
 - Python 3.12 or newer, `make`, and `curl`.
@@ -106,7 +137,7 @@ The automated builder currently supports **Apple Silicon macOS 13 or newer** wit
 
 The dedicated Debian ARM64 VM defaults to 4 CPUs, 4 GiB RAM, and a 64 GiB sparse virtual disk. Its state lives in the ignored `build/lima/` directory. It has no shared host folders or forwarded SSH agent. Only selected build inputs are copied into it. Existing VMs retain their configuration; set `TYRELL_BUILDER_MEMORY=4GiB` while the VM is stopped to resize it explicitly.
 
-The device package targets **Debian 13 ARM64 / ARMv8-A**, with Cortex-A53 tuning. The application also supports direct CMake builds and an optional SDL simulator; see the [app documentation](packages/tyrell-status/README.md).
+The Status device package targets **Debian 13 ARM64 / ARMv8-A**, with Cortex-A53 tuning. Status also supports direct CMake builds and an optional SDL simulator; see the [app documentation](packages/tyrell-status/README.md).
 
 ## Build
 
@@ -292,4 +323,7 @@ Further reading:
 
 ## License
 
-Tyrell's original code and documentation are licensed under the [MIT License](LICENSE). LVGL and other third-party components retain their own licenses; see [third-party notes](packages/tyrell-status/THIRD_PARTY.md).
+Tyrell's original code and documentation are licensed under the [MIT License](LICENSE).
+LVGL, raylib, ENet, and other third-party components retain their own licenses;
+see the [Status notices](packages/tyrell-status/THIRD_PARTY.md) and
+[game framework notices](packages/tyrell-game/THIRD_PARTY.md).
