@@ -145,9 +145,10 @@ both visible caption changes and a nonzero composition count.
 The final before/after audit contains exactly one package-version change:
 `tyrell-video 0.1.3-1` to `0.1.4-1`. All twelve protected boot, firmware, overlay,
 launcher and provenance hashes match, and the kernel is unchanged. The final
-movie is restored for observation. User confirmation of normal APPLaunch launch
-and physical LCD/TV appearance for 0.1.4 remains pending; the earlier 0.1.3
-physical HDMI/audio acceptance is recorded in the linked report.
+movie is restored for observation. The user subsequently confirmed smooth TV video and sound, while reporting
+that the native screen still looked slow. The follow-up
+[native display correction](video-lcd-refresh-validation.md) measures and fixes
+that separate framebuffer refresh bottleneck.
 
 During restored final HDMI movie playback, a twenty-second process sample used
 20.1% of one core. RSS decreased from 54.7 to 47.8 MiB, descriptors stayed at

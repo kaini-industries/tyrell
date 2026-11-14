@@ -62,6 +62,11 @@ Version 0.1.4 scales LCD pictures before RGB565 conversion and blends timed
 Pango captions into the small fitted frame. HDMI display and audio preparation
 share one initial decoder pipeline. Hardware-specific comparisons and remaining
 limits are in the [performance report](../../docs/video-performance-validation.md).
+Version 0.1.5 commits pending native framebuffer updates once per completed
+LVGL redraw, avoiding the driver's deferred refresh delay. Pause and caption
+changes preserve the current playback position. Physical transfer measurements
+and clock-continuity checks are in the
+[native display report](../../docs/video-lcd-refresh-validation.md).
 The computer-side HDMI conversion
 profile bounds output to 640 × 360. Setup and measured results are in the
 [attached-TV validation report](../../docs/video-hdmi-validation.md).

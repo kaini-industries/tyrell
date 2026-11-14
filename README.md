@@ -35,6 +35,11 @@ renderer, compared with about 6.5 fps before deferred blending. See the
 [hardware performance report](docs/video-performance-validation.md) for CPU use,
 measurement limits and the known anamorphic V4L2 decoder limitation.
 
+Version 0.1.5 raises the tested native screen's physical transfer cadence from
+about 12 to 24 full-frame equivalents per second, with user-confirmed smooth
+handheld playback. It also preserves fresh playback time when pausing before a
+caption change. See the [native display report](docs/video-lcd-refresh-validation.md).
+
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio
 session lacks one, without changing the system default. See the
@@ -43,7 +48,7 @@ session lacks one, without changing the system default. See the
 [earlier attached-TV validation](docs/video-hdmi-validation.md).
 
 Prebuilt ARM64 packages and checksums are available in the
-[Tyrell Video 0.1.4 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.4).
+[Tyrell Video 0.1.5 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5).
 
 ## Requirements
 

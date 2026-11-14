@@ -161,6 +161,12 @@ int main(int argc, char** argv) {
         player.poll();
         require(player.status().video_buffers_delivered >= delivered_before_eos && player.status().video_buffers_delivered > 0,
                 "EOS reset video delivery evidence");
+        const double ended_at = player.status().position;
+        require(player.set_subtitle_track(0) && player.set_subtitle_track(-1),
+                "Caption selection after EOS failed");
+        player.poll();
+        require(player.status().paused && std::abs(player.status().position - ended_at) < 0.01,
+                "Caption selection moved the end-of-file clock");
         require(player.play(), "Replay after EOS failed");
         require(wait_for(player, [&] { const auto s = player.status(); return s.playing && s.position < 1.0; }), "Replay did not restart the file");
         player.stop();

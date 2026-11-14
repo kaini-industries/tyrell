@@ -1,6 +1,7 @@
 #include "browser.h"
 #include "frame_image.h"
 #include "json_string.h"
+#include "lcd_commit.h"
 #include "outputs.h"
 #include "playback.h"
 #include "lvgl.h"
@@ -262,8 +263,7 @@ struct App {
         if(!playback) return;
         if(code == LV_KEY_ESC) { back_to_browser(); return; }
         if(code == ' ' || code == LV_KEY_ENTER) {
-            if(status.duration > 0 && status.position >= status.duration - 0.1) { playback->seek(0); playback->play(); }
-            else playback->toggle_pause();
+            playback->toggle_pause();
         }
         if(left) playback->seek_relative(-10);
         if(right) playback->seek_relative(10);
@@ -471,7 +471,8 @@ std::pair<double, double> cpu_times() {
     return {static_cast<double>(std::clock()) / CLOCKS_PER_SEC, 0};
 }
 
-void write_report(const App& app, double elapsed, const std::pair<double, double>& initial_cpu, unsigned iterations) {
+void write_report(const App& app, double elapsed, const std::pair<double, double>& initial_cpu, unsigned iterations,
+                  const FramebufferCommitStats& display_stats) {
     if(app.options.report.empty()) return;
     const auto& s = app.status;
     const auto current_cpu = cpu_times();
@@ -497,6 +498,12 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
         << ",\"cpu_percent_one_core\":" << (elapsed > 0 ? cpu_seconds / elapsed * 100 : 0)
         << ",\"max_rss_kib\":" << max_rss_kib << ",\"main_loop_iterations\":" << iterations
         << ",\"lcd_frame_assignments\":" << app.lcd_frame_assignments
+        << ",\"lcd_completed_redraws\":" << display_stats.completed_frames
+        << ",\"lcd_fsync_calls\":" << display_stats.fsync_calls
+        << ",\"lcd_fsync_seconds\":" << display_stats.fsync_total_seconds
+        << ",\"lcd_fsync_max_seconds\":" << display_stats.fsync_max_seconds
+        << ",\"lcd_fsync_error\":" << json_string(display_stats.error)
+        << ",\"lcd_redraw_scope\":\"Completed LVGL redraws and kernel commit requests, not physical panel scanout\""
         << ",\"measurement_note\":\"LCD frame assignments count unique frames given to LVGL; they do not measure physical panel refresh or audio/video timing\""
         << ",\"headless_preview\":" << (app.preview ? "true" : "false")
         << ",\"path\":" << json_string(s.path) << ",\"output\":" << json_string(s.output == Output::Hdmi ? "hdmi" : "lcd")
@@ -540,6 +547,7 @@ int gui(const Options& options) {
 #endif
     lv_init(); lv_tick_set_cb(tick_ms);
     lv_display_t* display = nullptr;
+    FramebufferCommit framebuffer_commit;
     std::vector<std::uint32_t> pixels;
     if(headless) {
         pixels.resize(width * height);
@@ -564,6 +572,10 @@ int gui(const Options& options) {
     if(lv_display_get_horizontal_resolution(display) != width || lv_display_get_vertical_resolution(display) != height) {
         lv_display_delete(display); lv_deinit(); throw std::runtime_error("Expected a 320x170 LCD display");
     }
+#if defined(__linux__)
+    if(!headless && !options.simulator && !framebuffer_commit.attach(display, options.framebuffer))
+        std::cerr << framebuffer_commit.stats().error << '\n';
+#endif
     if(headless) {
         app.status.path = "Sintel - trailer.mp4"; app.status.position = 45; app.status.duration = 148; app.status.volume = 0.65; app.status.playing = true; app.status.loaded = true;
         if(options.page == "player" || options.page == "hdmi") { app.page = Page::Player; app.status.output = options.page == "hdmi" ? Output::Hdmi : Output::Lcd; }
@@ -608,7 +620,7 @@ int gui(const Options& options) {
     }
     const auto elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - measurement_start).count();
     if(headless) write_ppm(options.screenshot, pixels);
-    write_report(app, elapsed, initial_cpu, iterations);
+    write_report(app, elapsed, initial_cpu, iterations, framebuffer_commit.stats());
     if(app.playback) app.playback->stop();
     app.frame_image.clear(app.image);
     lv_display_delete(display); lv_deinit();

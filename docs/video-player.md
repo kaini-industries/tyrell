@@ -17,8 +17,8 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-Copy `artifacts/video/tyrell-video_0.1.4-1_arm64.deb` to the device. Install with
-`sudo apt install ./tyrell-video_0.1.4-1_arm64.deb` from its containing directory,
+Copy `artifacts/video/tyrell-video_0.1.5-1_arm64.deb` to the device. Install with
+`sudo apt install ./tyrell-video_0.1.5-1_arm64.deb` from its containing directory,
 then select **Tyrell Video** in APPLaunch. APT resolves the declared media plugin
 and font dependencies. No network connection is needed during playback.
 
@@ -157,3 +157,6 @@ audio tracks; subtitles remain separate rather than being burned in.
 
 Hardware-specific playback measurements and the LCD conversion changes are in the
 [local-file performance report](video-performance-validation.md).
+
+The [native display report](video-lcd-refresh-validation.md) records the 0.1.5
+framebuffer refresh correction and pause/caption clock-continuity tests.

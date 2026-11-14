@@ -1165,10 +1165,24 @@ bool Playback::pause() {
     auto& p = *impl_;
     if(p.initial_hdmi_pending) { p.desired_playing = false; p.state.paused = true; return true; }
     if(!p.pipeline) return false;
+    GstState before = GST_STATE_NULL, pending = GST_STATE_VOID_PENDING;
+    const bool capture_position = !p.pending_preroll &&
+        gst_element_get_state(p.pipeline, &before, &pending, 0) == GST_STATE_CHANGE_SUCCESS &&
+        before == GST_STATE_PLAYING && pending == GST_STATE_VOID_PENDING;
     p.desired_playing = false;
     p.state.playing = false;
     p.state.paused = true;
-    return gst_element_set_state(p.pipeline, GST_STATE_PAUSED) != GST_STATE_CHANGE_FAILURE;
+    if(gst_element_set_state(p.pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE) return false;
+    // Caption changes while paused redraw by seeking to the saved position.
+    // Refresh it after pausing a stable running graph: the regular 250 ms
+    // status sample can otherwise rewind an immediate pause/caption request.
+    // An unsettled seek or preroll already has a target that must be retained.
+    if(capture_position) {
+        gint64 position = 0;
+        if(gst_element_query_position(p.pipeline, GST_FORMAT_TIME, &position) && position >= 0)
+            p.state.position = static_cast<double>(position) / GST_SECOND;
+    }
+    return true;
 }
 bool Playback::toggle_pause() { return impl_->desired_playing ? pause() : play(); }
 bool Playback::seek(double seconds) {
@@ -1250,7 +1264,7 @@ bool Playback::set_subtitle_track(int index) {
     // Pango remains in the running pipeline while hidden. Avoid tearing down
     // playbin during a concurrent asynchronous audio-stream switch; a paused
     // frame only needs a flushing seek to redraw with the new caption setting.
-    if(!p.desired_playing && !p.pending_preroll) return seek(p.state.position);
+    if(!p.desired_playing && !p.pending_preroll && !p.ended) return seek(p.state.position);
     return true;
 }
 bool Playback::set_audio_sink(const std::string& sink_name) {
