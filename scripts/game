@@ -1,0 +1,134 @@
+#!/usr/bin/env python3
+"""Build Tyrell's shared game framework or its Sandline consumer."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tarfile
+
+ROOT = Path(__file__).resolve().parents[1]
+DEPS = ROOT / 'build/game-deps'
+LOCK = json.loads((ROOT / 'locks/game-build-inputs.json').read_text())
+
+def run(*args):
+    subprocess.run([str(a) for a in args], check=True, cwd=ROOT)
+
+def verify_source(name, item):
+    archive = DEPS / f'{name}-{item["version"]}.tar.gz'
+    if not archive.is_file() or hashlib.sha256(archive.read_bytes()).hexdigest() != item['sha256']:
+        raise RuntimeError(f'{name}: missing or changed dependency archive; run deps')
+    expected = set()
+    with tarfile.open(archive) as source:
+        for member in source:
+            destination = DEPS / member.name
+            expected.add(destination)
+            if member.isfile():
+                if destination.is_symlink() or not destination.is_file():
+                    raise RuntimeError(f'{name}: missing or replaced source {member.name}')
+                with source.extractfile(member) as original, destination.open('rb') as actual:
+                    if hashlib.file_digest(original, 'sha256').digest() != hashlib.file_digest(actual, 'sha256').digest():
+                        raise RuntimeError(f'{name}: modified source {member.name}; retained for inspection')
+            elif member.issym() and (not destination.is_symlink() or os.readlink(destination) != member.linkname):
+                raise RuntimeError(f'{name}: modified source link {member.name}')
+            elif member.isdir() and (destination.is_symlink() or not destination.is_dir()):
+                raise RuntimeError(f'{name}: missing or replaced source directory {member.name}')
+    # Checking only archive members misses new headers that can shadow system
+    # includes or enter an upstream source glob. A verified extraction is exact.
+    for directory, directories, files in os.walk(DEPS / item['directory'], followlinks=False):
+        for entry in directories + files:
+            destination = Path(directory) / entry
+            if destination not in expected:
+                raise RuntimeError(f'{name}: unexpected source {destination.relative_to(DEPS)}; retained for inspection')
+
+def selected_dependencies(backend):
+    if backend == 'core':
+        return {}
+    return {name: item for name, item in LOCK.items() if backend != 'network' or name == 'enet'}
+
+def deps(backend='desktop'):
+    DEPS.mkdir(parents=True, exist_ok=True)
+    for name, item in selected_dependencies(backend).items():
+        archive = DEPS / f'{name}-{item["version"]}.tar.gz'
+        # Reuse the previously verified download cache without making the
+        # framework depend on any tank source or mutable extracted files.
+        legacy = ROOT / 'build/tanks-deps' / archive.name
+        if not archive.exists() and legacy.is_file() and hashlib.sha256(legacy.read_bytes()).hexdigest() == item['sha256']:
+            shutil.copyfile(legacy, archive)
+        if not archive.exists():
+            partial = archive.with_suffix('.partial')
+            try:
+                run('curl', '--fail', '--location', '--retry', '2', '--connect-timeout', '15', item['url'], '-o', partial)
+                if hashlib.sha256(partial.read_bytes()).hexdigest() != item['sha256']:
+                    raise RuntimeError(f'{name}: downloaded archive checksum mismatch')
+                partial.replace(archive)
+            finally:
+                partial.unlink(missing_ok=True)
+        if hashlib.sha256(archive.read_bytes()).hexdigest() != item['sha256']:
+            raise RuntimeError(f'{name}: archive checksum mismatch; retained for inspection')
+        if not (DEPS / item['directory']).exists():
+            with tarfile.open(archive) as source:
+                source.extractall(DEPS, filter='data')
+        verify_source(name, item)
+        print(f'{name} {item["version"]}: verified archive and source')
+
+def build_directory(project, backend):
+    return ROOT / 'build' / (f'game-{backend}' if project == 'framework' else f'tanks-{backend}')
+
+def configure(project, backend):
+    for name, item in selected_dependencies(backend).items():
+        if not (DEPS / item['directory']).is_dir():
+            raise RuntimeError('Dependencies missing; run python3 scripts/game deps first')
+        verify_source(name, item)
+    runtime = backend not in ('network', 'core')
+    network = backend != 'core'
+    source = ROOT / 'packages' / ('tyrell-game' if project == 'framework' else 'tyrell-tanks')
+    flags = ['-DCMAKE_BUILD_TYPE=RelWithDebInfo', '-DBUILD_TESTING=ON',
+             f'-DRAYLIB_SOURCE_DIR={DEPS / LOCK["raylib"]["directory"]}',
+             f'-DENET_SOURCE_DIR={DEPS / LOCK["enet"]["directory"]}']
+    if project == 'framework':
+        flags += [f'-DTYRELL_GAME_BACKEND={backend.upper() if runtime else "HEADLESS"}',
+                  f'-DTYRELL_GAME_BUILD_RUNTIME={"ON" if runtime else "OFF"}',
+                  f'-DTYRELL_GAME_BUILD_NETWORK={"ON" if network else "OFF"}',
+                  '-DTYRELL_GAME_BUILD_TESTS=ON',
+                  f'-DTYRELL_GAME_BUILD_EXAMPLES={"ON" if runtime and network else "OFF"}']
+    else:
+        flags += [f'-DTANKS_BUILD_DESKTOP={"ON" if backend == "desktop" else "OFF"}',
+                  f'-DTANKS_BUILD_NATIVE={"ON" if backend == "native" else "OFF"}',
+                  f'-DTANKS_BUILD_HEADLESS={"ON" if backend == "headless" else "OFF"}',
+                  '-DTANKS_BUILD_BENCHMARK=ON', '-DTYRELL_GAME_BUILD_TESTS=ON']
+    run('cmake', '-S', source, '-B', build_directory(project, backend), *flags)
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['deps', 'build', 'test', 'run'])
+    parser.add_argument('--backend', choices=['desktop', 'native', 'headless', 'network', 'core'], default='desktop')
+    parser.add_argument('--project', choices=['framework', 'tanks'], default='framework')
+    args, extra = parser.parse_known_args()
+    if extra and extra[0] == '--':
+        extra = extra[1:]
+    if extra and args.action != 'run':
+        parser.error('extra arguments are only supported for run')
+    if args.project == 'tanks' and args.backend in ('network', 'core'):
+        parser.error('Sandline requires desktop, native, or headless backend')
+    if args.action == 'run' and args.backend in ('network', 'core'):
+        parser.error('core and network builds have tests, but no graphical example to run')
+    if args.backend == 'native' and sys.platform != 'linux' and args.action in ('build', 'run'):
+        parser.error('native LCD builds require Linux; use headless on this host')
+    build = build_directory(args.project, args.backend)
+    if args.action == 'deps':
+        deps(args.backend)
+    elif args.action == 'build':
+        configure(args.project, args.backend)
+        run('cmake', '--build', build, '--parallel', min(os.cpu_count() or 2, 8))
+    elif args.action == 'test':
+        run('ctest', '--test-dir', build, '--output-on-failure')
+    else:
+        binary = 'tyrell-beacon-arena' if args.project == 'framework' else 'tyrell-tanks'
+        run(build / binary, *extra)
+
+if __name__ == '__main__':
+    main()

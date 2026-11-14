@@ -65,6 +65,37 @@ checksums, source provenance and test results:
 The previous Video version is also available in the
 [Tyrell Video 0.1.5 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5).
 
+## Tyrell Game Framework
+
+[Tyrell Game Framework](packages/tyrell-game/README.md) provides reusable C++17
+runtime, 3D rendering, fixed-step timing, input, and ENet transport modules.
+It supports desktop, native CardputerZero LCD, and headless software builds.
+Sandline now consumes these modules; the independent Beacon Arena example has
+its own simulation and packet schema.
+
+```sh
+make game-deps
+make game
+make game-test
+python3 scripts/game run
+```
+
+Use `GAME_BACKEND=headless`, `network`, or `core` for smaller builds and tests.
+Public targets are `Tyrell::GameCore`, `Tyrell::GameRender`,
+`Tyrell::GameRuntime`, and `Tyrell::GameNetwork`. See the
+[architecture and ownership guide](docs/game-framework.md).
+
+## Sandline / Tyrell Tanks prototype
+
+The [tank game](packages/tyrell-tanks/README.md) is a standalone C++17 desktop
+prototype using raylib 6.2 and ENet: four-player LAN hosting/joining, a low-poly
+arena, independent turrets, shells, damage and respawning. Build with
+`python3 scripts/tanks deps` followed by `make tanks`; run with
+`python3 scripts/tanks run`. It includes separate native Linux software/GLES2
+[display benchmarks](docs/tanks-display-benchmark.md) for the CardputerZero.
+The native-LCD game is packaged for ARM64 as **Sandline Tanks** in APPLaunch;
+see the [installation validation](docs/tanks-install-validation.md).
+
 ## Requirements
 
 The automated builder currently supports **Apple Silicon macOS 13 or newer** with:
@@ -237,6 +268,8 @@ scripts/builder          Host-side VM, package, and image orchestration
 image/                   Vendor image recipe, APT replay, job recovery, and verifier
 packages/tyrell-status/  C++ application, CMake/CPack files, assets, and tests
 packages/tyrell-video/   Video player, native display/HDMI support, and tests
+packages/tyrell-game/    Shared 3D/runtime/network modules and Beacon Arena example
+packages/tyrell-tanks/   Sandline game consuming the shared framework
 dist/                    Verified versioned ARM64 packages, checksums, and provenance
 locks/                   Pinned application and image package inputs
 research/                Firmware source and release research metadata

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Sandline Tanks
+Comment=Drive, aim and battle in a four-player LAN tank arena
+Exec=/usr/bin/tyrell-tanks
+Icon=tyrell-tanks
+Terminal=false
+Categories=Game;ActionGame;
+StartupNotify=false

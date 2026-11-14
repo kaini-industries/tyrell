@@ -1,0 +1,463 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-14",
+  "target": "M5Stack CardputerZero / Raspberry Pi CM0",
+  "resolution": [
+    320,
+    170
+  ],
+  "scene": "shared-untextured-tank-arena-v1",
+  "triangles": 854,
+  "warmup_seconds": 1,
+  "measured_seconds_per_run": 8,
+  "spi_window_seconds": 5,
+  "scope": "Representative display benchmark, not complete game; SPI full-frame equivalents, not panel-vsync timestamps.",
+  "launcher_preserved": true,
+  "launcher_resumed": true,
+  "framebuffer_restored": true,
+  "binaries": {
+    "tanks-display-bench-rlsw": {
+      "sha256": "368bb293f91c3d7b19f53714b20c04b55e5950ea945bae1917165d72c5ea2589"
+    },
+    "tanks-display-bench-gles": {
+      "sha256": "d527539d0fd00a92984f2e7df7ca4d1a59c234763ce376f440e6e170a04f8e15"
+    }
+  },
+  "runs": [
+    {
+      "name": "rlsw-0-commit",
+      "exit_code": 0,
+      "spi_window_seconds": 5.0082957279955735,
+      "spi_deltas": {
+        "bytes_tx": 21000523,
+        "errors": 0,
+        "timedout": 0
+      },
+      "spi_full_frame_equivalents_per_second": 38.539959169882636,
+      "application": {
+        "schema_version": 1,
+        "backend": "rlsw",
+        "renderer": "raylib 6.2 rlsw software rasterizer",
+        "vendor": "CPU",
+        "api_version": "OpenGL 1.1 style",
+        "hardware_accelerated": false,
+        "width": 320,
+        "height": 170,
+        "scene": "shared-untextured-tank-arena-v1",
+        "triangles": 854,
+        "fb": "/dev/fb_lcd",
+        "physical_display_test": true,
+        "fsync_enabled": true,
+        "warmup_seconds": 1.0,
+        "target_fps": 0.0,
+        "elapsed_seconds": 8.002274,
+        "frames": 1865,
+        "completed_frame_rate": 233.058756,
+        "fsync_calls": 1865,
+        "missed_pacing_deadlines": 0,
+        "frame_checksum_fnv1a64": "9851076880130728791",
+        "interrupted": false,
+        "restore_error": "",
+        "metrics": {
+          "scene_build": {
+            "mean_ms": 0.150148,
+            "p50_ms": 0.137127,
+            "p95_ms": 0.217986,
+            "max_ms": 0.418723
+          },
+          "render": {
+            "mean_ms": 3.319837,
+            "p50_ms": 3.336559,
+            "p95_ms": 3.501632,
+            "max_ms": 6.021961
+          },
+          "readback": {
+            "mean_ms": 0.243462,
+            "p50_ms": 0.228058,
+            "p95_ms": 0.362832,
+            "max_ms": 0.545642
+          },
+          "rgb565_conversion": {
+            "mean_ms": 0.183817,
+            "p50_ms": 0.16827,
+            "p95_ms": 0.300127,
+            "max_ms": 0.43643
+          },
+          "present_including_commit": {
+            "mean_ms": 0.384512,
+            "p50_ms": 0.352999,
+            "p95_ms": 0.56336,
+            "max_ms": 7.319744
+          },
+          "fsync": {
+            "mean_ms": 0.132872,
+            "p50_ms": 0.120721,
+            "p95_ms": 0.174249,
+            "max_ms": 7.094602
+          },
+          "work_total": {
+            "mean_ms": 4.281777,
+            "p50_ms": 4.31431,
+            "p95_ms": 4.485351,
+            "max_ms": 11.578172
+          },
+          "frame_start_interval": {
+            "mean_ms": 4.290738,
+            "p50_ms": 4.323997,
+            "p95_ms": 4.496262,
+            "max_ms": 11.587234
+          }
+        },
+        "measurement_scope": "CPU wall time and completed application frames; fsync is a kernel commit request, not panel-vsync or a verified physical refresh count"
+      }
+    },
+    {
+      "name": "gles-0-commit",
+      "exit_code": 0,
+      "spi_window_seconds": 5.000923316998524,
+      "spi_deltas": {
+        "bytes_tx": 20891712,
+        "errors": 0,
+        "timedout": 0
+      },
+      "spi_full_frame_equivalents_per_second": 38.39679187081656,
+      "application": {
+        "schema_version": 1,
+        "backend": "gles2",
+        "renderer": "VC4 V3D 2.1",
+        "vendor": "Broadcom",
+        "api_version": "OpenGL ES 2.0 Mesa 26.2.2-1~bpo13+0~rpt1",
+        "hardware_accelerated": true,
+        "width": 320,
+        "height": 170,
+        "scene": "shared-untextured-tank-arena-v1",
+        "triangles": 854,
+        "fb": "/dev/fb_lcd",
+        "physical_display_test": true,
+        "fsync_enabled": true,
+        "warmup_seconds": 1.0,
+        "target_fps": 0.0,
+        "elapsed_seconds": 8.001878,
+        "frames": 1363,
+        "completed_frame_rate": 170.335021,
+        "fsync_calls": 1363,
+        "missed_pacing_deadlines": 0,
+        "frame_checksum_fnv1a64": "10368893053892830144",
+        "interrupted": false,
+        "restore_error": "",
+        "metrics": {
+          "scene_build": {
+            "mean_ms": 0.144069,
+            "p50_ms": 0.139262,
+            "p95_ms": 0.175713,
+            "max_ms": 0.362997
+          },
+          "render": {
+            "mean_ms": 0.738416,
+            "p50_ms": 0.731724,
+            "p95_ms": 0.815218,
+            "max_ms": 0.920202
+          },
+          "readback": {
+            "mean_ms": 4.396737,
+            "p50_ms": 4.370035,
+            "p95_ms": 4.569794,
+            "max_ms": 5.214669
+          },
+          "rgb565_conversion": {
+            "mean_ms": 0.233557,
+            "p50_ms": 0.2266,
+            "p95_ms": 0.275769,
+            "max_ms": 0.39034
+          },
+          "present_including_commit": {
+            "mean_ms": 0.351269,
+            "p50_ms": 0.341177,
+            "p95_ms": 0.396584,
+            "max_ms": 5.497932
+          },
+          "fsync": {
+            "mean_ms": 0.127632,
+            "p50_ms": 0.121398,
+            "p95_ms": 0.150256,
+            "max_ms": 5.252115
+          },
+          "work_total": {
+            "mean_ms": 5.864048,
+            "p50_ms": 5.832807,
+            "p95_ms": 6.051679,
+            "max_ms": 10.87181
+          },
+          "frame_start_interval": {
+            "mean_ms": 5.870724,
+            "p50_ms": 5.839994,
+            "p95_ms": 6.059285,
+            "max_ms": 10.881184
+          }
+        },
+        "measurement_scope": "CPU wall time and completed application frames; fsync is a kernel commit request, not panel-vsync or a verified physical refresh count"
+      }
+    },
+    {
+      "name": "gles-30-commit",
+      "exit_code": 0,
+      "spi_window_seconds": 5.009739228000399,
+      "spi_deltas": {
+        "bytes_tx": 16364918,
+        "errors": 0,
+        "timedout": 0
+      },
+      "spi_full_frame_equivalents_per_second": 30.024087566079178,
+      "application": {
+        "schema_version": 1,
+        "backend": "gles2",
+        "renderer": "VC4 V3D 2.1",
+        "vendor": "Broadcom",
+        "api_version": "OpenGL ES 2.0 Mesa 26.2.2-1~bpo13+0~rpt1",
+        "hardware_accelerated": true,
+        "width": 320,
+        "height": 170,
+        "scene": "shared-untextured-tank-arena-v1",
+        "triangles": 854,
+        "fb": "/dev/fb_lcd",
+        "physical_display_test": true,
+        "fsync_enabled": true,
+        "warmup_seconds": 1.0,
+        "target_fps": 30.0,
+        "elapsed_seconds": 8.0001,
+        "frames": 240,
+        "completed_frame_rate": 29.999623,
+        "fsync_calls": 240,
+        "missed_pacing_deadlines": 0,
+        "frame_checksum_fnv1a64": "2850285670507354023",
+        "interrupted": false,
+        "restore_error": "",
+        "metrics": {
+          "scene_build": {
+            "mean_ms": 0.174043,
+            "p50_ms": 0.164547,
+            "p95_ms": 0.258372,
+            "max_ms": 0.805522
+          },
+          "render": {
+            "mean_ms": 0.736146,
+            "p50_ms": 0.736854,
+            "p95_ms": 0.825718,
+            "max_ms": 0.859737
+          },
+          "readback": {
+            "mean_ms": 4.58857,
+            "p50_ms": 4.51362,
+            "p95_ms": 5.000615,
+            "max_ms": 5.201284
+          },
+          "rgb565_conversion": {
+            "mean_ms": 0.265168,
+            "p50_ms": 0.247979,
+            "p95_ms": 0.385587,
+            "max_ms": 0.422474
+          },
+          "present_including_commit": {
+            "mean_ms": 1.204804,
+            "p50_ms": 0.476141,
+            "p95_ms": 4.614767,
+            "max_ms": 8.244008
+          },
+          "fsync": {
+            "mean_ms": 0.941694,
+            "p50_ms": 0.159782,
+            "p95_ms": 4.351554,
+            "max_ms": 7.953817
+          },
+          "work_total": {
+            "mean_ms": 6.96873,
+            "p50_ms": 6.495005,
+            "p95_ms": 10.282985,
+            "max_ms": 14.041139
+          },
+          "frame_start_interval": {
+            "mean_ms": 33.333743,
+            "p50_ms": 33.333404,
+            "p95_ms": 33.386635,
+            "max_ms": 33.425794
+          }
+        },
+        "measurement_scope": "CPU wall time and completed application frames; fsync is a kernel commit request, not panel-vsync or a verified physical refresh count"
+      }
+    },
+    {
+      "name": "rlsw-30-deferred",
+      "exit_code": 0,
+      "spi_window_seconds": 5.005920600997342,
+      "spi_deltas": {
+        "bytes_tx": 8160825,
+        "errors": 0,
+        "timedout": 0
+      },
+      "spi_full_frame_equivalents_per_second": 14.9837739547136,
+      "application": {
+        "schema_version": 1,
+        "backend": "rlsw",
+        "renderer": "raylib 6.2 rlsw software rasterizer",
+        "vendor": "CPU",
+        "api_version": "OpenGL 1.1 style",
+        "hardware_accelerated": false,
+        "width": 320,
+        "height": 170,
+        "scene": "shared-untextured-tank-arena-v1",
+        "triangles": 854,
+        "fb": "/dev/fb_lcd",
+        "physical_display_test": true,
+        "fsync_enabled": false,
+        "warmup_seconds": 1.0,
+        "target_fps": 30.0,
+        "elapsed_seconds": 8.000104,
+        "frames": 240,
+        "completed_frame_rate": 29.99961,
+        "fsync_calls": 0,
+        "missed_pacing_deadlines": 0,
+        "frame_checksum_fnv1a64": "235856929046566017",
+        "interrupted": false,
+        "restore_error": "",
+        "metrics": {
+          "scene_build": {
+            "mean_ms": 0.162692,
+            "p50_ms": 0.172932,
+            "p95_ms": 0.195699,
+            "max_ms": 0.265661
+          },
+          "render": {
+            "mean_ms": 3.874852,
+            "p50_ms": 4.394642,
+            "p95_ms": 4.56006,
+            "max_ms": 4.628613
+          },
+          "readback": {
+            "mean_ms": 0.2386,
+            "p50_ms": 0.238683,
+            "p95_ms": 0.31103,
+            "max_ms": 0.323365
+          },
+          "rgb565_conversion": {
+            "mean_ms": 0.178392,
+            "p50_ms": 0.183009,
+            "p95_ms": 0.200873,
+            "max_ms": 0.251651
+          },
+          "present_including_commit": {
+            "mean_ms": 0.17796,
+            "p50_ms": 0.170484,
+            "p95_ms": 0.294479,
+            "max_ms": 0.306699
+          },
+          "fsync": {
+            "mean_ms": 0.0,
+            "p50_ms": 0.0,
+            "p95_ms": 0.0,
+            "max_ms": 0.0
+          },
+          "work_total": {
+            "mean_ms": 4.632495,
+            "p50_ms": 5.167459,
+            "p95_ms": 5.456181,
+            "max_ms": 5.535481
+          },
+          "frame_start_interval": {
+            "mean_ms": 33.333756,
+            "p50_ms": 33.333352,
+            "p95_ms": 33.341236,
+            "max_ms": 33.426574
+          }
+        },
+        "measurement_scope": "CPU wall time and completed application frames; fsync is a kernel commit request, not panel-vsync or a verified physical refresh count"
+      }
+    },
+    {
+      "name": "rlsw-30-commit",
+      "exit_code": 0,
+      "spi_window_seconds": 5.009507824994216,
+      "spi_deltas": {
+        "bytes_tx": 16387193,
+        "errors": 0,
+        "timedout": 0
+      },
+      "spi_full_frame_equivalents_per_second": 30.06634343779314,
+      "application": {
+        "schema_version": 1,
+        "backend": "rlsw",
+        "renderer": "raylib 6.2 rlsw software rasterizer",
+        "vendor": "CPU",
+        "api_version": "OpenGL 1.1 style",
+        "hardware_accelerated": false,
+        "width": 320,
+        "height": 170,
+        "scene": "shared-untextured-tank-arena-v1",
+        "triangles": 854,
+        "fb": "/dev/fb_lcd",
+        "physical_display_test": true,
+        "fsync_enabled": true,
+        "warmup_seconds": 1.0,
+        "target_fps": 30.0,
+        "elapsed_seconds": 8.000104,
+        "frames": 240,
+        "completed_frame_rate": 29.999611,
+        "fsync_calls": 240,
+        "missed_pacing_deadlines": 0,
+        "frame_checksum_fnv1a64": "235856929046566017",
+        "interrupted": false,
+        "restore_error": "",
+        "metrics": {
+          "scene_build": {
+            "mean_ms": 0.171607,
+            "p50_ms": 0.157334,
+            "p95_ms": 0.306189,
+            "max_ms": 0.349197
+          },
+          "render": {
+            "mean_ms": 3.728386,
+            "p50_ms": 3.81184,
+            "p95_ms": 4.553957,
+            "max_ms": 4.837035
+          },
+          "readback": {
+            "mean_ms": 0.230584,
+            "p50_ms": 0.231782,
+            "p95_ms": 0.256512,
+            "max_ms": 0.313886
+          },
+          "rgb565_conversion": {
+            "mean_ms": 0.171719,
+            "p50_ms": 0.169494,
+            "p95_ms": 0.188312,
+            "max_ms": 0.422161
+          },
+          "present_including_commit": {
+            "mean_ms": 0.812303,
+            "p50_ms": 0.429347,
+            "p95_ms": 3.001468,
+            "max_ms": 5.973057
+          },
+          "fsync": {
+            "mean_ms": 0.552918,
+            "p50_ms": 0.158896,
+            "p95_ms": 2.673353,
+            "max_ms": 5.688804
+          },
+          "work_total": {
+            "mean_ms": 5.114599,
+            "p50_ms": 4.852633,
+            "p95_ms": 7.925846,
+            "max_ms": 10.948105
+          },
+          "frame_start_interval": {
+            "mean_ms": 33.333745,
+            "p50_ms": 33.333345,
+            "p95_ms": 33.410594,
+            "max_ms": 33.492032
+          }
+        },
+        "measurement_scope": "CPU wall time and completed application frames; fsync is a kernel commit request, not panel-vsync or a verified physical refresh count"
+      }
+    }
+  ]
+}

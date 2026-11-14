@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!-- Original geometric artwork, MIT licensed with Tyrell Tanks. -->
+  <rect width="80" height="80" fill="#242b28"/>
+  <rect x="3" y="3" width="74" height="74" rx="13" fill="#c69e68"/>
+  <path d="M13 21H67M13 40H67M13 59H67" stroke="#b98e59" stroke-width="1"/>
+  <rect x="21" y="29" width="42" height="36" rx="4" fill="#9a794d"/>
+  <rect x="18" y="25" width="11" height="37" rx="3" fill="#242b28"/>
+  <rect x="51" y="25" width="11" height="37" rx="3" fill="#242b28"/>
+  <path d="M20 32H27M20 39H27M20 46H27M20 53H27M53 32H60M53 39H60M53 46H60M53 53H60" stroke="#737561" stroke-width="2"/>
+  <rect x="26" y="25" width="28" height="37" rx="4" fill="#507556"/>
+  <rect x="29" y="54" width="22" height="4" fill="#ead5a2"/>
+  <circle cx="40" cy="40" r="12" fill="#395a42"/>
+  <circle cx="40" cy="38" r="10" fill="#6a8c63"/>
+  <rect x="37" y="12" width="6" height="27" fill="#242b28"/>
+  <rect x="35" y="10" width="10" height="5" rx="1" fill="#394336"/>
+  <rect x="34" y="37" width="7" height="5" rx="1" fill="#d4bc82"/>
+</svg>
