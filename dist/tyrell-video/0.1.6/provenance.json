@@ -1,0 +1,28 @@
+{
+  "package": "tyrell-video",
+  "debian_version": "0.1.6-1",
+  "architecture": "arm64",
+  "package_file": "tyrell-video_0.1.6-1_arm64.deb",
+  "package_sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+  "source_revision": "src-11a4e420adee",
+  "source_sha256": "11a4e420adeee086f40d9001c21cb36349d1ebda7ff3cc1a28939fc9c23b4890",
+  "source_commit": "ad4140aeee2de98cec66d85a83eb9d7dbd0ca8e1",
+  "source_commit_url": "https://github.com/kaini-industries/tyrell/commit/ad4140aeee2de98cec66d85a83eb9d7dbd0ca8e1",
+  "validation": {
+    "ctest_passed": 34,
+    "ctest_failed": 0,
+    "helper_python_tests": 31,
+    "host_script_tests": 14,
+    "host_builder_tests": 20,
+    "package_install_remove": "passed",
+    "store_path_and_nonroot_service_policy": "passed",
+    "physical_tv_playback": "pending; HDMI disconnected per user instruction",
+    "device_console_access_and_crash_recovery": "passed; final packaged service",
+    "device_runtime_owner_migration": "passed",
+    "installed_device_dpkg_verify": "clean",
+    "default_status_ctest_passed": 4,
+    "default_status_install_remove": "passed"
+  },
+  "origin": "Verified isolated Debian ARM64 builder export",
+  "note": "Immutable build snapshot; source manifests identify exact committed build inputs. Later validation/distribution documentation does not alter package bytes."
+}

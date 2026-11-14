@@ -1,0 +1,11 @@
+{
+  "version": "tyrell-video 0.1.6 (src-11a4e420adee)",
+  "package_sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+  "dpkg_verify": "clean",
+  "protected_files_unchanged": 12,
+  "kernel_unchanged": true,
+  "launcher_pid_unchanged": 1064,
+  "launcher_restarts": 0,
+  "foreground_console": "tty7",
+  "hdmi_status": "disconnected"
+}

@@ -78,6 +78,26 @@ The closed device policy must explicitly allow `/dev/tty0 r`: systemd opens
 test caught an initial missing allow rule; package validation now checks both
 that exact rule and `char-drm rw`, as well as the read-only `OpenFile` setting.
 
+The final `tyrell-video_0.1.6-1_arm64.deb`, source `src-11a4e420adee`, has SHA-256
+`3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f`.
+All 34 ARM64 CTests passed, including 31 Python helper cases within the helper
+CTest. The package passed installation, diagnostics/render smoke and removal
+in the builder. All 14 host script tests and 20 builder tests passed. The default
+Status package passed its four CTests and install/render/remove regression check.
+
+Running the current upstream path checker on the final package found zero
+rejected paths. Running the upload workflow's root-service function on every
+bundled service found none running as root. There were no special files or
+setuid/setgid entries. As a negative control, the same checks on 0.1.5 found its
+four rejected paths and root service. These checks cover package policy, not
+the separate Store listing, permissions declaration or maintainer review.
+
+The final package was installed on the Zero, passed `dpkg -V`, and repeated the
+console/access/crash checks above using the packaged service. Twelve protected
+firmware, boot and launcher files and the kernel were unchanged. APPLaunch kept
+PID 1064 with zero restarts. The [committed package snapshot](../dist/tyrell-video/0.1.6/)
+contains source provenance, checksums, policy results and sanitized device evidence.
+
 TV playback testing of 0.1.6 is pending: HDMI is disconnected and the user asked
 to finish without a TV test. Earlier playback, audio and hotplug qualifications
 apply to the unchanged playback engine, not to physical validation of this new

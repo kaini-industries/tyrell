@@ -1,0 +1,54 @@
+{
+  "before_vt": "tty7",
+  "cases": [
+    {
+      "name": "old-root-runtime-upgrade-normal-and-duplicate",
+      "passed": true,
+      "unit": "tyrell-video-hdmi@34-160695-1000.service",
+      "uids": [
+        111,
+        111,
+        111,
+        111
+      ],
+      "caps": {
+        "CapEff": "0000000004000000",
+        "CapPrm": "0000000004000000",
+        "CapBnd": "0000000004000000",
+        "CapAmb": "0000000004000000"
+      }
+    },
+    {
+      "name": "client-sigkill-restores-console",
+      "passed": true
+    },
+    {
+      "name": "helper-sigkill-nonroot-stoppost-restores-console",
+      "passed": true,
+      "unit": "tyrell-video-hdmi@37-160744-1000.service",
+      "uids": [
+        111,
+        111,
+        111,
+        111
+      ],
+      "caps": {
+        "CapEff": "0000000004000000",
+        "CapPrm": "0000000004000000",
+        "CapBnd": "0000000004000000",
+        "CapAmb": "0000000004000000"
+      }
+    },
+    {
+      "name": "lease-reacquired-after-crash",
+      "passed": true
+    },
+    {
+      "name": "outside-video-group-denied",
+      "passed": true
+    }
+  ],
+  "hdmi_connected": false,
+  "after_vt": "tty7",
+  "passed": true
+}
