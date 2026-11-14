@@ -35,13 +35,18 @@ helpers to check that their evidence formats agree.
   rejected by the stricter standalone verifier.
 - A fresh post-review VM build was attempted, but startup correctly refused
   when the Mac had **3.80 GiB** available against the existing **4.25 GiB**
-  combined internal reserve. That guard was retained. A complete post-review
-  ARM64 image rebuild has therefore **not** been run.
+  combined internal reserve. That guard was retained. Verified relocation of
+  inactive caches and historical generated outputs later raised free space to
+  **4.91 GiB**. Fresh job `20261114T182824879955Z-b309a99d`, built from reviewed
+  commit `e4933fa`, passed **582 offline checks** with ownership and firmware
+  routes included. Compression, decompressed-payload comparison, and verified
+  host export also succeeded, completing the post-review ARM64 rebuild. See
+  the [reviewed build record](stock-image-validation.md#reviewed-build--november-14-2026)
+  for the capacity measurements, artifact hashes, and preservation evidence.
 
-No unresolved actionable defect remains from this review. The blocked full
-rebuild is a validation limit, and physical cold-boot/peripheral acceptance on
-a spare card remains pending. No handheld or SD card was accessed during the
-review.
+No unresolved actionable defect remains from this review. The initial storage
+block has been resolved; physical cold-boot/peripheral acceptance on a spare
+card remains pending. No handheld or SD card was accessed during the review.
 
 ## README and operating workflow
 

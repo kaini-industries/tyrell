@@ -10,10 +10,11 @@ The original `make image` source/frozen-APT workflow remains available for
 customizing the OS recipe. Its September baseline and package locks are not
 automatically changed by stock-image refreshes.
 
-The [initial validation report](stock-image-validation.md) records a real ARM64
-stock-derived build with 580 passing offline checks. The subsequent
-[adversarial review](stock-image-adversarial-review.md) records the additional
-guards, regression tests, and limits of post-review validation.
+The [reviewed validation report](stock-image-validation.md) records 114 passing
+host tests and a fresh ARM64 stock-derived image with **582 passing offline
+checks**. It includes strict ownership and firmware-routing preservation. The
+[adversarial review](stock-image-adversarial-review.md) documents the guards and
+regressions; the original 580-check pre-review artifact remains historical.
 
 ## Check and select an upstream release
 
