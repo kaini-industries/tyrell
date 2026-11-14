@@ -17,10 +17,11 @@ seeking easy to see. Eight external SRT cues cover the clip; subtitles start dis
 app and can be selected with T. The clip can be restarted with Space after EOF.
 
 Use the checked-in media directly. To regenerate into a new directory on a
-computer with FFmpeg, ffprobe and the `libx264`/AAC encoders:
+computer with FFmpeg, ffprobe and the `libx264`/AAC encoders. From this `demo`
+directory, in either the repository or extracted handoff archive:
 
 ```sh
-python3 store/tyrell-video/0.1.6/demo/generate.py --output /path/to/new-directory
+python3 generate.py --output /path/to/new-directory
 ```
 
 The generator downloads nothing and refuses existing output filenames. It
