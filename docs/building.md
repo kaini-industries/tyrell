@@ -114,6 +114,11 @@ metadata and expected files, reject maintainer scripts and firmware/config
 payloads, install only in the dedicated VM, run JSON/render smoke tests, remove
 the package, and check that its launcher entry and binary are gone.
 
+Verified installable snapshots are committed separately under
+[`dist/`](../dist/README.md), with checksums, the exact build-source commit and
+validation records. Working exports and VM state remain ignored. Follow the
+distribution README when retaining a newly validated package in Git.
+
 Generated files are under ignored `artifacts/`:
 
 | File | Purpose |

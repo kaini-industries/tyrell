@@ -17,10 +17,19 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-Copy `artifacts/video/tyrell-video_0.1.5-1_arm64.deb` to the device. Install with
-`sudo apt install ./tyrell-video_0.1.5-1_arm64.deb` from its containing directory,
-then select **Tyrell Video** in APPLaunch. APT resolves the declared media plugin
-and font dependencies. No network connection is needed during playback.
+The verified [0.1.5 ARM64 package](../dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb)
+is committed with [checksums and provenance](../dist/README.md). On the device,
+from a repository checkout:
+
+```sh
+cd dist/tyrell-video/0.1.5
+sha256sum -c SHA256SUMS
+sudo apt install ./tyrell-video_0.1.5-1_arm64.deb
+```
+
+For a local build, copy the package from `artifacts/video/` and install it the
+same way. Then select **Tyrell Video** in APPLaunch. APT resolves the declared
+media plugin and font dependencies. No network connection is needed during playback.
 
 Keep videos on SD-backed storage such as `~/Videos`. The tested stock image
 mounts `/tmp` as tmpfs: a large clip there consumes the handheld's limited RAM

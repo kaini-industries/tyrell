@@ -47,7 +47,13 @@ session lacks one, without changing the system default. See the
 [desktop handoff validation](docs/video-hdmi-handoff-validation.md), and
 [earlier attached-TV validation](docs/video-hdmi-validation.md).
 
-Prebuilt ARM64 packages and checksums are available in the
+Verified ARM64 packages are committed in [`dist/`](dist/README.md), with
+checksums, source provenance and test results:
+
+- [Tyrell Video 0.1.5 `.deb`](dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb)
+- [Tyrell Status 0.1.0 `.deb`](dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
+
+Video is also available in the
 [Tyrell Video 0.1.5 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5).
 
 ## Requirements
@@ -83,7 +89,8 @@ python3 scripts/builder image-deps --check
 
 Stop the VM when finished to release its memory; the toolchain remains available for the next build.
 
-Generated outputs are local and are not committed:
+Generated working exports under `artifacts/` remain local. Verified package
+snapshots are committed separately under [`dist/`](dist/README.md).
 
 | Output | Purpose |
 | --- | --- |
@@ -209,7 +216,9 @@ python3 -m unittest discover -s image/tests -p 'test_*.py'
 python3 -m unittest discover -s builder/tests -p 'test_*.py'
 ```
 
-Raw test evidence, device captures, credentials, VM state, and build artifacts remain local and are ignored by Git.
+Raw device evidence, captures, credentials, VM state and intermediate build
+exports remain local and ignored by Git. Curated packages and their build/test
+provenance under `dist/` are tracked.
 
 ## Project layout
 
@@ -218,6 +227,8 @@ builder/                 Debian ARM64 VM configuration, provisioning, and checks
 scripts/builder          Host-side VM, package, and image orchestration
 image/                   Vendor image recipe, APT replay, job recovery, and verifier
 packages/tyrell-status/  C++ application, CMake/CPack files, assets, and tests
+packages/tyrell-video/   Video player, native display/HDMI support, and tests
+dist/                    Verified versioned ARM64 packages, checksums, and provenance
 locks/                   Pinned application and image package inputs
 research/                Firmware source and release research metadata
 docs/                    Build guides, hardware notes, validation, and roadmap

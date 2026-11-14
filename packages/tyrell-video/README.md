@@ -4,6 +4,12 @@ Keyboard-controlled local video player for the Linux M5Stack CardputerZero.
 Start **Tyrell Video** through APPLaunch so the launcher yields display/input
 ownership and resumes after the player exits.
 
+The verified [0.1.5 ARM64 package](../../dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb)
+is committed in the repository, with [checksums and provenance](../../dist/README.md).
+From the repository root on the device, install it with
+`sudo apt install ./dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb`.
+The [player guide](../../docs/video-player.md) covers verification and installation.
+
 The built-in screen uses the existing 320×170 framebuffer. Dedicated HDMI
 playback keeps controls on the handheld. On the stock LightDM/labwc desktop,
 the installed HDMI lease helper temporarily switches to an unused virtual console

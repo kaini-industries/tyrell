@@ -5,6 +5,11 @@ It shows uptime, used/total memory, battery status and network link state.
 It makes no network requests, invokes no shell commands, and needs no root
 privileges. Missing or malformed telemetry remains unknown.
 
+The verified [0.1.0 ARM64 package](../../dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
+is committed in the repository, with [checksums and provenance](../../dist/README.md).
+From the repository root on the device, install it with
+`sudo apt install ./dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb`.
+
 The normal UI uses the stock `/dev/fb_lcd` framebuffer and opens the stable
 `/dev/input/cardputer-zero-internal` keyboard link read-only, with a TCA8418
 device-name fallback. It does not grab the keyboard exclusively or change

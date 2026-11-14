@@ -1,0 +1,19 @@
+{
+  "package": "tyrell-video",
+  "debian_version": "0.1.5-1",
+  "architecture": "arm64",
+  "package_file": "tyrell-video_0.1.5-1_arm64.deb",
+  "package_sha256": "0acf088b12dcdd397ed9862f482d14839a4aafb2a38e5611ce6cc1e14ee0b122",
+  "source_revision": "src-44de5147f659",
+  "source_sha256": "44de5147f659381ec297f7b2080e8a7f49a42c8354fc320aa684b4121189efc6",
+  "source_commit": "4bfe96f1384c3e6e2f379fc43ee05c52714824cb",
+  "source_commit_url": "https://github.com/kaini-industries/tyrell/commit/4bfe96f1384c3e6e2f379fc43ee05c52714824cb",
+  "validation": {
+    "ctest_passed": 34,
+    "ctest_failed": 0,
+    "package_install_remove": "passed"
+  },
+  "origin": "Verified isolated Debian ARM64 builder export",
+  "note": "Immutable build snapshot; source manifests identify build inputs, including the README as it existed at build time. Later documentation/distribution commits do not change these package bytes.",
+  "github_release": "https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5"
+}

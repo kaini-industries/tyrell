@@ -1,0 +1,18 @@
+{
+  "package": "tyrell-status",
+  "debian_version": "0.1.0-1",
+  "architecture": "arm64",
+  "package_file": "tyrell-status_0.1.0-1_arm64.deb",
+  "package_sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+  "source_revision": "src-6f8a42e27baf",
+  "source_sha256": "6f8a42e27baf83569dbb319940a6639bfe7cf634a877f5946a22172b9fe90153",
+  "source_commit": "37cdb2a14d8c2a28611610a5b0d17a729c51ae44",
+  "source_commit_url": "https://github.com/kaini-industries/tyrell/commit/37cdb2a14d8c2a28611610a5b0d17a729c51ae44",
+  "validation": {
+    "ctest_passed": 4,
+    "ctest_failed": 0,
+    "package_install_remove": "passed"
+  },
+  "origin": "Verified isolated Debian ARM64 builder export",
+  "note": "Immutable build snapshot; source manifests identify build inputs, including the README as it existed at build time. Later documentation/distribution commits do not change these package bytes."
+}
