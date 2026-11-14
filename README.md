@@ -22,12 +22,18 @@ on the handheld. Build its separate ARM64 package with `make package APP=video`;
 outputs are under `artifacts/video/`. The default package command still builds
 Tyrell Status.
 
-Version 0.1.3 adds automatic TV audio, removes stale desktop cursor planes, and
-keeps decoder-native DMA buffers for HDMI playback. The tested 1920 × 816 H.264
+Version 0.1.3 added automatic TV audio, removed stale desktop cursor planes, and
+retained decoder-native DMA buffers for HDMI playback. The tested 1920 × 816 H.264
 source reached about 24 fps with zero sink drops, including two-line SRT captions.
 The user confirmed smooth TV video, matching flash/beep timing, and automatic
 video/audio recovery after reconnecting HDMI. Other source profiles and codecs
 still need individual qualification.
+
+Version 0.1.4 scales handheld video before RGB565 conversion and blends captions
+after scaling. The tested HD movie now delivers 24 fps with captions on the LCD
+renderer, compared with about 6.5 fps before deferred blending. See the
+[hardware performance report](docs/video-performance-validation.md) for CPU use,
+measurement limits and the known anamorphic V4L2 decoder limitation.
 
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio
@@ -37,7 +43,7 @@ session lacks one, without changing the system default. See the
 [earlier attached-TV validation](docs/video-hdmi-validation.md).
 
 Prebuilt ARM64 packages and checksums are available in the
-[Tyrell Video 0.1.3 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.3).
+[Tyrell Video 0.1.4 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.4).
 
 ## Requirements
 

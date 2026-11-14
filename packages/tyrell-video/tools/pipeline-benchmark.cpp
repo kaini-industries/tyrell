@@ -6,11 +6,11 @@
 #include <sys/resource.h>
 
 #include <algorithm>
-#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -23,41 +23,64 @@ using Clock = std::chrono::steady_clock;
 using tyrell::video::json_string;
 
 namespace {
-struct Stage {
+struct StageSnapshot {
     std::string name, factory, pad, caps, memory;
-    std::atomic<std::uint64_t> buffers{0}, bytes{0};
-    std::atomic<guint64> first_pts{GST_CLOCK_TIME_NONE}, last_pts{GST_CLOCK_TIME_NONE};
+    std::uint64_t buffers = 0, bytes = 0;
+    guint64 first_pts = GST_CLOCK_TIME_NONE, last_pts = GST_CLOCK_TIME_NONE;
+    gint64 first_buffer_ns = -1;
+    // Count complete buffers by allocator signature without mapping their data.
+    // A first-buffer snapshot alone misses late capture-pool copy fallbacks.
+    std::map<std::string, std::uint64_t> memory_buffers;
+    std::uint64_t memory_changes = 0, sink_rendered = 0, sink_dropped = 0;
+    bool sink_stats = false;
+    double snapshot_elapsed_seconds = 0;
+};
+
+struct Stage : StageSnapshot {
+    GstElement* element = nullptr;
+    Clock::time_point origin;
+    std::string last_memory;
     std::mutex metadata;
+
+    ~Stage() { if(element) gst_object_unref(element); }
 };
 
 struct Run {
+    explicit Run(Clock::time_point start) : origin(start) {}
+    Clock::time_point origin;
     std::mutex mutex;
     std::set<GstPad*> attached;
     std::vector<std::unique_ptr<Stage>> stages;
 
     static void buffer(Stage& stage, GstBuffer* value) {
         if(!value) return;
-        const auto previous = stage.buffers.fetch_add(1);
-        stage.bytes.fetch_add(gst_buffer_get_size(value));
+        // Counters, PTS and allocator histogram form one consistent snapshot.
+        std::lock_guard<std::mutex> lock(stage.metadata);
+        const auto previous = stage.buffers++;
+        if(previous == 0)
+            stage.first_buffer_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - stage.origin).count();
+        stage.bytes += gst_buffer_get_size(value);
         const auto pts = GST_BUFFER_PTS(value);
         if(GST_CLOCK_TIME_IS_VALID(pts)) {
-            guint64 empty = GST_CLOCK_TIME_NONE;
-            stage.first_pts.compare_exchange_strong(empty, pts);
+            if(!GST_CLOCK_TIME_IS_VALID(stage.first_pts)) stage.first_pts = pts;
             stage.last_pts = pts;
         }
-        if(previous == 0) {
-            std::set<std::string> types;
-            for(guint i = 0; i < gst_buffer_n_memory(value); ++i) {
-                GstMemory* memory = gst_buffer_peek_memory(value, i);
-                types.emplace(memory && memory->allocator && memory->allocator->mem_type
-                              ? memory->allocator->mem_type : "unknown");
-            }
-            std::lock_guard<std::mutex> lock(stage.metadata);
-            for(const auto& type : types) {
-                if(!stage.memory.empty()) stage.memory += ',';
-                stage.memory += type;
-            }
+        std::set<std::string> types;
+        for(guint i = 0; i < gst_buffer_n_memory(value); ++i) {
+            GstMemory* memory = gst_buffer_peek_memory(value, i);
+            types.emplace(memory && memory->allocator && memory->allocator->mem_type
+                          ? memory->allocator->mem_type : "unknown");
         }
+        std::string signature;
+        for(const auto& type : types) {
+            if(!signature.empty()) signature += ',';
+            signature += type;
+        }
+        if(signature.empty()) signature = "no-memory";
+        if(previous == 0) stage.memory = signature;
+        else if(stage.last_memory != signature) ++stage.memory_changes;
+        stage.last_memory = signature;
+        ++stage.memory_buffers[signature];
     }
 
     static GstPadProbeReturn probe(GstPad*, GstPadProbeInfo* info, gpointer data) {
@@ -91,20 +114,55 @@ struct Run {
         const bool converter = klass && std::strstr(klass, "Video") &&
                                (std::strstr(klass, "Converter") || std::strstr(klass, "Scale") || std::strstr(klass, "Overlay"));
         const bool sink = klass && std::strstr(klass, "Sink");
-        if(!(decoder || converter || sink || std::strcmp(factory, "identity") == 0)) return;
-        GstPad* pad = gst_element_get_static_pad(element, sink ? "sink" : "src");
-        if(!pad) return;
-        std::lock_guard<std::mutex> lock(mutex);
-        if(attached.insert(pad).second) {
-            auto stage = std::make_unique<Stage>();
-            stage->name = GST_ELEMENT_NAME(element);
-            stage->factory = factory;
-            stage->pad = sink ? "sink" : "src";
-            gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER |
-                              GST_PAD_PROBE_TYPE_BUFFER_LIST | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM), probe, stage.get(), nullptr);
-            stages.push_back(std::move(stage));
+        const bool overlay = std::strcmp(factory, "textoverlay") == 0 || std::strcmp(factory, "subtitleoverlay") == 0;
+        if(!(decoder || converter || sink || overlay || std::strcmp(factory, "identity") == 0)) return;
+        std::vector<const char*> pads{sink ? "sink" : "src"};
+        if(overlay) pads.push_back("video_sink");
+        for(const auto* name : pads) {
+            GstPad* pad = gst_element_get_static_pad(element, name);
+            if(!pad) continue;
+            std::lock_guard<std::mutex> lock(mutex);
+            if(attached.insert(pad).second) {
+                auto stage = std::make_unique<Stage>();
+                stage->name = GST_ELEMENT_NAME(element);
+                stage->factory = factory;
+                stage->pad = name;
+                stage->element = GST_ELEMENT(gst_object_ref(element));
+                stage->origin = origin;
+                gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER |
+                                  GST_PAD_PROBE_TYPE_BUFFER_LIST | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM), probe, stage.get(), nullptr);
+                stages.push_back(std::move(stage));
+            }
+            gst_object_unref(pad);
         }
-        gst_object_unref(pad);
+    }
+
+    std::vector<StageSnapshot> snapshot() {
+        std::vector<StageSnapshot> result;
+        std::lock_guard<std::mutex> lock(mutex);
+        for(auto& stage : stages) {
+            StageSnapshot value;
+            {
+                std::lock_guard<std::mutex> metadata_lock(stage->metadata);
+                value = static_cast<const StageSnapshot&>(*stage);
+            }
+            const auto* property = g_object_class_find_property(G_OBJECT_GET_CLASS(stage->element), "stats");
+            if(stage->pad == "sink" && property && G_PARAM_SPEC_VALUE_TYPE(property) == GST_TYPE_STRUCTURE) {
+                GstStructure* stats = nullptr;
+                g_object_get(stage->element, "stats", &stats, nullptr);
+                if(stats) {
+                    guint64 rendered = 0, dropped = 0;
+                    value.sink_stats = gst_structure_get_uint64(stats, "rendered", &rendered) &&
+                                       gst_structure_get_uint64(stats, "dropped", &dropped);
+                    value.sink_rendered = rendered;
+                    value.sink_dropped = dropped;
+                    gst_structure_free(stats);
+                }
+            }
+            value.snapshot_elapsed_seconds = std::chrono::duration<double>(Clock::now() - origin).count();
+            result.push_back(std::move(value));
+        }
+        return result;
     }
 
     static void added(GstBin*, GstBin*, GstElement* element, gpointer data) {
@@ -200,11 +258,11 @@ int main(int argc, char** argv) {
             if(pipeline) gst_object_unref(pipeline);
             throw std::runtime_error(message);
         }
-        Run run;
-        run.initial(pipeline);
         GstBus* bus = gst_element_get_bus(pipeline);
         rusage before{}; getrusage(RUSAGE_SELF, &before);
         const auto start = Clock::now();
+        Run run(start);
+        run.initial(pipeline);
         auto playing = Clock::time_point{};
         bool eos = false;
         std::string failure;
@@ -231,32 +289,61 @@ int main(int argc, char** argv) {
             gst_message_unref(message);
         }
         gint64 position = 0;
+        const auto snapshot_start = Clock::now();
         gst_element_query_position(pipeline, GST_FORMAT_TIME, &position);
+        // Snapshot every reported counter before teardown. Streaming continues
+        // during this short sequential interval; timestamps expose its skew.
+        const auto stages = run.snapshot();
         const auto end = Clock::now();
         const double elapsed = std::chrono::duration<double>(end - start).count();
         const double active = playing == Clock::time_point{} ? 0 : std::chrono::duration<double>(end - playing).count();
         rusage after{}; getrusage(RUSAGE_SELF, &after);
-        // Stop and join every streaming task before reading stage metadata.
+        // Teardown is excluded from both the snapshots and elapsed/CPU time.
         gst_element_set_state(pipeline, GST_STATE_NULL);
         gst_object_unref(bus);
         gst_object_unref(pipeline);
         std::cout << "{\"ok\":" << (failure.empty() ? "true" : "false")
                   << ",\"error\":" << json_string(failure) << ",\"eos\":" << (eos ? "true" : "false")
                   << ",\"elapsed_seconds\":" << elapsed << ",\"playing_seconds\":" << active
+                  << ",\"startup_seconds\":" << (playing == Clock::time_point{} ? -1 : std::chrono::duration<double>(playing - start).count())
+                  << ",\"snapshot_span_seconds\":" << std::chrono::duration<double>(end - snapshot_start).count()
                   << ",\"position_seconds\":" << position / static_cast<double>(GST_SECOND)
-                  << ",\"cpu_seconds\":" << cpu(after) - cpu(before) << ",\"stages\":[";
+                  << ",\"cpu_seconds\":" << cpu(after) - cpu(before)
+                  << ",\"input_blocks\":" << after.ru_inblock - before.ru_inblock
+                  << ",\"minor_faults\":" << after.ru_minflt - before.ru_minflt
+                  << ",\"major_faults\":" << after.ru_majflt - before.ru_majflt
+                  << ",\"max_rss_kib\":" <<
+#ifdef __APPLE__
+                      after.ru_maxrss / 1024
+#else
+                      after.ru_maxrss
+#endif
+                  << ",\"stages\":[";
         bool comma = false;
-        for(const auto& stage : run.stages) {
+        for(const auto& stage_value : stages) {
+            const auto* stage = &stage_value;
             if(comma) std::cout << ',';
             comma = true;
             std::cout << "{\"name\":" << json_string(stage->name) << ",\"factory\":" << json_string(stage->factory)
-                      << ",\"pad\":" << json_string(stage->pad) << ",\"buffers\":" << stage->buffers.load()
-                      << ",\"bytes\":" << stage->bytes.load() << ",\"caps\":" << json_string(stage->caps)
+                      << ",\"pad\":" << json_string(stage->pad) << ",\"buffers\":" << stage->buffers
+                      << ",\"bytes\":" << stage->bytes << ",\"caps\":" << json_string(stage->caps)
                       << ",\"memory\":" << json_string(stage->memory)
-                      << ",\"first_pts_seconds\":" << (GST_CLOCK_TIME_IS_VALID(stage->first_pts.load()) ? stage->first_pts.load() / static_cast<double>(GST_SECOND) : -1)
-                      << ",\"last_pts_seconds\":" << (GST_CLOCK_TIME_IS_VALID(stage->last_pts.load()) ? stage->last_pts.load() / static_cast<double>(GST_SECOND) : -1) << '}';
+                      << ",\"memory_changes\":" << stage->memory_changes
+                      << ",\"memory_buffers\":{";
+            bool memory_comma = false;
+            for(const auto& entry : stage->memory_buffers) {
+                if(memory_comma) std::cout << ',';
+                memory_comma = true;
+                std::cout << json_string(entry.first) << ':' << entry.second;
+            }
+            std::cout << "},\"first_buffer_elapsed_seconds\":" << (stage->first_buffer_ns < 0 ? -1 : stage->first_buffer_ns / 1e9)
+                      << ",\"snapshot_elapsed_seconds\":" << stage->snapshot_elapsed_seconds
+                      << ",\"sink_stats_available\":" << (stage->sink_stats ? "true" : "false")
+                      << ",\"sink_rendered\":" << stage->sink_rendered << ",\"sink_dropped\":" << stage->sink_dropped
+                      << ",\"first_pts_seconds\":" << (GST_CLOCK_TIME_IS_VALID(stage->first_pts) ? stage->first_pts / static_cast<double>(GST_SECOND) : -1)
+                      << ",\"last_pts_seconds\":" << (GST_CLOCK_TIME_IS_VALID(stage->last_pts) ? stage->last_pts / static_cast<double>(GST_SECOND) : -1) << '}';
         }
-        std::cout << "],\"measurement\":\"Pad buffer delivery and throughput; not physical scanout or audiovisual synchronization\"}\n";
+        std::cout << "],\"measurement\":\"Immutable snapshots precede teardown; counters, sink stats and position are sampled sequentially within snapshot_span_seconds, so small cross-stage skew is possible. Sink stats count render calls/drops since their last reset. Neither measures physical scanout or audiovisual synchronization. input_blocks is the OS block-input counter, not bytes read.\"}\n";
         return failure.empty() ? 0 : 1;
     } catch(const std::exception& error) {
         std::cerr << "pipeline-benchmark: " << error.what() << '\n';

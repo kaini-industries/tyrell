@@ -502,9 +502,15 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
         << ",\"path\":" << json_string(s.path) << ",\"output\":" << json_string(s.output == Output::Hdmi ? "hdmi" : "lcd")
         << ",\"playing\":" << (s.playing ? "true" : "false") << ",\"paused\":" << (s.paused ? "true" : "false")
         << ",\"position_seconds\":" << s.position << ",\"duration_seconds\":" << s.duration
+        << ",\"pipeline_builds\":" << s.pipeline_builds
+        << ",\"first_render_seconds\":" << s.first_render_seconds
+        << ",\"first_hdmi_render_seconds\":" << s.first_hdmi_render_seconds
+        << ",\"first_playing_seconds\":" << s.first_playing_seconds
+        << ",\"startup_timing_scope\":\"Seconds since accepted file load; -1 means not observed; render calls do not measure physical scanout\""
         << ",\"source_width\":" << s.source_width << ",\"source_height\":" << s.source_height
         << ",\"received_frames\":" << s.received_frames << ",\"qos_processed\":" << s.qos_processed
         << ",\"video_buffers_delivered\":" << s.video_buffers_delivered
+        << ",\"lcd_caption_compositions\":" << s.lcd_caption_compositions
         << ",\"video_frames_decoded\":" << s.video_frames_decoded
         << ",\"video_sink_rendered\":" << s.video_sink_rendered
         << ",\"video_sink_dropped\":" << s.video_sink_dropped

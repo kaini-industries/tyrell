@@ -58,6 +58,10 @@ to a 1280 × 720 HDMI signal. Version 0.1.3 retains decoder-native I420/YU12 DMA
 buffers when supported, avoiding the CPU conversion that made HD files slow.
 Decoder, sink-render and buffer-memory diagnostics expose the actual path; see
 the validation report for measured source profiles and subtitle limits.
+Version 0.1.4 scales LCD pictures before RGB565 conversion and blends timed
+Pango captions into the small fitted frame. HDMI display and audio preparation
+share one initial decoder pipeline. Hardware-specific comparisons and remaining
+limits are in the [performance report](../../docs/video-performance-validation.md).
 The computer-side HDMI conversion
 profile bounds output to 640 × 360. Setup and measured results are in the
 [attached-TV validation report](../../docs/video-hdmi-validation.md).

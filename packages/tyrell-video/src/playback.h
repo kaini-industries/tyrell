@@ -49,6 +49,7 @@ struct Status {
     std::uint64_t decoded_frames = 0;
     std::uint64_t dropped_frames = 0;
     std::uint64_t received_frames = 0;
+    std::uint64_t lcd_caption_compositions = 0; // Frames with timed overlays blended after LCD scaling.
     std::uint64_t video_buffers_delivered = 0; // Buffers reaching the final sink, not physical scanout.
     std::uint64_t qos_processed = 0;
     std::uint64_t video_frames_decoded = 0;
@@ -59,6 +60,12 @@ struct Status {
     std::string video_output_memory;
     std::string video_decoder;
     std::string audio_output;
+    // Per accepted load. Readiness is observed on poll(), with render statistics
+    // sampled every 250 ms; these are not physical display measurements.
+    std::uint64_t pipeline_builds = 0;
+    double first_render_seconds = -1;
+    double first_hdmi_render_seconds = -1;
+    double first_playing_seconds = -1;
 };
 
 struct PlaybackOptions {
@@ -68,6 +75,9 @@ struct PlaybackOptions {
     bool desktop_handoff = true;
     // Normal-user temporary TV sound; disabled for probes and simulators.
     bool automatic_hdmi_audio = true;
+    // Override only for an alternate desktop integration or a controlled test
+    // lease server. The normal application uses the installed system socket.
+    std::string desktop_handoff_socket = "/run/tyrell-video-hdmi.sock";
 };
 
 // Call control methods and poll() on the UI thread. GStreamer streaming threads
