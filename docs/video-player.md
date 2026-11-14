@@ -17,14 +17,14 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-The verified [0.1.5 ARM64 package](../dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb)
+The verified [0.1.6 ARM64 package](../dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb)
 is committed with [checksums and provenance](../dist/README.md). On the device,
 from a repository checkout:
 
 ```sh
-cd dist/tyrell-video/0.1.5
+cd dist/tyrell-video/0.1.6
 sha256sum -c SHA256SUMS
-sudo apt install ./tyrell-video_0.1.5-1_arm64.deb
+sudo apt install ./tyrell-video_0.1.6-1_arm64.deb
 ```
 
 For a local build, copy the package from `artifacts/video/` and install it the
@@ -82,13 +82,17 @@ HDMI uses DRM/KMS. When selecting HDMI, the packaged console lease temporarily
 switches from the desktop to an unused virtual console. The stock LightDM/labwc
 desktop releases the display while its session and applications remain running.
 The original console returns after switching to LCD, returning to the browser,
-exiting, or a player crash. Only the small socket-activated helper runs as root;
-the video player runs as the normal user. No desktop service is stopped and no
+exiting, or a player crash. Starting with 0.1.6, the socket-activated helper runs
+as a dedicated nonroot account with only `CAP_SYS_TTY_CONFIG`; systemd supplies
+its console descriptor. The video player runs as the normal user. No desktop service is stopped and no
 boot setting changes. See the [desktop handoff validation](video-hdmi-handoff-validation.md)
 for recovery tests and deployment details.
 
-The helper socket is restricted to the local video group and authenticates the
-installed player. It grants one lease at a time. Preparation is asynchronous:
+The helper socket is restricted to root and the local video group, verified
+using kernel-captured socket credentials. It accepts a fixed connection-lifetime
+lease, with no caller commands or paths. It grants one lease at a time. See the
+[Store policy validation](video-store-policy-validation.md) for its security
+boundary and nonroot recovery checks. Preparation is asynchronous:
 LCD playback and controls remain available. Unsupported owners, missing helpers
 and handoff failures keep playback on the LCD with an explanation. The helper
 also recovers the console after an abnormal helper exit.

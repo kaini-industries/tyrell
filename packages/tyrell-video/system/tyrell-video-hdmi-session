@@ -1,15 +1,17 @@
 #!/usr/bin/python3 -I
-"""A fixed, socket-lifetime VT lease for the installed Tyrell Video executable.
+"""A fixed, socket-lifetime VT lease for local video-group clients.
 
 No caller arguments, paths, environment, shell commands or service names are
 accepted. The desktop stays running on its original VT. systemd runs recovery
-on every exit, including SIGKILL, using a root-owned write-ahead marker.
+on every exit, including SIGKILL, using a private service-owned marker. The
+dedicated nonroot service has only CAP_SYS_TTY_CONFIG and a manager-opened tty0.
 """
 import array
 import fcntl
 import grp
 import json
 import os
+import pwd
 import re
 from pathlib import Path
 import select
@@ -26,6 +28,9 @@ VT_ACTIVATE = 0x5606
 VT_DISALLOCATE = 0x5608
 READY_TIMEOUT = 3.0
 DRM_RELEASE_TIMEOUT = 3.0
+SERVICE_USER = 'tyrell-video-hdmi'
+# Linux ABI; Python does not expose it on all versions.
+SO_PEERGROUPS = 59
 
 
 class LeaseError(Exception):
@@ -42,7 +47,28 @@ class DrmBusy(LeaseError):
 
 class Console:
     def __init__(self):
-        self.fd = os.open('/dev/tty0', os.O_RDWR | os.O_CLOEXEC | os.O_NOCTTY)
+        # No fallback open or extra capability: /dev/tty0 is root-only on the
+        # stock image. Resolve the descriptor by name, not socket activation
+        # order (the accepted socket may also occupy fd 3).
+        if os.environ.get('LISTEN_PID') != str(os.getpid()):
+            raise LeaseError('HDMI console descriptor requires systemd activation')
+        names = os.environ.get('LISTEN_FDNAMES', '').split(':')
+        try:
+            count = int(os.environ.get('LISTEN_FDS', '0'))
+        except ValueError as error:
+            raise LeaseError('Invalid HDMI console descriptor count') from error
+        # systemd 257 removes the accepted socket from LISTEN_FDS when it maps
+        # that socket to stdin, but leaves its "connection" name in FDNAMES.
+        # Accept only this known layout in addition to the ordinary layout.
+        if count == 1 and names == ['connection', 'console']:
+            names = ['console']
+        if not 1 <= count <= 16 or len(names) != count or names.count('console') != 1:
+            raise LeaseError('HDMI console descriptor is unavailable')
+        fd = 3 + names.index('console')
+        info = os.fstat(fd)
+        if not stat.S_ISCHR(info.st_mode) or info.st_rdev != os.makedev(4, 0):
+            raise LeaseError('Invalid HDMI console descriptor')
+        self.fd = fcntl.fcntl(fd, fcntl.F_DUPFD_CLOEXEC, 3)
 
     def active(self):
         state = array.array('H', [0, 0, 0])
@@ -78,28 +104,36 @@ class Console:
 
 
 def authenticate(peer):
-    pid, uid, gid = struct.unpack('3i', peer.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
-    # The socket mode also enforces this. Check process credentials again before
-    # looking at its executable; no caller-supplied PID is ever used.
-    info = Path(f'/proc/{pid}/status').read_text()
-    fields = dict(line.split(':', 1) for line in info.splitlines() if ':' in line)
-    uids = [int(item) for item in fields['Uid'].split()]
-    groups = [int(item) for item in fields['Groups'].split()]
+    try:
+        pid, uid, gid = struct.unpack('3i', peer.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12))
+    except (OSError, struct.error) as error:
+        raise LeaseError('Cannot verify HDMI peer credentials') from error
+    # Both options read credentials captured by the kernel at connection time.
+    # Never inspect /proc/PID/exe: cross-UID access would require SYS_PTRACE.
+    # Socket mode and this check authorize the local video group for this fixed
+    # operation, not arbitrary commands. The player itself has no capabilities.
+    if pid <= 0 or uid < 0 or gid < 0:
+        raise LeaseError('Invalid HDMI peer credentials')
     video = grp.getgrnam('video').gr_gid
-    if any(item != uid for item in uids) or (uid != 0 and video not in [gid, *groups]):
+    if uid == 0 or gid == video:
+        return
+    # Python limits getsockopt buffers to 1024 bytes. Excessive group lists or
+    # missing kernel support fail closed rather than falling back to /proc.
+    try:
+        raw = peer.getsockopt(socket.SOL_SOCKET, SO_PEERGROUPS, 1024)
+    except OSError as error:
+        raise LeaseError('Cannot verify HDMI video-group credentials') from error
+    if len(raw) % 4:
+        raise LeaseError('Invalid HDMI peer groups')
+    groups = struct.unpack(f'{len(raw) // 4}I', raw)
+    if video not in groups:
         raise LeaseError('HDMI console access requires the local video group')
-    expected = Path('/usr/bin/tyrell-video')
-    if os.readlink(f'/proc/{pid}/exe') != str(expected):
-        raise LeaseError('HDMI console access is only available to installed Tyrell Video')
-    installed = expected.stat()
-    if installed.st_uid != 0 or installed.st_mode & (stat.S_IWGRP | stat.S_IWOTH):
-        raise LeaseError('Installed Tyrell Video has unsafe ownership or permissions')
 
 
 def open_lock():
     RUNTIME.mkdir(mode=0o700, exist_ok=True)
-    directory = RUNTIME.stat()
-    if directory.st_uid != 0 or directory.st_mode & 0o077:
+    directory = RUNTIME.lstat()
+    if not stat.S_ISDIR(directory.st_mode) or directory.st_uid != os.geteuid() or directory.st_mode & 0o077:
         raise LeaseError('Unsafe HDMI recovery directory')
     fd = os.open(RUNTIME / 'lease.lock', os.O_CREAT | os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW, 0o600)
     try:
@@ -255,7 +289,7 @@ def send_error(peer, error):
 
 
 def main():
-    if os.geteuid() != 0:
+    if os.geteuid() == 0 or os.geteuid() != pwd.getpwnam(SERVICE_USER).pw_uid:
         raise LeaseError('HDMI console helper requires its system service')
     if sys.argv[1:] == ['--recover']:
         # Revoke even when the main helper was SIGKILLed. systemd may still

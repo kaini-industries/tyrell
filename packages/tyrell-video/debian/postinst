@@ -1,7 +1,44 @@
 #!/bin/sh
 set -e
+
+check_hdmi_account() {
+    # Reuse only an existing dedicated, locked, nonlogin identity. Do not turn
+    # an administrator's interactive account into a privileged HDMI helper.
+    account_entry=$(getent passwd tyrell-video-hdmi) || return 1
+    IFS=: read -r account password account_uid account_gid gecos account_home account_shell <<EOF
+$account_entry
+EOF
+    case "$account_uid:$account_gid" in
+        *[!0-9:]*|:*|*:|0:*|*:0) return 1 ;;
+    esac
+    [ "$account" = tyrell-video-hdmi ] && [ "$account_home" = /nonexistent ] || return 1
+    case "$account_shell" in
+        /usr/sbin/nologin|/sbin/nologin|/usr/bin/false|/bin/false) ;;
+        *) return 1 ;;
+    esac
+    group_entry=$(getent group tyrell-video-hdmi) || return 1
+    IFS=: read -r account_group group_password dedicated_gid members <<EOF
+$group_entry
+EOF
+    [ "$account_group" = tyrell-video-hdmi ] && [ "$account_gid" = "$dedicated_gid" ] || return 1
+    shadow_entry=$(getent shadow tyrell-video-hdmi) || return 1
+    IFS=: read -r shadow_name shadow_password shadow_fields <<EOF
+$shadow_entry
+EOF
+    [ "$shadow_name" = "$account" ] || return 1
+    case "$shadow_password" in '!'*|'*'*) ;; *) return 1 ;; esac
+}
+
 case "$1" in
     configure)
+        if ! getent passwd tyrell-video-hdmi >/dev/null; then
+            adduser --system --group --no-create-home --home /nonexistent \
+                --shell /usr/sbin/nologin tyrell-video-hdmi
+        fi
+        if ! check_hdmi_account; then
+            printf '%s\n' 'Unsafe existing tyrell-video-hdmi account; configure a dedicated locked nonlogin system account before retrying.' >&2
+            exit 1
+        fi
         deb-systemd-helper unmask tyrell-video-hdmi.socket >/dev/null || true
         if deb-systemd-helper --quiet was-enabled tyrell-video-hdmi.socket; then
             deb-systemd-helper enable tyrell-video-hdmi.socket >/dev/null || true

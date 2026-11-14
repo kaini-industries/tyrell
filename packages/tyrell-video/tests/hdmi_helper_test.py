@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Exercise VT ownership and recovery without touching a real console."""
+import errno
 import importlib.machinery
 import importlib.util
 import json
 import os
 from pathlib import Path
 import socket
+import stat
 import struct
 import tempfile
 import types
@@ -48,9 +50,13 @@ class Console:
 
 
 class Peer:
-    def __init__(self, payload=b''):
+    def __init__(self, payload=b'', *, pid=1234, uid=1000, gid=1000, groups=(44, 1000)):
         self.sent = []
         self.payload = payload
+        self.credentials = struct.pack('3i', pid, uid, gid)
+        self.groups = struct.pack(f'{len(groups)}I', *groups)
+        self.group_error = None
+        self.queries = []
 
     def sendall(self, payload):
         self.sent.append(payload)
@@ -62,7 +68,14 @@ class Peer:
         return self.payload
 
     def getsockopt(self, level, option, length):
-        return struct.pack('3i', 1234, 1000, 1000)
+        self.queries.append((level, option, length))
+        if option == socket.SO_PEERCRED:
+            return self.credentials
+        if option == helper.SO_PEERGROUPS:
+            if self.group_error:
+                raise self.group_error
+            return self.groups
+        raise AssertionError('Unexpected peer socket option')
 
 
 class HelperTest(unittest.TestCase):
@@ -166,20 +179,199 @@ class HelperTest(unittest.TestCase):
         constructor.assert_not_called()
         self.assertTrue(self.marker().exists())
 
-    def test_authentication_rejects_another_executable(self):
-        status = 'Uid:\t1000\t1000\t1000\t1000\nGroups:\t44 1000\n'
-        with patch.object(helper.Path, 'read_text', return_value=status), \
-                patch.object(helper.grp, 'getgrnam', return_value=types.SimpleNamespace(gr_gid=44)), \
-                patch.object(helper.os, 'readlink', return_value='/usr/bin/python3'):
-            with self.assertRaisesRegex(helper.LeaseError, 'installed Tyrell Video'):
-                helper.authenticate(Peer())
+    def authenticate(self, peer):
+        with patch.object(helper.grp, 'getgrnam', return_value=types.SimpleNamespace(gr_gid=44)):
+            helper.authenticate(peer)
+
+    def test_authentication_accepts_root_without_supplementary_lookup(self):
+        peer = Peer(uid=0, gid=0, groups=())
+        self.authenticate(peer)
+        self.assertEqual(len(peer.queries), 1)
+
+    def test_authentication_accepts_primary_video_group(self):
+        peer = Peer(gid=44, groups=())
+        self.authenticate(peer)
+        self.assertEqual(len(peer.queries), 1)
+
+    def test_authentication_accepts_captured_supplementary_video_group(self):
+        peer = Peer(groups=(5, 44, 1000))
+        with patch.object(helper.Path, 'read_text', side_effect=AssertionError('No proc lookup')), \
+                patch.object(helper.os, 'readlink', side_effect=AssertionError('No executable lookup')):
+            self.authenticate(peer)
+        self.assertEqual(peer.queries[-1], (socket.SOL_SOCKET, helper.SO_PEERGROUPS, 1024))
 
     def test_authentication_rejects_missing_video_group(self):
-        status = 'Uid:\t1000\t1000\t1000\t1000\nGroups:\t1000\n'
-        with patch.object(helper.Path, 'read_text', return_value=status), \
-                patch.object(helper.grp, 'getgrnam', return_value=types.SimpleNamespace(gr_gid=44)):
-            with self.assertRaisesRegex(helper.LeaseError, 'video group'):
-                helper.authenticate(Peer())
+        with self.assertRaisesRegex(helper.LeaseError, 'video group'):
+            self.authenticate(Peer(groups=(1000,)))
+
+    def test_authentication_rejects_empty_supplementary_groups(self):
+        with self.assertRaisesRegex(helper.LeaseError, 'video group'):
+            self.authenticate(Peer(groups=()))
+
+    def test_authentication_rejects_invalid_peer_identifiers(self):
+        for identifiers in ({'pid': 0}, {'pid': -1}, {'uid': -1}, {'gid': -1}):
+            with self.subTest(**identifiers), self.assertRaisesRegex(helper.LeaseError, 'credentials'):
+                self.authenticate(Peer(**identifiers))
+
+    def test_authentication_rejects_malformed_credentials(self):
+        peer = Peer()
+        for credentials in (b'', b'x', peer.credentials[:-1], peer.credentials + b'x'):
+            peer.credentials = credentials
+            with self.subTest(length=len(credentials)), self.assertRaises(helper.LeaseError):
+                self.authenticate(peer)
+
+    def test_authentication_fails_closed_when_peer_credentials_unavailable(self):
+        peer = Peer()
+        with patch.object(peer, 'getsockopt', side_effect=OSError(errno.ENOTCONN, 'disconnected')):
+            with self.assertRaisesRegex(helper.LeaseError, 'verify HDMI peer credentials'):
+                self.authenticate(peer)
+
+    def test_authentication_rejects_malformed_groups(self):
+        peer = Peer()
+        peer.groups = b'\x2c'
+        with self.assertRaisesRegex(helper.LeaseError, 'peer groups'):
+            self.authenticate(peer)
+
+    def test_authentication_fails_closed_when_groups_cannot_be_verified(self):
+        for number in (errno.ERANGE, errno.ENOPROTOOPT, errno.EPERM):
+            peer = Peer()
+            peer.group_error = OSError(number, 'groups unavailable')
+            with self.subTest(errno=number), self.assertRaisesRegex(helper.LeaseError, 'verify'):
+                self.authenticate(peer)
+
+    def test_denied_client_cannot_open_console_or_lock(self):
+        with patch.object(helper.grp, 'getgrnam', return_value=types.SimpleNamespace(gr_gid=44)), \
+                patch.object(helper, 'Console') as console, patch.object(helper, 'open_lock') as lock:
+            with self.assertRaises(helper.LeaseError):
+                helper.run_lease(Peer(groups=()))
+        console.assert_not_called()
+        lock.assert_not_called()
+
+    def test_main_rejects_root_or_unrelated_service_identity(self):
+        for uid in (0, 1000):
+            with self.subTest(uid=uid), patch.object(helper.os, 'geteuid', return_value=uid), \
+                    patch.object(helper.pwd, 'getpwnam', return_value=types.SimpleNamespace(pw_uid=321)), \
+                    patch.object(helper.socket, 'socket') as peer:
+                with self.assertRaisesRegex(helper.LeaseError, 'requires its system service'):
+                    helper.main()
+            peer.assert_not_called()
+
+    def test_main_rejects_caller_arguments(self):
+        with patch.object(helper.os, 'geteuid', return_value=321), \
+                patch.object(helper.pwd, 'getpwnam', return_value=types.SimpleNamespace(pw_uid=321)), \
+                patch.object(helper.sys, 'argv', ['tyrell-video-hdmi-session', '--command', 'anything']), \
+                patch.object(helper.socket, 'socket') as peer:
+            with self.assertRaisesRegex(helper.LeaseError, 'Unexpected HDMI helper argument'):
+                helper.main()
+        peer.assert_not_called()
+
+    def test_private_runtime_lock_excludes_second_connection(self):
+        fd = helper.open_lock()
+        try:
+            with self.assertRaises(helper.LeaseBusy):
+                helper.open_lock()
+            self.assertFalse(os.get_inheritable(fd))
+        finally:
+            os.close(fd)
+        fd = helper.open_lock()
+        os.close(fd)
+
+    def test_runtime_rejects_wrong_owner(self):
+        with patch.object(helper.os, 'geteuid', return_value=os.geteuid() + 1):
+            with self.assertRaisesRegex(helper.LeaseError, 'Unsafe HDMI recovery directory'):
+                helper.open_lock()
+
+    def test_runtime_rejects_group_or_world_access(self):
+        for mode in (0o750, 0o705, 0o770, 0o777):
+            self.runtime.chmod(mode)
+            with self.subTest(mode=mode), self.assertRaises(helper.LeaseError):
+                helper.open_lock()
+        self.runtime.chmod(0o700)
+
+    def test_runtime_rejects_symlink_directory(self):
+        link = self.runtime / 'redirect'
+        link.symlink_to(self.runtime, target_is_directory=True)
+        with patch.object(helper, 'RUNTIME', link):
+            with self.assertRaisesRegex(helper.LeaseError, 'Unsafe HDMI recovery directory'):
+                helper.open_lock()
+
+    def test_runtime_lock_rejects_symlink(self):
+        target = self.runtime / 'unrelated'
+        target.write_text('unchanged')
+        (self.runtime / 'lease.lock').symlink_to(target)
+        with self.assertRaises(OSError):
+            helper.open_lock()
+        self.assertEqual(target.read_text(), 'unchanged')
+
+    def test_console_uses_named_descriptor_with_close_on_exec(self):
+        environment = {'LISTEN_PID': '123', 'LISTEN_FDS': '2', 'LISTEN_FDNAMES': 'connection:console'}
+        info = types.SimpleNamespace(st_mode=stat.S_IFCHR | 0o600, st_rdev=os.makedev(4, 0))
+        with patch.dict(helper.os.environ, environment, clear=True), \
+                patch.object(helper.os, 'getpid', return_value=123), \
+                patch.object(helper.os, 'fstat', return_value=info) as fstat, \
+                patch.object(helper.os, 'open') as opened, \
+                patch.object(helper.fcntl, 'fcntl', return_value=9) as duplicate:
+            console = helper.Console()
+        self.assertEqual(console.fd, 9)
+        fstat.assert_called_once_with(4)
+        duplicate.assert_called_once_with(4, helper.fcntl.F_DUPFD_CLOEXEC, 3)
+        opened.assert_not_called()
+        with patch.object(helper.os, 'close') as close:
+            console.close()
+        close.assert_called_once_with(9)
+
+    def test_console_accepts_systemd257_stdin_socket_descriptor_layout(self):
+        # On systemd 257 the accepted socket is fd 0 and omitted from the
+        # descriptor count, but its connection name remains before console.
+        environment = {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'connection:console'}
+        info = types.SimpleNamespace(st_mode=stat.S_IFCHR | 0o600, st_rdev=os.makedev(4, 0))
+        with patch.dict(helper.os.environ, environment, clear=True), \
+                patch.object(helper.os, 'getpid', return_value=123), \
+                patch.object(helper.os, 'fstat', return_value=info) as fstat, \
+                patch.object(helper.fcntl, 'fcntl', return_value=9) as duplicate:
+            console = helper.Console()
+        self.assertEqual(console.fd, 9)
+        fstat.assert_called_once_with(3)
+        duplicate.assert_called_once_with(3, helper.fcntl.F_DUPFD_CLOEXEC, 3)
+
+    def test_console_rejects_missing_or_invalid_activation_environment(self):
+        environments = [
+            {},
+            {'LISTEN_PID': '456', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'console'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '0', 'LISTEN_FDNAMES': ''},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '17', 'LISTEN_FDNAMES': ':'.join(['console'] * 17)},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '2', 'LISTEN_FDNAMES': 'console:console'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '2', 'LISTEN_FDNAMES': 'console'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'connection'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'unexpected:console'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'console:connection'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'connection:console:extra'},
+            {'LISTEN_PID': '123', 'LISTEN_FDS': 'invalid', 'LISTEN_FDNAMES': 'console'},
+        ]
+        for environment in environments:
+            with self.subTest(environment=environment), patch.dict(helper.os.environ, environment, clear=True), \
+                    patch.object(helper.os, 'getpid', return_value=123), \
+                    patch.object(helper.os, 'fstat') as fstat, patch.object(helper.os, 'open') as opened:
+                with self.assertRaises((helper.LeaseError, ValueError)):
+                    helper.Console()
+            fstat.assert_not_called()
+            opened.assert_not_called()
+
+    def test_console_rejects_regular_file_or_other_character_device(self):
+        environment = {'LISTEN_PID': '123', 'LISTEN_FDS': '1', 'LISTEN_FDNAMES': 'console'}
+        invalid = [
+            types.SimpleNamespace(st_mode=stat.S_IFREG | 0o600, st_rdev=0),
+            types.SimpleNamespace(st_mode=stat.S_IFCHR | 0o600, st_rdev=os.makedev(4, 1)),
+            types.SimpleNamespace(st_mode=stat.S_IFCHR | 0o600, st_rdev=os.makedev(1, 3)),
+        ]
+        for info in invalid:
+            with self.subTest(info=info), patch.dict(helper.os.environ, environment, clear=True), \
+                    patch.object(helper.os, 'getpid', return_value=123), \
+                    patch.object(helper.os, 'fstat', return_value=info), \
+                    patch.object(helper.fcntl, 'fcntl') as duplicate:
+                with self.assertRaisesRegex(helper.LeaseError, 'Invalid HDMI console descriptor'):
+                    helper.Console()
+            duplicate.assert_not_called()
 
     def test_invalid_recovery_marker_never_selects_console(self):
         self.marker().write_text('{"original":"7", "takeover":1}')

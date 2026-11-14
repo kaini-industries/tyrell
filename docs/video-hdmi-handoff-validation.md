@@ -1,5 +1,9 @@
 # Tyrell Video desktop HDMI handoff
 
+This report describes the original 0.1.2 root helper. Version 0.1.6 replaces it
+with a dedicated nonroot service and an explicit video-group authorization
+boundary; see the [Store policy follow-up](video-store-policy-validation.md).
+
 November 13, 2026. Version 0.1.2 fixes the stock Raspbian desktop retaining HDMI
 when Tyrell Video tries to play a movie. Version 0.1.1 required manually releasing
 the desktop during its [TV qualification](video-hdmi-validation.md); that result

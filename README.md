@@ -40,6 +40,10 @@ about 12 to 24 full-frame equivalents per second, with user-confirmed smooth
 handheld playback. It also preserves fresh playback time when pausing before a
 caption change. See the [native display report](docs/video-lcd-refresh-validation.md).
 
+Version 0.1.6 replaces the root HDMI helper with a dedicated nonroot service
+and Store-compatible install paths. See the [policy validation](docs/video-store-policy-validation.md);
+TV playback testing of this helper is pending.
+
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio
 session lacks one, without changing the system default. See the
@@ -50,10 +54,10 @@ session lacks one, without changing the system default. See the
 Verified ARM64 packages are committed in [`dist/`](dist/README.md), with
 checksums, source provenance and test results:
 
-- [Tyrell Video 0.1.5 `.deb`](dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb)
+- [Tyrell Video 0.1.6 `.deb`](dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb)
 - [Tyrell Status 0.1.0 `.deb`](dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
 
-Video is also available in the
+The previous Video version is also available in the
 [Tyrell Video 0.1.5 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5).
 
 ## Requirements

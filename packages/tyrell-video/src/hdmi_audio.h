@@ -13,7 +13,7 @@ class HdmiAudioSession {
 public:
     enum class State { Idle, Waiting, Ready, Failed };
     explicit HdmiAudioSession(std::string launcher = "/usr/bin/systemd-run",
-                              std::string helper = "/usr/libexec/tyrell-video-audio-session",
+                              std::string helper = "/usr/lib/tyrell-video/tyrell-video-audio-session",
                               std::chrono::milliseconds timeout = std::chrono::seconds(5));
     ~HdmiAudioSession();
     HdmiAudioSession(const HdmiAudioSession&) = delete;

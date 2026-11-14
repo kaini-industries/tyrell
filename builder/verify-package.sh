@@ -42,15 +42,33 @@ test -f "$scratch/root/usr/share/APPLaunch/share/images/$name.png"
 # Permit this app's files and, for Video only, its fixed HDMI console broker.
 # Status still rejects every service/helper/hook; boot assets remain forbidden.
 python3 - "$scratch/root" "$name" <<'PY'
+import configparser
 from pathlib import Path
+import stat
 import sys
 root=Path(sys.argv[1]); name=sys.argv[2]
-allowed={f'usr/bin/{name}',f'usr/share/APPLaunch/applications/{name}.desktop',f'usr/share/applications/{name}.desktop',f'usr/share/APPLaunch/share/images/{name}.png',f'usr/share/icons/hicolor/80x80/apps/{name}.png'}
+allowed={f'usr/bin/{name}',f'usr/share/APPLaunch/applications/{name}.desktop',f'usr/share/APPLaunch/share/images/{name}.png'}
 if name == 'tyrell-video':
-    allowed.update({'usr/libexec/tyrell-video-hdmi-session', 'usr/libexec/tyrell-video-audio-session', 'usr/lib/systemd/system/tyrell-video-hdmi.socket', 'usr/lib/systemd/system/tyrell-video-hdmi@.service'})
+    allowed.update({'usr/lib/tyrell-video/tyrell-video-hdmi-session', 'usr/lib/tyrell-video/tyrell-video-audio-session', 'usr/lib/systemd/system/tyrell-video-hdmi.socket', 'usr/lib/systemd/system/tyrell-video-hdmi@.service'})
+    unit=configparser.ConfigParser(interpolation=None)
+    unit.read(root/'usr/lib/systemd/system/tyrell-video-hdmi@.service')
+    service=unit['Service']
+    for key in ('User', 'Group'):
+        if service.get(key) != 'tyrell-video-hdmi':
+            raise SystemExit('HDMI helper must use its dedicated nonroot '+key)
+    for key in ('CapabilityBoundingSet', 'AmbientCapabilities'):
+        if service.get(key, '').split() != ['CAP_SYS_TTY_CONFIG']:
+            raise SystemExit('HDMI helper must limit '+key+' to CAP_SYS_TTY_CONFIG')
+    helper='/usr/lib/tyrell-video/tyrell-video-hdmi-session'
+    if service.get('ExecStart') != helper or service.get('ExecStopPost') != helper+' --recover':
+        raise SystemExit('Unexpected HDMI helper command or privilege override')
+else:
+    allowed.update({f'usr/share/applications/{name}.desktop',f'usr/share/icons/hicolor/80x80/apps/{name}.png'})
 for path in root.rglob('*'):
     rel=path.relative_to(root).as_posix()
-    if path.is_symlink() or (path.is_file() and rel not in allowed and not rel.startswith(f'usr/share/doc/{name}/')):
+    if path.is_symlink() or (not path.is_dir() and not stat.S_ISREG(path.stat().st_mode)):
+        raise SystemExit('Unexpected packaged file type: '+rel)
+    if path.is_file() and rel not in allowed and not rel.startswith(f'usr/share/doc/{name}/'):
         raise SystemExit('Unexpected packaged path: '+rel)
     if path.is_file() and path.stat().st_mode & 0o6022:
         raise SystemExit('Unsafe packaged permissions: '+rel)
@@ -74,9 +92,21 @@ else
     "/usr/bin/$name" --headless-screenshot "$artifacts/video-installed.ppm" --frames 2 --page browser
 fi
 if test "$app" = video; then
-    test -x /usr/libexec/tyrell-video-hdmi-session
-    test -x /usr/libexec/tyrell-video-audio-session
+    test -x /usr/lib/tyrell-video/tyrell-video-hdmi-session
+    test -x /usr/lib/tyrell-video/tyrell-video-audio-session
+    test ! -e /usr/libexec/tyrell-video-hdmi-session
+    test ! -e /usr/libexec/tyrell-video-audio-session
+    test ! -e /usr/share/applications/tyrell-video.desktop
+    test ! -e /usr/share/icons/hicolor/80x80/apps/tyrell-video.png
     test -f /usr/lib/systemd/system/tyrell-video-hdmi.socket
+    python3 - <<'PY'
+import grp, pwd
+account=pwd.getpwnam('tyrell-video-hdmi')
+group=grp.getgrnam('tyrell-video-hdmi')
+assert account.pw_uid != 0 and account.pw_gid == group.gr_gid != 0
+assert account.pw_dir == '/nonexistent'
+assert account.pw_shell in ('/usr/sbin/nologin', '/sbin/nologin', '/usr/bin/false', '/bin/false')
+PY
     if test -d /run/systemd/system; then
         systemctl is-active --quiet tyrell-video-hdmi.socket
         systemctl is-enabled tyrell-video-hdmi.socket >> "$artifacts/install-test.txt"
@@ -85,10 +115,12 @@ fi
 sudo dpkg --remove "$name" >> "$artifacts/install-test.txt"
 installed=0
 if test "$app" = video; then
-    test ! -e /usr/libexec/tyrell-video-hdmi-session
-    test ! -e /usr/libexec/tyrell-video-audio-session
+    test ! -e /usr/lib/tyrell-video/tyrell-video-hdmi-session
+    test ! -e /usr/lib/tyrell-video/tyrell-video-audio-session
     test ! -e /usr/lib/systemd/system/tyrell-video-hdmi.socket
     test ! -S /run/tyrell-video-hdmi.sock
+    # Retain the system identity so a later UID reuse cannot own recovery data.
+    getent passwd tyrell-video-hdmi >/dev/null
 fi
 test ! -e "/usr/bin/$name"
 test ! -e "/usr/share/APPLaunch/applications/$name.desktop"

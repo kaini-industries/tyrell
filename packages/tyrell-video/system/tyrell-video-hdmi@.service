@@ -4,8 +4,16 @@ After=systemd-logind.service
 
 [Service]
 Type=exec
-ExecStart=/usr/libexec/tyrell-video-hdmi-session
-ExecStopPost=/usr/libexec/tyrell-video-hdmi-session --recover
+User=tyrell-video-hdmi
+Group=tyrell-video-hdmi
+SupplementaryGroups=video
+# systemd opens only this console; the helper needs no DAC bypass capability.
+# StandardInput=socket also passes OpenFile descriptors to ExecStopPost.
+OpenFile=/dev/tty0:console:read-only
+CapabilityBoundingSet=CAP_SYS_TTY_CONFIG
+AmbientCapabilities=CAP_SYS_TTY_CONFIG
+ExecStart=/usr/lib/tyrell-video/tyrell-video-hdmi-session
+ExecStopPost=/usr/lib/tyrell-video/tyrell-video-hdmi-session --recover
 StandardInput=socket
 StandardOutput=journal
 StandardError=journal
@@ -23,3 +31,7 @@ ProtectControlGroups=yes
 RestrictAddressFamilies=AF_UNIX
 RestrictSUIDSGID=yes
 LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+DevicePolicy=closed
+DeviceAllow=char-drm rw
