@@ -44,6 +44,11 @@ Version 0.1.6 replaces the root HDMI helper with a dedicated nonroot service
 and Store-compatible install paths. See the [policy validation](docs/video-store-policy-validation.md);
 TV playback testing of this helper is pending.
 
+The [0.1.6 Store submission draft](store/tyrell-video/0.1.6/README.md) includes
+the listing, icon, UI previews, permission declarations, review notes and a local
+handoff archive builder. Submission and the required real-device demo recording
+remain pending.
+
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio
 session lacks one, without changing the system default. See the

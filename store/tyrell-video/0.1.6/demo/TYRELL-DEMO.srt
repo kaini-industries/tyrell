@@ -1,0 +1,31 @@
+1
+00:00:00,250 --> 00:00:06,000
+Tyrell Video synthetic demo
+
+2
+00:00:06,000 --> 00:00:12,000
+Local files, keyboard controls
+
+3
+00:00:12,000 --> 00:00:18,000
+Captions keep playback time
+
+4
+00:00:18,000 --> 00:00:24,000
+Pause and resume at this point
+
+5
+00:00:24,000 --> 00:00:30,000
+Left / Right: seek 10 seconds
+
+6
+00:00:30,000 --> 00:00:36,000
+O: select LCD or HDMI
+
+7
+00:00:36,000 --> 00:00:42,000
+T: choose captions or audio
+
+8
+00:00:42,000 --> 00:00:45,000
+End of synthetic test clip

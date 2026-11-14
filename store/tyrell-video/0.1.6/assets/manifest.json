@@ -1,0 +1,60 @@
+{
+  "app": "Tyrell Video",
+  "version": "0.1.6",
+  "source_revision": "src-11a4e420adee",
+  "source_commit": "ad4140aeee2de98cec66d85a83eb9d7dbd0ca8e1",
+  "screenshots_are": "Deterministic software-rendered app UI previews, not photographs or physical playback evidence. No movie frames are included.",
+  "icon_conversion": "macOS sips --resampleHeightWidth 256 256; original aspect and artwork preserved.",
+  "files": [
+    {
+      "file": "icon-256.png",
+      "title": "Tyrell Video app icon",
+      "width": 256,
+      "height": 256,
+      "sha256": "96b30a1759d449db0aafdd9653fd3149c7aefbf2123306905d33094033c4ab9c",
+      "source_path": "packages/tyrell-video/assets/tyrell-video.png",
+      "source_sha256": "9727e44e04916a3a7b7eb97d040b61139ffc36aeae4056d0749fdfe2d5fcf059",
+      "provenance": "Mechanical resize of the existing 80x80 package artwork to 256x256; no redesign."
+    },
+    {
+      "file": "01-browser-preview.png",
+      "title": "File browser (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "100ca83a5cd7d4ff360b3b127ca147a0f8f12f3589a464194d2935cebcd7d18f",
+      "source_path": "artifacts/video/video-browser.png",
+      "source_sha256": "100ca83a5cd7d4ff360b3b127ca147a0f8f12f3589a464194d2935cebcd7d18f",
+      "provenance": "Byte-identical final 0.1.6 deterministic software-rendered UI preview."
+    },
+    {
+      "file": "02-lcd-player-preview.png",
+      "title": "LCD player (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "f5d0b0901837dd4c37b16f9157fe5342c3414199d07317ae4c650da74d73f3b3",
+      "source_path": "artifacts/video/video-player.png",
+      "source_sha256": "f5d0b0901837dd4c37b16f9157fe5342c3414199d07317ae4c650da74d73f3b3",
+      "provenance": "Byte-identical final 0.1.6 deterministic software-rendered UI preview; example scene is explicitly labeled."
+    },
+    {
+      "file": "03-tracks-preview.png",
+      "title": "Audio and subtitles (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "04ad8922f0f4b840a57f9d8589dab3409aadccd3365b9107ebe6366e62bc2430",
+      "source_path": "artifacts/video/video-tracks.png",
+      "source_sha256": "04ad8922f0f4b840a57f9d8589dab3409aadccd3365b9107ebe6366e62bc2430",
+      "provenance": "Byte-identical final 0.1.6 deterministic software-rendered UI preview."
+    },
+    {
+      "file": "04-hdmi-controller-preview.png",
+      "title": "HDMI controller (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "cf0bb66619709668c16fe8840ccfab23aee4c6377b6b3c41d2d73570980b57c9",
+      "source_path": "artifacts/video/video-hdmi.png",
+      "source_sha256": "cf0bb66619709668c16fe8840ccfab23aee4c6377b6b3c41d2d73570980b57c9",
+      "provenance": "Byte-identical final 0.1.6 deterministic software-rendered UI preview; not a TV capture."
+    }
+  ]
+}

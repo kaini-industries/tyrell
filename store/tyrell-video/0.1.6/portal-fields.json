@@ -1,0 +1,26 @@
+{
+  "title": "Tyrell Video",
+  "summary": "Local video with subtitles, audio tracks and handheld or HDMI playback",
+  "description": "Play local videos on the CardputerZero's built-in display, or send the movie to a dedicated HDMI screen while keeping controls on the handheld.\n\nBrowse folders and mounted media without a full-card scan. Choose audio tracks and common text subtitles, including matching external SRT files. Subtitles start off. HDMI playback prefers TV audio and falls back to onboard sound when necessary.\n\nEnter opens a file. Space pauses or resumes. Left/Right seek 10 seconds; Up/Down change volume. O selects the display, T opens audio/subtitle tracks, V selects audio output, M mutes, Esc returns to the browser, and Q exits to APPLaunch. W/A/S/D provide navigation fallbacks.\n\nRequires a CardputerZero running compatible Debian 13 ARM64 software with APPLaunch, GStreamer 1.26 and systemd 253 or newer. Dedicated HDMI playback temporarily releases the stock desktop and restores it on exit. The package installs a restricted nonroot console helper. Codec availability and smooth playback depend on the file; demanding formats may need computer-side conversion. Streaming, playlists and saved playback positions are not included.\n\nThe screenshots are rendered UI previews, not photographs or physical playback evidence. Version 0.1.6 passed on-device console handoff and crash-recovery checks; physical TV playback retesting of its new nonroot helper remains pending.",
+  "categories": "Media",
+  "display_name": "Tyrell contributors",
+  "license": "MIT",
+  "share_code": "TYVD",
+  "permissions": {
+    "camera": false,
+    "microphone": false,
+    "imu": false,
+    "network": false,
+    "additional_hardware": false,
+    "background_service": true,
+    "external_display": true
+  },
+  "hide_email": true,
+  "icon": "assets/icon-256.png",
+  "screenshots": [
+    "assets/01-browser-preview.png",
+    "assets/02-lcd-player-preview.png",
+    "assets/03-tracks-preview.png",
+    "assets/04-hdmi-controller-preview.png"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "prepared_on": "2026-11-14",
+  "package_file": "tyrell-video_0.1.6-1_arm64.deb",
+  "package_sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+  "package_unchanged": true,
+  "metadata_and_package_ready": true,
+  "first_app_approval_ready": false,
+  "submission_performed": false,
+  "metadata": {
+    "errors": [],
+    "warnings": [
+      "consider adding locales (localized title/summary) / 建议提供 locales（多语言 title/summary），商店会按用户语言展示",
+      "consider adding source_repo / 建议提供 source_repo（开源仓库地址）"
+    ],
+    "summary_length": 70,
+    "screenshots": 4,
+    "validator_blob": "36e50b78622d2f75355f06bf0d8a10f979a286e0",
+    "validator_url": "https://github.com/CardputerZero/packages/blob/main/.github/scripts/store_meta_policy.py",
+    "method": "Called check_meta against staged publisher-layout metadata/assets plus check_maintainer; asserted actual error list empty. Uniqueness checked separately against published data.",
+    "validated_inputs": {
+      "app-builder.json": "29a29644145e4e3e0b0d77ed878dc02b74f02e9ae67e79cef409100045d0471a",
+      "assets/icon-256.png": "96b30a1759d449db0aafdd9653fd3149c7aefbf2123306905d33094033c4ab9c",
+      "assets/01-browser-preview.png": "100ca83a5cd7d4ff360b3b127ca147a0f8f12f3589a464194d2935cebcd7d18f",
+      "assets/02-lcd-player-preview.png": "f5d0b0901837dd4c37b16f9157fe5342c3414199d07317ae4c650da74d73f3b3",
+      "assets/03-tracks-preview.png": "04ad8922f0f4b840a57f9d8589dab3409aadccd3365b9107ebe6366e62bc2430",
+      "assets/04-hdmi-controller-preview.png": "cf0bb66619709668c16fe8840ccfab23aee4c6377b6b3c41d2d73570980b57c9"
+    },
+    "advisory_disposition": {
+      "locales": "English base listing; additional translations not prepared",
+      "source_repo": "Intentionally omitted because source repository is private"
+    }
+  },
+  "package_policy": {
+    "package": "tyrell-video_0.1.6-1_arm64.deb",
+    "sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+    "path_policy_blob": "bab1318f4c6c41d4bfee4fbf1de24e004e5ca6ac",
+    "service_workflow_blob": "2e30925e98235209706274bfaa4684f937993128",
+    "rejected_paths": [],
+    "root_services": [],
+    "unsafe_entries": [],
+    "passed": true
+  },
+  "maintainer_scripts": {
+    "scripts_checked": [
+      "postinst",
+      "postrm",
+      "prerm"
+    ],
+    "dangerous_pattern_matches": [],
+    "workflow_blob": "2e30925e98235209706274bfaa4684f937993128",
+    "passed": true
+  },
+  "published_name_availability": {
+    "package": "tyrell-video",
+    "title": "Tyrell Video",
+    "share_code": "TYVD",
+    "published_pool_checked_at_utc": "2026-11-14T15:21:35Z",
+    "pool_meta_count": 49,
+    "packages_tree": "8803ae6948e1ab41fb1931da5d70dc426152af0d",
+    "registry_checked_at_utc": "2026-11-14T15:29:56Z",
+    "registry_blob": "69b0bc3f5e1e19afab5d40dcbd6304d048611016",
+    "registry_generated_at": "2026-11-14T22:13:27+08:00",
+    "registry_app_count": 48,
+    "conflicts": [],
+    "reservation": false,
+    "note": "Published data only; recheck at actual submission. Pending PRs can change availability."
+  },
+  "remaining_review_evidence": [
+    "Authentic short video of the app running on a physical CardputerZero; attach to the eventual first-app PR",
+    "Physical TV playback retest of the 0.1.6 nonroot helper remains pending per user instruction"
+  ],
+  "privacy": {
+    "source_repo_in_listing": false,
+    "portal_hide_email": true,
+    "publisher_github_login": "Supplied by the future authenticated uploader, not guessed in the draft",
+    "source_visibility_changed": false
+  },
+  "asset_disclosure": "Four screenshots are deterministic rendered UI previews; demo MP4 is synthetic playback input, not the required real-device recording."
+}
