@@ -22,23 +22,22 @@ on the handheld. Build its separate ARM64 package with `make package APP=video`;
 outputs are under `artifacts/video/`. The default package command still builds
 Tyrell Status.
 
-An attached-TV test confirmed smooth low-resolution H.264/AAC playback for ten
-minutes, correct aspect fitting and captions, matching flash/beep timing, and
-paused LCD fallback after unplugging HDMI. The player uses hardware scaling to
-a 1280 × 720 HDMI signal. Tested 720p/1080p source files dropped frames; smooth
-HD-source playback is not yet qualified.
+Version 0.1.3 adds automatic TV audio, removes stale desktop cursor planes, and
+keeps decoder-native DMA buffers for HDMI playback. The tested 1920 × 816 H.264
+source reached about 24 fps with zero sink drops, including two-line SRT captions.
+The user confirmed smooth TV video, matching flash/beep timing, and automatic
+video/audio recovery after reconnecting HDMI. Other source profiles and codecs
+still need individual qualification.
 
-The packaged HDMI console lease temporarily switches away from the stock
-desktop during video playback and restores it afterward, preserving its running
-applications. TV sound requires a configured HDMI sink in the user's
-PulseAudio-compatible audio session; the tested stock image needed a temporary
-ALSA HDMI bridge. Otherwise sound uses the onboard output. See the
-[player guide](docs/video-player.md), [desktop handoff validation](docs/video-hdmi-handoff-validation.md),
-[original validation record](docs/video-validation.md),
-and [attached-TV validation](docs/video-hdmi-validation.md) for setup and results.
+The HDMI console lease preserves the running desktop and restores it afterward.
+A temporary user-session HDMI audio sink supplies TV sound when the stock audio
+session lacks one, without changing the system default. See the
+[player guide](docs/video-player.md), [audio/video validation](docs/video-av-validation.md),
+[desktop handoff validation](docs/video-hdmi-handoff-validation.md), and
+[earlier attached-TV validation](docs/video-hdmi-validation.md).
 
 Prebuilt ARM64 packages and checksums are available in the
-[Tyrell Video 0.1.2 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.2).
+[Tyrell Video 0.1.3 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.3).
 
 ## Requirements
 

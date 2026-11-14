@@ -1,4 +1,5 @@
 #include "outputs.h"
+#include "plane_lease.h"
 #include "json_string.h"
 
 #include <algorithm>
@@ -11,6 +12,7 @@
 #include <sstream>
 #include <set>
 #include <thread>
+#include <utility>
 
 namespace tyrell::video {
 AudioRoute choose_audio_route(const std::vector<AudioSink>& sinks, bool prefer_hdmi,
@@ -222,8 +224,80 @@ struct HdmiSession::Impl {
     std::uint32_t background_fb = 0;
     bool modeset_attempted = false;
     DisplayMode selected;
+    std::vector<std::string> video_formats;
     std::vector<SavedCrtc> saved;
     std::vector<SavedPlaneProperty> plane_properties;
+    DisplayPlaneLease foreign_planes;
+
+    bool hide_foreign_planes(std::uint32_t crtc, std::string& error) {
+        // Atomic client capability exposes the exact source/destination plane
+        // properties. Legacy GETPLANE alone cannot recover those rectangles.
+        // kmssink may still use legacy SetPlane calls with this capability set.
+        if(drmSetClientCap(fd, DRM_CLIENT_CAP_ATOMIC, 1) != 0) {
+            error = "Cannot save HDMI cursor and overlay state: " + std::string(std::strerror(errno));
+            return false;
+        }
+        auto* resources = drmModeGetPlaneResources(fd);
+        if(!resources) { error = "Cannot enumerate HDMI cursor and overlays"; return false; }
+        std::vector<DisplayPlaneState> states;
+        bool ok = true;
+        for(std::uint32_t i = 0; i < resources->count_planes && ok; ++i) {
+            auto* item = drmModeGetPlane(fd, resources->planes[i]);
+            if(!item) { error = "Cannot inspect HDMI plane state"; ok = false; break; }
+            if(item->plane_id == plane || item->crtc_id != crtc || !item->fb_id) {
+                drmModeFreePlane(item);
+                continue;
+            }
+            DisplayPlaneState state;
+            state.id = item->plane_id;
+            state.crtc = item->crtc_id;
+            state.framebuffer = item->fb_id;
+            drmModeFreePlane(item);
+            auto* properties = drmModeObjectGetProperties(fd, state.id, DRM_MODE_OBJECT_PLANE);
+            if(!properties) { error = "Cannot save HDMI plane geometry"; ok = false; break; }
+            unsigned geometry = 0;
+            for(std::uint32_t j = 0; j < properties->count_props; ++j) {
+                auto* property = drmModeGetProperty(fd, properties->props[j]);
+                if(!property) { ok = false; break; }
+                const auto value = static_cast<std::uint32_t>(properties->prop_values[j]);
+                // CRTC_X/Y are signed values carried by unsigned properties.
+                const auto coordinate = static_cast<std::int32_t>(
+                    value <= 0x7fffffff ? static_cast<std::int64_t>(value)
+                                        : static_cast<std::int64_t>(value) - 0x100000000LL);
+                if(std::strcmp(property->name, "type") == 0) {
+                    if(value == DRM_PLANE_TYPE_PRIMARY) state.kind = DisplayPlaneKind::Primary;
+                    if(value == DRM_PLANE_TYPE_OVERLAY) state.kind = DisplayPlaneKind::Overlay;
+                    if(value == DRM_PLANE_TYPE_CURSOR) state.kind = DisplayPlaneKind::Cursor;
+                }
+                if(std::strcmp(property->name, "CRTC_X") == 0) { state.x = coordinate; geometry |= 1; }
+                if(std::strcmp(property->name, "CRTC_Y") == 0) { state.y = coordinate; geometry |= 2; }
+                if(std::strcmp(property->name, "CRTC_W") == 0) { state.width = value; geometry |= 4; }
+                if(std::strcmp(property->name, "CRTC_H") == 0) { state.height = value; geometry |= 8; }
+                if(std::strcmp(property->name, "SRC_X") == 0) { state.source_x = value; geometry |= 16; }
+                if(std::strcmp(property->name, "SRC_Y") == 0) { state.source_y = value; geometry |= 32; }
+                if(std::strcmp(property->name, "SRC_W") == 0) { state.source_width = value; geometry |= 64; }
+                if(std::strcmp(property->name, "SRC_H") == 0) { state.source_height = value; geometry |= 128; }
+                drmModeFreeProperty(property);
+            }
+            drmModeFreeObjectProperties(properties);
+            if(!ok || state.kind == DisplayPlaneKind::Unknown ||
+               (state.kind != DisplayPlaneKind::Primary && geometry != 255)) {
+                error = "Cannot preserve complete HDMI cursor/overlay geometry";
+                ok = false;
+                break;
+            }
+            states.push_back(state);
+        }
+        drmModeFreePlaneResources(resources);
+        if(!ok) return false;
+        if(!foreign_planes.hide(states, crtc, plane, [&](std::uint32_t id) {
+            return drmModeSetPlane(fd, id, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == 0;
+        })) {
+            error = "Cannot hide desktop cursor/overlay on HDMI: " + std::string(std::strerror(errno));
+            return false;
+        }
+        return true;
+    }
 
     bool configure_color(std::string& error) {
         auto* properties = drmModeObjectGetProperties(fd, plane, DRM_MODE_OBJECT_PLANE);
@@ -329,24 +403,31 @@ struct HdmiSession::Impl {
                     }
                     drmModeFreeObjectProperties(properties);
                 }
-                const bool nv12 = candidate->count_formats > 0 && std::find(candidate->formats, candidate->formats + candidate->count_formats,
-                                            DRM_FORMAT_NV12) != candidate->formats + candidate->count_formats;
-                if(overlay && plain && nv12 && !candidate->fb_id && !candidate->crtc_id &&
+                std::vector<std::string> formats;
+                for(const auto& format : {std::make_pair(DRM_FORMAT_YUV420, "I420"),
+                                         std::make_pair(DRM_FORMAT_NV12, "NV12"),
+                                         std::make_pair(DRM_FORMAT_YVU420, "YV12")}) {
+                    if(candidate->count_formats > 0 && std::find(candidate->formats,
+                        candidate->formats + candidate->count_formats, format.first) != candidate->formats + candidate->count_formats)
+                        formats.emplace_back(format.second);
+                }
+                if(overlay && plain && !formats.empty() && !candidate->fb_id && !candidate->crtc_id &&
                    (candidate->possible_crtcs & (std::uint32_t{1} << index))) {
                     plane = candidate->plane_id;
                     crtc_index = index;
+                    video_formats = std::move(formats);
                 }
                 drmModeFreePlane(candidate);
             }
             if(plane) break;
         }
         drmModeFreePlaneResources(planes);
-        if(!plane) { error = "HDMI has no unused NV12 overlay plane"; return false; }
+        if(!plane) { error = "HDMI has no unused planar YUV overlay plane"; return false; }
         if(!configure_color(error)) return false;
 
         // Establish the bounded display mode independently of the movie's
         // dimensions. kmssink can then use the overlay/HVS to scale native
-        // NV12 frames instead of forcing a software upscale to the mode size.
+        // YUV frames instead of forcing a software upscale to the mode size.
         drm_mode_create_dumb create{};
         create.width = selected.width;
         create.height = selected.height;
@@ -373,6 +454,7 @@ struct HdmiSession::Impl {
                          handles, pitches, offsets, &background_fb, 0) != 0) {
             error = "Cannot create HDMI background: " + std::string(std::strerror(errno)); return false;
         }
+        if(!hide_foreign_planes(resources->crtcs[crtc_index], error)) return false;
         modeset_attempted = true;
         if(drmModeSetCrtc(fd, resources->crtcs[crtc_index], background_fb, 0, 0, &connector, 1, timing) != 0) {
             error = "Cannot set HDMI display mode: " + std::string(std::strerror(errno)); return false;
@@ -438,6 +520,14 @@ void HdmiSession::release() {
             }
             drmModeFreeCrtc(saved.crtc);
         }
+        impl_->foreign_planes.release([&](const DisplayPlaneState& plane) {
+            const bool restored = drmModeSetPlane(impl_->fd, plane.id, plane.crtc, plane.framebuffer, 0,
+                plane.x, plane.y, plane.width, plane.height,
+                plane.source_x, plane.source_y, plane.source_width, plane.source_height) == 0;
+            if(!restored) std::cerr << "Tyrell HDMI: cannot restore desktop plane " << plane.id
+                                   << ": " << std::strerror(errno) << '\n';
+            return restored;
+        });
         if(impl_->background_fb) drmModeRmFB(impl_->fd, impl_->background_fb);
         if(impl_->background_handle) {
             drm_mode_destroy_dumb destroy{};
@@ -455,6 +545,7 @@ void HdmiSession::release() {
     impl_->modeset_attempted = false;
     impl_->path.clear();
     impl_->selected = {};
+    impl_->video_formats.clear();
 }
 
 bool HdmiSession::connected() const {
@@ -470,6 +561,7 @@ bool HdmiSession::connected() const {
 int HdmiSession::fd() const { return impl_->fd; }
 std::uint32_t HdmiSession::connector_id() const { return impl_->connector; }
 std::uint32_t HdmiSession::plane_id() const { return impl_->plane; }
+std::vector<std::string> HdmiSession::video_formats() const { return impl_->video_formats; }
 DisplayMode HdmiSession::mode() const { return impl_->selected; }
 std::string HdmiSession::device() const { return impl_->path; }
 
@@ -493,6 +585,7 @@ bool HdmiSession::connected() const { return false; }
 int HdmiSession::fd() const { return -1; }
 std::uint32_t HdmiSession::connector_id() const { return 0; }
 std::uint32_t HdmiSession::plane_id() const { return 0; }
+std::vector<std::string> HdmiSession::video_formats() const { return {}; }
 DisplayMode HdmiSession::mode() const { return {}; }
 std::string HdmiSession::device() const { return {}; }
 } // namespace tyrell::video

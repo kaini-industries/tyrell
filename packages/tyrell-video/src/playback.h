@@ -51,6 +51,12 @@ struct Status {
     std::uint64_t received_frames = 0;
     std::uint64_t video_buffers_delivered = 0; // Buffers reaching the final sink, not physical scanout.
     std::uint64_t qos_processed = 0;
+    std::uint64_t video_frames_decoded = 0;
+    // GstBaseSink counters reset on flush/segment; render calls are not scanout.
+    std::uint64_t video_sink_rendered = 0;
+    std::uint64_t video_sink_dropped = 0;
+    std::string video_output_caps;
+    std::string video_output_memory;
     std::string video_decoder;
     std::string audio_output;
 };
@@ -60,6 +66,8 @@ struct PlaybackOptions {
     bool fake_audio = false;
     // Simulators/probes can use an already free DRM output without taking a desktop lease.
     bool desktop_handoff = true;
+    // Normal-user temporary TV sound; disabled for probes and simulators.
+    bool automatic_hdmi_audio = true;
 };
 
 // Call control methods and poll() on the UI thread. GStreamer streaming threads

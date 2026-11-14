@@ -64,12 +64,19 @@ int main(int argc, char** argv) {
         player.stop();
 
         require(player.load(argv[1], subtitle.string()), "Fixture load failed: " + player.status().error);
+        // Automatic/explicit routing must accept input during asynchronous
+        // preparation without touching a live PulseAudio stream's device setter.
+        require(player.set_audio_sink(""), "Automatic routing request during preroll was rejected");
         // The Zero can need longer for initial decoder/font/audio setup than
         // the VM. Remain inside the application's 15-second startup deadline.
         require(wait_for(player, [&] { return player.status().playing && player.latest_frame() && player.status().duration > 0; }, 12),
                 "Fixture never became playable: " + player.status().error);
         require(wait_for(player, [&] { return player.status().video_buffers_delivered > 0; }),
                 "Final video sink did not receive video buffers");
+        require(wait_for(player, [&] { return player.status().video_sink_rendered > 0 && player.status().video_frames_decoded > 0; }),
+                "Decoder output and final sink render statistics must reflect actual media delivery");
+        require(!player.status().video_output_caps.empty() && !player.status().video_output_memory.empty(),
+                "Negotiated output format and allocator must be available for performance diagnosis");
         require(player.status().subtitle_track == -1, "Subtitles must start disabled");
         require(wait_for(player, [&] { return !player.status().subtitle_tracks.empty(); }), "External SRT stream was not discovered while disabled");
         require(!player.set_audio_track(99) && !player.set_subtitle_track(99), "Out-of-range track selection unexpectedly succeeded");

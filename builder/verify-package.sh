@@ -47,7 +47,7 @@ import sys
 root=Path(sys.argv[1]); name=sys.argv[2]
 allowed={f'usr/bin/{name}',f'usr/share/APPLaunch/applications/{name}.desktop',f'usr/share/applications/{name}.desktop',f'usr/share/APPLaunch/share/images/{name}.png',f'usr/share/icons/hicolor/80x80/apps/{name}.png'}
 if name == 'tyrell-video':
-    allowed.update({'usr/libexec/tyrell-video-hdmi-session', 'usr/lib/systemd/system/tyrell-video-hdmi.socket', 'usr/lib/systemd/system/tyrell-video-hdmi@.service'})
+    allowed.update({'usr/libexec/tyrell-video-hdmi-session', 'usr/libexec/tyrell-video-audio-session', 'usr/lib/systemd/system/tyrell-video-hdmi.socket', 'usr/lib/systemd/system/tyrell-video-hdmi@.service'})
 for path in root.rglob('*'):
     rel=path.relative_to(root).as_posix()
     if path.is_symlink() or (path.is_file() and rel not in allowed and not rel.startswith(f'usr/share/doc/{name}/')):
@@ -75,6 +75,7 @@ else
 fi
 if test "$app" = video; then
     test -x /usr/libexec/tyrell-video-hdmi-session
+    test -x /usr/libexec/tyrell-video-audio-session
     test -f /usr/lib/systemd/system/tyrell-video-hdmi.socket
     if test -d /run/systemd/system; then
         systemctl is-active --quiet tyrell-video-hdmi.socket
@@ -85,6 +86,7 @@ sudo dpkg --remove "$name" >> "$artifacts/install-test.txt"
 installed=0
 if test "$app" = video; then
     test ! -e /usr/libexec/tyrell-video-hdmi-session
+    test ! -e /usr/libexec/tyrell-video-audio-session
     test ! -e /usr/lib/systemd/system/tyrell-video-hdmi.socket
     test ! -S /run/tyrell-video-hdmi.sock
 fi

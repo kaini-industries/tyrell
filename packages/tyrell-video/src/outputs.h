@@ -64,7 +64,7 @@ public:
     ~HdmiSession();
     HdmiSession(const HdmiSession&) = delete;
     HdmiSession& operator=(const HdmiSession&) = delete;
-    // Prepare a bounded display mode and an unused NV12 overlay under DRM
+    // Prepare a bounded display mode and an unused planar YUV overlay under DRM
     // master. Stop every sink borrowing fd() before release() restores it.
     bool acquire(std::string& error);
     void release();
@@ -72,6 +72,9 @@ public:
     int fd() const;
     std::uint32_t connector_id() const;
     std::uint32_t plane_id() const;
+    // Raw GStreamer formats supported by this exact overlay. Negotiating a
+    // decoder's existing format avoids an otherwise unnecessary CPU conversion.
+    std::vector<std::string> video_formats() const;
     DisplayMode mode() const;
     std::string device() const;
 

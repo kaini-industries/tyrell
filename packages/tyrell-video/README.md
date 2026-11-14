@@ -44,16 +44,21 @@ HDMI plugged in during playback becomes selectable with O. Unplugging active
 HDMI pauses and returns video to LCD at the same position. Press Space to resume.
 HDMI sound is preferred for external playback when the user's PulseAudio-compatible
 audio session exposes a working HDMI sink, with onboard output as fallback.
-The tested stock image needed a temporary ALSA HDMI bridge for TV sound; package
-installation does not configure that audio sink. The packaged console lease
-automates the desktop display handoff.
+If the stock image exposes no HDMI sink, the app creates a temporary user-session
+VC4 HDMI sink and moves only its own audio stream to the TV. It removes that sink
+when no longer needed, including after a crash; an existing HDMI sink or explicit
+audio choice takes precedence. If TV audio cannot open, playback keeps onboard
+sound and reports the problem. No permanent audio configuration is installed.
 The board's existing headphone detection controls speaker muting.
 
 An attached-TV test confirmed ten minutes of smooth low-resolution H.264/AAC
 playback, matching flash/beep timing, readable captions, correct aspect fitting,
 and paused LCD fallback after unplugging HDMI. Hardware scaling fits the source
-to a 1280 × 720 HDMI signal. Tested 720p/1080p source files dropped frames, so
-smooth HD-source playback is not yet qualified. The computer-side HDMI conversion
+to a 1280 × 720 HDMI signal. Version 0.1.3 retains decoder-native I420/YU12 DMA
+buffers when supported, avoiding the CPU conversion that made HD files slow.
+Decoder, sink-render and buffer-memory diagnostics expose the actual path; see
+the validation report for measured source profiles and subtitle limits.
+The computer-side HDMI conversion
 profile bounds output to 640 × 360. Setup and measured results are in the
 [attached-TV validation report](../../docs/video-hdmi-validation.md).
 

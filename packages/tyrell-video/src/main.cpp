@@ -505,6 +505,12 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
         << ",\"source_width\":" << s.source_width << ",\"source_height\":" << s.source_height
         << ",\"received_frames\":" << s.received_frames << ",\"qos_processed\":" << s.qos_processed
         << ",\"video_buffers_delivered\":" << s.video_buffers_delivered
+        << ",\"video_frames_decoded\":" << s.video_frames_decoded
+        << ",\"video_sink_rendered\":" << s.video_sink_rendered
+        << ",\"video_sink_dropped\":" << s.video_sink_dropped
+        << ",\"video_output_memory\":" << json_string(s.video_output_memory)
+        << ",\"video_output_caps\":" << json_string(s.video_output_caps)
+        << ",\"sink_stats_scope\":\"GstBaseSink render calls/drops since its most recent reset, not physical scanout\""
         << ",\"qos_dropped\":" << s.dropped_frames << ",\"video_decoder\":" << json_string(s.video_decoder)
         << ",\"audio_output\":" << json_string(s.audio_output)
         << ",\"error\":" << json_string(s.error.empty() ? app.error : s.error) << ",\"notice\":" << json_string(s.notice) << "}\n";
@@ -563,7 +569,7 @@ int gui(const Options& options) {
         }
         if(options.page == "error") app.show_error("This file needs a video decoder that is not installed, or could not be opened.");
     } else {
-        app.playback = std::make_unique<Playback>(PlaybackOptions{false, !options.simulator});
+        app.playback = std::make_unique<Playback>(PlaybackOptions{false, !options.simulator, !options.simulator});
         if(options.output == "hdmi") app.playback->set_output(Output::Hdmi);
         else if(options.output == "auto" && !options.simulator) {
             const auto inventory = inspect_outputs(false);

@@ -5,6 +5,10 @@ when Tyrell Video tries to play a movie. Version 0.1.1 required manually releasi
 the desktop during its [TV qualification](video-hdmi-validation.md); that result
 did not establish a usable automatic desktop handoff.
 
+Version 0.1.3 adds automatic TV audio and native-buffer HD playback; see the
+[audio/video follow-up](video-av-validation.md). The results below retain the
+0.1.2 qualification conditions.
+
 ## Change
 
 The normal user player opens a restricted, socket-activated console lease.

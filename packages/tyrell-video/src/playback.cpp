@@ -1,6 +1,8 @@
 #include "playback.h"
 #include "outputs.h"
 #include "hdmi_lease.h"
+#include "hdmi_video_caps.h"
+#include "hdmi_audio.h"
 #include "json_string.h"
 
 #include <algorithm>
@@ -134,8 +136,15 @@ struct Playback::Impl {
     GstElement* pipeline = nullptr;
     GstBus* bus = nullptr;
     GstElement* audio_sink = nullptr; // borrowed from the pipeline
+    GstElement* video_sink = nullptr; // borrowed; valid while pipeline exists
     HdmiSession hdmi;
     HdmiDesktopLease desktop_lease;
+    HdmiAudioSession hdmi_audio;
+    bool audio_attempted = false;
+    bool audio_fallback_attempted = false;
+    bool audio_recovery_attempted = false;
+    bool audio_owned_seen = false;
+    bool audio_restart_pending = false;
     bool pending_hdmi = false;
     std::string external_subtitle;
     std::string requested_audio_sink;
@@ -145,6 +154,10 @@ struct Playback::Impl {
     std::shared_ptr<const Frame> frame;
     std::atomic<std::uint64_t> received{0};
     std::atomic<std::uint64_t> video_buffers_delivered{0};
+    std::atomic<std::uint64_t> video_frames_decoded{0};
+    std::atomic<bool> video_memory_sampled{false};
+    mutable std::mutex video_metadata_mutex;
+    std::string video_output_memory;
     std::atomic<bool> subtitles_enabled{false};
     std::atomic<bool> bitmap_blocked{false};
     bool bitmap_notice_shown = false;
@@ -169,7 +182,7 @@ struct Playback::Impl {
         if(error) g_error_free(error);
     }
 
-    ~Impl() { destroy_pipeline(); desktop_lease.release(); }
+    ~Impl() { destroy_pipeline(); hdmi_audio.release(); desktop_lease.release(); }
 
     void clear_frame() {
         std::lock_guard<std::mutex> lock(frame_mutex);
@@ -199,7 +212,10 @@ struct Playback::Impl {
             gst_object_unref(pipeline);
             pipeline = nullptr;
             audio_sink = nullptr;
+            video_sink = nullptr;
         }
+        video_memory_sampled = false;
+        audio_restart_pending = false;
         {
             std::lock_guard<std::mutex> lock(subtitle_mutex);
             for(auto* overlay : subtitle_overlays) gst_object_unref(overlay);
@@ -217,6 +233,16 @@ struct Playback::Impl {
         return static_cast<Impl*>(data)->accept_sample(gst_app_sink_pull_preroll(sink));
     }
 
+    static GstPadProbeReturn decoded_delivery(GstPad*, GstPadProbeInfo* info, gpointer data) {
+        auto& player = *static_cast<Impl*>(data);
+        if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
+            auto* list = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+            if(list) player.video_frames_decoded.fetch_add(gst_buffer_list_length(list));
+        } else if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER)
+            player.video_frames_decoded.fetch_add(1);
+        return GST_PAD_PROBE_OK;
+    }
+
     static GstPadProbeReturn video_delivery(GstPad*, GstPadProbeInfo* info, gpointer data) {
         auto& player = *static_cast<Impl*>(data);
         if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
@@ -224,6 +250,22 @@ struct Playback::Impl {
             if(buffers) player.video_buffers_delivered.fetch_add(gst_buffer_list_length(buffers));
         } else if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER) {
             player.video_buffers_delivered.fetch_add(1);
+        }
+        GstBuffer* first = GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER
+            ? GST_PAD_PROBE_INFO_BUFFER(info) : nullptr;
+        if(!first && (GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST)) {
+            auto* list = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
+            if(list && gst_buffer_list_length(list)) first = gst_buffer_list_get(list, 0);
+        }
+        if(first && !player.video_memory_sampled.exchange(true)) {
+            std::string types;
+            for(guint i = 0; i < gst_buffer_n_memory(first); ++i) {
+                auto* memory = gst_buffer_peek_memory(first, i);
+                if(!types.empty()) types += ',';
+                types += memory && memory->allocator && memory->allocator->mem_type ? memory->allocator->mem_type : "unknown";
+            }
+            std::lock_guard<std::mutex> lock(player.video_metadata_mutex);
+            player.video_output_memory = std::move(types);
         }
         return GST_PAD_PROBE_OK;
     }
@@ -252,6 +294,14 @@ struct Playback::Impl {
         GstElementFactory* factory = gst_element_get_factory(element);
         if(!factory) return;
         const char* factory_name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
+        const char* klass = gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS);
+        if(klass && std::strstr(klass, "Decoder") && std::strstr(klass, "Video")) {
+            if(GstPad* pad = gst_element_get_static_pad(element, "src")) {
+                gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                                  decoded_delivery, data, nullptr);
+                gst_object_unref(pad);
+            }
+        }
         if(std::strcmp(factory_name, "subtitleoverlay") == 0) {
             if(GstPad* pad = gst_element_get_static_pad(element, "subtitle_sink")) {
                 gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
@@ -349,15 +399,11 @@ struct Playback::Impl {
         }
         g_object_set(scale, "add-borders", TRUE, nullptr);
         // Keep HDMI video at its native size when possible. The owned KMS
-        // overlay scales and letterboxes it; CPU upscaling to the TV mode can
-        // reduce the Zero to a few frames per second. BT.709 limited matches
+        // overlay scales and letterboxes it. Preserve the decoder's planar
+        // YUV/DMABuf layout: forcing NV12 makes HD playback CPU-bound. BT.709 limited matches
         // the overlay's explicitly configured YUV conversion properties.
         GstCaps* caps = output == Output::Hdmi
-            ? gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, "NV12",
-                                  "colorimetry", G_TYPE_STRING, "bt709",
-                                  "width", GST_TYPE_INT_RANGE, 2, 1920,
-                                  "height", GST_TYPE_INT_RANGE, 2, 1080,
-                                  "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr)
+            ? hdmi_video_caps(hdmi.video_formats())
             : gst_caps_new_simple("video/x-raw", "format", G_TYPE_STRING, format,
                                   "width", G_TYPE_INT, width, "height", G_TYPE_INT, height,
                                   "pixel-aspect-ratio", GST_TYPE_FRACTION, 1, 1, nullptr);
@@ -388,7 +434,111 @@ struct Playback::Impl {
                 video_delivery, this, nullptr);
             gst_object_unref(sink_pad);
         }
+        video_sink = sink;
         return bin;
+    }
+
+    static bool temporary_audio(const std::string& name) {
+        return name.rfind("tyrell_video_hdmi_", 0) == 0;
+    }
+
+    OutputInventory audio_outputs() const {
+        auto result = inspect_outputs(true);
+        // A previous player's temporary sink may still be unloading. Only the
+        // lease owned by this instance has a useful, predictable lifetime.
+        result.audio.erase(std::remove_if(result.audio.begin(), result.audio.end(), [&](const AudioSink& sink) {
+            return temporary_audio(sink.name) &&
+                   !(hdmi_audio.state() == HdmiAudioSession::State::Ready && sink.name == hdmi_audio.sink_name());
+        }), result.audio.end());
+        return result;
+    }
+
+    bool explicit_owned_audio() const {
+        return hdmi_audio.state() == HdmiAudioSession::State::Ready &&
+               requested_audio_sink == hdmi_audio.sink_name();
+    }
+
+    void release_hdmi_audio(bool force = false) {
+        if(!force && explicit_owned_audio()) return;
+        if(requested_audio_sink == hdmi_audio.sink_name()) requested_audio_sink.clear();
+        hdmi_audio.release();
+        audio_attempted = false;
+        audio_fallback_attempted = false;
+        audio_recovery_attempted = false;
+        audio_owned_seen = false;
+    }
+
+    void move_audio(const AudioRoute& route) {
+        if(route.reset_previous_selection) requested_audio_sink.clear();
+        if(options.fake_audio) return;
+        const std::string target = route.sink_name.empty() ? "System default" : route.sink_name;
+        // GStreamer 1.26.2's live pulsesink.device setter leaks its PA mainloop
+        // lock when a stream has not acquired an index yet. A preroll/state
+        // check cannot close the race with an audio-track reconfiguration.
+        // Keep only the latest request and rebuild using a fresh NULL sink;
+        // make_audio_sink() is the only place that sets the device property.
+        audio_restart_pending = pipeline && target != state.audio_output;
+    }
+
+    void apply_audio_restart() {
+        if(!audio_restart_pending || !pipeline || pending_preroll || state.buffering) return;
+        // Capture at application time, not at enqueue time: intervening seek,
+        // pause and track requests must be carried into the replacement.
+        query();
+        const auto target = restart_target();
+        const bool autoplay = desired_playing;
+        destroy_pipeline();
+        state.error.clear();
+        if(create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) {
+            if(state.output == Output::Lcd) release_hdmi_audio();
+            return;
+        }
+        if(state.output == Output::Hdmi) fallback_to_lcd("Audio switch failed: " + state.error);
+        else {
+            release_hdmi_audio(true);
+            state.playing = false;
+            state.paused = true;
+            state.buffering = false;
+        }
+    }
+
+    void poll_hdmi_audio() {
+        if(options.fake_audio || !options.automatic_hdmi_audio || !pipeline) return;
+        const auto before = hdmi_audio.state();
+        if(before == HdmiAudioSession::State::Idle && state.output == Output::Hdmi && !audio_attempted) {
+            inventory = audio_outputs();
+            const bool explicit_available = !requested_audio_sink.empty() &&
+                std::any_of(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& sink) {
+                    return sink.available && sink.name == requested_audio_sink;
+                });
+            const bool hdmi_available = std::any_of(inventory.audio.begin(), inventory.audio.end(), [](const AudioSink& sink) {
+                return sink.available && sink.hdmi;
+            });
+            audio_attempted = true;
+            if(explicit_available || hdmi_available) {
+                move_audio(choose_audio_route(inventory.audio, true, requested_audio_sink));
+                return;
+            }
+            if(!hdmi_audio.begin()) {
+                state.notice = hdmi_audio.error();
+                return;
+            }
+            state.notice = "Preparing TV audio; video controls remain available";
+        }
+        const auto ready = hdmi_audio.poll();
+        if(ready == HdmiAudioSession::State::Ready && before != HdmiAudioSession::State::Ready) {
+            audio_owned_seen = true;
+            inventory = audio_outputs();
+            const auto route = choose_audio_route(inventory.audio, state.output == Output::Hdmi, requested_audio_sink);
+            move_audio(route);
+            state.notice = route.hdmi_fallback ? "TV audio is unavailable; using onboard/system audio" : "Switching to TV audio";
+        } else if(ready == HdmiAudioSession::State::Failed && before != HdmiAudioSession::State::Failed) {
+            audio_fallback_attempted = true;
+            const auto failure = hdmi_audio.error();
+            inventory = audio_outputs();
+            move_audio(choose_audio_route(inventory.audio, false, requested_audio_sink));
+            state.notice = failure;
+        }
     }
 
     GstElement* make_audio_sink(Output output, std::string& error) {
@@ -399,8 +549,8 @@ struct Playback::Impl {
             state.audio_output = "fakesink (explicit test option)";
             return sink;
         }
-        inventory = inspect_outputs(true);
-        const auto route = choose_audio_route(inventory.audio, output == Output::Hdmi, requested_audio_sink);
+        inventory = audio_outputs();
+        const auto route = choose_audio_route(inventory.audio, output == Output::Hdmi && !audio_fallback_attempted, requested_audio_sink);
         const std::string& destination = route.sink_name;
         if(route.reset_previous_selection) {
             requested_audio_sink.clear();
@@ -553,13 +703,14 @@ struct Playback::Impl {
         if(current >= 0) g_signal_emit_by_name(pipeline, "get-video-pad", current, &pad);
         if(pad) {
             GstCaps* caps = gst_pad_get_current_caps(pad);
-            GstVideoInfo info;
-            gst_video_info_init(&info);
-            if(caps && gst_video_info_from_caps(&info, caps)) {
-                state.source_width = GST_VIDEO_INFO_WIDTH(&info);
-                state.source_height = GST_VIDEO_INFO_HEIGHT(&info);
-                const double dar = static_cast<double>(state.source_width) * GST_VIDEO_INFO_PAR_N(&info) /
-                                   (std::max(1, state.source_height) * std::max(1, GST_VIDEO_INFO_PAR_D(&info)));
+            int width = 0, height = 0, par_n = 1, par_d = 1;
+            const GstStructure* fields = caps && gst_caps_get_size(caps) ? gst_caps_get_structure(caps, 0) : nullptr;
+            if(fields && gst_structure_get_int(fields, "width", &width) && gst_structure_get_int(fields, "height", &height) && width > 0 && height > 0) {
+                gst_structure_get_fraction(fields, "pixel-aspect-ratio", &par_n, &par_d);
+                state.source_width = width;
+                state.source_height = height;
+                const double dar = static_cast<double>(width) * std::max(1, par_n) /
+                                   (static_cast<double>(height) * std::max(1, par_d));
                 const double output_width = state.output == Output::Lcd ? lcd_width : hdmi.mode().width;
                 const double output_height = state.output == Output::Lcd ? lcd_height : hdmi.mode().height;
                 const double fitted_width = std::max(1.0, std::min(output_width, output_height * dar));
@@ -581,6 +732,34 @@ struct Playback::Impl {
         state.received_frames = received.load();
         state.video_buffers_delivered = video_buffers_delivered.load();
         state.qos_processed = qos_processed;
+        state.video_frames_decoded = video_frames_decoded.load();
+        {
+            std::lock_guard<std::mutex> lock(video_metadata_mutex);
+            state.video_output_memory = video_output_memory;
+        }
+        if(video_sink) {
+            if(g_object_class_find_property(G_OBJECT_GET_CLASS(video_sink), "stats")) {
+                GstStructure* stats = nullptr;
+                g_object_get(video_sink, "stats", &stats, nullptr);
+                if(stats) {
+                    guint64 rendered = 0, dropped = 0;
+                    gst_structure_get_uint64(stats, "rendered", &rendered);
+                    gst_structure_get_uint64(stats, "dropped", &dropped);
+                    state.video_sink_rendered = rendered;
+                    state.video_sink_dropped = dropped;
+                    gst_structure_free(stats);
+                }
+            }
+            if(GstPad* sink_pad = gst_element_get_static_pad(video_sink, "sink")) {
+                GstCaps* output_caps = gst_pad_get_current_caps(sink_pad);
+                if(output_caps) {
+                    gchar* text = gst_caps_to_string(output_caps);
+                    state.video_output_caps = text ? text : "";
+                    g_free(text); gst_caps_unref(output_caps);
+                }
+                gst_object_unref(sink_pad);
+            }
+        }
         if(state.video_decoder.empty()) {
             GstIterator* iterator = gst_bin_iterate_recurse(GST_BIN(pipeline));
             GValue value = G_VALUE_INIT;
@@ -601,6 +780,21 @@ struct Playback::Impl {
         }
     }
 
+    bool recover_audio(std::string failure) {
+        query();
+        const auto target = restart_target();
+        const bool autoplay = desired_playing;
+        destroy_pipeline();
+        release_hdmi_audio(true);
+        audio_attempted = true;
+        audio_fallback_attempted = true;
+        audio_recovery_attempted = true;
+        requested_audio_sink.clear();
+        state.error.clear();
+        state.notice = failure + "; using onboard/system audio";
+        return create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track);
+    }
+
     bool fallback_to_lcd(std::string notice) {
         // Lease loss and unplug are terminal for the owned HDMI session. A
         // failed LCD recovery must never roll back onto a display we no longer
@@ -608,6 +802,7 @@ struct Playback::Impl {
         query();
         const auto target = restart_target();
         destroy_pipeline();
+        release_hdmi_audio(true);
         desktop_lease.release();
         pending_hdmi = false;
         state.output_switching = false;
@@ -630,7 +825,10 @@ struct Playback::Impl {
         state.output = output;
         state.error.clear();
         if(create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) {
-            if(output == Output::Lcd) desktop_lease.release();
+            if(output == Output::Lcd) {
+                release_hdmi_audio();
+                desktop_lease.release();
+            }
             return true;
         }
         const std::string failure = state.error;
@@ -639,7 +837,10 @@ struct Playback::Impl {
         state.notice = failure;
         if(!create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track))
             state.error = failure + "; previous output also failed: " + state.error;
-        if(state.output == Output::Lcd || !pipeline) desktop_lease.release();
+        if(state.output == Output::Lcd || !pipeline) {
+            release_hdmi_audio(!pipeline);
+            desktop_lease.release();
+        }
         return false;
     }
 
@@ -655,6 +856,7 @@ struct Playback::Impl {
                 static_cast<gint64>(restart_position * GST_SECOND)))
             state.notice = "This file cannot seek; playback starts at the beginning";
         gst_element_set_state(pipeline, desired_playing ? GST_STATE_PLAYING : GST_STATE_PAUSED);
+        GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "tyrell-video-prerolled");
         state.buffering = false;
         state.paused = !desired_playing;
     }
@@ -675,7 +877,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     const Output output = p.pending_hdmi ? Output::Hdmi : p.state.output;
     p.pending_hdmi = false;
     p.destroy_pipeline();
-    if(output == Output::Lcd) p.desktop_lease.release();
+    if(output == Output::Lcd) { p.release_hdmi_audio(); p.desktop_lease.release(); }
     const double volume = p.state.volume;
     const bool muted = p.state.muted;
     p.state = {};
@@ -686,6 +888,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     p.state.loaded = true;
     p.received = 0;
     p.video_buffers_delivered = 0;
+    p.video_frames_decoded = 0;
     p.qos_processed = p.qos_dropped = 0;
     p.bitmap_blocked = false;
     p.bitmap_notice_shown = false;
@@ -703,6 +906,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
         p.state.output = Output::Lcd;
         if(!p.create_pipeline(0, true, -1, -1)) {
             p.state.loaded = false;
+            p.release_hdmi_audio(true);
             p.desktop_lease.release();
             return false;
         }
@@ -715,10 +919,12 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
         p.state.output = Output::Lcd;
         p.state.error.clear();
         p.state.notice = hdmi_error + "; using LCD";
+        p.release_hdmi_audio(true);
         p.desktop_lease.release();
         if(p.create_pipeline(0, true, -1, -1)) return true;
     }
     p.state.loaded = false;
+    p.release_hdmi_audio(true);
     p.desktop_lease.release();
     return false;
 }
@@ -743,15 +949,16 @@ void Playback::poll() {
         const auto error = p.desktop_lease.error();
         p.fallback_to_lcd(error + "; paused on LCD");
     }
-    if(!p.pipeline) return;
+    if(!p.pipeline) { p.hdmi_audio.poll(); return; }
     while(GstMessage* message = gst_bus_pop(p.bus)) {
-        bool fatal = false;
+        bool fatal = false, failed_audio = false;
         switch(GST_MESSAGE_TYPE(message)) {
             case GST_MESSAGE_ERROR: {
                 GError* error = nullptr;
                 gchar* debug = nullptr;
                 gst_message_parse_error(message, &error, &debug);
                 p.state.error = error ? error->message : "Playback failed";
+                failed_audio = p.audio_sink && GST_MESSAGE_SRC(message) == GST_OBJECT(p.audio_sink);
                 if(error) g_error_free(error);
                 g_free(debug);
                 p.state.playing = false;
@@ -801,10 +1008,13 @@ void Playback::poll() {
         }
         gst_message_unref(message);
         if(fatal) {
+            if(failed_audio && (p.state.output == Output::Hdmi || p.audio_owned_seen) &&
+               !p.audio_recovery_attempted && p.recover_audio(p.state.error)) return;
             if(p.state.output == Output::Hdmi) {
                 p.fallback_to_lcd(p.state.error + "; paused on LCD");
             } else {
                 p.destroy_pipeline();
+                p.release_hdmi_audio(true);
                 p.pending_hdmi = false;
                 p.state.output_switching = false;
                 p.desktop_lease.release();
@@ -822,11 +1032,14 @@ void Playback::poll() {
         p.state.playing = false;
         p.state.buffering = false;
         p.destroy_pipeline();
+        p.release_hdmi_audio(true);
         p.pending_hdmi = false;
         p.state.output_switching = false;
         p.desktop_lease.release();
         return;
     }
+    p.poll_hdmi_audio();
+    p.apply_audio_restart();
     if(now - p.last_query >= std::chrono::milliseconds(250)) { p.query(); p.last_query = now; }
     if(p.state.output == Output::Hdmi && now - p.last_hotplug >= std::chrono::milliseconds(500)) {
         p.last_hotplug = now;
@@ -882,7 +1095,7 @@ bool Playback::set_output(Output output) {
         p.pending_hdmi = false;
         p.state.output_switching = false;
         const bool result = p.change_output(output);
-        if(p.state.output == Output::Lcd) p.desktop_lease.release();
+        if(p.state.output == Output::Lcd) { p.release_hdmi_audio(); p.desktop_lease.release(); }
         if(cancelled) p.state.notice = "HDMI setup cancelled; using LCD";
         return result;
     }
@@ -939,23 +1152,22 @@ bool Playback::set_subtitle_track(int index) {
 bool Playback::set_audio_sink(const std::string& sink_name) {
     auto& p = *impl_;
     if(!sink_name.empty()) {
-        const auto inventory = inspect_outputs(true);
+        const auto inventory = p.audio_outputs();
         if(std::none_of(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& item) { return item.name == sink_name && item.available; })) {
             p.state.notice = "Selected audio output is unavailable";
             return false;
         }
     }
     p.requested_audio_sink = sink_name;
-    if(p.audio_sink && g_object_class_find_property(G_OBJECT_GET_CLASS(p.audio_sink), "device")) {
-        std::string destination = sink_name;
-        if(destination.empty()) {
-            const auto inventory = inspect_outputs(true);
-            destination = choose_audio_route(inventory.audio, p.state.output == Output::Hdmi, {}).sink_name;
-        }
-        // pulsesink moves an existing stream with PulseAudio's by-name API,
-        // which rejects NULL. The server resolves its default via this name.
-        g_object_set(p.audio_sink, "device", destination.empty() ? "@DEFAULT_SINK@" : destination.c_str(), nullptr);
-        p.state.audio_output = destination.empty() ? "System default" : destination;
+    p.audio_fallback_attempted = false;
+    p.audio_recovery_attempted = false;
+    if(sink_name.empty() && p.hdmi_audio.state() != HdmiAudioSession::State::Ready) {
+        p.hdmi_audio.release();
+        p.audio_attempted = false;
+    }
+    if(p.pipeline) {
+        const auto inventory = p.audio_outputs();
+        p.move_audio(choose_audio_route(inventory.audio, p.state.output == Output::Hdmi, sink_name));
     }
     return true;
 }
@@ -972,6 +1184,7 @@ void Playback::set_muted(bool muted) {
 void Playback::stop() {
     auto& p = *impl_;
     p.destroy_pipeline();
+    p.release_hdmi_audio(true);
     p.desktop_lease.release();
     p.pending_hdmi = false;
     p.state.output_switching = false;
@@ -1003,6 +1216,12 @@ std::string Playback::diagnostics_json() const {
         << ",\"path\":" << json_string(p.state.path) << ",\"position_seconds\":" << p.state.position
         << ",\"duration_seconds\":" << p.state.duration << ",\"received_frames\":" << p.received.load()
         << ",\"video_buffers_delivered\":" << p.video_buffers_delivered.load()
+        << ",\"video_frames_decoded\":" << p.state.video_frames_decoded
+        << ",\"video_sink_rendered\":" << p.state.video_sink_rendered
+        << ",\"video_sink_dropped\":" << p.state.video_sink_dropped
+        << ",\"video_output_memory\":" << json_string(p.state.video_output_memory)
+        << ",\"video_output_caps\":" << json_string(p.state.video_output_caps)
+        << ",\"sink_stats_scope\":\"GstBaseSink render calls/drops since its most recent reset, not physical scanout\""
         << ",\"video_decoder\":" << json_string(p.state.video_decoder) << ",\"fake_audio\":" << (p.options.fake_audio ? "true" : "false")
         << ",\"audio_output\":" << json_string(p.state.audio_output)
         << ",\"subtitle_renderer_count\":" << subtitle_renderer_count
