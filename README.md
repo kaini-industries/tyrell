@@ -64,9 +64,12 @@ do not promise smooth playback of every source profile.
 
 The [0.1.7 Store preparation](store/tyrell-video/0.1.7/README.md) includes the
 listing, icon, UI previews, permission declarations, qualification records,
-review notes and a local handoff archive builder. A reviewed real-device
-recording is provided and ready to attach to the eventual PR. No Store upload
-or maintainer approval has occurred.
+review notes and a local handoff archive builder. The exact package was
+[submitted to the Store as PR #324](https://github.com/CardputerZero/packages/pull/324),
+and the reviewed real-device recording is linked in the
+[PR conversation](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
+Automated submission checks passed. This first-app release awaits manual
+maintainer review and merge; it is not yet approved or live in the Store.
 
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio

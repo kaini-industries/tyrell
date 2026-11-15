@@ -1,0 +1,83 @@
+{
+  "package": "tyrell-video",
+  "debian_version": "0.1.7-1",
+  "architecture": "arm64",
+  "submitted_at_utc": "2026-11-15T05:52:34Z",
+  "submitted_date_local": "2026-11-14",
+  "verified_at_utc": "2026-11-15T05:57:43.248786+00:00",
+  "publisher": "beatsforthemind",
+  "method": "Official CardputerZero AppBuilder czdev publisher, existing GitHub authentication supplied in memory; no saved new credentials.",
+  "publisher_source_commit": "18996b694ae305306fc5d457d982cfba0b0e7cc5",
+  "publisher_publish_py_git_blob": "29db5a8342547bb68dd8890cd548bdcc33e31c2b",
+  "submitted_handoff_zip_sha256": "93a6bb48823f9f4b1428054aa43649b392da1724a1f7550e1ecd60831b00892a",
+  "pull_request": {
+    "url": "https://github.com/CardputerZero/packages/pull/324",
+    "number": 324,
+    "state": "open",
+    "merged": false,
+    "draft": false,
+    "head_sha": "6022394add25e7e2e38dd38366765251b5da878b",
+    "head_repository": "beatsforthemind/packages",
+    "head_branch": "publish/tyrell-video-0.1.7-1-1794721946",
+    "changed_files": 7
+  },
+  "recording_comment": {
+    "url": "https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512",
+    "id": 6890010512,
+    "author": "beatsforthemind",
+    "public_recording_access": "HTTP200 without authentication; release asset served as a downloadable MP4"
+  },
+  "assets": [
+    {
+      "id": 749996399,
+      "name": "Tyrell-Video-0.1.7-poster.jpg",
+      "size": 76132,
+      "digest": "sha256:5739d255aeafe3a3d071cbada63d439b3ed23270cbfb41d136b16d071e6619e5",
+      "content_type": "image/jpeg",
+      "browser_download_url": "https://github.com/beatsforthemind/packages/releases/download/czdev-buffer/Tyrell-Video-0.1.7-poster.jpg"
+    },
+    {
+      "id": 749996401,
+      "name": "Tyrell-Video-0.1.7.mp4",
+      "size": 5738744,
+      "digest": "sha256:989294ce8bb5018f074f247b1729ae921a0138e573e3b8d87236fb207ea47438",
+      "content_type": "video/mp4",
+      "browser_download_url": "https://github.com/beatsforthemind/packages/releases/download/czdev-buffer/Tyrell-Video-0.1.7.mp4"
+    },
+    {
+      "id": 749994635,
+      "name": "tyrell-video_0.1.7-1_arm64.deb",
+      "size": 686346,
+      "digest": "sha256:7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+      "content_type": "application/octet-stream",
+      "browser_download_url": "https://github.com/beatsforthemind/packages/releases/download/czdev-buffer/tyrell-video_0.1.7-1_arm64.deb"
+    }
+  ],
+  "automated_submission_checks": [
+    {
+      "name": "capture",
+      "conclusion": "SUCCESS",
+      "url": "https://github.com/CardputerZero/packages/actions/runs/43682944042/job/132717285807",
+      "completed_at": "2026-11-15T05:52:46Z"
+    },
+    {
+      "name": "validate",
+      "conclusion": "SUCCESS",
+      "url": "https://github.com/CardputerZero/packages/actions/runs/43682944110/job/132717284155",
+      "completed_at": "2026-11-15T05:52:47Z"
+    }
+  ],
+  "independent_submission_audit": "passed: seven expected metadata/image files only; all image bytes, metadata, package manifest, noreply identities and release server digests match preparation.",
+  "source_url_omitted": true,
+  "uploader_email_is_noreply": true,
+  "application_source_uploaded_in_store_pr": false,
+  "source_repository_visibility_observation": {
+    "repository": "kaini-industries/tyrell",
+    "visibility": "public",
+    "private": false,
+    "changed_by_this_submission": false,
+    "note": "The main project repository reports public through both GitHub API paths. Its visibility was not modified by the Store publisher; source URL remains omitted from the listing."
+  },
+  "store_catalog_status": "not yet published; awaiting manual first-app maintainer review and merge",
+  "maintainer_approval": "pending"
+}

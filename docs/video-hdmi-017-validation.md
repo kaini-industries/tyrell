@@ -210,7 +210,8 @@ measurement of audio/video latency.
 The prepared [SDR BT.709 H.264/AAC sharing copy](../store/tyrell-video/0.1.7/recording/Tyrell-Video-0.1.7.mp4)
 has source metadata removed, with conversion/provenance details in its
 [recording manifest](../store/tyrell-video/0.1.7/recording/manifest.json). It is
-ready to attach to the eventual first-app PR and has not been publicly uploaded.
+publicly uploaded and linked in the
+[first-app PR conversation](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
 The older unreceived 0.1.6 recording is no longer a missing-evidence dependency.
 
 The Store asks for a short real-device demonstration, not a 45-second minimum
@@ -220,8 +221,13 @@ or maintainer approval. Synthetic fixtures and rendered previews retain their
 separate labels.
 
 The [0.1.7 Store preparation](../store/tyrell-video/0.1.7/README.md) includes the
-completed hardware qualification and reviewed recording, ready to accompany
-the eventual first-app PR. A completed package build, an injected recovery
-test and an authentic device recording remain distinct evidence items. No
-Store upload or maintainer approval has occurred, and source-repository
-visibility remains unchanged.
+completed hardware qualification and reviewed recording. The exact package was
+[submitted as PR #324](https://github.com/CardputerZero/packages/pull/324), with
+head `6022394add25e7e2e38dd38366765251b5da878b`; capture and validation CI passed.
+The supplied recording and poster were uploaded alongside the package in the
+contributor's `czdev-buffer` release, preserving their prepared hashes, and
+linked in the PR comment above. The optional Store source URL remains omitted.
+A completed package build, an injected recovery test and an authentic device
+recording remain distinct evidence items. This first-app release awaits manual
+maintainer review and merge; submission does not establish Store approval or
+availability.

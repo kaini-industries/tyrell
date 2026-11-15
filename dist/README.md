@@ -32,8 +32,12 @@ nonroot helper introduced in 0.1.6. The
 [Store preparation](../store/tyrell-video/0.1.7/README.md) includes the completed
 qualification and reviewed real-device recording. The results cover the stated
 hardware, H.264 profile and injected failure; other formats can have different
-performance. No Store submission or maintainer approval has occurred. Earlier
-package bytes and their original build provenance remain unchanged.
+performance. The exact 0.1.7 package was
+[submitted as Store PR #324](https://github.com/CardputerZero/packages/pull/324),
+with its [real-device recording posted for review](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
+Automated submission checks passed; the first-app release awaits manual
+maintainer review and merge. Earlier package bytes and their original build
+provenance remain unchanged.
 
 Each version folder retains the original build/source manifests and test logs.
 The original manifest describes the complete builder export; `SHA256SUMS`

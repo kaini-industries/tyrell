@@ -1,8 +1,15 @@
-# Tyrell Video 0.1.7 Store handoff
+# Tyrell Video 0.1.7 Store submission
 
-Prepared and device-qualified November 14, 2026. The package, listing, review
-notes and authentic device recording are ready for submission. Nothing has
-been uploaded to the Store; first-app approval remains a maintainer decision.
+Submitted as [CardputerZero/packages PR #324](https://github.com/CardputerZero/packages/pull/324)
+on November 14, 2026. Both automated submission checks passed. The
+[recording and qualification notes](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512)
+are posted; first-app maintainer review and merge remain pending. The app is
+not yet published in the Store catalog. See the [submission receipt](../submissions/0.1.7.json).
+
+The package below is unchanged. This folder retains the November 14 prepared
+handoff, including its pre-submission `validation.json`, `UPLOAD.md` and reviewer
+notes. The receipt records current publication status. Do not rerun the publisher
+for this version: use the existing PR.
 
 Package: `tyrell-video_0.1.7-1_arm64.deb`, architecture `arm64`, 686346 bytes.
 SHA-256: `7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79`.
@@ -27,7 +34,9 @@ These are the exact bytes installed and tested on the CardputerZero.
 this prebuilt package. [`portal-fields.json`](portal-fields.json) mirrors the
 web form values; the portal does not import that JSON. The authenticated GitHub
 account that first submits the package becomes its Store owner. No login or
-source URL is guessed. Keep the private source repository private.
+source URL is guessed. The submission omits the source URL and does not change
+the project repository's visibility. Its current public visibility is recorded
+separately in the submission receipt.
 
 Current official path, service, dangerous-hook and metadata checks pass. The
 metadata has zero errors, with advisory suggestions for translations and a
@@ -73,7 +82,7 @@ The four listing images are explicitly rendered UI previews. The generic
 synthetic `demo/` clip is optional playback content, not the phone recording.
 See [`recording-guide.md`](recording-guide.md) for an optional longer walkthrough.
 
-## Local handoff
+## Archived local handoff
 
 From the repository root:
 
@@ -92,7 +101,18 @@ listing assets. Leave the source URL blank and email hidden. Submission is a
 public upload; attach the supplied recording and [`reviewer-notes.md`](reviewer-notes.md)
 to the generated first-app PR. Alternatively, `czdev publish --deb
 ./tyrell-video_0.1.7-1_arm64.deb` uses this prebuilt listing and performs a public
-fork-release/PR upload. Neither submission path has been run by this preparation.
+fork-release/PR upload. The original archive was assembled before publication; the subsequent publisher
+run is recorded in the receipt.
+
+## Submission record
+
+The publisher account is `beatsforthemind`. The official publisher uploaded the
+exact `.deb` to that account's Store-package fork and created the seven-file
+metadata/image PR. The recording and poster are hosted alongside the package;
+release-server SHA-256 digests match all three prepared files. No app source
+was added to the Store PR. This submission did not change the main project
+repository's visibility. The historical handoff instructions above describe
+the preparation and are retained for reproducibility.
 
 ## Requirements sources
 

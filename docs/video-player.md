@@ -194,6 +194,9 @@ The [native display report](video-lcd-refresh-validation.md) records the 0.1.5
 framebuffer refresh correction and pause/caption clock-continuity tests.
 
 The [0.1.7 Store preparation](../store/tyrell-video/0.1.7/README.md) includes the
-completed hardware evidence and reviewed real-device recording, ready for the
-eventual PR. Store upload and maintainer approval are separate, unperformed
-actions.
+completed hardware evidence and reviewed real-device recording. The package was
+[submitted as Store PR #324](https://github.com/CardputerZero/packages/pull/324),
+and the recording is linked in the
+[review comment](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
+Automated submission checks passed. This first-app release awaits manual
+maintainer review and merge before it becomes available in the Store.
