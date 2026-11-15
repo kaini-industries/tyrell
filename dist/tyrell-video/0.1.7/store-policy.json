@@ -1,0 +1,48 @@
+{
+  "checked_at_utc": "2026-11-15T05:38:21.069882+00:00",
+  "package": "tyrell-video_0.1.7-1_arm64.deb",
+  "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "bytes": 686346,
+  "identity": {
+    "Package": "tyrell-video",
+    "Version": "0.1.7-1",
+    "Architecture": "arm64",
+    "Maintainer": "Tyrell contributors <tyrell@localhost>"
+  },
+  "upstream_blobs": {
+    "path": "bab1318f4c6c41d4bfee4fbf1de24e004e5ca6ac",
+    "metadata": "36e50b78622d2f75355f06bf0d8a10f979a286e0",
+    "portal": "2e30925e98235209706274bfaa4684f937993128",
+    "cli": "1a13112e39f6ad8553391535c31c6b8c74f96fcd"
+  },
+  "rejected_paths": [],
+  "root_services": [],
+  "service_checks_by_channel": {
+    "portal": [],
+    "cli": []
+  },
+  "unsafe_entries": [],
+  "applaunch_entry_present": true,
+  "maintainer_errors": [],
+  "maintainer_scripts": {
+    "portal": {
+      "scripts_checked": [
+        "postinst",
+        "postrm",
+        "prerm"
+      ],
+      "rejected": []
+    },
+    "cli": {
+      "scripts_checked": [
+        "postinst",
+        "postrm",
+        "prerm"
+      ],
+      "rejected": []
+    }
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": []
+}

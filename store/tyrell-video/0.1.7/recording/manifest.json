@@ -1,0 +1,37 @@
+{
+  "app_version": "0.1.7",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "source": "User-provided Tyrell_Video.MOV, supplied during final controlled-recovery HDMI run",
+  "original_sha256": "26015c3fc4d962ef6177faf63ac167e4a5d2ac37f2d9ec2f1cefa7d712b71b2f",
+  "original_bytes": 21088645,
+  "prepared_file": "Tyrell-Video-0.1.7.mp4",
+  "prepared_sha256": "989294ce8bb5018f074f247b1729ae921a0138e573e3b8d87236fb207ea47438",
+  "prepared_bytes": 5738744,
+  "probe": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720,
+        "color_space": "bt709",
+        "color_transfer": "bt709",
+        "color_primaries": "bt709"
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "sample_rate": "48000",
+        "channels": 2
+      }
+    ],
+    "format": {
+      "duration": "17.108000",
+      "size": "5738744"
+    }
+  },
+  "transformation": "Entire original duration retained. Actual HLG/BT.2020 HDR to BT.709 SDR via linear zscale, Hable tone mapping (peak 10), and BT.709 output transfer/matrix. Format conversion to 1280x720 H.264/AAC. Original metadata, chapters and timed-data tracks removed. No cuts, overlays, synthesized screen content or audio replacements.",
+  "review_scope": "Independent complete original/final-derivative decode and sampled visual frames show the real handheld controller, TV motion and readable 0.1.7 label/subtitles. Audio analysis detects roughly one-second 880 Hz pulses; the user separately confirms TV sound matches flashes. Not a calibrated latency or physical-frame-rate measurement.",
+  "public_upload_performed": false
+}

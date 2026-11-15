@@ -1,0 +1,27 @@
+{
+  "baseline_version": "0.1.6-1",
+  "baseline_confirmed": [
+    "smooth TV video",
+    "matching TV sound and flashes",
+    "no desktop cursor",
+    "handheld controller",
+    "readable captions",
+    "pause/caption time preserved",
+    "disconnect pauses LCD at same position",
+    "reconnect O + Space returns TV picture and sound",
+    "4:3 circle/square and four borders correct",
+    "ten-minute run smooth with matching sound"
+  ],
+  "candidate_version": "0.1.7-1",
+  "candidate_recovered_software_session_confirmed": [
+    "smooth TV motion",
+    "matching TV sound and flashes",
+    "readable captions",
+    "handheld controller visible"
+  ],
+  "recordings": {
+    "baseline": "user reports recording ready; file not received or reviewed",
+    "candidate": "User supplied Tyrell_Video.MOV during the final 0.1.7 run; the entire 17.1-second clip is prepared as SDR H.264/AAC with metadata removed. See recording/manifest.json."
+  },
+  "scope": "User observations are physical checks, not instrumented latency or scanout measurements."
+}

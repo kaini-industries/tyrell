@@ -1,5 +1,10 @@
 # Tyrell Video 0.1.6 Store submission
 
+This historical draft is superseded by the 0.1.7 candidate. Final TV checks of
+0.1.6 found an intermittent HDMI startup buffer-allocation failure; see the
+[qualification report](../../../docs/video-hdmi-016-validation.md). Use the
+current candidate after its hardware qualification, rather than submitting 0.1.6.
+
 Prepared November 14, 2026. This folder is a reviewable submission draft; it has
 not been uploaded to the Store. Use the existing immutable ARM64 package:
 
@@ -60,7 +65,7 @@ establish a TV test of 0.1.6. Keep this limitation in the listing and
 From the repository root:
 
 ```sh
-python3 scripts/prepare-video-store.py
+python3 scripts/prepare-video-store.py --version 0.1.6
 ```
 
 This creates `build/store/tyrell-video-0.1.6-submission.zip` with the exact `.deb`,

@@ -18,6 +18,7 @@ vendor/
 # Verified package snapshots intentionally retained in Git.
 !dist/tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb
 !dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb
+!dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb
 !dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb
 *.log
 .DS_Store

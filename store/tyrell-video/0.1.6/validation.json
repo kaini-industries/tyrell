@@ -66,8 +66,8 @@
     "note": "Published data only; recheck at actual submission. Pending PRs can change availability."
   },
   "remaining_review_evidence": [
-    "Authentic short video of the app running on a physical CardputerZero; attach to the eventual first-app PR",
-    "Physical TV playback retest of the 0.1.6 nonroot helper remains pending per user instruction"
+    "Superseded: final TV startup checks exposed an intermittent KMS buffer-pool allocation failure. Use qualified0.1.7 candidate.",
+    "User reports authentic TV/handheld baseline phone video ready; file not yet received."
   ],
   "privacy": {
     "source_repo_in_listing": false,
@@ -75,5 +75,6 @@
     "publisher_github_login": "Supplied by the future authenticated uploader, not guessed in the draft",
     "source_visibility_changed": false
   },
-  "asset_disclosure": "Four screenshots are deterministic rendered UI previews; demo MP4 is synthetic playback input, not the required real-device recording."
+  "asset_disclosure": "Four screenshots are deterministic rendered UI previews; demo MP4 is synthetic playback input, not the required real-device recording.",
+  "superseded_by": "0.1.7"
 }

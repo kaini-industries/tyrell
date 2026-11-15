@@ -17,14 +17,18 @@ exported to `artifacts/video/`, including the `.deb`, screenshots, diagnostics,
 dependency inventory, checksums and manifest. The normal `make package` still
 builds Status and retains the video artifacts.
 
-The verified [0.1.6 ARM64 package](../dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb)
-is committed with [checksums and provenance](../dist/README.md). On the device,
-from a repository checkout:
+The current [0.1.7 ARM64 package](../dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb)
+passed 35 ARM64 CTests, package install/remove checks and actual-device HDMI
+recovery, sustained software playback and normal APPLaunch launch/exit checks.
+See the [qualification report](video-hdmi-017-validation.md) for the tested
+profile and measurement limits.
+Package [checksums and provenance](../dist/README.md) identify the exact build.
+On the device, from a repository checkout:
 
 ```sh
-cd dist/tyrell-video/0.1.6
+cd dist/tyrell-video/0.1.7
 sha256sum -c SHA256SUMS
-sudo apt install ./tyrell-video_0.1.6-1_arm64.deb
+sudo apt install ./tyrell-video_0.1.7-1_arm64.deb
 ```
 
 For a local build, copy the package from `artifacts/video/` and install it the
@@ -97,10 +101,23 @@ LCD playback and controls remain available. Unsupported owners, missing helpers
 and handoff failures keep playback on the LCD with an explanation. The helper
 also recovers the console after an abnormal helper exit.
 
-The attached-TV test found that software upscaling to the HDMI mode was too
-slow. HDMI now uses an owned background and VC4 overlay scaling, retaining
-native-sized NV12 video where possible. See the [TV validation report](video-hdmi-validation.md)
-for measured geometry, performance and the ten-minute stability result.
+The original attached-TV test found that software upscaling to the HDMI mode
+was too slow. HDMI uses an owned background and VC4 overlay scaling, retaining
+native-size video where possible. The [0.1.6 TV report](video-hdmi-016-validation.md)
+records physical sound, captions, aspect fitting and hotplug checks, together
+with a successful ten-minute run and a separate startup allocation failure.
+
+Version 0.1.7 adds one software-video retry per file load for the specific KMS
+buffer-pool activation failure after hardware video has produced output.
+Controlled tests verified one recovery, a nonzero paused position surviving
+caption selection, and paused LCD fallback after a second failure. The retry
+retains the console and audio leases; it does not broadly retry corrupt files,
+missing codecs, permission errors or unrelated failures, and it does not change
+system decoder preferences or firmware. The tested 1920 × 816, 24 fps H.264/AAC
+software session advanced 615.097 seconds with user-confirmed smooth motion,
+TV sound and readable captions. Software decoding uses substantial CPU and
+other profiles can still need conversion; the
+[0.1.7 qualification](video-hdmi-017-validation.md) records the actual limits.
 
 On the tested stock image, LightDM owns HDMI and its audio card does not expose
 a working HDMI PulseAudio sink by default. The app releases the desktop
@@ -157,7 +174,9 @@ The presets use aspect-preserving, even-sized H.264/yuv420p at 24 fps with AAC
 stereo. The handheld bounds are 320 × 170; HDMI bounds are 640 × 360, matching
 the smooth attached-TV test. The TV mode remains 1280 × 720, with hardware
 scaling. Earlier releases forced a slow HD frame conversion. Version 0.1.3 preserves
-decoder-native DMA buffers for HDMI; see current validation for measured profiles. The tool
+decoder-native DMA buffers for HDMI when the negotiated path supports them;
+first-buffer memory and software-retry costs must be interpreted from the
+current qualification rather than assumed to be identical on every run. The tool
 refuses to overwrite an existing destination. It selects the first video and
 audio tracks; subtitles remain separate rather than being burned in.
 
@@ -173,3 +192,8 @@ Hardware-specific playback measurements and the LCD conversion changes are in th
 
 The [native display report](video-lcd-refresh-validation.md) records the 0.1.5
 framebuffer refresh correction and pause/caption clock-continuity tests.
+
+The [0.1.7 Store preparation](../store/tyrell-video/0.1.7/README.md) includes the
+completed hardware evidence and reviewed real-device recording, ready for the
+eventual PR. Store upload and maintainer approval are separate, unperformed
+actions.

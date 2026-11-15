@@ -1,0 +1,28 @@
+{
+  "package": "tyrell-video",
+  "debian_version": "0.1.7-1",
+  "architecture": "arm64",
+  "package_file": "tyrell-video_0.1.7-1_arm64.deb",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "source_revision": "src-03a5a269b185",
+  "source_sha256": "03a5a269b185a98e97be0c5b023a68fe03a6b056d91d5b6171e590254db8e41c",
+  "source_commit": "8cba407dcce3675844acc4b203fa78a664044dc3",
+  "source_commit_url": "https://github.com/kaini-industries/tyrell/commit/8cba407dcce3675844acc4b203fa78a664044dc3",
+  "validation": {
+    "ctest_passed": 35,
+    "ctest_failed": 0,
+    "package_install_remove": "passed",
+    "physical_tv_playback": "passed for measured H.264/AAC profile; user confirmation and supplied recording",
+    "store_path_and_nonroot_service_policy": "passed",
+    "store_metadata": "passed with source-URL/translation advisories",
+    "software_retry_fault_injection": "passed; one retry and bounded second-failure fallback",
+    "ten_minute_software_recovery": "passed;615.097 seconds of media progression",
+    "device_connected_crash_recovery": "passed; player and helper SIGKILL",
+    "normal_applaunch_launch_exit": "passed; user confirmed",
+    "installed_device_dpkg_verify": "clean",
+    "protected_files_unchanged": 12,
+    "launcher_restarts": 0
+  },
+  "origin": "Verified isolated Debian ARM64 builder export",
+  "note": "Immutable build snapshot; source manifests identify exact committed build inputs. Later validation/distribution documentation does not alter package bytes. No shared builder or Status code changed for this recovery release; the existing Status artifacts are preserved."
+}

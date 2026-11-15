@@ -1,0 +1,133 @@
+{
+  "package_version": "0.1.7-1",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "scope": "Controlled process-local fault injection; not a reproduction of natural CMA exhaustion. Original installed app bytes unchanged. No bus messages synthesized.",
+  "interposer": {
+    "source": "kms-activation-fault.c",
+    "source_sha256": "492f9a88ed5c7e0adbe5bf37fcdf2c7da8a019cd2188fd20f11a3eb037a394bc",
+    "arm64_library_sha256": "46140f339b5bb47f7a60212adc6251cedaca90ca22998af6c1007383d2de6ff6",
+    "caller": "libgstkms.so",
+    "pool_type": "GstKMSBufferPool",
+    "dma_import_identification_deliberately_rejected_for_kms_only": true,
+    "failure_budget_per_distinct_pool": true,
+    "separate_strict_compile_and_mock_guard_smoke": "passed"
+  },
+  "bounded_two_failures": {
+    "passed": true,
+    "injected_distinct_pools": 2,
+    "injection_seconds": [
+      24.641,
+      28.459
+    ],
+    "software_retry_count": 1,
+    "pipeline_builds": 3,
+    "final_output": "lcd",
+    "final_paused": true,
+    "position_seconds": 20,
+    "error": "",
+    "notice": "failed to activate buffer pool; paused on LCD"
+  },
+  "single_failure_preservation": {
+    "paused_before_seconds": 20,
+    "paused_after_caption_selection_seconds": 20,
+    "before_image": "paused-before.png",
+    "after_image": "paused-after.png",
+    "selected_track_image": "selected-subtitle-track.png",
+    "subtitle_menu": "* Subs: Subtitles 1",
+    "final_report_pending": false,
+    "passed": true,
+    "software_decoder": "avdec_h264",
+    "retry_count": 1,
+    "final_position_seconds": 635.097,
+    "final_output": "hdmi"
+  },
+  "error_evidence": {
+    "actual_sink_warning": "kmssink ensure_internal_pool: failed to activate buffer pool",
+    "reported_reason": "failed to activate buffer pool",
+    "bus_domain_code": "eligibility guards unit tested; not independently captured by device interposer"
+  },
+  "natural_pressure_startups": {
+    "attempts": 5,
+    "matrix": "three cases with 4 MiB reserved, one with 12 MiB, one with 16 MiB",
+    "passed_hdmi": 5,
+    "automatic_retry_triggered": 0,
+    "reservation_scope": "Temporary normal-user unshown DRM dumb buffers; no modes, mastership or boot configuration changes; released after each group.",
+    "cases": [
+      {
+        "reserved_mib": 4,
+        "input_case": "fifo-none",
+        "before_cma_free_kib": 34132,
+        "minimum_sampled_cma_free_kib": 472,
+        "output": "hdmi",
+        "position_seconds": 12.139,
+        "sink_render_calls": 292,
+        "sink_drops": 0,
+        "decoder": "v4l2h264dec",
+        "first_observed_output_memory": "SystemMemory",
+        "retry_count": 0,
+        "error": "",
+        "notice": ""
+      },
+      {
+        "reserved_mib": 4,
+        "input_case": "fifo-early",
+        "before_cma_free_kib": 32804,
+        "minimum_sampled_cma_free_kib": 3816,
+        "output": "hdmi",
+        "position_seconds": 8.78718,
+        "sink_render_calls": 209,
+        "sink_drops": 1,
+        "decoder": "v4l2h264dec",
+        "first_observed_output_memory": "dmabuf",
+        "retry_count": 0,
+        "error": "",
+        "notice": ""
+      },
+      {
+        "reserved_mib": 4,
+        "input_case": "real-early",
+        "before_cma_free_kib": 28784,
+        "minimum_sampled_cma_free_kib": 952,
+        "output": "hdmi",
+        "position_seconds": 9.80316,
+        "sink_render_calls": 236,
+        "sink_drops": 0,
+        "decoder": "v4l2h264dec",
+        "first_observed_output_memory": "SystemMemory",
+        "retry_count": 0,
+        "error": "",
+        "notice": ""
+      },
+      {
+        "reserved_mib": 12,
+        "input_case": "real-early",
+        "before_cma_free_kib": 25420,
+        "minimum_sampled_cma_free_kib": 860,
+        "output": "hdmi",
+        "position_seconds": 36.0271,
+        "sink_render_calls": 865,
+        "sink_drops": 0,
+        "decoder": "v4l2h264dec",
+        "first_observed_output_memory": "dmabuf",
+        "retry_count": 0,
+        "error": "",
+        "notice": ""
+      },
+      {
+        "reserved_mib": 16,
+        "input_case": "real-early",
+        "before_cma_free_kib": 18016,
+        "minimum_sampled_cma_free_kib": 1052,
+        "output": "hdmi",
+        "position_seconds": 37.1243,
+        "sink_render_calls": 891,
+        "sink_drops": 0,
+        "decoder": "v4l2h264dec",
+        "first_observed_output_memory": "dmabuf",
+        "retry_count": 0,
+        "error": "",
+        "notice": ""
+      }
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "prepared_date_local": "2026-11-14",
+  "package": {
+    "filename": "tyrell-video_0.1.7-1_arm64.deb",
+    "version": "0.1.7-1",
+    "bytes": 686346,
+    "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+    "source_revision": "src-03a5a269b185",
+    "source_commit": "8cba407dcce3675844acc4b203fa78a664044dc3"
+  },
+  "metadata": {
+    "checked_at_utc": "2026-11-15T05:38:21.095939+00:00",
+    "package": "tyrell-video_0.1.7-1_arm64.deb",
+    "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+    "validator_blob": "36e50b78622d2f75355f06bf0d8a10f979a286e0",
+    "validator_url": "https://github.com/CardputerZero/packages/blob/main/.github/scripts/store_meta_policy.py",
+    "errors": [],
+    "warnings": [
+      "consider adding locales (localized title/summary) / 建议提供 locales（多语言 title/summary），商店会按用户语言展示",
+      "consider adding source_repo / 建议提供 source_repo（开源仓库地址）"
+    ],
+    "maintainer": "Tyrell contributors <tyrell@localhost>",
+    "maintainer_errors": [],
+    "summary_length": 70,
+    "screenshots": 4,
+    "published_pool_tree": "14062e53a49f87ec3a8315ec73962c54b22dbe85",
+    "published_metadata_count": 49,
+    "uniqueness_checked": true,
+    "portal_fields_match": true,
+    "private_source_omitted": true,
+    "validated_inputs": {
+      "app-builder.json": "ebb30d80dc3b2486377dd5d24f40ac8a61ed1eeffa436e0a1b2ce7c6274bc931",
+      "portal-fields.json": "07355f59906512127c476bece72777cdc3ee87500e2de3d71c076077757226c4",
+      "assets/icon-256.png": "96b30a1759d449db0aafdd9653fd3149c7aefbf2123306905d33094033c4ab9c",
+      "assets/01-browser-preview.png": "70bcfbc5c9b5b51652bbf9c26864283ac1b7932669f1a8a89b3173105db84f73",
+      "assets/02-lcd-player-preview.png": "b135f2806fafc4e3bbc56a681e808b6dc364abaf8f0aa71be1262143b439ac6a",
+      "assets/03-tracks-preview.png": "d368451627476eae2902fffe5d1044dce9a2394fe8f732956d25b06a6bef87ff",
+      "assets/04-hdmi-controller-preview.png": "3b0e0c60f30c0fcd51aae4f752bc9b9a5bafd43ee025097ab659b750bdd75b55"
+    },
+    "passed": true
+  },
+  "package_policy": {
+    "checked_at_utc": "2026-11-15T05:38:21.069882+00:00",
+    "package": "tyrell-video_0.1.7-1_arm64.deb",
+    "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+    "bytes": 686346,
+    "identity": {
+      "Package": "tyrell-video",
+      "Version": "0.1.7-1",
+      "Architecture": "arm64",
+      "Maintainer": "Tyrell contributors <tyrell@localhost>"
+    },
+    "upstream_blobs": {
+      "path": "bab1318f4c6c41d4bfee4fbf1de24e004e5ca6ac",
+      "metadata": "36e50b78622d2f75355f06bf0d8a10f979a286e0",
+      "portal": "2e30925e98235209706274bfaa4684f937993128",
+      "cli": "1a13112e39f6ad8553391535c31c6b8c74f96fcd"
+    },
+    "rejected_paths": [],
+    "root_services": [],
+    "service_checks_by_channel": {
+      "portal": [],
+      "cli": []
+    },
+    "unsafe_entries": [],
+    "applaunch_entry_present": true,
+    "maintainer_errors": [],
+    "maintainer_scripts": {
+      "portal": {
+        "scripts_checked": [
+          "postinst",
+          "postrm",
+          "prerm"
+        ],
+        "rejected": []
+      },
+      "cli": {
+        "scripts_checked": [
+          "postinst",
+          "postrm",
+          "prerm"
+        ],
+        "rejected": []
+      }
+    },
+    "passed": true,
+    "errors": [],
+    "warnings": []
+  },
+  "automated": {
+    "arm64_ctest_passed": 35,
+    "arm64_ctest_failed": 0,
+    "builder_install_diagnostics_render_remove": "passed",
+    "source_manifest_matches_build_commit": 76,
+    "package_payload_md5s_verified": 11
+  },
+  "hardware_qualification": {
+    "status": "passed for tested profile and conditions",
+    "ordinary_hardware_decoder_starts": 5,
+    "controlled_kms_retry": "passed; actual sink failure, no synthetic bus messages",
+    "controlled_second_failure": "passed; paused LCD at 20 seconds, one retry, no loop",
+    "paused_caption_time_preserved_seconds": 20,
+    "software_recovery_media_progress_seconds": 615.097,
+    "connected_crash_recovery": "passed",
+    "normal_applaunch_launch_exit": "passed; user confirmed",
+    "final_device_audit": "passed",
+    "details": "qualification/README.md",
+    "scope": "1920x816 at 24 fps H.264 Constrained Baseline/AAC source, 720p HDMI output; other profiles not universally guaranteed. Natural-pressure starts and injected failures are separate cases. Earlier 0.1.6 TV geometry/hotplug observations remain explicitly versioned."
+  },
+  "recording": {
+    "provided": true,
+    "file": "recording/Tyrell-Video-0.1.7.mp4",
+    "manifest": "recording/manifest.json",
+    "reviewed": true,
+    "description": "Authentic 17.1-second phone footage of physical TV/handheld and readable 0.1.7 captions; entire clip retained with actual SDR tone mapping and metadata removal; full video/audio decode passed.",
+    "calibrated_latency_or_scanout_measurement": false
+  },
+  "submission": {
+    "uploaded": false,
+    "store_approved": false,
+    "source_visibility_changed": false,
+    "share_code_reserved": false,
+    "remaining_actions": [
+      "Choose intended GitHub owner account and recheck listing availability at actual submission.",
+      "Submit exact deb/listing assets and attach the supplied real-device recording plus reviewer notes to the generated first-app PR.",
+      "Await maintainer review."
+    ]
+  }
+}

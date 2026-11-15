@@ -1,0 +1,76 @@
+Internal ctest changing into directory: /var/tmp/tyrell-build/cmake
+Test project /var/tmp/tyrell-build/cmake
+      Start  1: video-hdmi-helper
+ 1/35 Test  #1: video-hdmi-helper ................   Passed    0.08 sec
+      Start  2: video-decode-policy
+ 2/35 Test  #2: video-decode-policy ..............   Passed    0.04 sec
+      Start  3: video-media-fixture
+ 3/35 Test  #3: video-media-fixture ..............   Passed    0.48 sec
+      Start  4: video-media-controls
+ 4/35 Test  #4: video-media-controls .............   Passed    3.11 sec
+      Start  5: video-clock-fixture
+ 5/35 Test  #5: video-clock-fixture ..............   Passed    0.10 sec
+      Start  6: video-clock-embedded-fixture
+ 6/35 Test  #6: video-clock-embedded-fixture .....   Passed    0.10 sec
+      Start  7: video-caption-clock
+ 7/35 Test  #7: video-caption-clock ..............   Passed   23.03 sec
+      Start  8: video-wide-fixture
+ 8/35 Test  #8: video-wide-fixture ...............   Passed    0.06 sec
+      Start  9: video-anamorphic-fixture
+ 9/35 Test  #9: video-anamorphic-fixture .........   Passed    0.05 sec
+      Start 10: video-small-fixture
+10/35 Test #10: video-small-fixture ..............   Passed    0.05 sec
+      Start 11: video-lcd-geometry
+11/35 Test #11: video-lcd-geometry ...............   Passed    1.55 sec
+      Start 12: video-startup
+12/35 Test #12: video-startup ....................   Passed    0.44 sec
+      Start 13: video-multitrack-fixture
+13/35 Test #13: video-multitrack-fixture .........   Passed    0.05 sec
+      Start 14: video-track-switch
+14/35 Test #14: video-track-switch ...............   Passed    0.80 sec
+      Start 15: video-hdmi-lease
+15/35 Test #15: video-hdmi-lease .................   Passed    0.07 sec
+      Start 16: video-hdmi-audio
+16/35 Test #16: video-hdmi-audio .................   Passed    0.55 sec
+      Start 17: video-hdmi-caps
+17/35 Test #17: video-hdmi-caps ..................   Passed    0.01 sec
+      Start 18: video-browser
+18/35 Test #18: video-browser ....................   Passed    0.00 sec
+      Start 19: video-frame-image
+19/35 Test #19: video-frame-image ................   Passed    0.00 sec
+      Start 20: video-lcd-frame
+20/35 Test #20: video-lcd-frame ..................   Passed    0.01 sec
+      Start 21: video-lcd-commit
+21/35 Test #21: video-lcd-commit .................   Passed    0.00 sec
+      Start 22: video-playback
+22/35 Test #22: video-playback ...................   Passed    1.76 sec
+      Start 23: video-display-plane
+23/35 Test #23: video-display-plane ..............   Passed    0.00 sec
+      Start 24: video-output-mode
+24/35 Test #24: video-output-mode ................   Passed    0.00 sec
+      Start 25: video-audio-route
+25/35 Test #25: video-audio-route ................   Passed    0.00 sec
+      Start 26: video-json-string
+26/35 Test #26: video-json-string ................   Passed    0.00 sec
+      Start 27: video-cli-version
+27/35 Test #27: video-cli-version ................   Passed    0.00 sec
+      Start 28: video-cli-help
+28/35 Test #28: video-cli-help ...................   Passed    0.00 sec
+      Start 29: video-render-browser
+29/35 Test #29: video-render-browser .............   Passed    0.01 sec
+      Start 30: video-render-player
+30/35 Test #30: video-render-player ..............   Passed    0.01 sec
+      Start 31: video-render-hdmi
+31/35 Test #31: video-render-hdmi ................   Passed    0.00 sec
+      Start 32: video-render-tracks
+32/35 Test #32: video-render-tracks ..............   Passed    0.00 sec
+      Start 33: video-render-error
+33/35 Test #33: video-render-error ...............   Passed    0.00 sec
+      Start 34: video-cli-invalid-output
+34/35 Test #34: video-cli-invalid-output .........   Passed    0.00 sec
+      Start 35: video-cli-report-write-error
+35/35 Test #35: video-cli-report-write-error .....   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 35
+
+Total Test time (real) =  32.40 sec

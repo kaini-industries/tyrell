@@ -1,5 +1,9 @@
 # Tyrell Video 0.1.6 submission handoff
 
+Historical, superseded draft: do not use this package for the current Store
+submission. Final TV checks exposed an intermittent HD startup allocation
+failure; 0.1.7 is the replacement candidate with a bounded decoder retry.
+
 This is a prepared draft. Nothing in this archive has been submitted to the
 CardputerZero Store. The real-device demonstration recording is still required;
 physical TV playback testing of the 0.1.6 nonroot helper is pending.

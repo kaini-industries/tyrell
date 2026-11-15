@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble the reviewed 0.1.6 Store handoff locally; never upload or publish."""
+"""Assemble a reviewed Store handoff locally; never upload or publish."""
 import argparse
 import hashlib
 import json
@@ -9,10 +9,10 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-PREP = ROOT / 'store/tyrell-video/0.1.6'
-DIST = ROOT / 'dist/tyrell-video/0.1.6'
-PACKAGE = 'tyrell-video_0.1.6-1_arm64.deb'
-PACKAGE_SHA256 = '3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f'
+PACKAGE_SHA256S = {
+    '0.1.6': '3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f',
+    '0.1.7': '7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79',
+}
 PERMISSIONS = dict(camera=False, microphone=False, imu=False, network=False,
                    additional_hardware=False, background_service=True, external_display=True)
 
@@ -30,7 +30,11 @@ def read_file(base, relative):
     return path.read_bytes()
 
 
-def assemble():
+def assemble(version):
+    PREP = ROOT / 'store/tyrell-video' / version
+    DIST = ROOT / 'dist/tyrell-video' / version
+    PACKAGE = f'tyrell-video_{version}-1_arm64.deb'
+    PACKAGE_SHA256 = PACKAGE_SHA256S[version]
     expected = {}
     for line in read_file(PREP, 'SHA256SUMS').decode().splitlines():
         checksum, relative = line.split('  ', 1)
@@ -41,7 +45,7 @@ def assemble():
             raise ValueError('Preparation checksum mismatch: ' + relative)
     app = json.loads(read_file(PREP, 'app-builder.json'))
     listing = app['store']
-    if (app['package_name'] != 'tyrell-video' or app['version'] != '0.1.6-1' or
+    if (app['package_name'] != 'tyrell-video' or app['version'] != version + '-1' or
             app['bin_name'] != 'tyrell-video' or 'source_repo' in listing or
             listing['permissions'] != PERMISSIONS or
             any(type(v) is not bool for v in listing['permissions'].values())):
@@ -82,6 +86,16 @@ def assemble():
                       'assets/README.md', 'assets/manifest.json', *images,
                       'demo/README.md', 'demo/generate.py', 'demo/manifest.json',
                       'demo/TYRELL-DEMO.mp4', 'demo/TYRELL-DEMO.srt', 'demo/TYRELL-DEMO-poster.png']
+    if version == '0.1.7':
+        relative_files += ['qualification/README.md', 'qualification/hdmi-validation.json',
+                           'qualification/startup-recovery.json', 'qualification/endurance.json',
+                           'qualification/lifecycle.json', 'qualification/user-observations.json',
+                           'qualification/fixture-profile.json',
+                           'qualification/kms-activation-fault.c',
+                           'qualification/paused-before.png', 'qualification/paused-after.png',
+                           'qualification/selected-subtitle-track.png',
+                           'recording/README.md', 'recording/manifest.json',
+                           'recording/Tyrell-Video-0.1.7.mp4', 'recording/poster.jpg']
     missing = set(relative_files + ['UPLOAD.md']) - expected.keys()
     if missing:
         raise ValueError('Missing preparation checksums: ' + ', '.join(sorted(missing)))
@@ -106,11 +120,11 @@ def assemble():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output', type=Path,
-                        default=ROOT / 'build/store/tyrell-video-0.1.6-submission.zip')
+    parser.add_argument('--version', choices=sorted(PACKAGE_SHA256S), default='0.1.7')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
-    files = assemble()
-    output = args.output.absolute()
+    files = assemble(args.version)
+    output = (args.output or ROOT / f'build/store/tyrell-video-{args.version}-submission.zip').absolute()
     if output.is_symlink() or output.suffix != '.zip':
         raise ValueError('Output must be a regular .zip path')
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +134,7 @@ def main():
             temporary = Path(stream.name)
         with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
             for name, data in sorted(files.items()):
-                entry = zipfile.ZipInfo('tyrell-video-0.1.6-submission/' + name, (2026, 11, 14, 0, 0, 0))
+                entry = zipfile.ZipInfo(f'tyrell-video-{args.version}-submission/' + name, (2026, 11, 14, 0, 0, 0))
                 entry.create_system = 3
                 entry.external_attr = 0o100644 << 16
                 entry.compress_type = zipfile.ZIP_DEFLATED
@@ -131,7 +145,7 @@ def main():
             temporary.unlink(missing_ok=True)
     print(str(output))
     print('SHA256 ' + digest(output.read_bytes()))
-    print('Prepared locally; nothing uploaded. Real-device recording and TV retest remain pending.')
+    print('Prepared locally; nothing uploaded. See validation.json for completed checks and remaining review evidence.')
 
 
 if __name__ == '__main__':

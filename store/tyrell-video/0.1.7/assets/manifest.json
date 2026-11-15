@@ -1,0 +1,61 @@
+{
+  "app": "Tyrell Video",
+  "version": "0.1.7",
+  "source_revision": "src-03a5a269b185",
+  "source_commit": "8cba407dcce3675844acc4b203fa78a664044dc3",
+  "screenshots_are": "Deterministic software-rendered app UI previews from the 0.1.7 builder, not photographs or physical playback evidence. No movie frames are included.",
+  "icon_conversion": "Reused the existing 256x256 mechanical resize of the unchanged original 80x80 project icon.",
+  "screenshot_conversion": "Standard-library lossless P6 RGB to PNG: filter 0 scanlines, zlib level 9.",
+  "files": [
+    {
+      "file": "icon-256.png",
+      "title": "Tyrell Video app icon",
+      "width": 256,
+      "height": 256,
+      "sha256": "96b30a1759d449db0aafdd9653fd3149c7aefbf2123306905d33094033c4ab9c",
+      "source_path": "packages/tyrell-video/assets/tyrell-video.png",
+      "source_sha256": "9727e44e04916a3a7b7eb97d040b61139ffc36aeae4056d0749fdfe2d5fcf059",
+      "provenance": "Existing original project icon, mechanically resized to 256x256; no redesign. Artwork is unchanged from the preceding candidate."
+    },
+    {
+      "file": "01-browser-preview.png",
+      "title": "File browser (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "70bcfbc5c9b5b51652bbf9c26864283ac1b7932669f1a8a89b3173105db84f73",
+      "source_path": "artifacts/video/video-browser.ppm",
+      "source_sha256": "0b25f13f8df414df1f379084de8ca83e326ad27293c155ccbff0e5a4051e73ea",
+      "provenance": "Lossless PNG encoding of the actual 0.1.7 builder P6 PPM preview; no resizing, retouching or movie frames."
+    },
+    {
+      "file": "02-lcd-player-preview.png",
+      "title": "LCD player (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "b135f2806fafc4e3bbc56a681e808b6dc364abaf8f0aa71be1262143b439ac6a",
+      "source_path": "artifacts/video/video-player.ppm",
+      "source_sha256": "fb0d781384009c8a9afe69b71999276e33463850f6d00149a06d6f43bad322d3",
+      "provenance": "Lossless PNG encoding of the actual 0.1.7 builder P6 PPM preview; no resizing, retouching or movie frames."
+    },
+    {
+      "file": "03-tracks-preview.png",
+      "title": "Audio and subtitles (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "d368451627476eae2902fffe5d1044dce9a2394fe8f732956d25b06a6bef87ff",
+      "source_path": "artifacts/video/video-tracks.ppm",
+      "source_sha256": "68d6f1ea12a04035f5236ebc3b1ea4a99e730128633fc08524fa3c20da096c6f",
+      "provenance": "Lossless PNG encoding of the actual 0.1.7 builder P6 PPM preview; no resizing, retouching or movie frames."
+    },
+    {
+      "file": "04-hdmi-controller-preview.png",
+      "title": "HDMI controller (rendered UI preview)",
+      "width": 320,
+      "height": 170,
+      "sha256": "3b0e0c60f30c0fcd51aae4f752bc9b9a5bafd43ee025097ab659b750bdd75b55",
+      "source_path": "artifacts/video/video-hdmi.ppm",
+      "source_sha256": "28bb8ab209ecb7f91e1a923084fa8fe6ebbce5c879c22321a2b86801327a86ac",
+      "provenance": "Lossless PNG encoding of the actual 0.1.7 builder P6 PPM preview; no resizing, retouching or movie frames."
+    }
+  ]
+}

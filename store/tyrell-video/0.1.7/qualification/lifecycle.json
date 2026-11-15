@@ -1,0 +1,63 @@
+{
+  "package_version": "0.1.7-1",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "connected_crash_cases": [
+    {
+      "case": "kill-player",
+      "passed": true,
+      "after_vt": "tty7",
+      "default_audio_unchanged": true,
+      "owned_audio_modules_removed": true,
+      "desktop_pid_unchanged": true
+    },
+    {
+      "case": "kill-helper",
+      "passed": true,
+      "after_vt": "tty7",
+      "default_audio_unchanged": true,
+      "owned_audio_modules_removed": true,
+      "desktop_pid_unchanged": true,
+      "final_output": "lcd",
+      "final_paused": true,
+      "position_seconds": 4.43712,
+      "error": "",
+      "notice": "HDMI desktop handoff ended unexpectedly; paused on LCD"
+    }
+  ],
+  "initial_helper_check": {
+    "status": "inconclusive loading-state observation",
+    "observation": "Original test checked two seconds after console return. LCD graph was still loading (playing=false, paused=false), with no error and the expected recovery notice. It was not accepted as a pass. The retest allowed 20 seconds for the asynchronous LCD transition.",
+    "retained_raw_evidence": true
+  },
+  "normal_applaunch_launch_exit": {
+    "passed": true,
+    "observation": "User confirmed normal APPLaunch file playback with TV picture and sound, then Q returning to APPLaunch."
+  },
+  "final_device_audit": {
+    "checked_at_utc": "2026-11-15T05:40:45.069226+00:00",
+    "version": "tyrell-video 0.1.7 (src-03a5a269b185)",
+    "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+    "dpkg_verify": "clean",
+    "protected_files_checked": 12,
+    "protected_files_changed": [],
+    "kernel_unchanged": true,
+    "launcher": {
+      "MainPID": "1065",
+      "NRestarts": "0",
+      "FreezerState": "running"
+    },
+    "launcher_pid_unchanged": true,
+    "desktop_pid_unchanged": true,
+    "foreground_console": "tty7",
+    "default_audio_unchanged": true,
+    "owned_audio_modules_removed": true,
+    "hdmi_status": "connected",
+    "active_players": "",
+    "passed": true,
+    "desktop_mode_restored": "1920x1080@60",
+    "temporary_test_directories_removed": true,
+    "temporary_fault_injector_removed": true,
+    "temporary_cma_reservations_released": true
+  },
+  "passed": true
+}

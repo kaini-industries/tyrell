@@ -1,0 +1,101 @@
+{
+  "package_version": "0.1.7-1",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "hdmi_connected": true,
+  "connected_crash_cases": [
+    {
+      "case": "kill-player",
+      "passed": true,
+      "after_vt": "tty7",
+      "default_audio_unchanged": true,
+      "owned_audio_modules_removed": true,
+      "desktop_pid_unchanged": true
+    },
+    {
+      "case": "kill-helper",
+      "passed": true,
+      "after_vt": "tty7",
+      "default_audio_unchanged": true,
+      "owned_audio_modules_removed": true,
+      "desktop_pid_unchanged": true,
+      "final_output": "lcd",
+      "final_paused": true,
+      "position_seconds": 4.43712,
+      "error": "",
+      "notice": "HDMI desktop handoff ended unexpectedly; paused on LCD"
+    }
+  ],
+  "normal_applaunch_launch_exit": {
+    "passed": true,
+    "observation": "User confirmed normal APPLaunch file playback with TV picture and sound, then Q returning to APPLaunch."
+  },
+  "software_retry": {
+    "passed": true,
+    "once_per_load": true,
+    "two_failures_paused_lcd_position": 20,
+    "single_failure_preserved_pause_and_position": true
+  },
+  "endurance": {
+    "package_version": "0.1.7-1",
+    "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+    "test": "one controlled KMS pool activation failure followed by continuous software-decoded HDMI playback with external SRT captions",
+    "wall_elapsed_seconds": 670.166,
+    "media_start_seconds": 20,
+    "media_end_seconds": 635.097,
+    "media_progress_seconds": 615.097,
+    "pipeline_builds": 2,
+    "software_video_fallback": true,
+    "retry_count": 1,
+    "recovery_reason": "failed to activate buffer pool",
+    "decoder": "avdec_h264",
+    "output": "hdmi",
+    "audio_output_type": "app-owned temporary HDMI sink",
+    "sink_render_calls": 14755,
+    "sink_drops": 3,
+    "render_calls_per_media_second": 23.988086431896107,
+    "qos_dropped_observation": 5,
+    "cpu_percent_one_core_full_run": 90.6255,
+    "max_rss_kib_full_run": 93496,
+    "resource_samples": 615,
+    "resource_sample_span_seconds": 613.9952988530003,
+    "resource_samples_during_exit_excluded": 3,
+    "sampled_cpu_percent_one_core": 96.74341173452738,
+    "clock_ticks_per_second": 100,
+    "rss_range_kib_sampled": [
+      65420,
+      76788
+    ],
+    "rss_first_last_kib_sampled": [
+      76788,
+      66520
+    ],
+    "fds_range_sampled": [
+      22,
+      23
+    ],
+    "threads_range_sampled": [
+      17,
+      17
+    ],
+    "cma_free_range_kib_sampled": [
+      28976,
+      29380
+    ],
+    "swap_free_range_kib_sampled": [
+      184484,
+      206108
+    ],
+    "temperature_range_millic_sampled": [
+      54768,
+      59610
+    ],
+    "hdmi_connected_through_samples": true,
+    "error": "",
+    "notice": "HDMI video memory is tight; trying software decoding",
+    "physical_observation": "User confirmed smooth picture, matching TV flash/beep sound, readable captions and handheld controller during this final 0.1.7 run.",
+    "measurement_scope": "GStreamer sink render/drop submissions are not physical scanouts. QoS is a separate max-per-element observation, not added to sink drops. Resources sampled after pause/caption setup; teardown samples excluded. Full-run peak includes startup. CPU uses one core as100%.",
+    "passed": true
+  },
+  "final_audit_passed": true,
+  "passed": true
+}

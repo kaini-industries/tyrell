@@ -45,16 +45,28 @@ about 12 to 24 full-frame equivalents per second, with user-confirmed smooth
 handheld playback. It also preserves fresh playback time when pausing before a
 caption change. See the [native display report](docs/video-lcd-refresh-validation.md).
 
-Version 0.1.6 replaces the root HDMI helper with a dedicated nonroot service
-and Store-compatible install paths. On-device console access, upgrade migration,
-and crash recovery passed with HDMI disconnected. See the
-[policy validation](docs/video-store-policy-validation.md); TV playback testing
-of this helper is pending.
+Version 0.1.6 replaced the root HDMI helper with a dedicated nonroot service
+and Store-compatible install paths; see the
+[security and package checks](docs/video-store-policy-validation.md). Its later
+[TV qualification](docs/video-hdmi-016-validation.md) confirmed sound, captions,
+aspect fitting and hotplug recovery, and completed a ten-minute HD run. It also
+exposed a separate KMS buffer-pool startup failure.
 
-The [0.1.6 Store submission draft](store/tyrell-video/0.1.6/README.md) includes
-the listing, icon, UI previews, permission declarations, review notes and a local
-handoff archive builder. Submission and the required real-device demo recording
-remain pending.
+Version 0.1.7 adds one software-video retry for that specific HDMI allocation
+failure after hardware decoding has produced output. Controlled tests verified
+position/pause preservation, a bounded retry and safe LCD fallback after a second
+failure. The software-decoded 1920 × 816 H.264/AAC profile completed more than
+ten minutes of media with user-confirmed smooth TV motion and matching sound.
+The exact package passed 35 ARM64 tests, install/remove checks, connected crash
+recovery and normal APPLaunch launch/exit. See the
+[0.1.7 report](docs/video-hdmi-017-validation.md) for measured limits; these results
+do not promise smooth playback of every source profile.
+
+The [0.1.7 Store preparation](store/tyrell-video/0.1.7/README.md) includes the
+listing, icon, UI previews, permission declarations, qualification records,
+review notes and a local handoff archive builder. A reviewed real-device
+recording is provided and ready to attach to the eventual PR. No Store upload
+or maintainer approval has occurred.
 
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio
@@ -63,13 +75,14 @@ session lacks one, without changing the system default. See the
 [desktop handoff validation](docs/video-hdmi-handoff-validation.md), and
 [earlier attached-TV validation](docs/video-hdmi-validation.md).
 
-Verified ARM64 packages are committed in [`dist/`](dist/README.md), with
-checksums, source provenance and test results:
+ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
+source provenance and test results. Video 0.1.7 is qualified for the tested
+hardware and source profile:
 
-- [Tyrell Video 0.1.6 `.deb`](dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb)
+- [Tyrell Video 0.1.7 `.deb`](dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb)
 - [Tyrell Status 0.1.0 `.deb`](dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
 
-The previous Video version is also available in the
+The earlier Video 0.1.5 is also available in the
 [Tyrell Video 0.1.5 release](https://github.com/kaini-industries/tyrell/releases/tag/tyrell-video-v0.1.5).
 
 ## Tyrell Game Framework

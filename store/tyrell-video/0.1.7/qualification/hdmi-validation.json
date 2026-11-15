@@ -1,0 +1,65 @@
+{
+  "package_version": "0.1.7-1",
+  "package_sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+  "platform": {
+    "os": "Debian13 ARM64 stock CardputerZero environment",
+    "kernel": "6.18.39+rpt-rpi-v8",
+    "soc": "BCM2837/Cortex-A53",
+    "physical_ram_mib": 512,
+    "cma_kib": 65536
+  },
+  "active_software_recovery_drm_snapshot": {
+    "device": "/dev/dri/card0",
+    "connector": 35,
+    "crtc": 97,
+    "video_plane": 98,
+    "mode": "1280x720@60",
+    "source_rectangle": [
+      0,
+      0,
+      1920,
+      816
+    ],
+    "destination_rectangle": [
+      0,
+      88,
+      1280,
+      544
+    ],
+    "background_plane": 86,
+    "cursor_plane": 659,
+    "cursor_framebuffer": 0,
+    "cursor_crtc": null,
+    "aspect_fit_correct": true
+  },
+  "scope": "Snapshot establishes KMS configuration and aspect fitting, not physical frame cadence or latency. User separately confirms smooth picture and no cursor. Hardware and software decoders share the same aspect policy.",
+  "physical_geometry_card_baseline": {
+    "version": "0.1.6-1",
+    "source": "640x480 square pixels",
+    "destination_rectangle": [
+      160,
+      0,
+      960,
+      720
+    ],
+    "user_confirmed": "Cyan circle and pink square correctly shaped; all four white borders visible."
+  },
+  "live_nonroot_helper": {
+    "uids": [
+      111,
+      111,
+      111,
+      111
+    ],
+    "cap_eff": "0000000004000000",
+    "cap_bnd": "0000000004000000",
+    "cap_amb": "0000000004000000",
+    "only_capability": "CAP_SYS_TTY_CONFIG"
+  },
+  "audio": {
+    "normal_user_stream_only": true,
+    "app_owned_temporary_hdmi_sink_observed": true,
+    "default_onboard_sink_unchanged_during_run": true,
+    "user_confirmed_tv_flash_beep_alignment": true
+  }
+}

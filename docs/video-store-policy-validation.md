@@ -1,5 +1,9 @@
 # Tyrell Video Store policy and HDMI helper
 
+The later [0.1.7 connected-TV qualification](video-hdmi-017-validation.md)
+completed physical playback and crash-recovery checks for this nonroot helper.
+The disconnected-HDMI status below describes the original policy-validation run.
+
 November 14, 2026. Version 0.1.6 replaces the root HDMI console helper with a
 dedicated nonroot service. Store publication remains a separate step: this
 change does not submit an app or make the private source repository public.
