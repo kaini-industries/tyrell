@@ -4,10 +4,10 @@ Keyboard-controlled local video player for the Linux M5Stack CardputerZero.
 Start **Tyrell Video** through APPLaunch so the launcher yields display/input
 ownership and resumes after the player exits.
 
-The verified [0.1.6 ARM64 package](../../dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb)
+The verified [0.1.7 ARM64 package](../../dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb)
 is committed in the repository, with [checksums and provenance](../../dist/README.md).
 From the repository root on the device, install it with
-`sudo apt install ./dist/tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb`.
+`sudo apt install ./dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb`.
 The [player guide](../../docs/video-player.md) covers verification and installation.
 
 The built-in screen uses the existing 320×170 framebuffer. Dedicated HDMI
@@ -24,7 +24,18 @@ console-switching capability and a systemd-opened console descriptor; it accepts
 one fixed lease from local video-group clients. Helpers install under
 `/usr/lib/tyrell-video`, and the package retains its APPLaunch entries. See the
 [Store policy validation](../../docs/video-store-policy-validation.md) for the
-security boundary, package checks and remaining physical HDMI test.
+security boundary and package checks. The [final 0.1.6 TV checks](../../docs/video-hdmi-016-validation.md)
+confirmed the output/audio/geometry path and found a startup allocation limit.
+
+Version 0.1.7 retries a specific HDMI buffer-pool allocation failure once using
+GStreamer's software decoders, after a hardware video decoder has produced a
+frame. It preserves the current position, pause state, audio/subtitle choices
+and display/audio leases. Missing codecs, corrupt media and unrelated output
+errors do not trigger this retry. A second failure retains the paused handheld
+fallback. The default decoder choice is restored for each new file. Diagnostics
+and playback reports identify the selected decoder, retry count and reason;
+software recovery can use more CPU or memory and does not promise every HD file
+will play smoothly. The package does not change the kernel CMA allocation.
 
 | Action | Keys |
 | --- | --- |

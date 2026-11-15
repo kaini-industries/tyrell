@@ -5,6 +5,7 @@
 #include "hdmi_audio.h"
 #include "json_string.h"
 #include "lcd_frame.h"
+#include "video_decode_policy.h"
 
 #include <algorithm>
 #include <atomic>
@@ -163,6 +164,12 @@ struct Playback::Impl {
     std::atomic<std::uint64_t> video_buffers_delivered{0};
     std::atomic<std::uint64_t> video_frames_decoded{0};
     std::atomic<bool> video_memory_sampled{false};
+    // Streaming callbacks only publish whether a hardware video decoder has
+    // actually delivered a buffer. Trying an unused hardware factory is not
+    // enough to make a later software-decoder error eligible for recovery.
+    std::atomic<bool> hardware_video_produced{false};
+    bool software_video_preferred = false; // Retained across output/audio rebuilds for this load.
+    bool video_decode_retry_attempted = false;
     mutable std::mutex video_metadata_mutex;
     std::string video_output_memory;
     std::atomic<bool> subtitles_enabled{false};
@@ -228,6 +235,7 @@ struct Playback::Impl {
             video_sink = nullptr;
         }
         video_memory_sampled = false;
+        hardware_video_produced = false;
         lcd_renderer.reset();
         audio_restart_pending = false;
         {
@@ -264,6 +272,12 @@ struct Playback::Impl {
         } else if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER)
             player.video_frames_decoded.fetch_add(1);
         return GST_PAD_PROBE_OK;
+    }
+
+    static GstPadProbeReturn hardware_decoded_delivery(GstPad* pad, GstPadProbeInfo* info, gpointer data) {
+        if(GST_PAD_PROBE_INFO_TYPE(info) & (GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST))
+            static_cast<Impl*>(data)->hardware_video_produced = true;
+        return decoded_delivery(pad, info, data);
     }
 
     static GstPadProbeReturn video_delivery(GstPad*, GstPadProbeInfo* info, gpointer data) {
@@ -321,7 +335,8 @@ struct Playback::Impl {
         if(klass && std::strstr(klass, "Decoder") && std::strstr(klass, "Video")) {
             if(GstPad* pad = gst_element_get_static_pad(element, "src")) {
                 gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
-                                  decoded_delivery, data, nullptr);
+                                  decoder_is_hardware_video(factory_name, klass) ? hardware_decoded_delivery : decoded_delivery,
+                                  data, nullptr);
                 gst_object_unref(pad);
             }
         }
@@ -693,6 +708,18 @@ struct Playback::Impl {
 
     bool create_pipeline(double position, bool autoplay, int audio_track, int subtitle_track) {
         std::string error;
+        // These identify the current graph, unlike the cumulative per-load
+        // delivery/readiness counters. A replacement must not report its old
+        // hardware decoder or allocator while the software graph prepares.
+        state.video_decoder.clear();
+        state.video_output_caps.clear();
+        state.video_output_memory.clear();
+        {
+            std::lock_guard<std::mutex> lock(video_metadata_mutex);
+            video_output_memory.clear();
+        }
+        hardware_video_produced = false;
+        state.software_video_fallback = software_video_preferred && state.output == Output::Hdmi;
         ++state.pipeline_builds;
         pipeline = gst_element_factory_make("playbin", "tyrell-player");
         if(!pipeline) { state.error = "Missing GStreamer playbin plugin"; return false; }
@@ -725,6 +752,7 @@ struct Playback::Impl {
         g_object_get(pipeline, "flags", &flags, nullptr);
         flags &= ~visualization_flag;
         flags |= text_flag;
+        if(state.software_video_fallback) flags |= force_software_decoders_flag;
         g_object_set(pipeline, "flags", flags, nullptr);
         bus = gst_element_get_bus(pipeline);
         restart_position = position;
@@ -902,6 +930,31 @@ struct Playback::Impl {
         return create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track);
     }
 
+    bool recover_hdmi_video_memory(std::string failure) {
+        query();
+        const auto target = restart_target();
+        const bool autoplay = desired_playing;
+        // Consume before recreating anything: a second failure, including one
+        // during an audio/output rebuild, must take the ordinary LCD fallback.
+        video_decode_retry_attempted = true;
+        software_video_preferred = true;
+        ++state.video_decode_fallbacks;
+        state.video_decode_fallback_reason = std::move(failure);
+        destroy_pipeline();
+        // make_video_sink()/make_audio_sink() can fail before create_pipeline
+        // publishes its preroll fields. Keep the saved intent valid even then,
+        // so the existing LCD fallback can recover the same queued position.
+        state.position = restart_position = target.position;
+        state.audio_track = restart_audio_track = target.audio_track;
+        state.subtitle_track = restart_subtitle_track = target.subtitle_track;
+        // Keep the desktop and audio leases. Only the decoder/video graph is
+        // replaced; releasing the hardware capture pool gives KMS's small copy
+        // pool room without changing CMA, firmware or the desktop service.
+        state.error.clear();
+        state.notice = "HDMI video memory is tight; trying software decoding";
+        return create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track);
+    }
+
     bool fallback_to_lcd(std::string notice) {
         // Lease loss and unplug are terminal for the owned HDMI session. A
         // failed LCD recovery must never roll back onto a display we no longer
@@ -995,6 +1048,8 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     p.state.muted = muted;
     p.state.path = absolute.string();
     p.state.loaded = true;
+    p.software_video_preferred = false;
+    p.video_decode_retry_attempted = false;
     p.file_load_started = accepted_at;
     p.received = 0;
     p.lcd_caption_compositions = 0;
@@ -1046,7 +1101,7 @@ void Playback::poll() {
     }
     if(!p.pipeline) { p.hdmi_audio.poll(); return; }
     while(GstMessage* message = gst_bus_pop(p.bus)) {
-        bool fatal = false, failed_audio = false;
+        bool fatal = false, failed_audio = false, retry_video_memory = false;
         switch(GST_MESSAGE_TYPE(message)) {
             case GST_MESSAGE_ERROR: {
                 GError* error = nullptr;
@@ -1054,6 +1109,10 @@ void Playback::poll() {
                 gst_message_parse_error(message, &error, &debug);
                 p.state.error = error ? error->message : "Playback failed";
                 failed_audio = p.audio_sink && GST_MESSAGE_SRC(message) == GST_OBJECT(p.audio_sink);
+                retry_video_memory = retry_hdmi_with_software_video(
+                    p.state.output == Output::Hdmi,
+                    p.video_sink && GST_MESSAGE_SRC(message) == GST_OBJECT(p.video_sink),
+                    p.hardware_video_produced.load(), p.video_decode_retry_attempted, error);
                 if(error) g_error_free(error);
                 g_free(debug);
                 p.state.playing = false;
@@ -1105,6 +1164,7 @@ void Playback::poll() {
         }
         gst_message_unref(message);
         if(fatal) {
+            if(retry_video_memory && p.recover_hdmi_video_memory(p.state.error)) return;
             if(failed_audio && (p.state.output == Output::Hdmi || p.audio_owned_seen) &&
                !p.audio_recovery_attempted && p.recover_audio(p.state.error)) return;
             if(p.state.output == Output::Hdmi) {
@@ -1307,6 +1367,9 @@ void Playback::stop() {
     auto& p = *impl_;
     p.initial_hdmi_pending = false;
     p.destroy_pipeline();
+    p.software_video_preferred = false;
+    p.video_decode_retry_attempted = false;
+    p.state.software_video_fallback = false;
     p.release_hdmi_audio(true);
     p.desktop_lease.release();
     p.pending_hdmi = false;
@@ -1347,6 +1410,9 @@ std::string Playback::diagnostics_json() const {
         << ",\"video_output_caps\":" << json_string(p.state.video_output_caps)
         << ",\"sink_stats_scope\":\"GstBaseSink render calls/drops since its most recent reset, not physical scanout\""
         << ",\"video_decoder\":" << json_string(p.state.video_decoder) << ",\"fake_audio\":" << (p.options.fake_audio ? "true" : "false")
+        << ",\"software_video_fallback\":" << (p.state.software_video_fallback ? "true" : "false")
+        << ",\"video_decode_fallbacks\":" << p.state.video_decode_fallbacks
+        << ",\"video_decode_fallback_reason\":" << json_string(p.state.video_decode_fallback_reason)
         << ",\"audio_output\":" << json_string(p.state.audio_output)
         << ",\"pipeline_builds\":" << p.state.pipeline_builds
         << ",\"first_render_seconds\":" << p.state.first_render_seconds

@@ -525,6 +525,9 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
         << ",\"video_output_caps\":" << json_string(s.video_output_caps)
         << ",\"sink_stats_scope\":\"GstBaseSink render calls/drops since its most recent reset, not physical scanout\""
         << ",\"qos_dropped\":" << s.dropped_frames << ",\"video_decoder\":" << json_string(s.video_decoder)
+        << ",\"software_video_fallback\":" << (s.software_video_fallback ? "true" : "false")
+        << ",\"video_decode_fallbacks\":" << s.video_decode_fallbacks
+        << ",\"video_decode_fallback_reason\":" << json_string(s.video_decode_fallback_reason)
         << ",\"audio_output\":" << json_string(s.audio_output)
         << ",\"error\":" << json_string(s.error.empty() ? app.error : s.error) << ",\"notice\":" << json_string(s.notice) << "}\n";
     out.close();

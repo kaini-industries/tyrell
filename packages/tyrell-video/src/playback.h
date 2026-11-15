@@ -59,6 +59,12 @@ struct Status {
     std::string video_output_caps;
     std::string video_output_memory;
     std::string video_decoder;
+    // Current HDMI graph requests software decoding after a bounded allocation
+    // retry. The built-in playbin flag also excludes future hardware audio
+    // decoders, while preserving selected audio tracks and output routing.
+    bool software_video_fallback = false;
+    std::uint64_t video_decode_fallbacks = 0; // At most one retry per accepted load.
+    std::string video_decode_fallback_reason;
     std::string audio_output;
     // Per accepted load. Readiness is observed on poll(), with render statistics
     // sampled every 250 ms; these are not physical display measurements.
