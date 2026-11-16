@@ -1,0 +1,373 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "plan_revision": 3,
+  "milestone": "native-wizard-and-guarded-store-pre-image-integration",
+  "status": "built-reviewed-pre-image-integration-not-image-ready",
+  "project_commit": "2779e4323c5981307570969d4d1dff5fb5a346f4",
+  "device_access": false,
+  "sd_card_access": false,
+  "firmware_changed": false,
+  "image_built": false,
+  "battery_benefit_claimed": false,
+  "fresh_agents": [
+    "native_wizard_integration_r3_fresh",
+    "native_store_integration_r3_fresh",
+    "native_vendor_build_inputs_r3_fresh",
+    "store_security_adversary_r3_fresh",
+    "native_receipt_hardening_r3_fresh",
+    "wizard_adversarial_final_r3_fresh",
+    "wizard_native_config_r3_fresh",
+    "native_builder_adversarial_r3_fresh",
+    "store_isolated_lifecycle_r3_fresh",
+    "store_final_adversary_r3_fresh",
+    "native_integration_acceptance_r3_fresh"
+  ],
+  "build": {
+    "job_id": "20261116T030615312119Z-9c96e960",
+    "source_sha256": "326b72cef241530dd573c1f245eb33a686866f802ccfbc450ae0e8df37310119",
+    "artifact_directory": "artifacts/tyrell-zero-native/20261116T030615312119Z-9c96e960",
+    "manifest_sha256": "73c9b3163e76c0b9092993fa407998b67d2ae53af56360ab1210dd879f98b236",
+    "source_archive": "build/zero-native/jobs/20261116T030615312119Z-9c96e960/input.tar",
+    "source_manifest_sha256": "1fdb7afa6fd217561ce6df53c975d62ccd69f1fe4f6ef3a6812be42354f59a93",
+    "architecture": "arm64",
+    "native_machine": "aarch64",
+    "packages": [
+      {
+        "file": "tyrell-zero-session_0.2.0-1_arm64.deb",
+        "sha256": "252d2d2e4816b2b8d3111da2e498c2605eabe4bebcafbe712ec8f3e2d6a8e77f",
+        "isolated_install_reinstall_remove_purge": "passed",
+        "dependency_closure_verified": false
+      },
+      {
+        "file": "tyrell-zero-store_0.1.0-1_arm64.deb",
+        "sha256": "feab044d72861432d3fc6fd627124bde41cef090f9f0fbd5205ca9211d7097e8",
+        "isolated_install_reinstall_remove_purge": "passed",
+        "dependency_closure_verified": false
+      }
+    ],
+    "native_wizard": {
+      "job_id": "20261116T030043093692Z-717fd53a",
+      "artifact_directory": "artifacts/tyrell-zero-native/20261116T030043093692Z-717fd53a",
+      "sha256": "6512dd3c6a370960f3896560639760e4aa67433755f5c5d9819ed913de86e924",
+      "source_sha256": "3a4eaa9d257900a04e7ca524fc18785feff186678bda54eef7f957f833e85223",
+      "native_config": {
+        "schema": 1,
+        "kind": "native-cardputer-wizard-config",
+        "inputs": {
+          "config_defaults.mk": "b04847f37c5e88c1bbc170f058462e5bef17ceeca52afe0d10d2ef79ad30bd32",
+          "linux_x86_cross_cp0_config_defaults.mk": "b1670fdcac827fc47504d36ced37979a0f3728ad09ab5e25c8742c4c412e5863"
+        },
+        "config": "tyrell_native_config.mk",
+        "sha256": "1df551d93c93925eeaa1050fb1bb71c7e82813464e0a27fe6be3dd201075344b",
+        "derivation": "Pinned Cardputer runtime defaults with only cross compiler prefix removed",
+        "cross_toolchain": false,
+        "framebuffer_render_mode": "full",
+        "evdev": true,
+        "pthread": true,
+        "neon": true
+      },
+      "network_disabled": true,
+      "elf_and_linked_libraries": "passed"
+    },
+    "receipt_sha256": "5fc6bd21863b9fb43313bbd1723ed03fcf8343357d5062d966e58c528fb6b2be",
+    "integration_sha256": "2d19f36b9a39b128697bc4372dc68152f3ea6173e2c23cbc0731430159e68f4b",
+    "toolchain_inventory": "artifacts/tyrell-zero-native/20261116T030615312119Z-9c96e960/builder-packages.tsv",
+    "live_builder_packages_after": {
+      "tyrell-zero-session": null,
+      "tyrell-zero-store": null,
+      "greetd": null,
+      "applaunch": null
+    }
+  },
+  "validation": {
+    "host_builder_tests": 55,
+    "host_profile_tests": 29,
+    "native_session_unit_tests": 36,
+    "native_session_skipped_tests": 0,
+    "native_wizard_config_tests": 17,
+    "native_store_unit_tests": 28,
+    "native_ctest_targets": 6,
+    "real_dpkg_lifecycle_checks": 9,
+    "lifecycle_report": "artifacts/tyrell-zero-native/20261116T030615312119Z-9c96e960/store-lifecycle.json",
+    "lifecycle_scope": "isolated-real-dpkg-native-store-lifecycle",
+    "rollback_failure_model": "Actual dpkg lock failure; modeled half-installed target; user cache deleted; previous root-staged package restored by real dpkg.",
+    "host_dpkg_before": "43e9dd4dd255acf22327643e1b20f9414bc6a44199c02c3555f97c1d8d055602",
+    "host_dpkg_after": "43e9dd4dd255acf22327643e1b20f9414bc6a44199c02c3555f97c1d8d055602",
+    "host_dpkg_unchanged": true,
+    "qualification": "Five executable identities and fourteen runtime/font hashes; real receipt and tamper rejection.",
+    "independent_artifact_review": "native_integration_acceptance_r3_fresh: accepted; exact inventories/checksums/current source maps/DEB metadata and payloads verified.",
+    "dependency_closure_verified": false,
+    "physical_hardware_verified": false,
+    "result": "passed for pre-image native integration scope"
+  },
+  "review_findings_resolved": [
+    "Generated-path symlink/parent traversal and archive canonical aliases rejected.",
+    "State special files and malformed nested schemas rejected without blocking reads or uncaught recovery errors.",
+    "Owned child groups and adopted native apps in separate PGIDs cleaned up with Linux subreaper/pidfd handling.",
+    "Scoped foreground-before-SIGCONT avoids stopped-child startup race; terminal state restored.",
+    "Framebuffer bitfields/bounds checked; fixed recovery display has no command shell.",
+    "Disposable dpkg logging explicitly rooted; no live toolchain package install or policy activation.",
+    "Both real native Wizard completion routes use the same durable transaction and retain vendor guide/account-migration ordering.",
+    "Native Cardputer config retains framebuffer/evdev/pthread/NEON/FreeType without cross-SDK downloads.",
+    "Complete source inventory and aggregate identity required for reuse of a native Wizard artifact; guest flock remains held while sudo closes descriptors.",
+    "Real qualification receipt binds executable and supporting module/policy/catalog/font identities; tampering behind a wrapper fails closed.",
+    "Store root journals prevent completed replay and prohibit newer same-package work until unfinished authenticated repair.",
+    "Store rejects blocking FIFO/hardlink/unsafe directory inputs; immutable current/previous bytes and directory-synced journals support app-scoped rollback.",
+    "Registered offline diversion preserves and restores exact vendor Store bytes; named qualified triggers and protected base identities remain scoped."
+  ],
+  "milestones": {
+    "Z0": "in-progress: exact native archives/patch/config and real offline ARM64 GUI/packages built; coherent final runtime/resource/APT and native compatibility locks pending",
+    "Z1": "in-progress: native/Imager transaction, interruption, supervisor and guarded Store pre-image tests pass; assembled-runtime revalidation remains",
+    "Z2": "in-progress: profile/contracts, baseline power package and real isolated Store lifecycle pass; final APT closure, profile runner/resume/verifier and activation policy pending",
+    "Z3-Z6": "not started; no Zero image, spare-card or battery acceptance"
+  },
+  "profile_check": {
+    "schema": 1,
+    "profile_id": "tyrell-zero",
+    "plan_revision": 3,
+    "structural_valid": true,
+    "build_ready": false,
+    "phase": "foundation",
+    "stages": [
+      "stage0",
+      "stage1",
+      "stage2"
+    ],
+    "output": {
+      "basename": "tyrell-zero-trixie-arm64",
+      "suffix": "-lite",
+      "raw": "tyrell-zero-trixie-arm64-lite.img",
+      "compressed": "tyrell-zero-trixie-arm64-lite.img.xz"
+    },
+    "power_preset": "baseline",
+    "hardware_capabilities": 15,
+    "input_sha256": {
+      "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
+      "image/camera-packages.json": "070cf852959bd4981827cf0ed79c143ecf29d73226c4f168e9831b4a1938b8ef",
+      "image/contracts/tyrell-zero-hardware.json": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491",
+      "image/contracts/tyrell-zero-power.json": "99803052bb1f7e03c5ccdeab8b14c831d019bee290248e199dd3bf0e4885465a",
+      "image/profiles/tyrell-zero.json": "71460f47759e82b7642ae5f0cdbf2492fdb3cfc3cfc4a303af5e5a4a2acc3115",
+      "locks/image-apt.json": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e",
+      "locks/tyrell-zero-build-inputs.json": "37ae3d7f639c8a74d603de1f958372abc2413f66577010fddc5d08b88c246361",
+      "locks/tyrell-zero-session-source.json": "3cd70541a1e72ee61807763d626dbb4c7898ae998df1516de82149c4a6227f1f"
+    },
+    "blockers": [
+      {
+        "code": "unqualified-build",
+        "path": "locks/tyrell-zero-build-inputs.json",
+        "detail": "Qualify the frozen build lock: locks/tyrell-zero-build-inputs.json"
+      },
+      {
+        "code": "incomplete-source",
+        "path": "locks/tyrell-zero-session-source.json",
+        "detail": "Complete and qualify the partial source audit: locks/tyrell-zero-session-source.json"
+      },
+      {
+        "code": "missing-apt",
+        "path": "locks/tyrell-zero-apt.json",
+        "detail": "Create and qualify the frozen apt lock: locks/tyrell-zero-apt.json"
+      },
+      {
+        "code": "missing-apps",
+        "path": "locks/tyrell-zero-apps.json",
+        "detail": "Create and qualify the frozen apps lock: locks/tyrell-zero-apps.json"
+      },
+      {
+        "code": "missing-native_compat",
+        "path": "locks/tyrell-zero-native-compat.json",
+        "detail": "Create and qualify the frozen native compat lock: locks/tyrell-zero-native-compat.json"
+      },
+      {
+        "code": "native-wizard-integration",
+        "detail": "Build and qualify both private native Wizard completion routes."
+      },
+      {
+        "code": "appstore-integration",
+        "detail": "Implement and qualify protected AppStore install/remove/repair/rollback integration."
+      },
+      {
+        "code": "zero-runner",
+        "detail": "Implement a profile-aware stage0-2 runner and immutable attempt/resume identity."
+      },
+      {
+        "code": "zero-verifier",
+        "detail": "Implement the independent Zero offline verifier before exporting an image."
+      }
+    ]
+  },
+  "commands": [
+    "python3 builder/zero-vendor.py fetch",
+    "make zero-native-deps",
+    "make zero-native-wizard",
+    "make zero-integration WIZARD_ARTIFACTS=artifacts/tyrell-zero-native/20261116T030043093692Z-717fd53a",
+    "make zero-check"
+  ],
+  "limitations": [
+    "Pre-image package/transaction acceptance only; no complete Zero runtime/APT or native compatibility qualification.",
+    "Real dpkg lifecycle root uses builder runtime and modeled exact vendor executable baseline; integration packages use --force-depends.",
+    "Actual GUI/account provisioning, native hardware, boot/seat/PAM/VT and battery behavior remain spare-card gates.",
+    "Packages install no enabled units or activation maintscripts; default session manifest remains complete:false.",
+    "Final image-specific Store snapshot/receipt, updater/session policy, runner/resume and independent verifier remain pending.",
+    "Historical foundation and development jobs remain retained; only the recorded latest source-frozen native integration job is current evidence."
+  ],
+  "implementation_files_sha256": {
+    "builder/build-zero-native.sh": "1b953712320afbebb3d7c467c464a134813a462e245fa14e03ed644f2a86d11e",
+    "builder/build-zero-packages.sh": "2840d20236b14afcb64ea4d27bf9307e75f28c5b6a45f1973d8cad264226d345",
+    "builder/ensure-zero-vendor-deps.sh": "5b0d5a14df0584e2b6fb94e37563d719068850e5f8809eecfd5a3da36d61046f",
+    "builder/tests/test_zero.py": "1148c68476f0cff26abd43baad3eaf64035d650c68bec798aa55f5f6fa4668b3",
+    "builder/tests/test_zero_integration.py": "7b5e44432e3d16223fa6700501976c696bc396176edb88aca75ed90acf3a41dd",
+    "builder/tests/test_zero_store_lifecycle.py": "41c72f959953b417e79aca95c0eb50ca5bea61ae619bbc5b047544af0b1791a7",
+    "builder/tests/test_zero_vendor.py": "58e136cd871ad3fa2390d6f9f16e1583474c638a47a83547849184c82d2e7af7",
+    "builder/zero-guest.py": "cc9550093a1c80e1e967be84825c28bf8e4a7fac5b8abf0236366724a83673bf",
+    "builder/zero-integration-guest.py": "8504f251d61ea1032faa9dabeadf2104f69b8566d38a6dd4630076dc0f5203d7",
+    "builder/zero-integration.py": "0bec9ea9d01ff41f175f567a7f3249b22b96ca7a0fee238be4e2a86e6b0a71a2",
+    "builder/zero-native-guest.py": "827a1c66f1c0f7459d189dc9d23c4bf7547cf5cb83826c6bfd34c94a4e3f370f",
+    "builder/zero-store-lifecycle.py": "a35da662b91b4d0565fc7030abce02464ab17bec1c261db95078e5d569847663",
+    "builder/zero-vendor-dependencies.txt": "b5964f56d0952d0b8f19814c3926e20eac7c0750ef04e2d1d3b8001b64f18ca6",
+    "builder/zero-vendor.py": "3f04e3fb9429321346c2df29ce299cf3430efcaecd6443f015ef48d5de4c341d",
+    "builder/zero.py": "dd3e885a58e0570c90f5a7f8d313e8d9fce7c89cd1579d8fa253a6c6bc453e04",
+    "image/profiles.py": "087c3637a6cca7dc28ff282b1c4d0649cb398f8425b52d929f2596ccf6ab84dc",
+    "locks/tyrell-zero-build-inputs.json": "27a458f69347e8bc230fe927e61f811321b93403c2612a5e2cc326306a2f2d76",
+    "locks/tyrell-zero-greetd.json": "f67df18d9d7c4f5d6cd555015ab4eb9f6b3944d2f75f47f406da611947f40ed8",
+    "locks/tyrell-zero-session-source.json": "d10f1610dce0f490d12f8a2ddb4ade66e2d4a53d815393a661aa4d3e1b346787",
+    "locks/tyrell-zero-vendor-inputs.json": "50777c8c1cf08d6832b09b793f3f1e71b7f0940026967d3b22c77247d213c7e3",
+    "packages/tyrell-zero-power-policy/LICENSE": "32ffb7f513a2faaac16d737dd235030b3992728c2a142434f9496bc4d3fa2a32",
+    "packages/tyrell-zero-power-policy/README.md": "9688b97a7a51b12f0f35b69663e65b5bfba83bc76c55aa35eba37ad891405375",
+    "packages/tyrell-zero-power-policy/build-package.py": "4c35d9407e3509d9c47daf619da14a7ac216fe226bb24fd44ecf7ca3f214cc6c",
+    "packages/tyrell-zero-power-policy/config/power-policy.json": "78edb50bbe4b0c054b6dd186fa405f96b106a67ccfd3f8dc7df6abbc322884a9",
+    "packages/tyrell-zero-power-policy/power_policy.py": "b9556920fc9bf8b80e9751fa884762b729317578d5e2cb5eae66c81b15759fc0",
+    "packages/tyrell-zero-power-policy/templates/ondemand-factor-1.conf.inactive": "2cb452390e97b42b2b5933b774e0dcaa2e5b07eaf5f2893bed51fc3e7e934d0c",
+    "packages/tyrell-zero-power-policy/tests/test_power_policy.py": "5cd706346eb0b0390008d731ca906e7ef8fa7af7d89b90922ff9d11d433f0fd8",
+    "packages/tyrell-zero-power-policy/tyrell-zero-power-policy": "e6f2f6c96a7770b5597abefc5505fd98f28747e3bad9c4ef254cb846a8d33556",
+    "packages/tyrell-zero-session/CMakeLists.txt": "fb8417ebaf0548383e6b8f6f76c07389598f0464218392671557bcaa6e0f22ff",
+    "packages/tyrell-zero-session/LICENSE": "4a17d8102480fb0f196627f1decb54b42b647f8fbffdc5617c9ba448ba21dc2a",
+    "packages/tyrell-zero-session/README.md": "b22311b3051b6840e45c6c9eb6172261dd7ede0c648ec071668d5f64d6bca1e8",
+    "packages/tyrell-zero-session/bin/tyrell-zero-session": "5582208f3742ae0a5a800602472634f53fa8be4c6f9f738bc4221b025b21e188",
+    "packages/tyrell-zero-session/bin/tyrell-zero-session-state": "b7a6f2c532d8970a5613c337d2485e9143d47ba02ce8f3bd0faeebde392450d5",
+    "packages/tyrell-zero-session/build-package.py": "f4b209ee90f24b67ad2883c65d77b9ff02e1413755c5d3d03c818d246086a093",
+    "packages/tyrell-zero-session/profile/activation.json": "1b59e13df88d5780f66e1a928f3100251e85f0636e2ecf64db5f74994565aeee",
+    "packages/tyrell-zero-session/profile/integration-required.json": "b430ca6229f141040d9e44ce905fd6e9d7b0156b31877f8967d8989aa5b63f16",
+    "packages/tyrell-zero-session/profile/logind.conf": "fc8557e053aa19742c0405d0c25da840c7fba52018ac8c128fa662ab96f7b9eb",
+    "packages/tyrell-zero-session/src/recovery.cpp": "3552a4359d1b3b35f040e477504d4a03ae5999f0491ad0d5b3788eb4bef22fc8",
+    "packages/tyrell-zero-session/src/state.py": "f19b52ab1eb02bdcabf1b43318ab632874fabca5aa2f52f7b3481fb2f5e1fc4e",
+    "packages/tyrell-zero-session/src/supervisor.py": "653e51cc3a72a7db2fbadde21916e297ff9c365f2ebc48f4b49d6f97be1fd878",
+    "packages/tyrell-zero-session/system/tyrell-zero-boot-state.service": "13154a03d8f38b870672e94702114088d2a38755ffead4307c5cde52c24bfd9b",
+    "packages/tyrell-zero-session/system/tyrell-zero-session.service": "25c14aad91fa22019ef53d9583be6b3263bd39a3dd2b75db4bd1e8fe105c324f",
+    "packages/tyrell-zero-session/system/tyrell-zero-wizard.service": "5b955f55d39ce063d18d26480084e935478d3b9eee16089ada3487bcafaad96d",
+    "packages/tyrell-zero-session/system/tyrell-zero.target": "1ebb18bcffca51cc83b24e34738ec6ea3de6fc228689cf9e8db272edfe600b2a",
+    "packages/tyrell-zero-session/tests/test_session.py": "836929041959096d3cb41cd83b1f7ddef83ba3807fa6d5c1f220abc7ec058e07",
+    "packages/tyrell-zero-session/wizard/README.md": "572cd0638ad13b6a1b421fb85c1c129f47e62f539c241cf66f04870476e111d5",
+    "packages/tyrell-zero-session/wizard/apply-patches.py": "c05dd0e4448d75760e9b3724bf3064b51baf1626c7067ae51437d2cd9d43e271",
+    "packages/tyrell-zero-session/wizard/completion.py": "5c3d9cf0401fadf6e4f7075c8afa38b09f7606d3dd1a31372c2d177930daa4a1",
+    "packages/tyrell-zero-session/wizard/native_config.py": "d468199b9bd6bc6f471377777afd0b18d73369fb95a2d48224febbb1ef75edb3",
+    "packages/tyrell-zero-session/wizard/patches/0001-native-wizard-completion.patch": "3d05a08131a374f35e35e81092dddb669bc85b9b7ee2353dee51cd02680435b8",
+    "packages/tyrell-zero-session/wizard/patches/identity.json": "6451c9f69efe6a7954084022d93ff986e72410970de36df33ce8aa5217036132",
+    "packages/tyrell-zero-session/wizard/tests/fixtures/config_defaults.mk": "b04847f37c5e88c1bbc170f058462e5bef17ceeca52afe0d10d2ef79ad30bd32",
+    "packages/tyrell-zero-session/wizard/tests/fixtures/linux_x86_cross_cp0_config_defaults.mk": "b1670fdcac827fc47504d36ced37979a0f3728ad09ab5e25c8742c4c412e5863",
+    "packages/tyrell-zero-session/wizard/tests/fixtures/main.cpp": "a6a8be0768e0f5d52f351c3f880d2fa820836111340c34b35c78b778c81f9175",
+    "packages/tyrell-zero-session/wizard/tests/fixtures/wizard_service.cpp": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7",
+    "packages/tyrell-zero-session/wizard/tests/test_native_config.py": "80f049252a6025c2d045c5c8c80672035e842011a7364ff3ef41d088e472ecf9",
+    "packages/tyrell-zero-session/wizard/tests/test_wizard.py": "7219b5a87d4e52f997aa3eb42c2e97f1d8cc1ed424f8de9f992fd758422a3234",
+    "packages/tyrell-zero-session/wizard/tyrell-zero-wizard-complete": "43ac2afb578696fe48aa5217efe9fc1b93e33acfcf87d569a20d4dd9db7fc3bc",
+    "packages/tyrell-zero-store/CMakeLists.txt": "3ef756e4767d195c8b9384787da28e3e22f0591e63a9a502d3cde4b4ab9b75c4",
+    "packages/tyrell-zero-store/LICENSE": "6cc753f8c238aae60531a83451ac90360c088a0ba67b3bd29c4554ce7091e24d",
+    "packages/tyrell-zero-store/README.md": "5ec265e26acf3c3f093d6583ae71817472e655b8d00ecc44882ab1d1fd715613",
+    "packages/tyrell-zero-store/activate-image.py": "74e85751b55ba721bd23440f6d98d69b5f25f05dc26190d970cd116f44f54bc3",
+    "packages/tyrell-zero-store/bin/appstore-package-helper": "e75c7550a4c166b4d846dbb000359d2d6fc41021c0e81244be7694ac4a9e9c7e",
+    "packages/tyrell-zero-store/build-package.py": "0fc0537104456226c57d99e3565b0d4563a3996b51f820d04e489a782ece310c",
+    "packages/tyrell-zero-store/config/store-catalog.json": "3c8b509383b3fb31bf7e5780d0203a7425ea4a692e3483dd50515d4234a3085b",
+    "packages/tyrell-zero-store/config/store-policy.json": "8f6aa6757e0a9478bee245147884e3b03bdc4322b24a9db76881111d91fddfb4",
+    "packages/tyrell-zero-store/guard.py": "2609aaf686e36d6d46cd7432eb658d6974a90f4c1c295b6d37396f49dfca88fd",
+    "packages/tyrell-zero-store/src/dispatcher.cpp": "fdf9ca8ca785acfeb8a3e020b12ba535722d212e05c67f11b8d48f02c37b703c",
+    "packages/tyrell-zero-store/src/routing.hpp": "5c6b684e5c836342cb62e82b40437f06033dc3b446525c9e0d9a1a0ece7e1aa5",
+    "packages/tyrell-zero-store/tests/routing.cpp": "e20fcbac392e0e1813cf774f5b764c8bcbb5a395fb0fb4742aae27f3f3598d6b",
+    "packages/tyrell-zero-store/tests/test_guard.py": "99bfab3a9f7507a1fd392e7ca1f8f698c306a8b38f64d001684c942eba795eed"
+  },
+  "builder_lifecycle": {
+    "instance": "tyrell-build",
+    "used_existing_instance": true,
+    "initial_state": "Stopped",
+    "final_state": "Stopped",
+    "configuration_resized": false,
+    "foundation_packages_installed_in_live_builder": false,
+    "development_dependencies_provisioned": true,
+    "native_integration_packages_installed_in_live_builder": false,
+    "device_access": false
+  },
+  "foundation_build": {
+    "job_id": "20261116T023454094402Z-0531c7d1",
+    "source_sha256": "26a1b279cb5470930b4f0a26ba7acb293553ceb73b8adcd111ea73b15beff4c1",
+    "artifact_directory": "artifacts/tyrell-zero/20261116T023454094402Z-0531c7d1",
+    "manifest_sha256": "82bfe17e3d5b481dcea9b917ffb07a9684b41f5de06920c16a1cfcf7fa4dede0",
+    "source_archive": "build/zero-packages/jobs/20261116T023454094402Z-0531c7d1/input.tar",
+    "architecture": "arm64",
+    "native_machine": "aarch64",
+    "packages": [
+      {
+        "package": "tyrell-zero-session",
+        "file": "tyrell-zero-session/tyrell-zero-session_0.1.0-1_arm64.deb",
+        "sha256": "d8e4ecc9678a67eff934021971f49afa59c77734529b1c21d92b4c5189c0dd26",
+        "control": {
+          "Package": "tyrell-zero-session",
+          "Version": "0.1.0-1",
+          "Architecture": "arm64",
+          "Depends": "python3 (>= 3.11), greetd (= 0.10.3-4), libpam-systemd, dbus-user-session, systemd, applaunch (= 0.6.105), libc6 (>= 2.34), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)"
+        },
+        "isolated_install_reinstall_remove_purge": "passed",
+        "dependency_closure_verified": false
+      },
+      {
+        "package": "tyrell-zero-power-policy",
+        "file": "tyrell-zero-power-policy/tyrell-zero-power-policy_0.1.0-1_arm64.deb",
+        "sha256": "4583b3a90b37c59b61cde544626f5f10fd24a2104642678fa184085763290845",
+        "control": {
+          "Package": "tyrell-zero-power-policy",
+          "Version": "0.1.0-1",
+          "Architecture": "arm64",
+          "Depends": "python3 (>= 3.11)"
+        },
+        "isolated_install_reinstall_remove_purge": "passed",
+        "dependency_closure_verified": false
+      }
+    ],
+    "toolchain_inventory": "artifacts/tyrell-zero/20261116T023454094402Z-0531c7d1/builder-packages.tsv",
+    "live_builder_packages_before": {
+      "tyrell-zero-session": "",
+      "tyrell-zero-power-policy": ""
+    },
+    "live_builder_packages_after": {
+      "tyrell-zero-session": "",
+      "tyrell-zero-power-policy": ""
+    }
+  },
+  "foundation_validation": {
+    "host_builder_tests": 36,
+    "host_profile_tests": 29,
+    "native_session_unit_tests": 25,
+    "native_session_skipped_tests": 0,
+    "native_session_ctest_targets": 3,
+    "native_power_unit_tests": 15,
+    "isolated_lifecycle": [
+      "install",
+      "same-version reinstall",
+      "remove",
+      "purge"
+    ],
+    "dpkg_logs": "Inside disposable roots only",
+    "dependency_closure_verified": false,
+    "recovery_preview": "Rendered320x170 and visually reviewed; physical framebuffer/VT not tested",
+    "source_export_checksums": "Independently verified against final current-source snapshot",
+    "final_acceptance_reviewer": "zero_package_acceptance_r3_fresh",
+    "result": "passed for foundation scope"
+  },
+  "foundation_fresh_agents": [
+    "zero_session_implementation_r3_fresh",
+    "zero_profile_implementation_r3_fresh",
+    "zero_power_implementation_r3_fresh",
+    "zero_foundation_adversary_r3_fresh",
+    "zero_vendor_source_freeze_r3_fresh",
+    "zero_package_acceptance_r3_fresh"
+  ]
+}

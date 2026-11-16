@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "store_source": "b02db122396a7d33c41c66199ab443437975cfee",
+  "vendor_sha256": "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e",
+  "dependencies": [],
+  "qualification": "Exact Tyrell Status 0.1.0-1 and Video 0.1.6-1/0.1.7-1 bytes only; dependency closure must already be installed. Unknown missing dependencies fail closed."
+}

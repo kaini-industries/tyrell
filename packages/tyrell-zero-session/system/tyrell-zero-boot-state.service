@@ -1,0 +1,13 @@
+[Unit]
+Description=Validate and latch Tyrell Zero native boot state
+Before=tyrell-zero-session.service tyrell-zero-wizard.service
+RequiresMountsFor=/etc/tyrell-zero /var/lib/tyrell-zero /var/lib/LaunchWizard
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/tyrell-zero-session-state boot
+RemainAfterExit=yes
+TimeoutStartSec=20
+UMask=0022
+# Do not use RuntimeDirectory: greetd's once-per-boot runfile must survive
+# helper/greetd restarts. /run itself is cleared only by a real reboot.

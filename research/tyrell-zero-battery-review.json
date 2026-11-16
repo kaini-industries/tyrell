@@ -1,0 +1,214 @@
+{
+  "kind": "battery-plan-review-not-new-measurements",
+  "revision": 3,
+  "date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "fresh_agents": [
+    "battery_policy_review_round3_fresh",
+    "battery_platform_options_round3_fresh",
+    "battery_acceptance_round3_fresh",
+    "battery_release_adversary_round3_fresh",
+    "battery_maintenance_round3_fresh"
+  ],
+  "scope": "Base system only; all native hardware, Wi-Fi/SSH and original M5 launcher retained; no device access, image build or app optimization in this review.",
+  "new_device_measurements": false,
+  "battery_benefit_demonstrated": false,
+  "conclusion": "Retain the two evidence-backed activity candidates, strengthen battery-powered promotion and realistic duty-cycle gates, and add bounded qualification improvements without new default BSP tuning.",
+  "findings": [
+    {
+      "id": "battery-promotion",
+      "priority": "release-gate",
+      "suggestion": "Require validated unplugged battery energy or controlled usable-runtime benefit for promotion; USB input is screening only.",
+      "basis": "Published separate USB/battery supply paths and existing gauge limitations; experimental design, not measured benefit."
+    },
+    {
+      "id": "comparable-work",
+      "priority": "release-gate",
+      "suggestion": "Equal elapsed idle windows, equal completed burst work plus common return-to-idle cycle, same useful runtime endpoints and unchanged shutdown safeguards; predeclare usage weights and per-condition regression limits.",
+      "basis": "A lower energy total over shorter or less useful work is not a comparable outcome."
+    },
+    {
+      "id": "usb-delay",
+      "priority": "qualification",
+      "suggestion": "Capture/preserve leaf autosuspend delay2000ms plus wakeup attribute and residency; conditionally compare5000ms only if measured resume churn erases benefit.",
+      "basis": "Existing raw leaf delay2000ms; runtime PM transitions consume time and energy."
+    },
+    {
+      "id": "cpu-factor",
+      "priority": "conditional",
+      "suggestion": "Factor1 is first candidate, not predetermined optimum; bounded factors2/5 only if battery energy/performance question remains; retain other controls.",
+      "basis": "Earlier trials establish clock residency, not net battery energy or latency."
+    },
+    {
+      "id": "transactional-invalidation",
+      "priority": "qualification",
+      "suggestion": "Serialize supported preset/update/apply paths, invalidate generations/remove stale owned overrides, verify effective state and restore only validated controls or perform controlled baseline boot.",
+      "basis": "Deleting a file does not stop an already-open concurrent reader."
+    },
+    {
+      "id": "idle-return",
+      "priority": "qualification",
+      "suggestion": "Check physical IMX219/CSI/V3D/HDMI/USB return to appropriate idle after legitimate resource release; no forced suspension under required clients.",
+      "basis": "These camera/graphics devices already reported runtime-suspended in earlier passive evidence; clock rate alone is not PM/energy proof."
+    },
+    {
+      "id": "wifi-persistence",
+      "priority": "qualification",
+      "suggestion": "Preserve effective Wi-Fi PS across provisioning/newprofiles/reconnect/roam/restart, respecting explicit user choices; test locked NM version.",
+      "basis": "Observed profile default0 delegates rather than proving ON; live effective state was ON."
+    },
+    {
+      "id": "maintenance",
+      "priority": "measured-follow-up",
+      "suggestion": "Keep APT/security schedule initially; classify actual activations; any nonurgent deferral needs finite perjob deadline/retry/manual/freshness fallback; unknown power signal cannot justify security deferral.",
+      "basis": "ConditionACPower passes if AC connectors unknown; persistent calendar triggers do not guarantee retry/completion."
+    },
+    {
+      "id": "realistic-exposure",
+      "priority": "qualification",
+      "suggestion": "Include screenon/off, intermittent SSH, legitimate Ethernet/USB, boot/apply/reapply/shutdown/off, lostAP and longer sessions with actual maintenance.",
+      "basis": "Short settled counter samples do not expose duty-cycle costs."
+    },
+    {
+      "id": "observer",
+      "priority": "release-gate",
+      "suggestion": "Record topology/instrument burden, avoid charging/back-power/USB wake from logger, match buffered cadence and profile outside energy windows.",
+      "basis": "Observer activity can invalidate the measured PM state and battery-only supply."
+    },
+    {
+      "id": "combined-eligibility",
+      "priority": "release-logic",
+      "suggestion": "Test planned combination after isolated hardware/performance passes even if standalone energy is inconclusive; require combined proof.",
+      "basis": "Policy interactions can be measurable without resolving both isolated energy effects."
+    },
+    {
+      "id": "claim-reference",
+      "priority": "release-logic",
+      "suggestion": "Distinguish added-policy savings versus Zero baseline from whole-image savings versus matched full-source; baseline alone can fulfill image objective if battery benefit is demonstrated.",
+      "basis": "Desktop/base-stack changes may contribute independently of additional power policy."
+    },
+    {
+      "id": "boot-accounting",
+      "priority": "qualification",
+      "suggestion": "Record one-time provisioning and deliberate setup reboot separately from ordinary configured cold-boot energy.",
+      "basis": "A configured candidate and unconfigured control are not comparable session states."
+    }
+  ],
+  "existing_observations": {
+    "source_path": "build/power-audit-round3/device-passive.json",
+    "source_sha256": "ac8bff1089f6c39e166aa55b39cdfd0227f2c2d7b468b3470f3185258a407722",
+    "timestamp_utc": "2026-11-16T01:23:46.851644+00:00",
+    "physical_pm": [
+      {
+        "bus": "i2c",
+        "device": "10-0010",
+        "driver": "imx219",
+        "control": "auto",
+        "runtime_status": "suspended",
+        "runtime_active_time": "4",
+        "runtime_suspended_time": "4719855",
+        "runtime_usage": null,
+        "wakeup": null,
+        "autosuspend_delay_ms": "1000"
+      },
+      {
+        "bus": "platform",
+        "device": "3fc00000.v3d",
+        "driver": "vc4_v3d",
+        "control": "auto",
+        "runtime_status": "suspended",
+        "runtime_active_time": "117",
+        "runtime_suspended_time": "4729791",
+        "runtime_usage": null,
+        "wakeup": null,
+        "autosuspend_delay_ms": "40"
+      },
+      {
+        "bus": "platform",
+        "device": "3f801000.csi",
+        "driver": "unicam",
+        "control": "auto",
+        "runtime_status": "suspended",
+        "runtime_active_time": "0",
+        "runtime_suspended_time": "4720253",
+        "runtime_usage": null,
+        "wakeup": null,
+        "autosuspend_delay_ms": null
+      },
+      {
+        "bus": "platform",
+        "device": "3f902000.hdmi",
+        "driver": "vc4_hdmi",
+        "control": "auto",
+        "runtime_status": "suspended",
+        "runtime_active_time": "1560",
+        "runtime_suspended_time": "4728487",
+        "runtime_usage": null,
+        "wakeup": null,
+        "autosuspend_delay_ms": null
+      }
+    ],
+    "ethernet_leaf_delay_ms": 2000,
+    "live_power_evidence_sha256": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d"
+  },
+  "retained_package_identities": [
+    {
+      "Package": "apt",
+      "Version": "3.0.4",
+      "Architecture": "arm64",
+      "sha256": "9a3ee57117d1d8e086e2d8917cd3e85e8f76da25dd18a898085759668dc5c71f",
+      "source": "https://deb.debian.org/debian-security/pool/updates/main/a/apt/apt_3.0.4_arm64.deb"
+    },
+    {
+      "Package": "man-db",
+      "Version": "2.13.1-1",
+      "Architecture": "arm64",
+      "sha256": "edf05f2008bd010d576b473db058892f027ef1d097b7d9bc26fe00534d154ef3",
+      "source": "https://deb.debian.org/debian/pool/main/m/man-db/man-db_2.13.1-1_arm64.deb"
+    },
+    {
+      "Package": "network-manager",
+      "Version": "1.52.1-1+rpt4",
+      "Architecture": "arm64",
+      "sha256": "50717dccae05dcc6e091d4f9a57503a969836cbeaa5f87afd54bbbe9beb6e801",
+      "source": "https://archive.raspberrypi.com/debian/pool/main/n/network-manager/network-manager_1.52.1-1+rpt4_arm64.deb"
+    },
+    {
+      "Package": "rpi-swap",
+      "Version": "1.2.4",
+      "Architecture": "all",
+      "sha256": "4a8d68f8a3ff29de45cfc64a7c52532e57185f039ad89e72410072f2970f2921",
+      "source": "https://archive.raspberrypi.com/debian/pool/main/r/rpi-swap/rpi-swap_1.2.4_all.deb"
+    }
+  ],
+  "sources": {
+    "power_paths": "https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1243/C154-CardputerZERO_SCH_V0.6.1_20260702.pdf",
+    "runtime_pm": "https://docs.kernel.org/power/runtime_pm.html#autosuspend-or-automatically-delayed-suspends",
+    "usb_pm": "https://docs.kernel.org/driver-api/usb/power-management.html",
+    "cpufreq": "https://docs.kernel.org/admin-guide/pm/cpufreq.html#ondemand",
+    "systemd_condition": "https://www.freedesktop.org/software/systemd/man/257/systemd.unit.html#ConditionACPower=",
+    "systemd_timer": "https://www.freedesktop.org/software/systemd/man/257/systemd.timer.html",
+    "wifi_profile": "https://networkmanager.dev/docs/api/latest/settings-802-11-wireless.html",
+    "wifi_defaults": "https://networkmanager.dev/docs/api/latest/NetworkManager.conf.html",
+    "vendor_off_behavior": "https://docs.m5stack.com/en/CardputerZero#power-and-charging",
+    "version_scope": "Current upstream documentation explains semantics; version-locked package/live evidence and real Zero qualification remain authoritative."
+  },
+  "final_review": {
+    "status": "passed",
+    "agents": [
+      "battery_policy_review_round3_fresh",
+      "battery_maintenance_round3_fresh",
+      "battery_release_adversary_round3_fresh"
+    ],
+    "resolved_findings": [
+      "Battery-powered benefit is required for extra-policy promotion; USB input is screening only.",
+      "Idle energy, useful work cycles and runtime endpoints are compared on equivalent terms, with declared per-condition limits and observer controls.",
+      "Combined testing follows isolated hardware/performance passes even if standalone energy is inconclusive.",
+      "Candidate-versus-Zero-baseline and whole-image-versus-full-source battery claims have separate references; baseline can meet the image objective if its comparison passes.",
+      "One-time provisioning energy is separate from ordinary configured boot energy.",
+      "Initial leaf delay is captured as2000ms; bounded intermediate factors2/5 and delay5000ms are conditional, not new defaults.",
+      "Post-activation invalidation serializes supported paths and verifies live baseline recovery; stale file removal alone is insufficient.",
+      "Hardware idle return is consumer-aware; effective WiFi PS and security-safe maintenance are qualified without disabling hardware or adding a pollingdaemon."
+    ]
+  }
+}

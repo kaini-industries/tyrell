@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "kind": "partial-native-session-source-audit",
+  "complete": false,
+  "state": "native-wizard-built-store-guard-implemented",
+  "plan_revision": 3,
+  "scope": "Exact native source archives and patch/config replay, actual offline ARM64 Wizard build and guarded Store implementation. Full assembled-image APT/resource/boot acceptance remains incomplete.",
+  "launcher": {
+    "repository": "https://github.com/CardputerZero/launcher.git",
+    "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+    "tree": "f1e891dd71fe7c2d487fa5a1db64f9a75177cff4",
+    "applaunch_version": "0.6.105",
+    "original_deb_sha256": "a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544",
+    "original_main_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+    "archive_sha256": "f75545a999800bbaa8d6215a03c2b56d8639d75708c9df11aa57d89437a40436"
+  },
+  "sdk": {
+    "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+    "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
+    "tree": "097845dea400db7704927633509ae7656a6538e4",
+    "archive_sha256": "eeab5e58ba9aa39992ad4260a081e89d87b2177fe595d04692f8e52cc310a2a3",
+    "source_registry_entries": 32,
+    "source_registry_scope": "Registry has 32 entries; native config_defaults.mk enables LVGL 9.5, eventpp, Sigslot, SmoothUI and Spdlog, all materialized by the vendor-input lock."
+  },
+  "top_level_gitlinks": [
+    {
+      "path": "SDK",
+      "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+      "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
+      "closure_status": "Exact archive and five selected third-party source archives materialized; isolated ARM64 build remains an acceptance gate.",
+      "native_wizard_dependency": true,
+      "guard_source_dependency": false
+    },
+    {
+      "path": "projects/AppStore",
+      "repository": "https://github.com/CardputerZero/Store.git",
+      "commit": "b02db122396a7d33c41c66199ab443437975cfee",
+      "closure_status": "Not recursively materialized or build-qualified",
+      "native_wizard_dependency": false,
+      "guard_source_dependency": true
+    },
+    {
+      "path": "projects/Calculator",
+      "repository": "https://github.com/CardputerZero/Calculator.git",
+      "commit": "6b781200692a47200a0293b9e2731e9c7ff60180",
+      "closure_status": "Not recursively materialized or build-qualified",
+      "native_wizard_dependency": false,
+      "guard_source_dependency": false
+    },
+    {
+      "path": "projects/CameraApp/main_CameraApp",
+      "repository": "https://github.com/CardputerZero/CameraApp.git",
+      "commit": "c4c37e6129cfb25489e2161c93bf35b010a0ec6e",
+      "closure_status": "Not recursively materialized or build-qualified",
+      "native_wizard_dependency": false,
+      "guard_source_dependency": false
+    },
+    {
+      "path": "projects/CardputerZero-Emulator/lib/lvgl",
+      "repository": "https://github.com/lvgl/lvgl.git",
+      "commit": "85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "closure_status": "Not recursively materialized or build-qualified",
+      "native_wizard_dependency": false,
+      "guard_source_dependency": false
+    },
+    {
+      "path": "projects/Keyboard-Guide/main_Keyboard-Guide",
+      "repository": "https://github.com/CardputerZero/Keyboard-Guide.git",
+      "commit": "dd0c1bf630ce2eabaca218417763a66fa8efe1cc",
+      "closure_status": "Not recursively materialized or build-qualified",
+      "native_wizard_dependency": false,
+      "guard_source_dependency": false
+    }
+  ],
+  "inspected_source_files": {
+    "launcher": {
+      ".gitmodules": {
+        "git_blob": "5e049ec6d5408088d6cb6c8e0fce61eadbd83881",
+        "sha256": "573269ba5c07fa43933baae8e91a686ed5e3320c7bdb24dada60336435d5ab14",
+        "bytes": 800
+      },
+      ".github/scripts/prepare-sdk-source.sh": {
+        "git_blob": "fccfd8fc973786559f5a25a69a166cdaad6cdd89",
+        "sha256": "2220fffee23611d5b5615ad8d10450eabb79d0b3c49af85e21512bb959d11e07",
+        "bytes": 1916
+      },
+      "projects/LaunchWizard/SConstruct": {
+        "git_blob": "5977bb571803304cc625d6a08e68275e4a82163e",
+        "sha256": "75fdbe06486511b6ffa46b9a97a8032765c728c72b5123f9e9fdbd4b655df357",
+        "bytes": 4079
+      },
+      "projects/LaunchWizard/main/SConstruct": {
+        "git_blob": "e4c1da71a2e80d559d1c35e77caeb56100bd1291",
+        "sha256": "b5d650f7855ec8cbe1b68ee6063f70dc67f30f57fa116329234182bef7bae3dc",
+        "bytes": 2293
+      },
+      "projects/LaunchWizard/config_defaults.mk": {
+        "git_blob": "960ef6ca43d45dc0eff5a1fb62b1b74b0eb2abfd",
+        "sha256": "b04847f37c5e88c1bbc170f058462e5bef17ceeca52afe0d10d2ef79ad30bd32",
+        "bytes": 1086
+      },
+      "projects/LaunchWizard/main/ui/wizard_service.cpp": {
+        "git_blob": "418dcdc0b61aa78036291bd43bcf21bd13206bc6",
+        "sha256": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7",
+        "bytes": 48620
+      },
+      "ext_components/cp0_lvgl/SConstruct": {
+        "git_blob": "cc0ded7b4f425f56959410e8db6d0c701a0f527f",
+        "sha256": "80895560f28dd259e217cd1933d17564cae31d84a49f63d37b0cbada0c2d5c99",
+        "bytes": 5071
+      },
+      "ext_components/Miniaudio/SConstruct": {
+        "git_blob": "2789227b0b15d53efad7ef8016b7af3e55bd284b",
+        "sha256": "db9482aab4134d2250eab3807ff01d546bb4c2e8487dbdbae297da6ee9fb9d1a",
+        "bytes": 1036
+      },
+      "ext_components/Sigslot/SConstruct": {
+        "git_blob": "de3f1fe67212b5cd34373d88c16f934868a856d5",
+        "sha256": "0a81a580a2e8c6d2d335ed04932a6bd0ce4de7ce0bd5a0bae91129fbfbbc35b3",
+        "bytes": 1307
+      }
+    },
+    "sdk": {
+      "github_source/source-list.sh": {
+        "git_blob": "cdf65d6ec6452ebbbeb0e1b386c9755c335d94d5",
+        "sha256": "c2125b60cf05a5e18adb3e71c55a1f1391d4d212ba15ad4e7f7f65551e569a60",
+        "bytes": 7183
+      },
+      "components/lvgl_component/SConstruct": {
+        "git_blob": "d4321d79a7e9fafcad7677529a84e325b90599c0",
+        "sha256": "2054a3fc800c984976d533a8d59e6d0b8eda0542f3f19b9d991f7e047fa1c60c",
+        "bytes": 6303
+      },
+      "components/eventpp/SConstruct": {
+        "git_blob": "2cc6e0623f7ccc775530165e18f6c62b44ad6253",
+        "sha256": "7163b52a7f7dd0675a11faa667427ef3b5128cdc21144b5fa2b06ced9baf5360",
+        "bytes": 1129
+      },
+      "tools/scons/SConstruct_tool.py": {
+        "git_blob": "242a5376f75b6c4909e91f7ad98436481ed8e755",
+        "sha256": "b51b270e754ebe6c6107513692342cdc405ec803526a0ccad8c63022b4b628bd",
+        "bytes": 14544
+      }
+    }
+  },
+  "identified_native_wizard_fetches": [
+    {
+      "component": "lvgl_9_5",
+      "repository": "https://github.com/dianjixz/lvgl.git",
+      "commit": "85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "archive_url": "https://codeload.github.com/dianjixz/lvgl/tar.gz/85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "archive_sha256": "b32747cf6568d86a5cb9d30f53970bec1c7a322cb624c4158d4b0e348324146b",
+      "status": "Exact immutable codeload tar archive verified and safely replayed into native SDK source path; no automatic network fetch allowed."
+    },
+    {
+      "component": "eventpp",
+      "repository": "https://github.com/wqking/eventpp.git",
+      "commit": "c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+      "archive_url": "https://codeload.github.com/wqking/eventpp/tar.gz/c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+      "archive_sha256": "2d2bebea25cab8723525206c6d77c8a95f073992a8e8b880a11bb8823b05f179",
+      "status": "Exact immutable codeload tar archive verified and safely replayed into native SDK source path; no automatic network fetch allowed."
+    },
+    {
+      "component": "Sigslot",
+      "repository": "https://github.com/palacaze/sigslot.git",
+      "commit": "b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+      "archive_url": "https://codeload.github.com/palacaze/sigslot/tar.gz/b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+      "archive_sha256": "140f0a2a731ed7d9ebff1bad4cb506ea2aa28fd57f42b3ec79031b1505dc6680",
+      "status": "Exact immutable codeload tar archive verified and safely replayed into native SDK source path; no automatic network fetch allowed."
+    },
+    {
+      "component": "SmoothUI",
+      "repository": "https://github.com/Forairaaaaa/smooth_ui_toolkit.git",
+      "commit": "5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+      "archive_url": "https://codeload.github.com/Forairaaaaa/smooth_ui_toolkit/tar.gz/5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+      "archive_sha256": "b0600ac91f02c521ff9236cb312a9385062bde065687dc626868424eadd48215",
+      "status": "Exact immutable codeload tar archive verified and safely replayed into native SDK source path; no automatic network fetch allowed."
+    },
+    {
+      "component": "Spdlog",
+      "repository": "https://github.com/gabime/spdlog.git",
+      "commit": "79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "archive_url": "https://codeload.github.com/gabime/spdlog/tar.gz/79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "archive_sha256": "c6dee844e35a54cc80e3ab76aae2310763e0b49c7397549dfa4d4657d9737138",
+      "status": "Exact immutable codeload tar archive verified and safely replayed into native SDK source path; no automatic network fetch allowed."
+    }
+  ],
+  "native_build_contract": {
+    "architecture": "arm64",
+    "environment": {
+      "CONFIG_DEFAULT_FILE": "tyrell_native_config.mk"
+    },
+    "reason": "Generic native defaults omit fbdev/evdev/pthread choices. Derive exact pinned Cardputer runtime defaults with only cross compiler prefix removed; avoid SConstruct cross filename branch.",
+    "cross_sdk_policy": "Do not use the cross-config sdk_bsp.tar.gz download as an implicit native source/sysroot. Its versioned release URL and existing-directory/version-file checks are not locked archive bytes.",
+    "builder_isolation": "Compile only in existing ARM64 toolchain. Never install or enable this base integration in its live root.",
+    "configuration": "packages/tyrell-zero-session/wizard/native_config.py"
+  },
+  "fetch_behavior_findings": [
+    {
+      "source": "sdk:tools/scons/SConstruct_tool.py:177-194",
+      "finding": "check_component trusts an existing directory and can automatically download a missing one; inspection found no source-tree identity validation on the existing-directory path."
+    },
+    {
+      "source": "sdk:tools/scons/SConstruct_tool.py:196-243",
+      "finding": "check_wget_down selects caches by path and can fetch ZIP/tar/file inputs without a project-supplied archive SHA256."
+    },
+    {
+      "source": "launcher:projects/LaunchWizard/SConstruct",
+      "finding": "Cross profiles may fetch sdk_bsp.tar.gz from a versioned release and set fully_trusted_filter; native builds should avoid this path. Freeze any needed binary assets independently and extract with checked paths."
+    }
+  ],
+  "wizard_patch_set": [
+    {
+      "identity": "packages/tyrell-zero-session/wizard/patches/identity.json",
+      "files": {
+        "projects/LaunchWizard/main/src/main.cpp": {
+          "after": "2cf69fd4205f05c6bf1de49c6dc5cd219fc8a43914ddde4f6c911f23369cb68a",
+          "before": "a6a8be0768e0f5d52f351c3f880d2fa820836111340c34b35c78b778c81f9175"
+        },
+        "projects/LaunchWizard/main/ui/wizard_service.cpp": {
+          "after": "fc67d135922a80e8a8e661f8753095c93a091b63619e4f3f41dfe30d2bc844a6",
+          "before": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7"
+        }
+      },
+      "patch_sha256": "3d05a08131a374f35e35e81092dddb669bc85b9b7ee2353dee51cd02680435b8",
+      "revision": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "schema": 1
+    }
+  ],
+  "wizard_assets_status": "Native ARM64 ELF and linked libraries verified; original vendor fonts bound during pre-image integration. Physical GUI/resources/audio acceptance and final image coverage remain gates.",
+  "store_guard_status": "Implemented files-only dispatcher/helper package, exact Status/Video catalog, protected base snapshot and scoped repair/rollback; final assembled-image closure and lifecycle remain gates.",
+  "unresolved_before_complete": [
+    "Freeze coherent Zero system/custom app APT closure and native compatibility locks; toolchain inventory does not prove a coherent runtime.",
+    "Revalidate both native completion paths and Store guard against final assembled image/resources and baseline snapshot.",
+    "Complete profile-aware runner, independent offline verifier and spare-card native hardware/boot acceptance."
+  ],
+  "device_access": false,
+  "image_build_ready": false,
+  "cache_handling": "Explicit immutable fetch into ignored build/zero-vendor/downloads; offline replay into a fresh ignored source tree. No vendor checkout/branch edits or hardware access.",
+  "native_source_replay": {
+    "lock": "locks/tyrell-zero-vendor-inputs.json",
+    "lock_sha256": "50777c8c1cf08d6832b09b793f3f1e71b7f0940026967d3b22c77247d213c7e3",
+    "implementation": "builder/zero-vendor.py",
+    "archive_count": 7,
+    "compressed_bytes": 203114855,
+    "uncompressed_bytes": 438413627,
+    "archive_extraction": "Regular files/directories only; checked root, paths, duplicate names, ancestor collisions, member counts and expanded size; no links/devices/owner/set-ID replay; refuses nonempty stage.",
+    "offline_source_policy": "Upstream SDK helper appended only after its original SHA256 matches; download and Conan helpers fail closed; check_component accepts only locked commit/URL/path identity.",
+    "licenses": "Per-archive license-file path/SHA256 inventory retained in the vendor-input lock.",
+    "kconfig_verification": "Pinned Cardputer defaults generated as tyrell_native_config.mk; real ARM64 compile completed with network namespace disabling external connectivity. Exact generated config hash and archive identities in native build receipt."
+  }
+}

@@ -1,0 +1,5 @@
+#!/usr/bin/python3
+import sys
+sys.path.insert(0, "/usr/lib/tyrell-zero")
+from power_policy import main
+raise SystemExit(main())

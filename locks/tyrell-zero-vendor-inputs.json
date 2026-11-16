@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "kind": "native-wizard-source-archive-lock",
+  "plan_revision": 3,
+  "scope": "Immutable source archives selected by the pinned native LaunchWizard config_defaults.mk. Non-Wizard launcher gitlinks and remote Store catalogue/application downloads are outside this source closure. Build, image, and hardware qualification are tracked separately.",
+  "native_source_archives_materialized": true,
+  "archives": [
+    {
+      "id": "launcher",
+      "repository": "https://github.com/CardputerZero/launcher.git",
+      "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "url": "https://codeload.github.com/CardputerZero/launcher/tar.gz/e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "filename": "launcher-e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f.tar.gz",
+      "sha256": "f75545a999800bbaa8d6215a03c2b56d8639d75708c9df11aa57d89437a40436",
+      "bytes": 52982318,
+      "unpacked_bytes": 78513203,
+      "members": 1329,
+      "archive_root": "launcher-e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "destination": ".",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "2b1a9319c51c3da294d4a8373f56cadcabfcbd1fc7290e12cd8700588fc6077f"
+        },
+        {
+          "path": "ext_components/Miniaudio/LICENSE",
+          "sha256": "bde09ed161fef45da2194cba70601aab33ca6fdfe6eed2e3d95efd15b48561f9"
+        },
+        {
+          "path": "ext_components/RadioLib/LICENSE",
+          "sha256": "025378110a5679f82e8a59c19cf91b8ed760dc8752e5504596ef0c0592b8a3e8"
+        },
+        {
+          "path": "ext_components/Sigslot/LICENSE",
+          "sha256": "1315e4bdd10265324c80724a6506a8238c69c94c4cf5d19f76a6161a41b3a528"
+        },
+        {
+          "path": "ext_components/SmoothUI/LICENSE",
+          "sha256": "4633fd988ed98812f2ca0b2a42e2bfd5a02e5364a4af6bc65191e05b92e5a0b4"
+        },
+        {
+          "path": "ext_components/Spdlog/LICENSE",
+          "sha256": "d678c20826e1392578508e1c78649a1e3c31bda05ef4388d967dbd654461b140"
+        },
+        {
+          "path": "ext_components/bluectl/LICENSE",
+          "sha256": "2b1a9319c51c3da294d4a8373f56cadcabfcbd1fc7290e12cd8700588fc6077f"
+        },
+        {
+          "path": "ext_components/cp0_lvgl/LICENSE",
+          "sha256": "7073ab6e27d4f34ad7c89cc9ecbdfd8cf3b5b4260cd4ac623fc47cddcd7c2e5d"
+        },
+        {
+          "path": "ext_components/nmtui/LICENSE",
+          "sha256": "2b1a9319c51c3da294d4a8373f56cadcabfcbd1fc7290e12cd8700588fc6077f"
+        }
+      ]
+    },
+    {
+      "id": "sdk",
+      "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+      "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
+      "url": "https://codeload.github.com/m5stack/M5Stack_Linux_Libs/tar.gz/730634b0fec605c2087836fd35b37d3cf21b1a4c",
+      "filename": "sdk-730634b0fec605c2087836fd35b37d3cf21b1a4c.tar.gz",
+      "sha256": "eeab5e58ba9aa39992ad4260a081e89d87b2177fe595d04692f8e52cc310a2a3",
+      "bytes": 48125220,
+      "unpacked_bytes": 179290661,
+      "members": 3349,
+      "archive_root": "M5Stack_Linux_Libs-730634b0fec605c2087836fd35b37d3cf21b1a4c",
+      "destination": "SDK",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "5553f6c8771c6407e875f325af144f4699660d9b7a7d77375a9263e63beefa56"
+        },
+        {
+          "path": "components/utilities/party/fmt/LICENSE.rst",
+          "sha256": "07580f2a3b35709ce703d523f447b242f6dfec7582a8c0df102c7fa2849375f8"
+        },
+        {
+          "path": "doc/component_doc/c_periphery/LICENSE",
+          "sha256": "2c29e38ac4d393558522c5fa671bd03f9d6f7d751c899a3482b20ab2a0ba5122"
+        },
+        {
+          "path": "github_source/lvgl/lv_drivers/LICENSE",
+          "sha256": "9c9bcef74b44e12c480839af9916192578b81f1296b372f505d0293659be6392"
+        },
+        {
+          "path": "github_source/lvgl/lvgl/LICENCE.txt",
+          "sha256": "6a916130a36e83a79bb0dca6c6a7bfe60a67af7d118605e2b7b23bd5ad5c4eb0"
+        },
+        {
+          "path": "github_source/minicv2/LICENSE",
+          "sha256": "d022ad79a1fbe8215758a56e92658a8f9fc185d9baead447e597e885a9152596"
+        },
+        {
+          "path": "tools/kconfig/Kconfiglib/LICENSE.txt",
+          "sha256": "4a5f66f112ae14d59e106d55186ec0ea873f694d6b70e218ca5c8a6bc608058a"
+        }
+      ]
+    },
+    {
+      "id": "lvgl",
+      "repository": "https://github.com/dianjixz/lvgl.git",
+      "commit": "85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "url": "https://codeload.github.com/dianjixz/lvgl/tar.gz/85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "filename": "lvgl-85aa60d18b3d5e5588d7b247abf90198f07c8a63.tar.gz",
+      "sha256": "b32747cf6568d86a5cb9d30f53970bec1c7a322cb624c4158d4b0e348324146b",
+      "bytes": 101335560,
+      "unpacked_bytes": 177421681,
+      "members": 5357,
+      "archive_root": "lvgl-85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+      "destination": "SDK/github_source/lvgl/lvgl_9_5/lvgl",
+      "license_files": [
+        {
+          "path": "LICENCE.txt",
+          "sha256": "27a80bd36832ab42d35ad60c08b2b230a807a9bc0d58e94ec1531543dc49cbe8"
+        },
+        {
+          "path": "docs/src/introduction/license.rst",
+          "sha256": "75c5bbce99ab35522e48ef29d5be352f35c428a385cfed69231ae0ac865fecca"
+        },
+        {
+          "path": "docs/src/xml/editor/license.rst",
+          "sha256": "4bd5f7689f0bf38ba2ecd59ea457e7263fb74c3ff6840c48e38589b02196f09b"
+        },
+        {
+          "path": "docs/src/xml/xml/license.rst",
+          "sha256": "b97009a52d7c7d61ed1053326331e4daf976449064f352be820715b834f08ac6"
+        },
+        {
+          "path": "scripts/built_in_font/font_license/DejaVuSans/LICENSE",
+          "sha256": "d75938dec098f06f0ac3c00853065d94f020be1c3c62ef1dc2975ba15b4d9b0e"
+        },
+        {
+          "path": "scripts/built_in_font/font_license/FontAwesome/LICENSE.txt",
+          "sha256": "9b914eae88817d63b576eab5aafde7068c7a1abae125d7cdfb034f1da43a9afc"
+        },
+        {
+          "path": "scripts/built_in_font/font_license/FontAwesome5/LICENSE.txt",
+          "sha256": "de784a808496d49f5f80dd9d1d6e9a51cff712cfbc339e7c25155631ae3cdb5d"
+        },
+        {
+          "path": "scripts/built_in_font/font_license/SourceHanSansSC/LICENSE.txt",
+          "sha256": "f55c2d43dd905011515f5e46ba78d180027e314ef8ccaaf53a9e88fe316767cd"
+        },
+        {
+          "path": "src/libs/FT800-FT813/LICENSE",
+          "sha256": "862e06968462faf8ff2066fffaf7c4522aa48ddafd11fe9c578248aa4b013729"
+        },
+        {
+          "path": "src/libs/barcode/LICENSE.txt",
+          "sha256": "bc9492ba4839f81fed80aa4b966e7078b18fc7f0d81cf47aa3c04a86047099f1"
+        },
+        {
+          "path": "src/libs/frogfs/LICENSE.txt",
+          "sha256": "af175b9d96ee93c21a036152e1b905b0b95304d4ae8c2c921c7609100ba8df7e"
+        },
+        {
+          "path": "src/libs/gif/LICENSE",
+          "sha256": "63fefff6dd199d109389e0f413579387e9ca9cfdeeae961ecdbcb120d08432e0"
+        },
+        {
+          "path": "src/libs/lodepng/LICENSE.txt",
+          "sha256": "f43c59ae0979ea7c08b24a56cfe7816f3c82141d13f5866a2040f66b02589771"
+        },
+        {
+          "path": "src/libs/lz4/LICENSE.txt",
+          "sha256": "8b58c446121a109ccf32edc094bba3010a3d85e4ee3702950db55e4d3e87736c"
+        },
+        {
+          "path": "src/libs/nanovg/LICENSE.txt",
+          "sha256": "45185a6680ed83863bef33e1055f9fd76374df4b81c957802c19a286c982dfd2"
+        },
+        {
+          "path": "src/libs/qrcode/LICENSE.txt",
+          "sha256": "4d3b92a5e730466508ed46e8632140dfb96221bacfa18c95355cee161e7a22c8"
+        },
+        {
+          "path": "src/libs/thorvg/LICENSE.txt",
+          "sha256": "861eb0197d1b43e3c904c433b605cf38be3c4bc447bb9752dfad74c704e36af7"
+        },
+        {
+          "path": "src/libs/tiny_ttf/LICENSE.txt",
+          "sha256": "f214b427f12e19d68f65e2e30a3c9a1f59ee4a09d4c684931971a8f3bfdd7a1f"
+        },
+        {
+          "path": "src/libs/tjpgd/LICENSE.txt",
+          "sha256": "e85563f195d82708ca334e85c63d0352c980ccc66dca2052e9fd05f7823df51c"
+        },
+        {
+          "path": "src/libs/vg_lite_driver/LICENSE.txt",
+          "sha256": "928c166e5324bd40709174aae078010aa8206ce056aa199fb98126b062ecbd64"
+        },
+        {
+          "path": "tests/src/test_libs/rnd_unicodes/rnd_unicodes/LICENSE",
+          "sha256": "ad4feab161c3e1f5b12ec323eb5c69688523b32f643684236af765c8931fecd1"
+        }
+      ]
+    },
+    {
+      "id": "eventpp",
+      "repository": "https://github.com/wqking/eventpp.git",
+      "commit": "c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+      "url": "https://codeload.github.com/wqking/eventpp/tar.gz/c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+      "filename": "eventpp-c472fb22e71ead0e58ff7df89e12c66b0bdfb533.tar.gz",
+      "sha256": "2d2bebea25cab8723525206c6d77c8a95f073992a8e8b880a11bb8823b05f179",
+      "bytes": 255636,
+      "unpacked_bytes": 1375599,
+      "members": 137,
+      "archive_root": "eventpp-c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+      "destination": "SDK/github_source/eventpp",
+      "license_files": [
+        {
+          "path": "license",
+          "sha256": "e8d33482911d6333e299537081f717103b05f6dabe921f38430ffe0a5b03c538"
+        }
+      ]
+    },
+    {
+      "id": "sigslot",
+      "repository": "https://github.com/palacaze/sigslot.git",
+      "commit": "b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+      "url": "https://codeload.github.com/palacaze/sigslot/tar.gz/b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+      "filename": "sigslot-b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1.tar.gz",
+      "sha256": "140f0a2a731ed7d9ebff1bad4cb506ea2aa28fd57f42b3ec79031b1505dc6680",
+      "bytes": 33987,
+      "unpacked_bytes": 157617,
+      "members": 45,
+      "archive_root": "sigslot-b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+      "destination": "SDK/github_source/sigslot",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "1315e4bdd10265324c80724a6506a8238c69c94c4cf5d19f76a6161a41b3a528"
+        }
+      ]
+    },
+    {
+      "id": "smooth_ui_toolkit",
+      "repository": "https://github.com/Forairaaaaa/smooth_ui_toolkit.git",
+      "commit": "5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+      "url": "https://codeload.github.com/Forairaaaaa/smooth_ui_toolkit/tar.gz/5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+      "filename": "smooth_ui_toolkit-5328cfd14af9390b8d26a4daa0d7dbd237894d4b.tar.gz",
+      "sha256": "b0600ac91f02c521ff9236cb312a9385062bde065687dc626868424eadd48215",
+      "bytes": 100289,
+      "unpacked_bytes": 444317,
+      "members": 176,
+      "archive_root": "smooth_ui_toolkit-5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+      "destination": "SDK/github_source/smooth_ui_toolkit",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "f9db7ea7026e1ec808bab58868bc949d62a081c1727b17f842e907a3757c5476"
+        }
+      ]
+    },
+    {
+      "id": "spdlog",
+      "repository": "https://github.com/gabime/spdlog.git",
+      "commit": "79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "url": "https://codeload.github.com/gabime/spdlog/tar.gz/79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "filename": "spdlog-79524ddd08a4ec981b7fea76afd08ee05f83755d.tar.gz",
+      "sha256": "c6dee844e35a54cc80e3ab76aae2310763e0b49c7397549dfa4d4657d9737138",
+      "bytes": 281845,
+      "unpacked_bytes": 1210549,
+      "members": 194,
+      "archive_root": "spdlog-79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "destination": "SDK/github_source/spdlog",
+      "license_files": [
+        {
+          "path": "LICENSE",
+          "sha256": "d678c20826e1392578508e1c78649a1e3c31bda05ef4388d967dbd654461b140"
+        }
+      ]
+    }
+  ],
+  "native_build": {
+    "cwd": "projects/LaunchWizard",
+    "environment": {
+      "CONFIG_DEFAULT_FILE": "tyrell_native_config.mk"
+    },
+    "command": [
+      "scons",
+      "-j2"
+    ],
+    "debian_packages": [
+      "build-essential",
+      "pkg-config",
+      "scons",
+      "python3-parse",
+      "libinput-dev",
+      "libxkbcommon-dev",
+      "libudev-dev",
+      "libglib2.0-dev",
+      "libdbus-1-dev",
+      "libfreetype-dev",
+      "libpng-dev",
+      "libcrypt-dev"
+    ],
+    "python_modules": {
+      "scons": "Debian scons package",
+      "parse": "Debian python3-parse package",
+      "kconfiglib": "Vendored SDK/tools/kconfig/Kconfiglib, no network dependency"
+    },
+    "cross_sdk_allowed": false,
+    "network_policy": "Fetch is explicit and verifies locked bytes. Staging never fetches; SDK download entry points fail closed. Native builds must run without external networking.",
+    "configuration_preparation": {
+      "implementation": "packages/tyrell-zero-session/wizard/native_config.py",
+      "sha256": "1df551d93c93925eeaa1050fb1bb71c7e82813464e0a27fe6be3dd201075344b",
+      "derivation": "Exact vendor Cardputer runtime defaults minus only cross compiler prefix; generic config omits framebuffer backend."
+    }
+  },
+  "sdk_offline_patch": {
+    "path": "SDK/tools/scons/SConstruct_tool.py",
+    "upstream_sha256": "b51b270e754ebe6c6107513692342cdc405ec803526a0ccad8c63022b4b628bd",
+    "implementation": "builder/zero-vendor.py:offline_guard",
+    "purpose": "Only the five staged commit identities may satisfy check_component; all downloader and Conan entry points are disabled."
+  }
+}

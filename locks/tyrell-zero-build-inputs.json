@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "milestone": "revision-3-foundation-packages",
+  "source_date_epoch": 1794528000,
+  "target": "Debian Trixie on the existing native ARM64 builder",
+  "packages": {
+    "tyrell-zero-session": "0.2.0-1",
+    "tyrell-zero-power-policy": "0.1.0-1"
+  },
+  "builder_policy": "Use existing Lima instance and record installed toolchain. No global package installation, device credentials, hardware access or image build.",
+  "qualification": "Foundation only; native Wizard, Store guard, frozen Zero APT closure, boot integration and hardware/battery gates remain separate.",
+  "reproducibility": "Capture source hashes, package hashes and builder inventory. Byte-identical rebuilds are not claimed."
+}

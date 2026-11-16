@@ -1,0 +1,6 @@
+# INACTIVE TEMPLATE. Never install directly into a tmpfiles.d directory.
+# Real activation requires verified identity, ordering and generation integration.
+w /sys/devices/system/cpu/cpufreq/ondemand/up_threshold - - - - 50
+w /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate - - - - 100000
+w /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor - - - - 1
+w /sys/devices/system/cpu/cpufreq/ondemand/io_is_busy - - - - 0

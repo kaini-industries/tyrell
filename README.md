@@ -176,6 +176,24 @@ python3 scripts/builder image-deps --check
 
 Stop the VM when finished to release its memory; the toolchain remains available for the next build.
 
+Revision 3 **Tyrell Zero** has separate foundation and native integration commands:
+
+```sh
+make zero-check       # Read-only structure and remaining image-build gates
+make zero-packages    # ARM64 foundation packages; disposable install-test roots
+make zero-native-deps
+make zero-native-wizard
+make zero-integration WIZARD_ARTIFACTS=artifacts/tyrell-zero-native/WIZARD_JOB
+```
+
+These commands keep the handheld and its SD card untouched. The profile remains
+explicitly unready for an image build until the frozen Zero image pipeline and
+assembled-image qualification are complete. The native build uses the actual
+patched Wizard GUI and a guarded dispatcher preserving the vendor Store UI.
+See the [native integration workflow](docs/tyrell-zero-native-integration.md) and
+[implementation progress](docs/tyrell-zero-progress.md) for package behavior,
+test boundaries and next gates.
+
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
 

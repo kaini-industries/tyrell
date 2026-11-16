@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "state": "exact-package-cached-not-installed-or-profile-qualified",
+  "package": "greetd",
+  "version": "0.10.3-4",
+  "architecture": "arm64",
+  "bytes": 318812,
+  "sha256": "8bf65899d76ca397ae8c64bf336bab65f00ec5e3385944a643e3aa70221935d0",
+  "url": "https://deb.debian.org/debian/pool/main/g/greetd/greetd_0.10.3-4_arm64.deb",
+  "metadata_source": "Authenticated existing builder APT metadata; local SHA256 verified.",
+  "depends": [
+    "libc6 (>= 2.34)",
+    "libgcc-s1 (>= 4.2)",
+    "libpam0g (>= 0.99.7.1)",
+    "adduser"
+  ],
+  "pre_depends": [
+    "init-system-helpers (>= 1.54~)"
+  ],
+  "closure_complete": false,
+  "installed_in_builder": false,
+  "zero_apt_lock_ready": false
+}

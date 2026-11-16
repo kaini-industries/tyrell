@@ -1,0 +1,12 @@
+[Unit]
+Description=Tyrell Zero private native setup wizard
+Requires=tyrell-zero-boot-state.service
+After=tyrell-zero-boot-state.service systemd-user-sessions.service
+ConditionPathExists=/run/tyrell-zero/setup
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/share/APPLaunch
+ExecStart=/usr/libexec/tyrell-zero/LaunchWizard
+Restart=no
+TimeoutStopSec=10

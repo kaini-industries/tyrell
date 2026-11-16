@@ -327,16 +327,21 @@ def parse_args(argv=None):
     app_build = actions.add_parser('build')
     app_build.add_argument('--app', choices=['status', 'video'], default='status')
     actions.add_parser('image-deps').add_argument('--check', action='store_true')
-    for name in ['image', 'shell']:
+    for name in ['image', 'shell', 'zero']:
         actions.add_parser(name).add_argument('command', nargs=argparse.REMAINDER)
     # These commands own their option parsing; preserve their complete order.
-    if argv and argv[0] in {'image', 'shell'}:
+    if argv and argv[0] in {'image', 'shell', 'zero'}:
         return argparse.Namespace(action=argv[0], command=argv[1:])
     return parser.parse_args(argv)
 
 
 def main():
     args = parse_args()
+    if args.action == 'zero':
+        # Host-only inspection works without Lima; the package command checks
+        # its own VM requirements and never routes through the app installer.
+        run([sys.executable, str(ROOT / 'builder/zero.py'), *args.command])
+        return
     if not shutil.which('limactl'):
         raise RuntimeError('Install Lima 2.x before using this builder')
     if args.action == 'up':

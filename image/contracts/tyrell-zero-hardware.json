@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "id": "tyrell-zero-hardware",
+  "plan_revision": 3,
+  "kernel_release": "6.18.39+rpt-rpi-v8",
+  "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+  "retain_complete_modules": true,
+  "retain_complete_firmware": true,
+  "retain_complete_overlays": true,
+  "protected_trees": [
+    "/lib/modules",
+    "/lib/firmware",
+    "/boot/firmware/overlays"
+  ],
+  "capabilities": [
+    {
+      "id": "boot_sd",
+      "required_proof": "Cold boot, expansion, clean shutdown and recovery",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "lcd_backlight",
+      "required_proof": "Display, brightness, dim/off/wake",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "keyboard",
+      "required_proof": "All keys, modifiers, repeat and normal-user access",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "power_gauge",
+      "required_proof": "Battery/gauge, charging, low-battery and physical-switch power fail",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "audio",
+      "required_proof": "Speaker, built-in/headset microphones, TRRS, resume and underruns",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "hdmi",
+      "required_proof": "Display/audio, hotplug, VT restoration and idle return after use",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "camera",
+      "required_proof": "Capture, preview, recording, reopening and physical idle return",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "imu_compass",
+      "required_proof": "Accelerometer, gyroscope, magnetometer and initialization firmware",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "rtc",
+      "required_proof": "Persistence and network time",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "infrared",
+      "required_proof": "Known-code reception and transmission",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "wifi_ssh",
+      "required_proof": "Association, SSH, reconnect and effective power-saving persistence",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "bluetooth",
+      "required_proof": "Pairing, reconnect and supported peripherals",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "ethernet",
+      "required_proof": "Link/traffic and automatic cable insertion wake after idle",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "usb_modes",
+      "required_proof": "Host/gadget/modes, normal-user mount/eject and peripheral hotplug",
+      "qualification": "not-tested-for-Zero"
+    },
+    {
+      "id": "expansion",
+      "required_proof": "Grove/GPIO/I2C/SPI/UART, routing, LEDs and accessory power",
+      "qualification": "not-tested-for-Zero"
+    }
+  ],
+  "qualification": "not-tested-for-Zero",
+  "spare_card_required": true,
+  "current_device_access": false
+}

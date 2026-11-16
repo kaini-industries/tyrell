@@ -1,4 +1,5 @@
 .PHONY: builder-up builder-info builder-stop package image image-stock stock-check tanks-deps tanks tanks-test game-deps game game-test
+.PHONY: zero-check zero-packages zero-session-package zero-power-policy-package zero-native-deps zero-native-wizard zero-integration
 
 APP ?= status
 GAME_BACKEND ?= desktop
@@ -12,6 +13,29 @@ builder-info:
 
 builder-stop:
 	python3 scripts/builder stop
+
+zero-check:
+	python3 scripts/builder zero check
+
+zero-native-deps:
+	python3 builder/zero-integration.py deps
+
+zero-native-wizard:
+	python3 builder/zero-integration.py deps --check
+	python3 scripts/builder zero build-wizard
+
+zero-integration:
+	test -n "$(WIZARD_ARTIFACTS)"
+	python3 scripts/builder zero build-integration --wizard-artifacts "$(WIZARD_ARTIFACTS)"
+
+zero-packages:
+	python3 scripts/builder zero build-packages
+
+zero-session-package:
+	python3 scripts/builder zero build-packages --package session
+
+zero-power-policy-package:
+	python3 scripts/builder zero build-packages --package power
 
 package:
 	python3 scripts/builder build --app $(APP)

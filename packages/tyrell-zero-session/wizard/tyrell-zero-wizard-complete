@@ -1,0 +1,6 @@
+#!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
+import sys
+sys.path.insert(0, "/usr/lib/tyrell-zero/session")
+from wizard_complete import main
+raise SystemExit(main())

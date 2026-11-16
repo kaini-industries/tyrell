@@ -1,0 +1,388 @@
+--- a/projects/LaunchWizard/main/ui/wizard_service.cpp
++++ b/projects/LaunchWizard/main/ui/wizard_service.cpp
+@@ -9,7 +9,6 @@
+ #include "apply_checkpoint.h"
+ #include "command_runner.h"
+ #include "first_boot_policy.h"
+-#include "service_handoff.h"
+ #include "timezone_setup.h"
+ 
+ #if __has_include("global_config.h")
+@@ -20,7 +19,6 @@
+ #include <arpa/inet.h>
+ #include <ctype.h>
+ #include <errno.h>
+-#include <glob.h>
+ #include <grp.h>
+ #include <fcntl.h>
+ #include <pwd.h>
+@@ -57,7 +55,6 @@
+ namespace launch_wizard {
+ 
+ constexpr uid_t kDefaultUserUid = 1000;
+-constexpr const char *kFirstBootWizardUser = "rpi-first-boot-wizard";
+ // Factory account baked into every image by pi-gen (build.yml FIRST_USER_NAME /
+ // FIRST_USER_PASS). Keep in sync with the pi-gen workflow configuration.
+ constexpr const char *kFactoryDefaultUser = "pi";
+@@ -85,17 +82,6 @@
+ // wizard keeps the display after the first-boot lesson ends, so it opts in; the
+ // launcher's own keyboard-guide.desktop entry intentionally does not.
+ constexpr const char *kKeyboardGuideExitLogoArgument = "--exit-logo";
+-
+-void remove_oobe_markers(std::string *first_error = nullptr)
+-{
+-    static const char *marker_paths[] = {kRearmOobeMarker, kFactoryOobeMarker};
+-    for (const char *path : marker_paths) {
+-        if (remove(path) != 0 && errno != ENOENT && first_error &&
+-            first_error->empty())
+-            *first_error = std::string("Failed to remove OOBE marker: ") +
+-                           strerror(errno);
+-    }
+-}
+ 
+ void print_command(const std::vector<std::string> &args, const std::string *stdin_text)
+ {
+@@ -142,89 +128,15 @@
+ #endif
+ }
+ 
+-std::string trim_copy(const std::string &value)
+-{
+-    size_t start = 0;
+-    while (start < value.size() && isspace(static_cast<unsigned char>(value[start])))
+-        ++start;
+-    size_t end = value.size();
+-    while (end > start && isspace(static_cast<unsigned char>(value[end - 1])))
+-        --end;
+-    return value.substr(start, end - start);
+-}
+-
+-void read_lightdm_autologin_file(const char *path, std::string &autologin_user)
+-{
+-    FILE *fp = fopen(path, "r");
+-    if (!fp)
+-        return;
+-
+-    char buffer[512];
+-    while (fgets(buffer, sizeof(buffer), fp)) {
+-        std::string line = trim_copy(buffer);
+-        if (line.empty() || line[0] == '#' || line[0] == ';')
+-            continue;
+-        size_t comment = line.find_first_of("#;");
+-        if (comment != std::string::npos)
+-            line = trim_copy(line.substr(0, comment));
+-        size_t sep = line.find('=');
+-        if (sep == std::string::npos)
+-            continue;
+-        std::string key = trim_copy(line.substr(0, sep));
+-        if (key == "autologin-user")
+-            autologin_user = trim_copy(line.substr(sep + 1));
+-    }
+-    fclose(fp);
+-}
+-
+-std::string lightdm_autologin_user()
+-{
+-#if LAUNCH_WIZARD_DRY_RUN
+-    return kFirstBootWizardUser;
+-#else
+-    std::string autologin_user;
+-    read_lightdm_autologin_file("/etc/lightdm/lightdm.conf", autologin_user);
+-
+-    glob_t matches;
+-    memset(&matches, 0, sizeof(matches));
+-    if (glob("/etc/lightdm/lightdm.conf.d/*.conf", 0, nullptr, &matches) == 0) {
+-        for (size_t i = 0; i < matches.gl_pathc; ++i)
+-            read_lightdm_autologin_file(matches.gl_pathv[i], autologin_user);
+-    }
+-    globfree(&matches);
+-    return autologin_user;
+-#endif
+-}
+-
+-bool piwiz_autostart_enabled()
+-{
+-#if LAUNCH_WIZARD_DRY_RUN
+-    return true;
+-#else
+-    FILE *fp = fopen("/etc/xdg/autostart/piwiz.desktop", "r");
+-    if (!fp)
+-        return false;
+-
+-    bool hidden = false;
+-    char buffer[512];
+-    while (fgets(buffer, sizeof(buffer), fp)) {
+-        std::string line = trim_copy(buffer);
+-        if (line.empty() || line[0] == '#' || line[0] == ';')
+-            continue;
+-        size_t comment = line.find_first_of("#;");
+-        if (comment != std::string::npos)
+-            line = trim_copy(line.substr(0, comment));
+-        size_t sep = line.find('=');
+-        if (sep == std::string::npos)
+-            continue;
+-        std::string key = trim_copy(line.substr(0, sep));
+-        std::string value = trim_copy(line.substr(sep + 1));
+-        if (key == "Hidden" && value == "true")
+-            hidden = true;
+-    }
+-    fclose(fp);
+-    return !hidden;
+-#endif
++// Fixed, private root helper; no command strings or provisioning secrets.
++std::string native_completion(const char *action, const std::string &user = {},
++                              int step = -1)
++{
++    std::vector<std::string> args = {"/usr/libexec/tyrell-zero-wizard-complete", action};
++    if (!user.empty()) args.push_back(user);
++    if (step >= 0) args.push_back(std::to_string(step));
++    CommandResult result = run_command(args);
++    return result.code == 0 ? std::string{} : "Native setup transaction failed";
+ }
+ 
+ bool command_ok(const std::vector<std::string> &args, std::string &error)
+@@ -708,95 +620,6 @@
+ #endif
+ }
+ 
+-std::string disable_piwiz(const std::string &user)
+-{
+-    std::string error;
+-    CommandResult killed = run_command({"pkill", "-x", "piwiz"});
+-    if (killed.code != 0 && killed.code != 1)
+-        return killed.output.empty() ? "Failed to stop piwiz" : killed.output;
+-    if (!command_ok({"rm", "-f",
+-                     "/etc/xdg/autostart/piwiz.desktop.dpkg-new",
+-                     "/etc/xdg/autostart/piwiz.desktop.dpkg-dist",
+-                     "/etc/xdg/autostart/piwiz.desktop.dpkg-old"}, error) ||
+-        !command_ok({"install", "-d", "-m", "0755", "/etc/xdg/autostart"}, error))
+-        return error;
+-    const std::string hidden_entry =
+-        "[Desktop Entry]\n"
+-        "Type=Application\n"
+-        "Name=piwiz\n"
+-        "Hidden=true\n";
+-    CommandResult written = run_command(
+-        {"tee", "/etc/xdg/autostart/piwiz.desktop"}, &hidden_entry);
+-    if (written.code != 0)
+-        return written.output.empty() ? "Failed to disable piwiz autostart" : written.output;
+-    if (!command_ok({"chmod", "0644", "/etc/xdg/autostart/piwiz.desktop"}, error))
+-        return error;
+-
+-    const std::string user_autostart = "/home/" + user + "/.config/autostart";
+-    const std::string user_piwiz = user_autostart + "/piwiz.desktop";
+-    if (!command_ok({"install", "-d", "-m", "0755", "-o", user, "-g", user,
+-                     user_autostart}, error))
+-        return error;
+-    written = run_command({"tee", user_piwiz}, &hidden_entry);
+-    if (written.code != 0)
+-        return written.output.empty() ? "Failed to disable user piwiz autostart" : written.output;
+-    if (!command_ok({"chown", user + ":" + user, user_piwiz}, error) ||
+-        !command_ok({"chmod", "0644", user_piwiz}, error))
+-        return error;
+-    return {};
+-}
+-
+-std::string configure_desktop_startup(const std::string &user)
+-{
+-    std::string warning;
+-
+-    warning = disable_piwiz(user);
+-    if (!warning.empty()) return warning;
+-
+-    if (!command_ok({"systemctl", "set-default", "graphical.target"}, warning))
+-        return warning;
+-
+-    CommandResult raspi_config = run_command({"raspi-config", "nonint", "do_boot_behaviour", "B4"});
+-    if (raspi_config.code != 0) {
+-        warning = "raspi-config desktop autologin failed";
+-        if (!raspi_config.output.empty())
+-            warning += ": " + raspi_config.output;
+-        return warning;
+-    }
+-
+-    if (!command_ok({"install", "-d", "-m", "0755", "/etc/lightdm/lightdm.conf.d"},
+-                    warning))
+-        return warning;
+-    const std::string lightdm_conf =
+-        "[Seat:*]\n"
+-        "autologin-user=" + user + "\n"
+-        "autologin-user-timeout=0\n";
+-    CommandResult write_conf = run_command(
+-        {"tee", "/etc/lightdm/lightdm.conf.d/50-launchwizard-autologin.conf"},
+-        &lightdm_conf);
+-    if (write_conf.code != 0) {
+-        warning = "LightDM autologin config failed";
+-        if (!write_conf.output.empty())
+-            warning += ": " + write_conf.output;
+-        return warning;
+-    }
+-    if (!command_ok({"chmod", "0644",
+-                     "/etc/lightdm/lightdm.conf.d/50-launchwizard-autologin.conf"}, warning))
+-        return warning;
+-
+-    return warning;
+-}
+-
+-std::string enable_applaunch_service(const std::string &user, unsigned int uid)
+-{
+-    return enable_applaunch_after_reboot(
+-        user, uid,
+-        [](const std::vector<std::string> &args) {
+-            CommandResult result = run_command(args);
+-            return HandoffCommandResult{result.code, result.output};
+-        });
+-}
+-
+ // ---------------------------------------------------------------------------
+ // System integration -- OOBE steps (timezone / hostname / wifi / ssh).
+ // ---------------------------------------------------------------------------
+@@ -1006,6 +829,11 @@
+             return std::string{};
+         }};
+     };
++    // Begin durably publishes pending native work before any vendor mutation.
++    // Reapply every confirmed vendor action; the account migration alone owns
++    // its separate, unchanged recovery journal. No numeric legacy checkpoint.
++    const std::string begin_error = native_completion("begin", username);
++    if (!begin_error.empty()) return begin_error;
+     std::vector<ApplyStep> steps = {
+         {"Setting timezone...", [timezone, timezone_mode] {
+             const std::string error = apply_timezone(timezone, timezone_mode, run_command);
+@@ -1033,41 +861,31 @@
+             std::string error;
+             return configure_account(username, password, error) == 0 ? error : std::string{};
+         }},
+-        {"Configuring desktop login...", [username] {
+-            return configure_desktop_startup(username);
++        {"Configuring native session...", [username] {
++            return native_completion("configure", username);
+         }},
+-        {"Enabling APPLaunch service...", [username] {
+-            return enable_applaunch_service(username, kDefaultUserUid);
++        {"Committing native readiness...", [username] {
++            return native_completion("commit", username);
+         }},
+-        {"Finalizing configuration...", [] {
+-            CommandResult disabled =
+-                run_command({"systemctl", "disable", "LaunchWizard.service"});
+-            if (disabled.code != 0)
+-                return disabled.output.empty()
+-                    ? std::string("Failed to disable LaunchWizard.service")
+-                    : disabled.output;
+-
+-            std::string error;
+-            remove_oobe_markers(&error);
+-            if (!error.empty())
+-                return error;
+-
+-#if !LAUNCH_WIZARD_DRY_RUN
+-            sync();
+-            sync();
+-            sync();
+-#endif
+-            return std::string{};
++        {"Finalizing configuration...", [username] {
++            return native_completion("finalize", username);
+         }},
+     };
+-
+-    const ApplyCheckpointStore checkpoint(default_apply_checkpoint_path());
+-    return run_apply_steps(
+-        wizard_configuration_fingerprint(g), steps, checkpoint,
+-        [&progress](int step, int total, const std::string &label) {
+-            if (progress) progress({step, total, label});
+-        },
+-        cancelled);
++    for (size_t index = 0; index < steps.size(); ++index) {
++        if (cancelled && cancelled()) return "Configuration cancelled";
++        if (progress) progress({static_cast<int>(index + 1),
++                                static_cast<int>(steps.size()), steps[index].label});
++        const std::string error = steps[index].execute();
++        if (!error.empty()) return error;
++        if (cancelled && cancelled()) return "Configuration cancelled";
++        if (index < 5) {
++            const std::string saved = native_completion(
++                "checkpoint", username, static_cast<int>(index + 1));
++            if (!saved.empty()) return saved;
++        }
++    }
++    return {};
++
+ }
+ 
+ std::string WizardService::reboot()
+@@ -1075,9 +893,7 @@
+ #if !LAUNCH_WIZARD_DRY_RUN
+     if (geteuid() != 0) return "LaunchWizard must run as root";
+ #endif
+-    CommandResult result = run_command({"systemctl", "reboot"});
+-    return result.code == 0 ? std::string() :
+-        (result.output.empty() ? "Failed to restart device" : result.output);
++    return native_completion("reboot");
+ }
+ 
+ }  // namespace launch_wizard
+@@ -1104,8 +920,12 @@
+     state.factory_username = first_user_has_factory_name();
+     state.user_has_password = first_user_has_password();
+     state.factory_credentials = first_user_has_factory_credentials();
+-    state.legacy_piwiz_active =
+-        lightdm_autologin_user() == kFirstBootWizardUser && piwiz_autostart_enabled();
++    // A pending migration must return to the vendor account recovery path.
++    if (access(kAccountJournalPath, F_OK) == 0) return true;
++    state.legacy_piwiz_active = false;
++    // Missing factory metadata must not treat baked credentials as Imager provisioning.
++    if (state.factory_username && (!state.user_has_password || state.factory_credentials))
++        return true;
+     return should_run_wizard(state);
+ #endif
+ }
+@@ -1251,25 +1071,12 @@
+         return 1;
+     }
+ 
+-    std::string service_warning = handoff_to_applaunch(
+-        user, kDefaultUserUid, [](const std::vector<std::string> &args) {
+-            CommandResult result = run_command(args);
+-            return HandoffCommandResult{result.code, result.output};
+-        });
+-    if (!service_warning.empty()) {
+-        fprintf(stderr, "LaunchWizard: %s\n", service_warning.c_str());
++    // Imager/preprovisioned completion shares exactly the normal native commit,
++    // marker cleanup and controlled reboot. It never starts another UI owner.
++    const std::string error = native_completion("complete", user);
++    if (!error.empty()) {
++        fprintf(stderr, "LaunchWizard: native completion failed; retaining setup\n");
+         return 1;
+     }
+-
+-    // The device counts as configured (Imager provisioning or a finished
+-    // OOBE), so drop any leftover factory marker to keep future boots clean.
+-    remove_oobe_markers();
+-#if !LAUNCH_WIZARD_DRY_RUN
+-    sync();
+-#endif
+-
+-    printf("LaunchWizard: started APPLaunch for %s and disabled LaunchWizard.service\n",
+-           user.c_str());
+-    fflush(stdout);
+     return 0;
+ }
+--- a/projects/LaunchWizard/main/src/main.cpp
++++ b/projects/LaunchWizard/main/src/main.cpp
+@@ -49,12 +49,12 @@
+         launch_wizard_run_keyboard_guide();
+ 
+     if (!force && !launch_wizard_should_run()) {
+-        printf("LaunchWizard: first-boot desktop is not active, starting APPLaunch\n");
++        printf("LaunchWizard: completing native first boot\n");
+         const int handoff_result = launch_wizard_finish_configured_system();
+         if (handoff_result == 0) return 0;
+ 
+         fprintf(stderr,
+-                "LaunchWizard: APPLaunch handoff failed; keeping the wizard visible\n");
++                "LaunchWizard: native completion incomplete; keeping the wizard visible\n");
+         return lvgl_main();
+     }
+ 

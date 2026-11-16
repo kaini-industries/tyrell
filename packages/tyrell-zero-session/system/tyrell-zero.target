@@ -1,0 +1,7 @@
+[Unit]
+Description=Tyrell Zero native profile (explicit image integration required)
+Requires=tyrell-zero-boot-state.service
+Wants=tyrell-zero-session.service tyrell-zero-wizard.service
+After=tyrell-zero-boot-state.service
+# Deliberately no Install section: package installation cannot select this
+# profile or replace the persistent builder's default target.

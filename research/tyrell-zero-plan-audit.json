@@ -1,0 +1,307 @@
+{
+  "kind": "planning-completion-audit",
+  "date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "completion_boundary": "Revision3 reviewed battery-performance plan is complete; no image implementation, device changes, Zero hardware qualification or new battery measurement is claimed.",
+  "requirements": [
+    {
+      "id": "R1",
+      "requirement": "Another round of fresh agents",
+      "evidence": "Five newly spawned agents: native session, image architecture, runtime contract, independent session adversary, independent whole-plan reviewer.",
+      "location": "Conversation agent results and resolved-review summary",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R2",
+      "requirement": "A concrete implementation plan for Tyrell Zero",
+      "evidence": "Selected architecture, proposed artifacts/interfaces, dependencies, ordered Z0\u2013Z6 work packages and proof gates.",
+      "location": "docs/tyrell-zero-implementation-plan.md",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R3",
+      "requirement": "Lighter Debian Trixie base image",
+      "evidence": "ARM64 stages0\u20132, explicit desktop/base-service exclusions, protected runtime closure and measured footprint/memory acceptance.",
+      "location": "research/tyrell-zero-plan.json:profile/acceptance",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R4",
+      "requirement": "Still implements M5 APPLaunch",
+      "evidence": "Pinned vendor package/main hash, direct original launcher in native PAM session, private base-only Wizard derivative, declared Store diversion retaining vendor bytes.",
+      "location": "docs/tyrell-zero-native-session.md",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R5",
+      "requirement": "Every native hardware capability retained",
+      "evidence": "Full BSP/module/firmware trees plus fifteen mandatory hardware acceptance categories, no unqualified policy changes.",
+      "location": "research/tyrell-zero-plan.json:hardware_acceptance",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R6",
+      "requirement": "Native operation, Wi-Fi and SSH",
+      "evidence": "Runtime/service roots, normal-user/PAM/seat/device permissions, explicit secure first-boot network/SSH provisioning.",
+      "location": "docs/tyrell-zero-implementation-plan.md:Runtime and service contract",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R7",
+      "requirement": "Base-system scope only",
+      "evidence": "Application power changes excluded; controls keep native clients/audio states matched.",
+      "location": "research/tyrell-zero-plan.json:scope/acceptance",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R8",
+      "requirement": "Current firmware/card and unrelated work preserved",
+      "evidence": "Planning reviews preserved all unrelated work; implementation uses the existing isolated ARM64 builder with no handheld/SD access and no global foundation-package installation.",
+      "location": "Conversation tool actions and git status",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R9",
+      "requirement": "Plan verified against current evidence",
+      "evidence": "Eight project source hashes and baseline pins still match; exact live-power evidence hash, four policy presets and fresh revision reviews integrated.",
+      "location": "research/tyrell-zero-plan.json:source_snapshot/pins",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R10",
+      "requirement": "Honest implementation/verification boundary",
+      "evidence": "Package/check foundations now implemented; image/resume interfaces remain proposed and image dependency/boot/hardware/battery acceptance is not claimed.",
+      "location": "docs/tyrell-zero-implementation-plan.md:Work packages and release gates",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R11",
+      "requirement": "Use live power research in the lightweight image plan",
+      "evidence": "Repeated USB and CPU activity effects drive four captured presets; independently qualified policies and combined release selection with baseline fallback.",
+      "location": "research/tyrell-zero-plan.json:power_strategy/work_packages/Z6",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R12",
+      "requirement": "Persistent reversible policies preserve all native hardware",
+      "evidence": "Separate config-only power package, initial2000ms timing, guarded identity and transactional post-activation invalidation/rollback; full native hardware remains mandatory.",
+      "location": "docs/tyrell-zero-implementation-plan.md:Proposed ownership and persistence",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R13",
+      "requirement": "Separate activity, energy and battery-runtime evidence",
+      "evidence": "Battery proof mandatory for extra-policy promotion, USB screening only; equal-time/work/runtime endpoints, instrument controls and separate extra-policy/whole-image references.",
+      "location": "research/tyrell-zero-plan.json:acceptance",
+      "plan_completion": "proven"
+    },
+    {
+      "id": "R14",
+      "requirement": "Another fresh review improves battery performance planning",
+      "evidence": "Five fresh agents; bounded conditional CPU/USB alternatives, idle-return/WiFi persistence, realistic battery duty cycles, maintenance contracts and final adversarial release-logic corrections.",
+      "location": "research/tyrell-zero-battery-review.json and docs/tyrell-zero-battery-validation.md",
+      "plan_completion": "proven"
+    }
+  ],
+  "fresh_agents": [
+    "plan_zero_native_session_fresh",
+    "plan_zero_image_architecture_fresh",
+    "plan_zero_runtime_contract_fresh",
+    "plan_zero_session_adversary_fresh",
+    "plan_zero_wholeplan_review_fresh"
+  ],
+  "review_findings_closed": [
+    "Normal and preprovisioned native Wizard paths both covered.",
+    "Outer apply checkpoint versioned separately from preserved account migration journal.",
+    "greetd command prefix, runfile persistence and VT/termios behavior corrected.",
+    "Store public argv[0] diversion and direct-dpkg/legacy-root/repair guards explicit.",
+    "Unchanged updater UI uses known rejection plus separate help entry.",
+    "Zero resume uses original inputs and attempt-specific identity/results; no timeout-based restart.",
+    "Live builder is build-only for base package; install tests isolated.",
+    "Pre-image logic and physical seat/hardware gates are separated.",
+    "Eligibility precedes automatic CPU tmpfiles exposure and every optimized write; invalid identity exposes no candidate override.",
+    "Generated /run same-basename override respects administrator /etc precedence; boot ordering and late-policy cases remain future proof.",
+    "Fixed controls exclude the varied ondemand factor; originals are separately recorded.",
+    "One coherent Zero rootfs/closure supports four qualification presets; final preset gets a new immutable release job.",
+    "Functional, performance, electrical and battery/runtime boundaries remain separate; all fifteen Zero hardware gates future.",
+    "Battery-powered benefit is required for extra-policy promotion; USB input is screening only.",
+    "Idle energy, useful work cycles and runtime endpoints are compared on equivalent terms, with declared per-condition limits and observer controls.",
+    "Combined testing follows isolated hardware/performance passes even if standalone energy is inconclusive.",
+    "Candidate-versus-Zero-baseline and whole-image-versus-full-source battery claims have separate references; baseline can meet the image objective if its comparison passes.",
+    "One-time provisioning energy is separate from ordinary configured boot energy.",
+    "Initial leaf delay is captured as2000ms; bounded intermediate factors2/5 and delay5000ms are conditional, not new defaults.",
+    "Post-activation invalidation serializes supported paths and verifies live baseline recovery; stale file removal alone is insufficient.",
+    "Hardware idle return is consumer-aware; effective WiFi PS and security-safe maintenance are qualified without disabling hardware or adding a pollingdaemon."
+  ],
+  "checks": [
+    "Original eight image-source identity hashes remain unchanged; implementation source hashes are separately recorded.",
+    "65 host builder/profile checks and native25session/15power unit tests passed;3sessionCTest targets and isolated lifecycle tests passed.",
+    "Final current-source and package/export checksum acceptance passed with two fresh adversarial reviews.",
+    "Source audit remains complete:false; exact greetd cache does not certify Zero APT closure.",
+    "Profile is structurally valid with baseline policy and15capabilities but build_ready:false; full image pipeline remains blocked.",
+    "Z0/Z1/Z2 are explicitly in-progress, while image/hardware/battery milestones remain unexecuted.",
+    "Implemented package/check commands are distinguished from proposed image/resume commands; progress links resolve."
+  ],
+  "implementation_status": "Native Wizard/guarded Store ARM64 pre-image integration built and independently accepted; Z0-Z2 remain incomplete.",
+  "future_gate_status": "Final Zero APT/runtime/compatibility/activation/runner/verifier and Z3-Z6 physical hardware/boot/battery gates remain unexecuted. No Zero image built.",
+  "goal_result": "Revision3 design retained; first buildable foundation increment accepted in its limited scope, full image integration still blocked.",
+  "artifact_sha256": {
+    "docs/cardputer-zero-power-audit.md": "ba2c190c5d77c5d6eeb486b9e4bb0b0ac4dde41e5a9ffdacc84151e7149cbddd",
+    "docs/tyrell-zero-battery-validation.md": "3d8f9331d77a53806fd82d2bdd8c2ed4dbcfe76198bdf9401020a4cf1d3f9bb0",
+    "docs/tyrell-zero-implementation-plan.md": "7427cd12bed1693f1121586fc197bfb02704430d16a2395034ebfe7eda8c72bb",
+    "docs/tyrell-zero-native-integration.md": "5dee47776ec429b70824db2c4c5b4775099a88c6831078c85feee98d0d8f8d1c",
+    "docs/tyrell-zero-native-session.md": "b2a00fadbd6997f84de2e9e1a6c21a90987ac3deded7238b5fb5e4eef022403a",
+    "docs/tyrell-zero-progress.md": "8ba850a6700d7b7ab7f5183dec5d44b116833cab2c4e27525ff3a8ced93c08d6",
+    "locks/tyrell-zero-session-source.json": "d10f1610dce0f490d12f8a2ddb4ade66e2d4a53d815393a661aa4d3e1b346787",
+    "locks/tyrell-zero-vendor-inputs.json": "50777c8c1cf08d6832b09b793f3f1e71b7f0940026967d3b22c77247d213c7e3",
+    "research/cardputer-zero-power-audit.json": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d",
+    "research/tyrell-zero-battery-review.json": "26d3100c29c12765fa57cbc3413841ae8fee4725d1fd0a25647a52e799c843e4",
+    "research/tyrell-zero-implementation.json": "e7e94ad3e7e14c2740236072fc2203a14fb4106afaa58b1be2b30bfb35a772b2",
+    "research/tyrell-zero-plan.json": "b4c2bc49649988b89aca043ef39a5f26dd3fd82ac8b320910db1a0d4b80592e8"
+  },
+  "original_plan_artifact_sha256": {
+    "docs/tyrell-zero-implementation-plan.md": "0688cec0ce5cb31e1a43dc01b54b7b7abd8eacc613077a4fa91543dfd8c28459",
+    "docs/tyrell-zero-native-session.md": "f98f03bbfc96a707de7d36b54f4f85747f3ada6fb6ce06709cba0e9bbe68e408",
+    "research/tyrell-zero-plan.json": "c906e1d080207d5fc0e621359f44133708379dfd0fa3653bc1f2eef1d1ee3b71"
+  },
+  "original_plan_checks": [
+    "All eight recorded current project-source SHA-256 values match.",
+    "Planning TOML parses and matches the machine contract; no duplicate greetd exec prefix.",
+    "Milestone dependency graph is coherent; all fifteen hardware gates remain explicitly future evidence.",
+    "Selected baseline pins and declared raw/compressed naming are internally consistent."
+  ],
+  "plan_revision": 3,
+  "revision_reviews": [
+    {
+      "revision": 2,
+      "date": "2026-11-15",
+      "fresh_agents": [
+        "zero_plan_power_revision_fresh",
+        "zero_plan_delivery_review_fresh",
+        "zero_plan_measurement_review_fresh"
+      ],
+      "result": "Passed after resolving both concrete final power-review findings.",
+      "resolved_findings": [
+        "Eligibility precedes automatic CPU tmpfiles exposure and every optimized write; invalid identity exposes no candidate override.",
+        "Generated /run same-basename override respects administrator /etc precedence; boot ordering and late-policy cases remain future proof.",
+        "Fixed controls exclude the varied ondemand factor; originals are separately recorded.",
+        "One coherent Zero rootfs/closure supports four qualification presets; final preset gets a new immutable release job.",
+        "Functional, performance, electrical and battery/runtime boundaries remain separate; all fifteen Zero hardware gates future."
+      ]
+    },
+    {
+      "revision": 3,
+      "date": "2026-11-15",
+      "fresh_agents": [
+        "battery_policy_review_round3_fresh",
+        "battery_platform_options_round3_fresh",
+        "battery_acceptance_round3_fresh",
+        "battery_release_adversary_round3_fresh",
+        "battery_maintenance_round3_fresh"
+      ],
+      "result": "Passed after final adversarial release-logic refinements.",
+      "resolved_findings": [
+        "Battery-powered benefit is required for extra-policy promotion; USB input is screening only.",
+        "Idle energy, useful work cycles and runtime endpoints are compared on equivalent terms, with declared per-condition limits and observer controls.",
+        "Combined testing follows isolated hardware/performance passes even if standalone energy is inconclusive.",
+        "Candidate-versus-Zero-baseline and whole-image-versus-full-source battery claims have separate references; baseline can meet the image objective if its comparison passes.",
+        "One-time provisioning energy is separate from ordinary configured boot energy.",
+        "Initial leaf delay is captured as2000ms; bounded intermediate factors2/5 and delay5000ms are conditional, not new defaults.",
+        "Post-activation invalidation serializes supported paths and verifies live baseline recovery; stale file removal alone is insufficient.",
+        "Hardware idle return is consumer-aware; effective WiFi PS and security-safe maintenance are qualified without disabling hardware or adding a pollingdaemon."
+      ]
+    }
+  ],
+  "revision_artifact_history": [
+    {
+      "revision": 2,
+      "artifact_sha256": {
+        "docs/tyrell-zero-implementation-plan.md": "83f72980e10ed68eb2d92b14224a9eeba5444febf1306445b644b0c34e40816a",
+        "docs/tyrell-zero-native-session.md": "6bb5916e5851f0367642955ea15bc8a8495f5a8f5b644cf8ecad2b06f6a87393",
+        "research/tyrell-zero-plan.json": "3edf942981698f92283d54d48555e4c76ba8f2cb8f16e3b6275e720c5da9e549",
+        "docs/cardputer-zero-power-audit.md": "ba2c190c5d77c5d6eeb486b9e4bb0b0ac4dde41e5a9ffdacc84151e7149cbddd",
+        "research/cardputer-zero-power-audit.json": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d"
+      }
+    },
+    {
+      "revision": 3,
+      "phase": "planning-before-implementation",
+      "artifact_sha256": {
+        "docs/tyrell-zero-implementation-plan.md": "9097106fd45edc654a9a19986acb5b2d5db0d62159ced105525d26a9a0d1524d",
+        "docs/tyrell-zero-native-session.md": "b2a00fadbd6997f84de2e9e1a6c21a90987ac3deded7238b5fb5e4eef022403a",
+        "research/tyrell-zero-plan.json": "d07407010e9607e98df400b4409c444c82192678c7eba3d3ee8cdeece7a875b5",
+        "docs/cardputer-zero-power-audit.md": "ba2c190c5d77c5d6eeb486b9e4bb0b0ac4dde41e5a9ffdacc84151e7149cbddd",
+        "research/cardputer-zero-power-audit.json": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d",
+        "docs/tyrell-zero-battery-validation.md": "3d8f9331d77a53806fd82d2bdd8c2ed4dbcfe76198bdf9401020a4cf1d3f9bb0",
+        "research/tyrell-zero-battery-review.json": "26d3100c29c12765fa57cbc3413841ae8fee4725d1fd0a25647a52e799c843e4"
+      }
+    },
+    {
+      "revision": 3,
+      "phase": "inactive-foundation-before-native-integration",
+      "artifact_sha256": {
+        "docs/tyrell-zero-implementation-plan.md": "f6dea891f3b06ea0dbb89a77819543a4b19cccd97a9f30f48e0a2d294aa7d8ed",
+        "docs/tyrell-zero-native-session.md": "b2a00fadbd6997f84de2e9e1a6c21a90987ac3deded7238b5fb5e4eef022403a",
+        "research/tyrell-zero-plan.json": "3e08d66f04ee045721308a1d6b716a886f92c1157627314d45e9ecb1c1c640a2",
+        "docs/cardputer-zero-power-audit.md": "ba2c190c5d77c5d6eeb486b9e4bb0b0ac4dde41e5a9ffdacc84151e7149cbddd",
+        "research/cardputer-zero-power-audit.json": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d",
+        "docs/tyrell-zero-battery-validation.md": "3d8f9331d77a53806fd82d2bdd8c2ed4dbcfe76198bdf9401020a4cf1d3f9bb0",
+        "research/tyrell-zero-battery-review.json": "26d3100c29c12765fa57cbc3413841ae8fee4725d1fd0a25647a52e799c843e4",
+        "docs/tyrell-zero-progress.md": "f5149d1937f1d4a2ba2bd5f4d09d311b9ab567ee55c2ce964e72b01e94ae7d8f",
+        "research/tyrell-zero-implementation.json": "956343af19f58deba0259a2567256aeae5799ed7a1fd9e3ab81ce2392b5a4172"
+      },
+      "implementation_evidence": {
+        "record": "research/tyrell-zero-implementation.json",
+        "sha256": "956343af19f58deba0259a2567256aeae5799ed7a1fd9e3ab81ce2392b5a4172",
+        "progress": "docs/tyrell-zero-progress.md",
+        "job_id": "20261116T023454094402Z-0531c7d1",
+        "fresh_agents": [
+          "zero_session_implementation_r3_fresh",
+          "zero_profile_implementation_r3_fresh",
+          "zero_power_implementation_r3_fresh",
+          "zero_foundation_adversary_r3_fresh",
+          "zero_vendor_source_freeze_r3_fresh",
+          "zero_package_acceptance_r3_fresh"
+        ],
+        "image_build_ready": false,
+        "device_access": false
+      }
+    }
+  ],
+  "audit_scope": "Planning review history plus a pointer to first foundation implementation evidence; this is not image or hardware acceptance.",
+  "implementation_evidence": {
+    "record": "research/tyrell-zero-implementation.json",
+    "sha256": "e7e94ad3e7e14c2740236072fc2203a14fb4106afaa58b1be2b30bfb35a772b2",
+    "progress": "docs/tyrell-zero-progress.md",
+    "job_id": "20261116T030615312119Z-9c96e960",
+    "fresh_agents": [
+      "native_wizard_integration_r3_fresh",
+      "native_store_integration_r3_fresh",
+      "native_vendor_build_inputs_r3_fresh",
+      "store_security_adversary_r3_fresh",
+      "native_receipt_hardening_r3_fresh",
+      "wizard_adversarial_final_r3_fresh",
+      "wizard_native_config_r3_fresh",
+      "native_builder_adversarial_r3_fresh",
+      "store_isolated_lifecycle_r3_fresh",
+      "store_final_adversary_r3_fresh",
+      "native_integration_acceptance_r3_fresh"
+    ],
+    "image_build_ready": false,
+    "device_access": false
+  },
+  "planning_completion_checks": [
+    "All eight project-source SHA-256 values remain unchanged.",
+    "Live-power evidence and selected raw passive-observation SHA-256 values match; no new measurement is claimed.",
+    "Five newly spawned agents supplied this review; three final adversarial checks passed after revisions.",
+    "Four initial presets include2000ms leaf delay; conditional factor2/5 and delay5000ms remain bounded follow-up cases.",
+    "Mandatory battery-powered promotion and no USB-only promotion are explicit in the machine contract.",
+    "Fixed controls, initial comparison scope and any selected follow-up parameter identity are distinguished.",
+    "Milestone dependency graph remains coherent with seven future work packages and four Z6 subgates.",
+    "All fifteen Zero hardware categories remain future/unqualified; full native support and base-only scope retained.",
+    "Proposed artifact paths and commands remain listed and unimplemented.",
+    "Native-session TOML parses and matches VT/runfile/command contracts.",
+    "All relative Markdown file links in the plan, session design and battery protocol resolve.",
+    "Separate combined eligibility and whole-image/additional-policy comparison references passed final review."
+  ]
+}

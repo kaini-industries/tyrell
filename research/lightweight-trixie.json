@@ -1,0 +1,352 @@
+{
+  "research_date": "2026-11-15",
+  "research_timezone": "America/Chicago",
+  "scope": "Research only; passive SSH observations; all native hardware retained by proposed profile; no device settings or firmware changes.",
+  "project_commit": "2779e4323c5981307570969d4d1dff5fb5a346f4",
+  "source_apt_lock_sha256": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e",
+  "package_analysis": {
+    "basis": "Source/frozen APT lock selections, not measured filesystem shrink or current stock package versions; may include transient build packages.",
+    "stage_selection_counts": {
+      "stage2": 950,
+      "stage4": 1679
+    },
+    "introduced_after_stage2": {
+      "identities": 729,
+      "installed_kib": 2333479,
+      "installed_mib": 2278.7880859375
+    },
+    "overlapping_candidate_groups": {
+      "cjk_fonts": {
+        "packages": [
+          {
+            "name": "fonts-noto-cjk",
+            "version": "1:20240730+repack1-1",
+            "installed_kib": 91217
+          },
+          {
+            "name": "fonts-noto-cjk-extra",
+            "version": "1:20240730+repack1-1",
+            "installed_kib": 214826
+          }
+        ],
+        "installed_mib": 298.8701171875
+      },
+      "browsers": {
+        "packages": [
+          {
+            "name": "chromium",
+            "version": "1:156.0.8078.79-1~deb13u1+rpt1",
+            "installed_kib": 300271
+          },
+          {
+            "name": "chromium-common",
+            "version": "1:156.0.8078.79-1~deb13u1+rpt1",
+            "installed_kib": 86357
+          },
+          {
+            "name": "chromium-l10n",
+            "version": "1:156.0.8078.79-1~deb13u1+rpt1",
+            "installed_kib": 118949
+          },
+          {
+            "name": "firefox",
+            "version": "159.0.1-1+rpt1",
+            "installed_kib": 295112
+          }
+        ],
+        "installed_mib": 781.9228515625
+      }
+    },
+    "current_stock_derived": {
+      "packages": 1686,
+      "raw_bytes": 7415529472,
+      "compressed_bytes": 1942911472,
+      "physical_boot": "not tested"
+    }
+  },
+  "live_observations": {
+    "first_sample_utc": "2026-11-16T00:06:57.517235+00:00",
+    "followup_utc": "2026-11-16T00:08:17.570903+00:00",
+    "followup_uptime_seconds": 183.91,
+    "memory": {
+      "MemTotal": "361392 kB",
+      "MemAvailable": "120440 kB",
+      "SwapTotal": "360444 kB",
+      "SwapFree": "257740 kB",
+      "CmaTotal": "65536 kB",
+      "CmaFree": "33424 kB"
+    },
+    "initial_cpu_8s_aggregate_percent": 28.75,
+    "followup_cpu_aggregate_percent": 5.36,
+    "followup_duration_seconds": 15.133955952000008,
+    "top_interval_process_cpu": [
+      {
+        "comm": "M5CardputerZero",
+        "cpu_one_core_percent": 7.4,
+        "rss_kib": 12444.0
+      },
+      {
+        "comm": "pipewire-pulse",
+        "cpu_one_core_percent": 4.43,
+        "rss_kib": 12392.0
+      },
+      {
+        "comm": "pipewire",
+        "cpu_one_core_percent": 3.77,
+        "rss_kib": 7176.0
+      },
+      {
+        "comm": "dbus-daemon",
+        "cpu_one_core_percent": 1.26,
+        "rss_kib": 3096.0
+      },
+      {
+        "comm": "NetworkManager",
+        "cpu_one_core_percent": 1.12,
+        "rss_kib": 6936.0
+      },
+      {
+        "comm": "python3",
+        "cpu_one_core_percent": 0.59,
+        "rss_kib": 10976.0
+      },
+      {
+        "comm": "kworker/1:2-events",
+        "cpu_one_core_percent": 0.4,
+        "rss_kib": 0.0
+      },
+      {
+        "comm": "wf-panel-pi",
+        "cpu_one_core_percent": 0.2,
+        "rss_kib": 20048.0
+      }
+    ],
+    "cpu_policy": {
+      "policy0": {
+        "scaling_driver": "cpufreq-dt",
+        "scaling_governor": "ondemand",
+        "scaling_available_governors": "conservative ondemand userspace powersave performance schedutil",
+        "scaling_min_freq": "600000",
+        "scaling_max_freq": "1000000",
+        "scaling_cur_freq": "1000000",
+        "stats/time_in_state": "600000 183\n700000 204\n800000 165\n900000 85\n1000000 9508"
+      }
+    },
+    "backlight": {
+      "backlight": {
+        "brightness": "0",
+        "actual_brightness": "0",
+        "max_brightness": "100",
+        "bl_power": "0"
+      }
+    },
+    "running_system_services": [
+      "accounts-daemon.service",
+      "avahi-daemon.service",
+      "bluetooth.service",
+      "cron.service",
+      "dbus.service",
+      "lightdm.service",
+      "NetworkManager.service",
+      "nfs-blkmap.service",
+      "packagekit.service",
+      "polkit.service",
+      "rpcbind.service",
+      "rtkit-daemon.service",
+      "ssh.service",
+      "systemd-journald.service",
+      "systemd-logind.service",
+      "systemd-timesyncd.service",
+      "systemd-udevd.service",
+      "udisks2.service",
+      "user@1000.service",
+      "wpa_supplicant.service"
+    ],
+    "running_user_services": [
+      "APPLaunch.service",
+      "dbus.service",
+      "filter-chain.service",
+      "gvfs-afc-volume-monitor.service",
+      "gvfs-daemon.service",
+      "gvfs-goa-volume-monitor.service",
+      "gvfs-gphoto2-volume-monitor.service",
+      "gvfs-mtp-volume-monitor.service",
+      "gvfs-udisks2-volume-monitor.service",
+      "mpris-proxy.service",
+      "pipewire-pulse.service",
+      "pipewire.service",
+      "wireplumber.service",
+      "xdg-desktop-portal-gtk.service",
+      "xdg-desktop-portal-wlr.service",
+      "xdg-desktop-portal.service",
+      "xdg-document-portal.service",
+      "xdg-permission-store.service"
+    ],
+    "battery_samples_5s": [
+      {
+        "status": "Charging",
+        "capacity": "10",
+        "voltage_now": "3717000",
+        "current_now": "559000",
+        "power_avg": "208000",
+        "charge_now": "122000",
+        "temp": "238"
+      },
+      {
+        "status": "Charging",
+        "capacity": "10",
+        "voltage_now": "3717000",
+        "current_now": "559000",
+        "power_avg": "208000",
+        "charge_now": "123000",
+        "temp": "239"
+      },
+      {
+        "status": "Charging",
+        "capacity": "10",
+        "voltage_now": "3718000",
+        "current_now": "560000",
+        "power_avg": "208000",
+        "charge_now": "124000",
+        "temp": "239"
+      },
+      {
+        "status": "Charging",
+        "capacity": "10",
+        "voltage_now": "3718000",
+        "current_now": "559000",
+        "power_avg": "208000",
+        "charge_now": "125000",
+        "temp": "239"
+      }
+    ],
+    "power_avg_vs_voltage_current": "Unresolved roughly tenfold difference during charging; not corrected or used for energy claims.",
+    "audio_snapshot_utc": "2026-11-16T00:09:44.230127+00:00",
+    "audio_nodes": [
+      {
+        "state": "suspended",
+        "node.name": "Dummy-Driver",
+        "media.class": null,
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": null,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "Freewheel-Driver",
+        "media.class": null,
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": null,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "Midi-Bridge",
+        "media.class": "Midi/Bridge",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": null,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "running",
+        "node.name": "alsa_output.platform-sound.stereo-fallback",
+        "media.class": "Audio/Sink",
+        "audio.rate": null,
+        "audio.channels": 2,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "alsa_input.platform-sound.stereo-fallback",
+        "media.class": "Audio/Source",
+        "audio.rate": null,
+        "audio.channels": 2,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "v4l2_input.platform-3f00b840.mailbox",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "v4l2_input.platform-3f00b840.mailbox",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "v4l2_input.platform-3f00b840.mailbox",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "v4l2_input.platform-3f00b840.mailbox",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "v4l2_input.platform-3f801000.csi",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "libcamera_input._base_soc_i2c0mux_i2c_1_imx219_10",
+        "media.class": "Video/Source",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": false,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "suspended",
+        "node.name": "bluez_midi.server",
+        "media.class": "Midi/Bridge",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": null,
+        "session.suspend-timeout-seconds": null
+      },
+      {
+        "state": "running",
+        "node.name": "M5CardputerZero-APPLaunch",
+        "media.class": "Stream/Output/Audio",
+        "audio.rate": null,
+        "audio.channels": null,
+        "node.pause-on-idle": null,
+        "session.suspend-timeout-seconds": null
+      }
+    ]
+  },
+  "limitations": [
+    "Short passive observations after recent boot; uncontrolled workload and SSH observer effects.",
+    "Charging at 9\u201310%; no discharge benchmark, energy savings, or runtime improvement measured.",
+    "Occupied swap is not evidence of active swapping.",
+    "Installed-Size totals are not predicted image shrink and may include transient packages.",
+    "Native app sources include concurrent uncommitted development; no application code changed by this research."
+  ]
+}

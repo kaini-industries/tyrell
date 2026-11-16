@@ -1,0 +1,1146 @@
+{
+  "investigation_date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "scope": "Base-system power only; all native hardware, Wi-Fi and SSH retained. Application processes/settings not manipulated; workload uncontrolled.",
+  "project_commit": "2779e4323c5981307570969d4d1dff5fb5a346f4",
+  "fresh_agents": [
+    "power_rails_audit_fresh",
+    "power_os_wakeups_fresh",
+    "power_measurement_fresh",
+    "power_usb_experiment_fresh",
+    "power_baseline_adversary_fresh",
+    "power_ir_clock_fresh",
+    "power_live_review_fresh",
+    "power_charger_path_fresh",
+    "power_ondemand_policy_fresh"
+  ],
+  "electrical_savings_measured": false,
+  "persistent_device_configuration_changes": false,
+  "kernel": "6.18.39+rpt-rpi-v8",
+  "passive_observation": {
+    "timestamp_start_utc": "2026-11-16T01:23:46.851644+00:00",
+    "uptime_seconds": 4713.19,
+    "cpu_busy_aggregate_percent_INCLUDES_OBSERVER_AND_CLIENTS": 6.22,
+    "usb_interrupts_per_second": 7996.9021918154485,
+    "IR_interrupts_per_second": 37.169189396437844,
+    "wifi_power_save": "Power save: on",
+    "ethernet": {
+      "carrier": "0",
+      "operstate": "down",
+      "driver": "r8152",
+      "supports_autosuspend": "1",
+      "eee": "EEE settings for eth0:\n\tEEE status: enabled - inactive\n\tTx LPI: disabled\n\tSupported EEE link modes:  100baseT/Full\n\tAdvertised EEE link modes:  100baseT/Full\n\tLink partner advertised EEE link modes:  Not reported"
+    },
+    "camera_physical_pm": {
+      "bus": "i2c",
+      "device": "10-0010",
+      "driver": "imx219",
+      "control": "auto",
+      "runtime_status": "suspended",
+      "runtime_active_time": "4",
+      "runtime_suspended_time": "4719855",
+      "runtime_usage": null,
+      "wakeup": null,
+      "autosuspend_delay_ms": "1000"
+    }
+  },
+  "usb_comparison": {
+    "timestamp_start_utc": "2026-11-16T01:26:37.652330+00:00",
+    "timestamp_end_utc": "2026-11-16T01:29:51.949023+00:00",
+    "sequence": "on/auto/on/auto/on",
+    "settling_seconds_each": 8,
+    "sampling_note": "30s nominal phases, telemetry every 2s; frequency/IRQ/PM counters sampled at boundaries.",
+    "phases": [
+      {
+        "index": 0,
+        "setting": "on",
+        "duration_seconds": 30.17270932500014,
+        "cpu_busy_aggregate_percent": 5.470890410958904,
+        "interrupts_per_second": 11293.317955960469,
+        "context_switches_per_second": 4720.7560469878135,
+        "usb_interrupts_per_second": 7999.546789124774,
+        "frequency_residency_percent_kHz": {
+          "600000": 21.3386,
+          "700000": 2.0212,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 76.6402
+        },
+        "IR_interrupts_per_second": 36.98706629156826,
+        "thermal_before_mC": "45622",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 539000,
+          "mean": 539800,
+          "max": 540000
+        },
+        "battery_voltage_uV": {
+          "min": 3971000,
+          "mean": 3972733.3333333335,
+          "max": 3974000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 214000,
+          "mean": 214000,
+          "max": 214000
+        },
+        "usb": {
+          "usb1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30173,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1.1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30172,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30173,
+            "suspended_time_delta_ms": 0
+          }
+        },
+        "network_deltas": {
+          "eth0": {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_packets": 0,
+            "tx_packets": 0
+          },
+          "wlan0": {
+            "rx_bytes": 4270,
+            "tx_bytes": 621,
+            "rx_packets": 40,
+            "tx_packets": 2
+          }
+        }
+      },
+      {
+        "index": 1,
+        "setting": "auto",
+        "duration_seconds": 30.172908609000842,
+        "cpu_busy_aggregate_percent": 4.371303677037799,
+        "interrupts_per_second": 3270.5166505082175,
+        "context_switches_per_second": 4734.014935417591,
+        "usb_interrupts_per_second": 0.0,
+        "frequency_residency_percent_kHz": {
+          "600000": 22.0086,
+          "700000": 1.3258,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 76.6656
+        },
+        "IR_interrupts_per_second": 37.11939125636347,
+        "thermal_before_mC": "44546",
+        "thermal_after_mC": "44546",
+        "battery_current_uA": {
+          "min": 540000,
+          "mean": 540066.6666666666,
+          "max": 541000
+        },
+        "battery_voltage_uV": {
+          "min": 3975000,
+          "mean": 3976333.3333333335,
+          "max": 3978000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "usb": {
+          "usb1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30173
+          },
+          "1-1.1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30173
+          },
+          "1-1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30173
+          }
+        },
+        "network_deltas": {
+          "eth0": {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_packets": 0,
+            "tx_packets": 0
+          },
+          "wlan0": {
+            "rx_bytes": 14047,
+            "tx_bytes": 0,
+            "rx_packets": 53,
+            "tx_packets": 0
+          }
+        }
+      },
+      {
+        "index": 2,
+        "setting": "on",
+        "duration_seconds": 30.178595836000568,
+        "cpu_busy_aggregate_percent": 5.924978687127025,
+        "interrupts_per_second": 11317.690254910956,
+        "context_switches_per_second": 4722.254168962897,
+        "usb_interrupts_per_second": 7999.941458906367,
+        "frequency_residency_percent_kHz": {
+          "600000": 20.6759,
+          "700000": 3.0152,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 76.3088
+        },
+        "IR_interrupts_per_second": 37.11239602022612,
+        "thermal_before_mC": "44546",
+        "thermal_after_mC": "44546",
+        "battery_current_uA": {
+          "min": 538000,
+          "mean": 538266.6666666666,
+          "max": 539000
+        },
+        "battery_voltage_uV": {
+          "min": 3978000,
+          "mean": 3979600,
+          "max": 3981000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 214000,
+          "mean": 214066.66666666666,
+          "max": 215000
+        },
+        "usb": {
+          "usb1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30179,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1.1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30178,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30178,
+            "suspended_time_delta_ms": 0
+          }
+        },
+        "network_deltas": {
+          "eth0": {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_packets": 0,
+            "tx_packets": 0
+          },
+          "wlan0": {
+            "rx_bytes": 2720,
+            "tx_bytes": 543,
+            "rx_packets": 31,
+            "tx_packets": 2
+          }
+        }
+      },
+      {
+        "index": 3,
+        "setting": "auto",
+        "duration_seconds": 30.16083095399972,
+        "cpu_busy_aggregate_percent": 4.603405493283135,
+        "interrupts_per_second": 3331.440043984437,
+        "context_switches_per_second": 4791.645171196278,
+        "usb_interrupts_per_second": 0.0,
+        "frequency_residency_percent_kHz": {
+          "600000": 22.0159,
+          "700000": 1.3263,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 76.6578
+        },
+        "IR_interrupts_per_second": 37.00163306846835,
+        "thermal_before_mC": "44546",
+        "thermal_after_mC": "44008",
+        "battery_current_uA": {
+          "min": 538000,
+          "mean": 538933.3333333334,
+          "max": 540000
+        },
+        "battery_voltage_uV": {
+          "min": 3982000,
+          "mean": 3983200,
+          "max": 3984000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "usb": {
+          "usb1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30162
+          },
+          "1-1.1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30163
+          },
+          "1-1": {
+            "status_before": "suspended",
+            "status_after": "suspended",
+            "active_time_delta_ms": 0,
+            "suspended_time_delta_ms": 30165
+          }
+        },
+        "network_deltas": {
+          "eth0": {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_packets": 0,
+            "tx_packets": 0
+          },
+          "wlan0": {
+            "rx_bytes": 26916,
+            "tx_bytes": 923,
+            "rx_packets": 113,
+            "tx_packets": 5
+          }
+        }
+      },
+      {
+        "index": 4,
+        "setting": "on",
+        "duration_seconds": 30.182430848999502,
+        "cpu_busy_aggregate_percent": 3.411569671058372,
+        "interrupts_per_second": 11288.355192613453,
+        "context_switches_per_second": 4710.85316856489,
+        "usb_interrupts_per_second": 8000.084592523935,
+        "frequency_residency_percent_kHz": {
+          "600000": 21.8874,
+          "700000": 1.3245,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 76.7881
+        },
+        "IR_interrupts_per_second": 37.10768047819867,
+        "thermal_before_mC": "44546",
+        "thermal_after_mC": "44008",
+        "battery_current_uA": {
+          "min": 537000,
+          "mean": 537866.6666666666,
+          "max": 538000
+        },
+        "battery_voltage_uV": {
+          "min": 3985000,
+          "mean": 3986533.3333333335,
+          "max": 3988000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 214000,
+          "mean": 214066.66666666666,
+          "max": 215000
+        },
+        "usb": {
+          "usb1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30184,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1.1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30187,
+            "suspended_time_delta_ms": 0
+          },
+          "1-1": {
+            "status_before": "active",
+            "status_after": "active",
+            "active_time_delta_ms": 30188,
+            "suspended_time_delta_ms": 0
+          }
+        },
+        "network_deltas": {
+          "eth0": {
+            "rx_bytes": 0,
+            "tx_bytes": 0,
+            "rx_packets": 0,
+            "tx_packets": 0
+          },
+          "wlan0": {
+            "rx_bytes": 5200,
+            "tx_bytes": 0,
+            "rx_packets": 42,
+            "tx_packets": 0
+          }
+        }
+      }
+    ],
+    "original_control": "on",
+    "restored_control": "on",
+    "finding": "Allowing only the no-link Ethernet leaf autosuspend repeatedly suspended leaf, hub and root and removed ~8000 USB IRQ occurrences/s. CPU usage reduction and watts not established."
+  },
+  "governor_comparison": {
+    "timestamp_start_utc": "2026-11-16T01:32:33.491972+00:00",
+    "timestamp_end_utc": "2026-11-16T01:35:44.590706+00:00",
+    "sequence": "ondemand/schedutil/ondemand/conservative/ondemand",
+    "settling_seconds_each": 8,
+    "phases": [
+      {
+        "index": 0,
+        "setting": "ondemand",
+        "duration_seconds": 30.170496081000238,
+        "cpu_busy_aggregate_percent": 6.33276740237691,
+        "interrupts_per_second": 11362.259310541474,
+        "context_switches_per_second": 4777.349355245388,
+        "usb_interrupts_per_second": 8000.365633762483,
+        "frequency_residency_percent_kHz": {
+          "600000": 19.6553,
+          "700000": 3.6792,
+          "800000": 0.3315,
+          "900000": 0.0,
+          "1000000": 76.3341
+        },
+        "IR_interrupts_per_second": 36.989779584791016,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "44546",
+        "battery_current_uA": {
+          "min": 535000,
+          "mean": 536200,
+          "max": 537000
+        },
+        "battery_voltage_uV": {
+          "min": 4004000,
+          "mean": 4005066.6666666665,
+          "max": 4006000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 1,
+        "setting": "schedutil",
+        "duration_seconds": 30.176620726999317,
+        "cpu_busy_aggregate_percent": 8.14410107563599,
+        "interrupts_per_second": 14125.803013410741,
+        "context_switches_per_second": 6804.1084473151,
+        "usb_interrupts_per_second": 8000.564482821306,
+        "frequency_residency_percent_kHz": {
+          "600000": 54.3738,
+          "700000": 0.2319,
+          "800000": 0.5964,
+          "900000": 0.729,
+          "1000000": 44.0689
+        },
+        "IR_interrupts_per_second": 36.98227214028322,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 535000,
+          "mean": 535600,
+          "max": 536000
+        },
+        "battery_voltage_uV": {
+          "min": 4008000,
+          "mean": 4008733.3333333335,
+          "max": 4010000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "rate_limit_us": "1500"
+        }
+      },
+      {
+        "index": 2,
+        "setting": "ondemand",
+        "duration_seconds": 30.172285356999964,
+        "cpu_busy_aggregate_percent": 5.492440420261382,
+        "interrupts_per_second": 11323.272200219248,
+        "context_switches_per_second": 4719.132088115633,
+        "usb_interrupts_per_second": 8000.322055286343,
+        "frequency_residency_percent_kHz": {
+          "600000": 20.3446,
+          "700000": 3.0152,
+          "800000": 0.3313,
+          "900000": 0.0,
+          "1000000": 76.3088
+        },
+        "IR_interrupts_per_second": 37.12015801084024,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "44546",
+        "battery_current_uA": {
+          "min": 535000,
+          "mean": 535066.6666666666,
+          "max": 536000
+        },
+        "battery_voltage_uV": {
+          "min": 4011000,
+          "mean": 4012133.3333333335,
+          "max": 4014000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 3,
+        "setting": "conservative",
+        "duration_seconds": 30.178622647999873,
+        "cpu_busy_aggregate_percent": 6.837606837606837,
+        "interrupts_per_second": 11549.06915617965,
+        "context_switches_per_second": 4897.473344755035,
+        "usb_interrupts_per_second": 8000.365119910525,
+        "frequency_residency_percent_kHz": {
+          "600000": 91.882,
+          "700000": 1.1597,
+          "800000": 1.1597,
+          "900000": 1.723,
+          "1000000": 4.0755
+        },
+        "IR_interrupts_per_second": 37.11236304796135,
+        "thermal_before_mC": "44008",
+        "thermal_after_mC": "44546",
+        "battery_current_uA": {
+          "min": 534000,
+          "mean": 534733.3333333334,
+          "max": 535000
+        },
+        "battery_voltage_uV": {
+          "min": 4014000,
+          "mean": 4015800,
+          "max": 4017000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "80",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "1",
+          "down_threshold": "20",
+          "sampling_rate": "8000",
+          "freq_step": "5"
+        }
+      },
+      {
+        "index": 4,
+        "setting": "ondemand",
+        "duration_seconds": 30.166537977999724,
+        "cpu_busy_aggregate_percent": 5.951269207912387,
+        "interrupts_per_second": 11279.318834933863,
+        "context_switches_per_second": 4704.417858737999,
+        "usb_interrupts_per_second": 8000.188824319395,
+        "frequency_residency_percent_kHz": {
+          "600000": 17.0643,
+          "700000": 2.3526,
+          "800000": 0.3313,
+          "900000": 0.0,
+          "1000000": 80.2518
+        },
+        "IR_interrupts_per_second": 36.994632954364604,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 534000,
+          "mean": 534333.3333333334,
+          "max": 535000
+        },
+        "battery_voltage_uV": {
+          "min": 4018000,
+          "mean": 4019133.3333333335,
+          "max": 4020000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      }
+    ],
+    "original_governor": "ondemand",
+    "original_tunables": {
+      "up_threshold": "50",
+      "ignore_nice_load": "0",
+      "sampling_down_factor": "50",
+      "powersave_bias": "0",
+      "sampling_rate": "100000",
+      "io_is_busy": "0"
+    },
+    "restored_governor": "ondemand",
+    "restored_tunables": {
+      "up_threshold": "50",
+      "ignore_nice_load": "0",
+      "sampling_down_factor": "50",
+      "powersave_bias": "0",
+      "sampling_rate": "100000",
+      "io_is_busy": "0"
+    },
+    "original_limits": {
+      "scaling_min_freq": "600000",
+      "scaling_max_freq": "1000000"
+    },
+    "restored_limits": {
+      "scaling_min_freq": "600000",
+      "scaling_max_freq": "1000000"
+    },
+    "limitation": "Frequency and CPU counters are not electrical energy, equal-work or responsiveness validation."
+  },
+  "final_state": {
+    "timestamp_utc": "2026-11-16T01:39:29.733454+00:00",
+    "ssh_route_interface": "wlan0",
+    "governor": "ondemand",
+    "governor_tunables": {
+      "up_threshold": "50",
+      "ignore_nice_load": "0",
+      "sampling_down_factor": "50",
+      "powersave_bias": "0",
+      "sampling_rate": "100000",
+      "io_is_busy": "0"
+    },
+    "limits": {
+      "scaling_min_freq": "600000",
+      "scaling_max_freq": "1000000"
+    },
+    "usb": {
+      "usb1": {
+        "control": "auto",
+        "runtime_status": "active",
+        "runtime_active_time": "5581552",
+        "runtime_suspended_time": "71679"
+      },
+      "1-1.1": {
+        "control": "on",
+        "runtime_status": "active",
+        "runtime_active_time": "5580445",
+        "runtime_suspended_time": "71923"
+      },
+      "1-1": {
+        "control": "auto",
+        "runtime_status": "active",
+        "runtime_active_time": "5581066",
+        "runtime_suspended_time": "71680"
+      }
+    },
+    "ethernet": {
+      "carrier": "0",
+      "operstate": "down",
+      "flags": "0x1003"
+    },
+    "backlight": {
+      "backlight": "0"
+    },
+    "camera": {
+      "control": "auto",
+      "runtime_status": "suspended",
+      "runtime_active_time": "4",
+      "runtime_suspended_time": "5642228"
+    },
+    "wifi_power_save": "Power save: on",
+    "kernel_error_counts": {
+      "pwm": 0,
+      "i2c": 0,
+      "usb": 0,
+      "dwc2": 0,
+      "r8152": 0,
+      "bmi270": 0,
+      "imx219": 0,
+      "es8389": 0,
+      "under-voltage": 0,
+      "voltage normalised": 0
+    },
+    "rc": {
+      "rc1": {
+        "protocols": null,
+        "filter": null,
+        "filter_mask": null,
+        "power/control": "auto",
+        "power/runtime_status": "unsupported",
+        "input_devices": [],
+        "lirc_devices": [
+          "lirc0"
+        ],
+        "parent_driver": "gpio-ir-tx"
+      },
+      "rc2": {
+        "protocols": "rc-5 nec [rc-6] jvc sony rc-5-sz sanyo sharp mce_kbd xmp imon [lirc]",
+        "filter": null,
+        "filter_mask": null,
+        "power/control": "auto",
+        "power/runtime_status": "unsupported",
+        "input_devices": [
+          "event2"
+        ],
+        "lirc_devices": [
+          "lirc1"
+        ],
+        "parent_driver": "gpio_ir_recv"
+      },
+      "rc0": {
+        "protocols": "[cec]",
+        "filter": null,
+        "filter_mask": null,
+        "power/control": "auto",
+        "power/runtime_status": "unsupported",
+        "input_devices": [
+          "event0"
+        ],
+        "lirc_devices": [],
+        "parent_driver": "vc4_hdmi"
+      }
+    },
+    "ir_clients": [
+      {
+        "comm": "systemd",
+        "device": "/dev/input/event2"
+      },
+      {
+        "comm": "systemd-logind",
+        "device": "/dev/input/event2"
+      },
+      {
+        "comm": "systemd-logind",
+        "device": "/dev/input/event2"
+      },
+      {
+        "comm": "labwc",
+        "device": "/dev/input/event2"
+      }
+    ],
+    "ondemand_policy_files": {
+      "/usr/lib/tmpfiles.d/raspberrypi-sys-mods-ondemand-governor.conf": "w /sys/devices/system/cpu/cpufreq/ondemand/up_threshold\t\t-\t-\t-\t-\t50\nw /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate\t-\t-\t-\t-\t100000\nw /sys/devices/system/cpu/cpufreq/ondemand/sampling_down_factor\t-\t-\t-\t-\t50\nw /sys/devices/system/cpu/cpufreq/ondemand/io_is_busy\t\t-\t-\t-\t-\t0",
+      "/usr/lib/udev/rules.d/60-ondemand-governor.rules": "KERNEL==\"cpu*\", SUBSYSTEM==\"cpu\", ATTR{cpufreq/scaling_governor}=\"ondemand\""
+    },
+    "raspberrypi_sys_mods_version": "1:20260914",
+    "throttled": "throttled=0x0"
+  },
+  "measurement_findings": {
+    "charging_gauge_is_not_system_input_meter": true,
+    "TI_document_units_conflict": "SLUUBD4A section 2.18 says mW; Figure 8-3 visually shows cW with -25 matching V*I. Software screenshot does not prove raw register units.",
+    "conversion_or_calibration_changed": false,
+    "reported_power_unit_validated": false,
+    "supported_software_total_input_meter_found": false,
+    "supported_software_force_battery_discharge_while_USB_connected_found": false
+  },
+  "required_before_shipping_policy": [
+    "Ethernet cable insertion, negotiation and sustained traffic after idle",
+    "Repeated Ethernet suspend/resume",
+    "USB peripheral hotplug and host/gadget switching",
+    "Full native hardware qualification",
+    "Independent electrical measurements with controlled charging/discharge"
+  ],
+  "sources": {
+    "BSP_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "TI_TRM": {
+      "url": "https://www.ti.com/lit/ug/sluubd4a/sluubd4a.pdf",
+      "sha256": "44779f229423d649e410439d1d1a3a65026d5919cdd43112ee3a3d8d9811ead9"
+    },
+    "schematic": {
+      "url": "https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1243/C154-CardputerZERO_SCH_V0.6.1_20260702.pdf",
+      "sha256": "91bbf37ae57e9153d9190367979a7789c225ff83567d2b1a9eba30fcd873a0d9"
+    },
+    "M5_specifications": "https://docs.m5stack.com/en/CardputerZero",
+    "CM0_datasheet": "https://pip-assets.raspberrypi.com/categories/1286-raspberry-pi-compute-module-zero/documents/RP-009251-DS-3-cm0-datasheet.pdf",
+    "upstream_kernel_reference_note": "Upstream v6.18 and Raspberry Pi branch source explain mechanisms but are not an integrity match to the installed kernel source tree.",
+    "raspberrypi_sys_mods": {
+      "version": "1:20260914",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/raspberrypi-sys-mods/raspberrypi-sys-mods_20260914_arm64.deb",
+      "sha256": "a6169bc9506b36ba92d72c88d3390b6eefc8eb616fd9a46100f9bbf3ac088211"
+    }
+  },
+  "local_raw_artifact_sha256": {
+    "device-governor-ab.json": "24108939ab4801f0cc3e014cd6cc367bd99c3e8ae9713cf91b3dfeb5f33bac77",
+    "device-final-inventory.json": "41acfaf950c25e9497cc08c04904249a2b923391ac8c458e163e4d18b6472ca9",
+    "device-usb-ab.json": "59523d844ad310c92d6a82815b4601cf50d9e8e2d948e4b9acbab5da04cd66dc",
+    "device-post-governor-inventory.json": "3289d1f3d6fa0e6fa94b7e2d599e3f1ae9b1b34356cc203e2ee5262b9c18564b",
+    "device-root-inventory.json": "261dd12a036455c45ef2d693d749e711d4a583982607465d384723c6028f7355",
+    "device-passive.json": "ac8bff1089f6c39e166aa55b39cdfd0227f2c2d7b468b3470f3185258a407722",
+    "device-ondemand-ab.json": "ec9ee156e5e187b80d7668d42fce250ec0159bb58800bcc82f2be6b214d2b2d3"
+  },
+  "ondemand_factor_comparison": {
+    "timestamp_start_utc": "2026-11-16T01:36:53.625064+00:00",
+    "timestamp_end_utc": "2026-11-16T01:39:14.401594+00:00",
+    "sequence": "50/1/50/1/50",
+    "settling_seconds_each": 8,
+    "nominal_measurement_seconds_each": 20,
+    "phases": [
+      {
+        "index": 0,
+        "setting": "50",
+        "duration_seconds": 20.116922893000265,
+        "cpu_busy_aggregate_percent": 5.732158815268735,
+        "interrupts_per_second": 11333.144796181976,
+        "context_switches_per_second": 4726.518091545918,
+        "usb_interrupts_per_second": 8000.42833867007,
+        "frequency_residency_percent_kHz": {
+          "600000": 19.4431,
+          "700000": 1.4918,
+          "800000": 0.4973,
+          "900000": 0.0,
+          "1000000": 78.5679
+        },
+        "IR_interrupts_per_second": 36.98378742898481,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 533000,
+          "mean": 533700,
+          "max": 534000
+        },
+        "battery_voltage_uV": {
+          "min": 4028000,
+          "mean": 4028600,
+          "max": 4029000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 1,
+        "setting": "1",
+        "duration_seconds": 20.12971639800071,
+        "cpu_busy_aggregate_percent": 7.48046624823876,
+        "interrupts_per_second": 11328.078125464704,
+        "context_switches_per_second": 4716.062468193977,
+        "usb_interrupts_per_second": 8000.460454375564,
+        "frequency_residency_percent_kHz": {
+          "600000": 78.5892,
+          "700000": 14.456,
+          "800000": 0.9935,
+          "900000": 0.0,
+          "1000000": 5.9613
+        },
+        "IR_interrupts_per_second": 37.158993460747,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "44008",
+        "battery_current_uA": {
+          "min": 533000,
+          "mean": 533500,
+          "max": 534000
+        },
+        "battery_voltage_uV": {
+          "min": 4030000,
+          "mean": 4031300,
+          "max": 4032000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "1",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 2,
+        "setting": "50",
+        "duration_seconds": 20.11379185199985,
+        "cpu_busy_aggregate_percent": 5.040608482660822,
+        "interrupts_per_second": 11376.12448630612,
+        "context_switches_per_second": 4812.071274883785,
+        "usb_interrupts_per_second": 8000.629676596755,
+        "frequency_residency_percent_kHz": {
+          "600000": 18.4485,
+          "700000": 2.4863,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 79.0651
+        },
+        "IR_interrupts_per_second": 36.989544560988705,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 532000,
+          "mean": 532800,
+          "max": 533000
+        },
+        "battery_voltage_uV": {
+          "min": 4033000,
+          "mean": 4033900,
+          "max": 4035000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 3,
+        "setting": "1",
+        "duration_seconds": 20.120626691000325,
+        "cpu_busy_aggregate_percent": 7.636924659295449,
+        "interrupts_per_second": 11359.437432544348,
+        "context_switches_per_second": 4741.900014609165,
+        "usb_interrupts_per_second": 8000.595730549623,
+        "frequency_residency_percent_kHz": {
+          "600000": 80.1193,
+          "700000": 11.4314,
+          "800000": 1.9384,
+          "900000": 0.0,
+          "1000000": 6.5109
+        },
+        "IR_interrupts_per_second": 36.97697946619032,
+        "thermal_before_mC": "44546",
+        "thermal_after_mC": "45622",
+        "battery_current_uA": {
+          "min": 532000,
+          "mean": 532700,
+          "max": 533000
+        },
+        "battery_voltage_uV": {
+          "min": 4036000,
+          "mean": 4036500,
+          "max": 4037000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "1",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      },
+      {
+        "index": 4,
+        "setting": "50",
+        "duration_seconds": 20.109287571000095,
+        "cpu_busy_aggregate_percent": 6.268240071056972,
+        "interrupts_per_second": 11323.325065397908,
+        "context_switches_per_second": 4693.701836365248,
+        "usb_interrupts_per_second": 8000.532064199761,
+        "frequency_residency_percent_kHz": {
+          "600000": 19.4928,
+          "700000": 1.4918,
+          "800000": 0.0,
+          "900000": 0.0,
+          "1000000": 79.0154
+        },
+        "IR_interrupts_per_second": 36.997829852159136,
+        "thermal_before_mC": "45084",
+        "thermal_after_mC": "45084",
+        "battery_current_uA": {
+          "min": 532000,
+          "mean": 532100,
+          "max": 533000
+        },
+        "battery_voltage_uV": {
+          "min": 4038000,
+          "mean": 4039100,
+          "max": 4040000
+        },
+        "battery_power_avg_reported_uW_UNVALIDATED": {
+          "min": 215000,
+          "mean": 215000,
+          "max": 215000
+        },
+        "alsa_pcm_states_before": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "alsa_pcm_states_after": {
+          "card0/pcm0p/sub0/status": "closed",
+          "card1/pcm0c/sub0/status": "closed",
+          "card1/pcm0p/sub0/status": "state: RUNNING"
+        },
+        "governor_tunables": {
+          "up_threshold": "50",
+          "ignore_nice_load": "0",
+          "sampling_down_factor": "50",
+          "powersave_bias": "0",
+          "sampling_rate": "100000",
+          "io_is_busy": "0"
+        }
+      }
+    ],
+    "original_tunables": {
+      "up_threshold": "50",
+      "ignore_nice_load": "0",
+      "sampling_down_factor": "50",
+      "powersave_bias": "0",
+      "sampling_rate": "100000",
+      "io_is_busy": "0"
+    },
+    "restored_tunables": {
+      "up_threshold": "50",
+      "ignore_nice_load": "0",
+      "sampling_down_factor": "50",
+      "powersave_bias": "0",
+      "sampling_rate": "100000",
+      "io_is_busy": "0"
+    },
+    "limitation": "No electrical, equal-work or responsiveness qualification; factor1 can increase governor work."
+  }
+}

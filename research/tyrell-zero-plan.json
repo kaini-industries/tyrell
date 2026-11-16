@@ -1,0 +1,789 @@
+{
+  "schema_version": 3,
+  "kind": "implementation-plan-not-runnable-profile",
+  "status": "implementation-started-foundation-only",
+  "plan_date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "objective": "Plan a lighter Tyrell Zero Debian Trixie base image for CardputerZero retaining M5 APPLaunch.",
+  "scope": {
+    "base_system_only": true,
+    "all_native_hardware": true,
+    "wifi_ssh_supported": true,
+    "app_power_optimization": false,
+    "build_or_flash_performed": false,
+    "current_handheld_changes": false,
+    "existing_modes_preserved": [
+      "source-desktop",
+      "stock-derived"
+    ],
+    "current_handheld_changes_scope": "No handheld or SD access in the implementation increment. Existing ARM64 builder used only for source/package compilation and disposable lifecycle tests.",
+    "new_image_qualified": false,
+    "foundation_packages_started": true,
+    "image_build_or_flash_performed": false,
+    "foundation_packages_built": true
+  },
+  "source_snapshot": {
+    "project_commit": "2779e4323c5981307570969d4d1dff5fb5a346f4",
+    "source_hashes": {
+      "image/build-image.py": "55d917b9696397352f2a97b5c51ba6840f555efe091fd7f034309f26d060d940",
+      "builder/build-image.sh": "24ac6e0356b2c7e280999ebfaffb8cc4012fd907bbb9f364f0ac93d051e5a9fa",
+      "image/prepare-vendor.py": "1629f359b8efcb75ab2e8a8bfd51896957397904333b4e8d0075b2924dd8c93d",
+      "image/apt-lock.py": "377a4c26182ebb4cc3696da7e30fddba9f3f20bed2e721173927856fcf30912d",
+      "image/resume.py": "010dc017807e70933d7f426653c897d1649951cd38091a6a9889d686cdb6473e",
+      "image/verify-image.py": "c94c55d630a147972090b7b62f03a4a9d763974f2e442b324bc25fb9d5bad718",
+      "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
+      "locks/image-apt.json": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e"
+    },
+    "unrelated_worktree_changes": "Preserved; no game/application source edits in this planning task."
+  },
+  "pins": {
+    "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+    "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "bsp_archive_sha256": "a541239495b9e1c15d2fe580c2cee4587ba9667e427d5f4d15d45038d8fd93a0",
+    "kernel_release": "6.18.39+rpt-rpi-v8",
+    "kernel_package": "1:6.18.39-1+rpt1",
+    "applaunch_version": "0.6.105",
+    "applaunch_source": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+    "applaunch_deb_sha256": "a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544",
+    "applaunch_main_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+    "seed_apt_lock_sha256": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e",
+    "seed_identities": 1679,
+    "new_os_package": {
+      "name": "greetd",
+      "version": "0.10.3-4",
+      "state": "Exact ARM64 package cached and SHA-256 verified; not installed in builder and not yet part of a complete qualified Zero APT closure.",
+      "must_freeze_before_build": true,
+      "cache_record": "locks/tyrell-zero-greetd.json"
+    },
+    "raspberrypi_sys_mods": {
+      "version": "1:20260914",
+      "url": "https://archive.raspberrypi.com/debian/pool/main/r/raspberrypi-sys-mods/raspberrypi-sys-mods_20260914_arm64.deb",
+      "sha256": "a6169bc9506b36ba92d72c88d3390b6eefc8eb616fd9a46100f9bbf3ac088211"
+    }
+  },
+  "profile": {
+    "id": "tyrell-zero",
+    "version": 1,
+    "os": "Debian 13 Trixie",
+    "architecture": "arm64",
+    "stages": [
+      "stage0",
+      "stage1",
+      "stage2"
+    ],
+    "final_integration": "stage2/99-tyrell",
+    "basename": "tyrell-zero-trixie-arm64",
+    "export_suffix": "-lite",
+    "raw_filename": "tyrell-zero-trixie-arm64-lite.img",
+    "compressed_filename": "tyrell-zero-trixie-arm64-lite.img.xz",
+    "suffix_meaning": "OS stage/export convention; full native hardware remains required.",
+    "default_independent_packages": [
+      "tyrell-status",
+      "tyrell-zero-session",
+      "tyrell-zero-power-policy"
+    ],
+    "optional_native_packages": "Explicit verified payload list; no dependency on uncommitted games.",
+    "initial_hardware_policy": {
+      "gpu_mem_mib": 128,
+      "cma_mib": 64,
+      "governor": "ondemand",
+      "swap": "Preserve existing policy",
+      "wifi_power_save": "Preserve known effective on state",
+      "firmware_modules": "Retain complete trees",
+      "power_preset": "baseline",
+      "ethernet_usb_leaf_control": "on",
+      "ethernet_usb_parent_control": "auto",
+      "ondemand_tunables": {
+        "up_threshold": "50",
+        "ignore_nice_load": "0",
+        "sampling_down_factor": "50",
+        "powersave_bias": "0",
+        "sampling_rate": "100000",
+        "io_is_busy": "0"
+      },
+      "cpu_min_khz": 600000,
+      "cpu_max_khz": 1000000,
+      "ethernet_eee": "Preserve existing enabled state; distinct from USB runtime PM.",
+      "ethernet_autosuspend_delay_ms": 2000
+    },
+    "release_power_policy": "Promote an extra policy only with validated battery-side energy or controlled usable-runtime benefit versus Zero baseline, beyond uncertainty and within declared per-condition performance/regression limits. Test planned combination after isolated function/performance passes even if standalone energy is inconclusive. Compare selected Zero to matched full-source for the total image claim. USB screening cannot promote; a baseline release can fulfill the image battery goal only if its own full-source battery comparison passes."
+  },
+  "native_session": {
+    "manager": "greetd",
+    "vt": 7,
+    "source_profile": false,
+    "initial_command": "/usr/libexec/tyrell-zero-session",
+    "recovery_command": "/usr/libexec/tyrell-zero-session-recovery",
+    "command_prefix": "Bare absolute path; greetd adds exec internally.",
+    "runfile": "/run/tyrell-zero/greetd.initial-session",
+    "runfile_policy": "Retain across greetd restart; only reboot resets initial-session authorization.",
+    "launcher_execution": "Direct normal-user child inside local PAM session, not a separate user-unit child.",
+    "legacy_user_unit": "Mask only in Zero",
+    "tty_policy": "No automatic gettys/hidden shell; save/configure/restore KD and termios state.",
+    "provisioning": "Private version-matched Wizard handles normal and preprovisioned paths, then controlled reboot.",
+    "outer_checkpoint": "/var/lib/tyrell-zero/setup-apply.v1.json; profile/workflow/step-version bound",
+    "account_migration_journal": "Preserve /var/lib/LaunchWizard/account-migration.state",
+    "boot_modes": [
+      "setup/resume-valid-migration",
+      "native-ready",
+      "fixed-recovery"
+    ],
+    "resources": "Original M5 working directory/resources; verify private Wizard lookup and dynamic dependencies.",
+    "runtime_config": "/run/tyrell-zero/greetd.config",
+    "recovery_config": "Package-owned static default_session only; no initial autologin or interactive shell."
+  },
+  "m5_package_policy": {
+    "main_binary_unchanged": true,
+    "vendor_original_bytes_retained": true,
+    "declared_store_diversion": "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore",
+    "store_source_gitlink": "b02db122396a7d33c41c66199ab443437975cfee",
+    "dispatcher": "Compiled, fixed public argv[0], preserve UI/resources; guarded privileged backend.",
+    "guarded_operations": [
+      "direct-dpkg",
+      "apt-closure",
+      "remove",
+      "reconfigure",
+      "repair",
+      "rollback",
+      "legacy-root-install-reinstall-upgrade-uninstall"
+    ],
+    "guard_protects": [
+      "base package identities",
+      "normalized protected payload paths and aliases",
+      "session/boot integration",
+      "dispatcher/diversion originals/policy manifests",
+      "power package and helper",
+      "selected power preset/contract",
+      "generated tmpfiles and udev policy",
+      "relevant raspberrypi-sys-mods configuration"
+    ],
+    "scripts": "Reviewed exact identities for qualified versions; unknown unsupported scripts rejected.",
+    "self_updater_mask": "applaunch-updater.service",
+    "self_updater_status": "failed:incompatible",
+    "base_update_explanation": "Profile-owned Tyrell Zero Updates help entry; ordinary APT security metadata remains enabled.",
+    "compatibility": "Qualified ordinary native application lifecycle; no claim of arbitrary future package sandboxing.",
+    "diverted_original": "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor",
+    "private_guard_backend": "/usr/libexec/tyrell-zero/appstore-package-helper"
+  },
+  "resume": {
+    "proposed_action": "image resume --job JOB_ID --from stage2",
+    "input_policy": "Reuse original immutable captured inputs and original job workspace; changed input means new job. Selected power preset/contract and generated configuration hashes are captured; a preset change requires a new job.",
+    "preconditions": [
+      "Authoritative terminal/stopped handle",
+      "Completed and verified stage1",
+      "All profile/source/session/hardware/APT/config hashes match",
+      "No leftover mounts",
+      "Host/guest locks and fresh capacity"
+    ],
+    "attempts": "Separate logs, durable results, output and atomic current-attempt identity",
+    "identity_fields": [
+      "job_id",
+      "attempt_id",
+      "input_archive_sha256"
+    ],
+    "historical_attempts": "Read own durable result, not another running attempt state.",
+    "observation_timeout": "Reattach/inspect same live handle; never auto-start a new attempt.",
+    "stage0_or_stage1_failure": "New job required for initial Zero implementation.",
+    "legacy_interface": "Existing source --resume-from remains unchanged."
+  },
+  "planned_artifacts": [
+    {
+      "path": "image/profiles/tyrell-zero.json",
+      "purpose": "Profile selection and captured contract",
+      "state": "foundation-implemented-not-image-ready"
+    },
+    {
+      "path": "image/contracts/tyrell-zero-hardware.json",
+      "purpose": "All native capability requirements",
+      "state": "foundation-implemented-not-image-ready"
+    },
+    {
+      "path": "locks/tyrell-zero-session-source.json",
+      "purpose": "M5 source/patch/submodule/asset/build locks",
+      "state": "partial-source-audit-incomplete"
+    },
+    {
+      "path": "locks/tyrell-zero-apt.json",
+      "purpose": "Profile-specific OS dependency bytes",
+      "state": "proposed-not-implemented"
+    },
+    {
+      "path": "locks/tyrell-zero-apps.json",
+      "purpose": "Independent custom package payloads",
+      "state": "proposed-not-implemented"
+    },
+    {
+      "path": "locks/tyrell-zero-native-compat.json",
+      "purpose": "Qualified Store versions/scripts and compatibility",
+      "state": "proposed-not-implemented"
+    },
+    {
+      "path": "packages/tyrell-zero-session/",
+      "purpose": "Base boot/provision/session/recovery/package policy",
+      "state": "foundation-implemented-unqualified"
+    },
+    {
+      "path": "image/contracts/tyrell-zero-power.json",
+      "purpose": "Versioned power presets, match rules, original/target settings and qualification identity",
+      "state": "foundation-implemented-not-image-ready"
+    },
+    {
+      "path": "packages/tyrell-zero-power-policy/",
+      "purpose": "Config-only, independently reversible base power policy package",
+      "state": "foundation-implemented-unqualified"
+    },
+    {
+      "path": "builder/zero.py",
+      "purpose": "Read-only profile inspection and isolated ARM64 package orchestration",
+      "state": "foundation-implemented"
+    },
+    {
+      "path": "builder/build-zero-packages.sh",
+      "purpose": "Guest shared-lock native entry point",
+      "state": "foundation-implemented"
+    },
+    {
+      "path": "builder/zero-guest.py",
+      "purpose": "Native tests/archive checks/disposable dpkg/export records",
+      "state": "foundation-implemented"
+    }
+  ],
+  "work_packages": [
+    {
+      "id": "Z0",
+      "depends_on": [],
+      "name": "Freeze inputs and build native integration package",
+      "future_evidence": "Source/patch/submodule/asset identities; compile manifest; ELF/CLI/resource checks; original M5 main hash unchanged; no global installation into live builder. Freeze prior power evidence and distribution policy identities as inputs, without claiming Zero qualification.",
+      "state": "in-progress",
+      "actual_progress": "in-progress: exact native archives/patch/config and real offline ARM64 GUI/packages built; coherent final runtime/resource/APT and native compatibility locks pending"
+    },
+    {
+      "id": "Z1",
+      "depends_on": [
+        "Z0"
+      ],
+      "name": "Pre-image session/integration logic",
+      "future_evidence": "Versioned checkpoint and boot-mode tests, normal/preprovisioned models, privilege/config/supervisor/guard tests; physical seat proof deferred to Z4.",
+      "state": "in-progress",
+      "actual_progress": "in-progress: native/Imager transaction, interruption, supervisor and guarded Store pre-image tests pass; assembled-runtime revalidation remains"
+    },
+    {
+      "id": "Z2",
+      "depends_on": [
+        "Z0"
+      ],
+      "name": "Profile/APT/lifecycle and power-policy package plumbing",
+      "future_evidence": "Schemas, exact closure and frozen replay, stage/suffix/namespace/resume/capacity tests, legacy source and stock regression suites. Preset/contract capture and resume mismatch tests; config-only power package, tmpfiles precedence, device matching and restoration tests; no host sysfs/udev side effects. Eligibility-before-automatic-tmpfiles/application tests, late-policy and administrator-override cases. Capture 2000ms delay/wakeup state; transactional stale-override invalidation and concurrent-reader tests; bounded event/reapply/log overhead.",
+      "state": "in-progress",
+      "actual_progress": "in-progress: profile/contracts, baseline power package and real isolated Store lifecycle pass; final APT closure, profile runner/resume/verifier and activation policy pending"
+    },
+    {
+      "id": "Z3",
+      "depends_on": [
+        "Z1",
+        "Z2"
+      ],
+      "name": "Zero baseline and matching full-source image builds",
+      "future_evidence": "Fresh job, exact captured inputs/outputs, Zero offline verifier, no leaked mounts/loops, verified export. Existing ARM64 builder; baseline preset; common versions and policy matched to full-source control; fresh capacity checks.",
+      "state": "not-implemented"
+    },
+    {
+      "id": "Z4",
+      "depends_on": [
+        "Z3"
+      ],
+      "name": "Spare-card baseline acceptance",
+      "future_evidence": "Real OOBE/reboot, active PAM session, M5/Store/native launch, permissions/mounts, complete hardware matrix and recovery. Effective WiFiPS provisioning/reconnect invariants and feature-use/physical-idle-return checks.",
+      "state": "not-implemented"
+    },
+    {
+      "id": "Z5",
+      "depends_on": [
+        "Z4"
+      ],
+      "name": "Demonstrate lighter base",
+      "future_evidence": "Matching full-source control; actual rootfs bytes, process/service inventory, settled memory/PSS and swap-I/O data. Compare Zero baseline against full-source control with same power policies; original stock is a compatibility reference. Finished-image timer/socket/D-Bus activation inventory and current maintenance contracts.",
+      "state": "not-implemented"
+    },
+    {
+      "id": "Z6",
+      "depends_on": [
+        "Z4",
+        "Z5"
+      ],
+      "name": "Battery-policy qualification and reproducible release selection",
+      "future_evidence": "Representative battery-energy/runtime validation with matched SoC/voltage/temperature/topology/work, initial USBscreening only; bounded conditional tuning, idle-return/WiFi guards, maintenance/boot/observer budget, combined final+full-source battery comparison and immutable release or baselinefallback.",
+      "state": "not-implemented",
+      "subgates": [
+        {
+          "id": "Z6a",
+          "name": "Isolated policy functionality and performance",
+          "state": "not-tested-for-Zero",
+          "required_proof": "Automatic cable insertion wake/traffic after extended idle, repeated USB resume/hotplug/modes; original CPU limits and all non-factor tunables; burst/sustained/latency/audio/video/camera/network/storage/expansion budgets. Explicit2000msinitialdelay, burst/resumechurn, consumer-awareidle-return, WiFiPS transitions and bounded conditional factor/delay tests."
+        },
+        {
+          "id": "Z6b",
+          "name": "Representative battery-powered qualification",
+          "state": "not-tested-for-Zero",
+          "required_proof": "Use battery validationprotocol: validated battery-sideenergy or controlledusable runtime beyonduncertainty; at least3independentpairedtrialsinitially, counterbalanced, equalelapsedidle/equalworkcycles, declaredusageweights/perconditionregressionlimits, battery/temp/topologyandobservercontrols; boot/longmaintenance/offstateexposures. USBinput is screeningonly."
+        },
+        {
+          "id": "Z6c",
+          "name": "Combined and final preset acceptance",
+          "state": "not-tested-for-Zero",
+          "required_proof": "After isolated hardware/performance passes, test planned combination even if standalone energy is inconclusive. Require combination battery/performance proof and final full hardware matrix; identify candidate-vs-Zero-baseline and selected-image-vs-full-source references separately."
+        },
+        {
+          "id": "Z6d",
+          "name": "Reproducible release and fallback",
+          "state": "not-implemented",
+          "required_proof": "Freeze selected parameters in fresh job/manifests and reaccept exported artifact; no USB-only promotion or endpoint/calibration changes. Baseline has no additional-policy claim but can meet whole-image battery goal if its full-source comparison passes."
+        }
+      ]
+    }
+  ],
+  "hardware_acceptance": [
+    {
+      "id": "boot_sd",
+      "required_proof": "Cold boot, expansion, shutdown and recovery",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "lcd_backlight",
+      "required_proof": "LCD, brightness, dim/off/wake",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "keyboard",
+      "required_proof": "All keys/modifiers/repeat and normal-user access",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "power_gauge",
+      "required_proof": "M5IOE1, gauge, charging, low battery and power fail; preserve calibration/shutdown endpoints; distinguish software halt and physical off",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "audio",
+      "required_proof": "Speaker, built-in/headset microphones and TRRS routing; underrun/resume qualification under selected CPU/combined preset",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "hdmi",
+      "required_proof": "Display/audio, hotplug, VT lease and crash recovery; physical-device idle return after legitimate consumers release resources",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "camera",
+      "required_proof": "Capture/preview/record and clean reopening; physical-device idle return after legitimate consumers release resources",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "imu_compass",
+      "required_proof": "Accelerometer, gyro, magnetometer and initialization firmware",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "rtc",
+      "required_proof": "Persistence and network time",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "infrared",
+      "required_proof": "Known-code receive and transmit",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "wifi_ssh",
+      "required_proof": "Association, reconnect, SSH and transfers; effective PS across normal/Imager/newprofile/reconnect/roam/restart, explicituserchoices preserved",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "bluetooth",
+      "required_proof": "Pairing, reconnect and supported peripheral use",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "ethernet",
+      "required_proof": "Cable insertion after extended autosuspended idle must automatically negotiate and pass sustained traffic without manual/SSH wake; repeat idle/resume and baseline recovery.",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "usb_modes",
+      "required_proof": "Host/storage normal-user mount/eject, peripheral hotplug with idle hub/root, gadget/mode switching and re-enumeration under selected preset.; physical-device idle return after legitimate consumers release resources",
+      "state": "not-tested-for-Zero"
+    },
+    {
+      "id": "expansion",
+      "required_proof": "Grove/GPIO/I2C/SPI/UART, routing, LEDs and accessory power; timing-sensitive functions under selected CPU/combined preset",
+      "state": "not-tested-for-Zero"
+    }
+  ],
+  "acceptance": {
+    "must_be_lighter": "Measured installed filesystem reduction and improved settled base memory headroom; no hardware/functionality trade.",
+    "engineering_targets_not_results": {
+      "rootfs_reduction_bytes": 1073741824,
+      "mem_available_gain_bytes": 33554432
+    },
+    "comparison": "Stock compatibility reference; full-source vs Zero baseline for footprint/base-stack, then Zero baseline/ethernet/cpu/combined for policy. Common versions, clients/audio and original policies matched.",
+    "no_energy_claim_yet": true,
+    "energy_gate": "Promote an extra policy only with validated battery-side energy or controlled usable-runtime benefit versus Zero baseline, beyond uncertainty and within declared per-condition performance/regression limits. Test planned combination after isolated function/performance passes even if standalone energy is inconclusive. Compare selected Zero to matched full-source for the total image claim. USB screening cannot promote; a baseline release can fulfill the image battery goal only if its own full-source battery comparison passes.",
+    "installation_test_isolation": "Both base packages build in existing ARM64 builder; install/remove/upgrade tests in isolated root with services blocked/no host buses/devices or sysfs tuning; boot tests disposable/spare-card only.",
+    "proof_boundary": "Headless Lima/chroot does not certify VT/seat/framebuffer or hardware; release requires spare-card Z4.",
+    "usb_input_method": "External input meter only after charging terminates and settles, with battery flow monitored; proves only the measured USB-powered conditions.",
+    "battery_claim_gate": "Both promotion and battery/runtime claims require validated unplugged batteryenergy or controlled usable-runtime comparisons with equal useful work/availability and unchanged safe endpoints.",
+    "gauge_policy": "Preserve raw values; TI mW/cW conflict is a conversion hypothesis, not automatic x10 calibration. Gauge fix not required for independent external-meter qualification.",
+    "maintenance": "Keep existing automaticsecurity until qualification; nonurgentdeferral only with finite perjob contract and verified retry/freshness. Test realmaintenance in longer representative runs aswell as aligned shorttrials.",
+    "workload_mismatch": "Label comparisons whole-product if clients/settings/audio/work sequence cannot be matched.",
+    "release_fallback": "If no extra policy qualifies, retain lighter baseline with no extra-policy savings claim; its own validated benefit versus matched full-source may meet the image battery objective. Without that benefit the objective remains open.",
+    "battery_promotion_required": true,
+    "usb_only_promotion_allowed": false,
+    "battery_protocol_path": "docs/tyrell-zero-battery-validation.md",
+    "representative_conditions": [
+      "connected screenon idle",
+      "connected screenoff idle",
+      "intermittent SSH/network and equalwork bursts",
+      "legitimate Ethernet/USB",
+      "hardware use then idle return",
+      "cold boot to nativeUI/SSH readiness",
+      "shutdown/software halt/physical off",
+      "long session including actualmaintenance"
+    ],
+    "comparison_endpoints": "Idle over equal elapsedtime; bursts over equal completedwork and fixed work/return-to-idle cycle; runtime at equivalent useful start/shutdown conditions. Percentage endpoints alone do not prove energy benefit.",
+    "battery_matching": [
+      "same battery/health/cycle data whereavailable",
+      "declared start charge/voltagewindow",
+      "battery and ambient temperature",
+      "same client/audio/display/network/peripheral topology",
+      "same safe shutdown thresholds; no calibration change"
+    ],
+    "observer": "No charging/back-power/USBwake from instrument; record burden; quiet SSH, identical buffered cadence and brief profiling outsideenergywindows wherepossible.",
+    "boot_accounting": "Separate one-time provisioning/OOBE and its reboot from ordinary configured cold boots; controls and candidates must be equally configured."
+  },
+  "commands": [
+    {
+      "command": "python3 scripts/builder zero check",
+      "exists_today": true,
+      "note": "Read-only structural validation with explicit build_ready=false; no image runner is enabled."
+    },
+    {
+      "command": "make zero-session-package",
+      "exists_today": true,
+      "note": "Implemented foundation package target; builds/tests only, no handheld or live toolchain installation."
+    },
+    {
+      "command": "make zero-power-policy-package",
+      "exists_today": true,
+      "note": "Implemented foundation package target; builds/tests only, no handheld or live toolchain installation."
+    },
+    {
+      "command": "python3 scripts/builder image --profile image/profiles/tyrell-zero.json --prepare-only",
+      "exists_today": false,
+      "note": "Proposed interface; do not run before implementation."
+    },
+    {
+      "command": "python3 scripts/builder image --profile image/profiles/tyrell-zero.json --no-wait",
+      "exists_today": false,
+      "note": "Proposed interface; do not run before implementation."
+    },
+    {
+      "command": "python3 scripts/builder image status --job JOB_ID",
+      "exists_today": true,
+      "note": "Existing lifecycle form; Zero semantics planned."
+    },
+    {
+      "command": "python3 scripts/builder image logs --job JOB_ID",
+      "exists_today": true,
+      "note": "Existing lifecycle form; Zero semantics planned."
+    },
+    {
+      "command": "python3 scripts/builder image wait --job JOB_ID",
+      "exists_today": true,
+      "note": "Existing lifecycle form; Zero semantics planned."
+    },
+    {
+      "command": "python3 scripts/builder image export --job JOB_ID",
+      "exists_today": true,
+      "note": "Existing lifecycle form; Zero semantics planned."
+    },
+    {
+      "command": "python3 scripts/builder image resume --job JOB_ID --from stage2",
+      "exists_today": false,
+      "note": "Proposed interface; do not run before implementation."
+    }
+  ],
+  "references": {
+    "main_plan": "docs/tyrell-zero-implementation-plan.md",
+    "session_adr": "docs/tyrell-zero-native-session.md",
+    "base_review": "docs/lightweight-trixie-review.md",
+    "runtime_elf_evidence": "build/tyrell-zero-plan/runtime/launcher-elf-audit.json",
+    "session_source_evidence": "build/tyrell-zero-plan/session-review/",
+    "live_power_report": "docs/cardputer-zero-power-audit.md",
+    "live_power_evidence": "research/cardputer-zero-power-audit.json",
+    "battery_protocol": "docs/tyrell-zero-battery-validation.md",
+    "battery_review": "research/tyrell-zero-battery-review.json",
+    "implementation_progress": "docs/tyrell-zero-progress.md",
+    "implementation_record": "research/tyrell-zero-implementation.json"
+  },
+  "plan_revision": 3,
+  "revision_reason": "Five fresh agents strengthened battery-powered release selection, representative validation and bounded base-policy/maintenance qualification.",
+  "power_strategy": {
+    "state": "planned-not-implemented-or-qualified-for-Zero",
+    "input_evidence": {
+      "path": "research/cardputer-zero-power-audit.json",
+      "sha256": "954e81651241fa4be64b05a024be4b9edaf052c0bf9e20d4308fa5941e1aa39d",
+      "firmware_scope": "Existing vendor image, not Zero",
+      "live_phase_count": 15,
+      "electrical_savings_measured": false,
+      "usb_result": "About 8000 USB IRQ occurrences/s to zero in both auto phases; leaf/hub/root suspended; restored on in control phases.",
+      "cpu_result": "1GHz residency about79% to6% in both isolated factor1 phases, same governor and limits.",
+      "all_Zero_gates_remain_future": true
+    },
+    "contract_path": "image/contracts/tyrell-zero-power.json",
+    "package": "tyrell-zero-power-policy",
+    "presets": [
+      {
+        "id": "baseline",
+        "ethernet_usb_leaf_control": "on",
+        "ondemand_sampling_down_factor": 50,
+        "purpose": "Hardware-complete native control and fallback",
+        "ethernet_autosuspend_delay_ms": 2000
+      },
+      {
+        "id": "ethernet",
+        "ethernet_usb_leaf_control": "auto",
+        "ondemand_sampling_down_factor": 50,
+        "purpose": "Isolate USB policy",
+        "ethernet_autosuspend_delay_ms": 2000
+      },
+      {
+        "id": "cpu",
+        "ethernet_usb_leaf_control": "on",
+        "ondemand_sampling_down_factor": 1,
+        "purpose": "Isolate CPU policy",
+        "ethernet_autosuspend_delay_ms": 2000
+      },
+      {
+        "id": "combined",
+        "ethernet_usb_leaf_control": "auto",
+        "ondemand_sampling_down_factor": 1,
+        "purpose": "Interaction and intended release candidate",
+        "ethernet_autosuspend_delay_ms": 2000
+      }
+    ],
+    "unchanged_controls": {
+      "governor": "ondemand",
+      "cpu_min_khz": 600000,
+      "cpu_max_khz": 1000000,
+      "gpu_mem_mib": 128,
+      "cma_mib": 64,
+      "usb_parent_policy": "Preserve auto; no global autosuspend",
+      "swap": "Preserve",
+      "wifi_power_save": "Preserve on",
+      "ethernet_eee": "Preserve enabled",
+      "native_clients": "Same exact packages/settings; application power optimization excluded",
+      "fixed_ondemand_tunables": {
+        "up_threshold": "50",
+        "ignore_nice_load": "0",
+        "powersave_bias": "0",
+        "sampling_rate": "100000",
+        "io_is_busy": "0"
+      },
+      "ethernet_autosuspend_delay_ms": 2000
+    },
+    "package_installation": "Files/configuration only; no host sysfs writes, udev triggers or live tuning in maintainer scripts. Build in existing ARM64 builder; install tests isolated.",
+    "cpu_persistence": {
+      "inactive_template": "Package-owned resource; not an automatically applied tmpfiles file",
+      "runtime_override": "/run/tmpfiles.d/raspberrypi-sys-mods-ondemand-governor.conf",
+      "method": "Early bounded eligibility helper validates board/kernel/BSP/distribution and CPU policy before exposing same-basename runtime override; preserve vendor entries and change only factor.",
+      "original_vendor_file": "/usr/lib/tmpfiles.d/raspberrypi-sys-mods-ondemand-governor.conf",
+      "vendor_governor_rule": "/usr/lib/udev/rules.d/60-ondemand-governor.rules",
+      "ordering": "Eligibility must precede the tmpfiles application for CPU policy and every event-triggered optimized write; failed eligibility/baseline exposes no candidate override.",
+      "administrator_override": "Detect higher-priority /etc override and mark unqualified; do not replace it.",
+      "do_not_edit_vendor_usr_lib": true,
+      "no_unconditional_factor1_override": true,
+      "no_late_duplicate_tmpfiles_rule": true,
+      "qualification": "Prove ordering, missing/late policies, reboot and policy recreation; bounded event-triggered reapply only if needed and revalidated.",
+      "post_activation_invalidation": "On failed revalidation invalidate generation/remove owned runtime override before future application; serialize supported apply/update/preset paths. File deletion cannot stop already-open reader; generation/order checks plus readback are mandatory. Restore validated affected controls or controlled baseline boot; no baseline certification until verified."
+    },
+    "ethernet_persistence": {
+      "usb_ids": "0fe6:9900",
+      "observed_usb_device_driver": "r8152-cfgselector",
+      "observed_interface_driver": "r8152",
+      "match": "Verify integrated board/topology, USB IDs and bound interface across re-enumeration/mode changes; not bus-number or VID:PID alone.",
+      "forbid": [
+        "Global USB/hub autotuning",
+        "Administrative Ethernet disable",
+        "Cable polling daemon",
+        "Naive USB-device DRIVER==r8152 match"
+      ],
+      "wakeup_limitation": "Research exposed no readable leaf power/wakeup attribute; automatic cable insertion wake remains unproven.",
+      "capture": [
+        "autosuspend_delay_ms=2000 in initial comparisons",
+        "wakeup attribute availability/value",
+        "parent policies",
+        "active/suspended residency",
+        "resume transition/churn observations"
+      ]
+    },
+    "activation": "Event-driven configuration/bounded oneshots; no periodic tuning daemon. Coalesce duplicate events, bound boot/apply/reapply work and rate-limit diagnostics; include machinery and any continuing process/wakeups in battery accounting.",
+    "rollback": "Remove only owned override/rule; restore affected original live controls and verify future boot policy after reboot; removing files alone is insufficient.",
+    "unknown_identity": "Reject before any optimized write or override exposure; retain vendor configuration with a diagnostic and no optimized/hardware-qualified certification.",
+    "capture": "Preset, original/target values, distribution/kernel/BSP identities, matching rules and generated config hashes bound into profile/input/output/resume identity.",
+    "comparison_matrix": [
+      {
+        "id": "stock",
+        "role": "Compatibility and recovery reference; not causal footprint/power control"
+      },
+      {
+        "id": "full-source",
+        "role": "Matched common package versions/clients and baseline policies; desktop/base-stack comparison against Zero baseline"
+      },
+      {
+        "id": "zero-baseline",
+        "role": "Hardware-complete native control and fallback"
+      },
+      {
+        "id": "zero-ethernet",
+        "role": "Isolate USB policy"
+      },
+      {
+        "id": "zero-cpu",
+        "role": "Isolate CPU policy"
+      },
+      {
+        "id": "zero-combined",
+        "role": "Interaction and intended release candidate"
+      }
+    ],
+    "build_economy": "One coherent Zero APT closure/frozen rootfs; initial spare-card policy trials capture hashes/effective settings without four full builds. Final shipping preset requires a fresh immutable image job.",
+    "deferred": [
+      "IMU coordinated idle PM",
+      "Panel-controller sleep",
+      "Codec idle standby",
+      "IR noise and driver changes",
+      "UART/core clock changes",
+      "SD detection polling changes",
+      "Governor switch",
+      "Clock caps/core disabling",
+      "Whole-system suspend"
+    ],
+    "release_selection": "Promote an extra policy only with validated battery-side energy or controlled usable-runtime benefit versus Zero baseline, beyond uncertainty and within declared per-condition performance/regression limits. Test planned combination after isolated function/performance passes even if standalone energy is inconclusive. Compare selected Zero to matched full-source for the total image claim. USB screening cannot promote; a baseline release can fulfill the image battery goal only if its own full-source battery comparison passes.",
+    "baseline_controls": {
+      "ethernet_usb_leaf_control": "on",
+      "ondemand_tunables": {
+        "up_threshold": "50",
+        "ignore_nice_load": "0",
+        "sampling_down_factor": "50",
+        "powersave_bias": "0",
+        "sampling_rate": "100000",
+        "io_is_busy": "0"
+      },
+      "cpu_min_khz": 600000,
+      "cpu_max_khz": 1000000,
+      "ethernet_autosuspend_delay_ms": 2000
+    },
+    "conditional_parameter_search": {
+      "initial_cpu_factor": 1,
+      "reference_cpu_factor": 50,
+      "conditional_cpu_factors": [
+        2,
+        5
+      ],
+      "initial_leaf_delay_ms": 2000,
+      "conditional_leaf_delays_ms": [
+        5000
+      ],
+      "trigger": "Only if first candidate fails/has unresolved battery energy, latency or resume-churn result; preregister limited alternatives, change one parameter, and stop once resolved.",
+      "selection": "Battery benefit with performance and per-condition regression limits, never minimum clock residency.",
+      "identity": "Initial preset matrix is not a fixed release optimum; freeze final selected parameters in contract/new image job and repeat combination qualification."
+    },
+    "hardware_idle_return": {
+      "state": "future-Zero-qualification",
+      "devices": [
+        "IMX219",
+        "CSI/unicam",
+        "V3D",
+        "HDMI",
+        "USB leaf/hub/root"
+      ],
+      "gate": "Physical devices return to appropriate baseline idle residency after legitimate consumers release resources, within declared deadlines/margins. Do not force suspend or equate PM state with rail watts."
+    },
+    "wifi_persistence": {
+      "version": "network-manager 1.52.1-1+rpt4",
+      "expected": "Preserve effectiveON for unset/default profiles; honor explicit userchoices.",
+      "transitions": [
+        "normal provisioning",
+        "Imager provisioning",
+        "new profile",
+        "reboot",
+        "reconnect/roam",
+        "lost AP recovery",
+        "NetworkManager restart"
+      ],
+      "gate": "Read effective state and qualify SSH latency/reconnect; default0 alone is not proofON. Narrow owned default only if necessary/version-qualified; no new savings claim."
+    },
+    "maintenance_qualification": {
+      "initial_policy": "Preserve existing APT/security, swap/durability behavior.",
+      "inventory": "Timers, sockets and D-Bus activations in finished image; actual jobs, not just installed package counts.",
+      "power_detection": [
+        "connected",
+        "disconnected",
+        "unknown"
+      ],
+      "unknown_power": "No automatic security deferral; ConditionACPower may pass when connectors unknown.",
+      "nonurgent_candidate": "Only measured work; perjob existingdeadline, finite maxdeferral, retry trigger, manual authenticated run and freshness fallback before enabling.",
+      "tests": [
+        "skip/failure",
+        "network loss",
+        "lock contention",
+        "missed calendar window",
+        "reboot catch-up",
+        "power transitions including full charge",
+        "deadline fallback",
+        "last successful completion versus last trigger"
+      ],
+      "scheduling": "AccuracySec coalesces suitable work; RandomizedDelaySec spreads it; Persistent is not guaranteed immediate plug-in retry or completion. No pollingdaemon.",
+      "long_session": "Capture actual maintenance and180min/24h zramwriteback where present; explicitly report exposure limits and keep plugged/forced functional tests distinct from batteryenergy."
+    },
+    "unchanged_controls_scope": "Initial four-preset comparison; bounded follow-up parameters must be recorded separately and frozen for release.",
+    "comparison_claims": {
+      "additional_policy": "Candidate versus Zero baseline on battery.",
+      "whole_image": "Selected Zero image versus matched full-source image on battery.",
+      "combined_eligibility": "Isolated hardware/performance passes allow planned combined testing even when standalone battery energy is inconclusive; combination needs its own proof.",
+      "baseline_fallback": "No additional-policy claim; baseline can meet the whole-image battery goal if its full-source comparison passes. Otherwise that goal remains open."
+    }
+  },
+  "revision_reviews": {
+    "revision": 3,
+    "date": "2026-11-15",
+    "fresh_agents": [
+      "battery_policy_review_round3_fresh",
+      "battery_platform_options_round3_fresh",
+      "battery_acceptance_round3_fresh",
+      "battery_release_adversary_round3_fresh",
+      "battery_maintenance_round3_fresh"
+    ],
+    "focus": "Battery-specific proof, conditional parameter choices, PM regression guards, maintenance and adversarial transactional/measurement review.",
+    "status": "passed-after-adversarial-revisions"
+  },
+  "revision_history": [
+    {
+      "revision": 2,
+      "date": "2026-11-15",
+      "fresh_agents": [
+        "zero_plan_power_revision_fresh",
+        "zero_plan_delivery_review_fresh",
+        "zero_plan_measurement_review_fresh"
+      ],
+      "focus": "Power ownership/persistence, delivery sequencing and adversarial measurement/acceptance; original five-agent review provenance retained in audit."
+    }
+  ],
+  "native_integration_evidence": {
+    "record": "research/tyrell-zero-implementation.json",
+    "job_id": "20261116T030615312119Z-9c96e960",
+    "status": "pre-image-integration-passed",
+    "image_build_ready": false,
+    "device_access": false
+  }
+}

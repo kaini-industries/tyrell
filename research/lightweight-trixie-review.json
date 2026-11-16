@@ -1,0 +1,224 @@
+{
+  "review_date": "2026-11-15",
+  "timezone": "America/Chicago",
+  "scope": "Base-system power only; native application power optimization excluded; all native hardware, Wi-Fi and SSH retained.",
+  "project_commit": "2779e4323c5981307570969d4d1dff5fb5a346f4",
+  "source_hashes": {
+    "image/build-image.py": "55d917b9696397352f2a97b5c51ba6840f555efe091fd7f034309f26d060d940",
+    "builder/build-image.sh": "24ac6e0356b2c7e280999ebfaffb8cc4012fd907bbb9f364f0ac93d051e5a9fa",
+    "image/apt-lock.py": "377a4c26182ebb4cc3696da7e30fddba9f3f20bed2e721173927856fcf30912d",
+    "image/prepare-vendor.py": "1629f359b8efcb75ab2e8a8bfd51896957397904333b4e8d0075b2924dd8c93d",
+    "image/verify-image.py": "c94c55d630a147972090b7b62f03a4a9d763974f2e442b324bc25fb9d5bad718",
+    "locks/image-apt.json": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e"
+  },
+  "first_boot_verification": {
+    "launcher_version": "0.6.105",
+    "source_commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+    "binary_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+    "embedded_revision": "e7f6085",
+    "mandatory_step": "configure_desktop_startup calls raspi-config nonint do_boot_behaviour B4 before enabling APPLaunch",
+    "source_build_raspi_config_core_version": "20261026+2",
+    "missing_lightdm_behavior": "B3/B4 return failure if /etc/init.d/lightdm is absent",
+    "required_change": "Verified native provisioning/session contract or separately qualified provisioning alternative."
+  },
+  "live_base_observations": {
+    "timestamp_utc": "2026-11-16T00:19:23.677364+00:00",
+    "uptime_seconds": 850.02,
+    "interval_seconds": 15.080893002000039,
+    "whole_product_cpu_percent": 5.64,
+    "cpu_limitation": "Includes clients and client-driven service/kernel work; not pure base OS power and not separable by subtracting CPU shares.",
+    "vm_deltas": {
+      "pswpin": 1,
+      "pswpout": 0,
+      "allocstall_dma": 0,
+      "allocstall_dma32": 0,
+      "allocstall_normal": 0,
+      "allocstall_movable": 0,
+      "pgmajfault": 1,
+      "compact_stall": 0
+    },
+    "disk_deltas": {
+      "read_sectors": 0,
+      "write_sectors": 32
+    },
+    "effective_wifi_power_save": {
+      "returncode": 0,
+      "stdout": "Power save: on",
+      "stderr": ""
+    },
+    "wifi_profile_power_save": {
+      "returncode": 0,
+      "stdout": "default",
+      "stderr": ""
+    },
+    "ethernet": {
+      "driver": "r8152",
+      "carrier": "0",
+      "operstate": "down",
+      "supports_autosuspend": "1",
+      "usb_wakeup": null,
+      "ethtool_driver": {
+        "returncode": 0,
+        "stdout": "driver: r8152\nversion: v1.12.13\nfirmware-version: \nexpansion-rom-version: \nbus-info: usb-3f980000.usb-1.1\nsupports-statistics: yes\nsupports-test: no\nsupports-eeprom-access: no\nsupports-register-dump: no\nsupports-priv-flags: no",
+        "stderr": ""
+      },
+      "eee": {
+        "returncode": 0,
+        "stdout": "EEE settings for eth0:\n\tEEE status: enabled - inactive\n\tTx LPI: disabled\n\tSupported EEE link modes:  100baseT/Full\n\tAdvertised EEE link modes:  100baseT/Full\n\tLink partner advertised EEE link modes:  Not reported",
+        "stderr": ""
+      }
+    },
+    "iio": [
+      {
+        "device": "iio:device1",
+        "name": "m5ioe1",
+        "buffer/enable": null,
+        "sampling_frequency": null,
+        "in_accel_sampling_frequency": null,
+        "in_anglvel_sampling_frequency": null,
+        "in_magn_sampling_frequency": null,
+        "power/control": "auto",
+        "power/runtime_status": "unsupported"
+      },
+      {
+        "device": "iio:device2",
+        "name": "bmm150",
+        "buffer/enable": "0",
+        "sampling_frequency": null,
+        "in_accel_sampling_frequency": null,
+        "in_anglvel_sampling_frequency": null,
+        "in_magn_sampling_frequency": "10",
+        "power/control": "auto",
+        "power/runtime_status": "unsupported"
+      },
+      {
+        "device": "iio:device0",
+        "name": "bmi270",
+        "buffer/enable": "0",
+        "sampling_frequency": null,
+        "in_accel_sampling_frequency": "100.000000",
+        "in_anglvel_sampling_frequency": "200.000000",
+        "in_magn_sampling_frequency": null,
+        "power/control": "auto",
+        "power/runtime_status": "unsupported"
+      }
+    ],
+    "usb": [
+      {
+        "device": "usb1",
+        "product": "DWC OTG Controller",
+        "idVendor": "1d6b",
+        "idProduct": "0002",
+        "power/control": "auto",
+        "power/runtime_status": "active",
+        "power/autosuspend_delay_ms": "0"
+      },
+      {
+        "device": "1-1.1",
+        "product": "USB 10/100 LAN",
+        "idVendor": "0fe6",
+        "idProduct": "9900",
+        "power/control": "on",
+        "power/runtime_status": "active",
+        "power/autosuspend_delay_ms": "2000"
+      },
+      {
+        "device": "1-1",
+        "product": "USB2.0 Hub",
+        "idVendor": "05e3",
+        "idProduct": "0610",
+        "power/control": "auto",
+        "power/runtime_status": "active",
+        "power/autosuspend_delay_ms": "0"
+      }
+    ],
+    "zram": {
+      "comp_algorithm": "lzo-rle lzo lz4 [zstd]",
+      "mm_stat": "92786688 15289460 18317312        0 35782656      526     4731       23      430",
+      "bd_stat": "0        0        0",
+      "backing_dev": "/dev/loop0",
+      "writeback_limit_enable": "0",
+      "writeback_limit": "0"
+    },
+    "swap_entries": [
+      {
+        "type": "partition",
+        "size_kib": 360444,
+        "used_kib": 94032,
+        "priority": 100
+      }
+    ],
+    "generated_writeback_timer": "# Automatically generated by rpi-swap-generator\n\n[Unit]\nSourcePath=/etc/rpi/swap.conf\nDescription=zram writeback timer\n\n[Timer]\nOnBootSec=180min\nOnUnitActiveSec=24h\n\n[Install]\nWantedBy=timers.target",
+    "power_supply": {
+      "bq27220-0": {
+        "type": "Battery",
+        "status": "Charging",
+        "online": null,
+        "capacity": "18",
+        "voltage_now": "3735000",
+        "current_now": "561000",
+        "power_avg": "210000",
+        "charge_now": "228000"
+      }
+    }
+  },
+  "options": [
+    {
+      "id": "native_base_profile",
+      "kind": "base image/session",
+      "priority": 1,
+      "energy_measured": false,
+      "gate": "Full native OOBE/session/device access and hardware acceptance."
+    },
+    {
+      "id": "r8152_idle_autosuspend",
+      "kind": "base driver policy",
+      "priority": 2,
+      "energy_measured": false,
+      "gate": "Actual residency, cable insertion, recovery/traffic, USB modes and shared hub/input tests."
+    },
+    {
+      "id": "bmi270_bmm150_idle_pm",
+      "kind": "later coordinated BSP change",
+      "priority": 3,
+      "energy_measured": false,
+      "gate": "Physical parent PM, AUX usage, all sensor channels and repeated restore."
+    },
+    {
+      "id": "panel_controller_sleep",
+      "kind": "later BSP change",
+      "priority": 4,
+      "energy_measured": false,
+      "gate": "Actual controller/rail state, command timing, full repaint/wake/HDMI tests."
+    },
+    {
+      "id": "hardware_standby_audit",
+      "kind": "base driver verification",
+      "priority": 5,
+      "energy_measured": false,
+      "gate": "Camera/codec physical PM and idle PCM state; do not force standby under clients."
+    }
+  ],
+  "false_wins": [
+    "Wi-Fi power saving already on.",
+    "Ethernet EEE already enabled; inactive without partner.",
+    "No observed heavy swap/writeback or SD writes.",
+    "IIO class PM status does not establish parent-device or physical rail state.",
+    "No complete-system suspend does not prohibit device runtime PM."
+  ],
+  "measurement_constraints": {
+    "charging": true,
+    "runtime_gain_measured": false,
+    "power_avg_vs_vi": "Unresolved roughly tenfold difference; no correction applied.",
+    "remaining_charge_slope_milliamps_approx": 559.6653905371029,
+    "remaining_charge_slope_limitation": "Approximate internal consistency of RemainingCapacity/current, not independent coulomb-counter or physical calibration; sample read skew and smoothing apply.",
+    "causal_control": "Matched common versions/settings/client states in full-source and lean images; stock is compatibility reference.",
+    "current_device_changes": "None apart from normal SSH authentication/audit activity."
+  },
+  "pinned_bsp": {
+    "commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "archive_sha256": "a541239495b9e1c15d2fe580c2cee4587ba9667e427d5f4d15d45038d8fd93a0",
+    "archive_url": "https://github.com/m5stack/m5stack-linux-dtoverlays/archive/75518549a2640486f5d13ea72ca4935b198d7c20.tar.gz",
+    "verification": "Fresh agents verified retained archive SHA-256 and inspected the pinned driver files."
+  }
+}

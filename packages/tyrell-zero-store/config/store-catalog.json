@@ -1,0 +1,175 @@
+{
+  "packages": [
+    {
+      "architecture": "arm64",
+      "bytes": 546044,
+      "control": {
+        "Architecture": "arm64",
+        "Depends": "libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)",
+        "Description": "Read-only system status for the M5Stack CardputerZero",
+        "Installed-Size": "1314",
+        "Maintainer": "Tyrell contributors <tyrell@localhost>",
+        "Package": "tyrell-status",
+        "Priority": "optional",
+        "Section": "utils",
+        "Version": "0.1.0-1"
+      },
+      "desktop": "/usr/share/APPLaunch/applications/tyrell-status.desktop",
+      "directories": {
+        "usr": 493,
+        "usr/bin": 493,
+        "usr/share": 493,
+        "usr/share/APPLaunch": 493,
+        "usr/share/APPLaunch/applications": 493,
+        "usr/share/APPLaunch/share": 493,
+        "usr/share/APPLaunch/share/images": 493,
+        "usr/share/applications": 493,
+        "usr/share/doc": 493,
+        "usr/share/doc/tyrell-status": 493,
+        "usr/share/icons": 493,
+        "usr/share/icons/hicolor": 493,
+        "usr/share/icons/hicolor/80x80": 493,
+        "usr/share/icons/hicolor/80x80/apps": 493
+      },
+      "executables": [
+        "/usr/bin/tyrell-status",
+        "/usr/lib/tyrell-status/tyrell-status",
+        "/usr/lib/tyrell-status/tyrell-status_zero_device"
+      ],
+      "files": {
+        "usr/bin/tyrell-status": "e16fd0262d23296efdd4df90cfacd625e78686a9a39d5aba603634f7e03b4d1f",
+        "usr/share/APPLaunch/applications/tyrell-status.desktop": "307702e2431fc7c3deed8ff52e3462e9cb00b0aa2a20a0efb3892645f2e97e6d",
+        "usr/share/APPLaunch/share/images/tyrell-status.png": "aae378a1e1a200b0650419bd595da9d281af43beefe1e1b869a7e41af0eaee36",
+        "usr/share/applications/tyrell-status.desktop": "fa7c6e552eaf225c61f82ce5c24bd951ea40740ce9e522c12d02f55d8357153b",
+        "usr/share/doc/tyrell-status/LICENSE": "32ffb7f513a2faaac16d737dd235030b3992728c2a142434f9496bc4d3fa2a32",
+        "usr/share/doc/tyrell-status/README.md": "28cb51ecf5a220540312a4edd8ed00ff31714f9fd232875694d6f9763d2dafdc",
+        "usr/share/doc/tyrell-status/THIRD_PARTY.md": "dd18021c32f40640916ab3cd8a61ae3d4cbe327acb83042f5e40a137ca01f71c",
+        "usr/share/doc/tyrell-status/lvgl-LICENCE.txt": "27a80bd36832ab42d35ad60c08b2b230a807a9bc0d58e94ec1531543dc49cbe8",
+        "usr/share/icons/hicolor/80x80/apps/tyrell-status.png": "aae378a1e1a200b0650419bd595da9d281af43beefe1e1b869a7e41af0eaee36"
+      },
+      "md5": "c8ba8188ce236540e57521654ad84373",
+      "package": "tyrell-status",
+      "scripts": {},
+      "sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+      "version": "0.1.0-1"
+    },
+    {
+      "architecture": "arm64",
+      "bytes": 685526,
+      "control": {
+        "Architecture": "arm64",
+        "Depends": "gstreamer1.0-plugins-base (>= 1.26), gstreamer1.0-plugins-good (>= 1.26), gstreamer1.0-plugins-bad (>= 1.26), gstreamer1.0-libav (>= 1.26), gstreamer1.0-x (>= 1.26), fonts-dejavu-core, python3, systemd (>= 253), adduser, init-system-helpers (>= 1.56), libc6 (>= 2.38), libdrm2 (>= 2.4.61), libgcc-s1 (>= 3.0), libglib2.0-0t64 (>= 2.12.0), libgstreamer-plugins-base1.0-0 (>= 1.6.0), libgstreamer1.0-0 (>= 1.12.0), libpulse0 (>= 0.99.1), libstdc++6 (>= 13.1)",
+        "Description": "Keyboard-controlled local video player for the CardputerZero",
+        "Installed-Size": "1627",
+        "Maintainer": "Tyrell contributors <tyrell@localhost>",
+        "Package": "tyrell-video",
+        "Priority": "optional",
+        "Section": "video",
+        "Version": "0.1.6-1"
+      },
+      "desktop": "/usr/share/APPLaunch/applications/tyrell-video.desktop",
+      "directories": {
+        "usr": 493,
+        "usr/bin": 493,
+        "usr/lib": 493,
+        "usr/lib/systemd": 493,
+        "usr/lib/systemd/system": 493,
+        "usr/lib/tyrell-video": 493,
+        "usr/share": 493,
+        "usr/share/APPLaunch": 493,
+        "usr/share/APPLaunch/applications": 493,
+        "usr/share/APPLaunch/share": 493,
+        "usr/share/APPLaunch/share/images": 493,
+        "usr/share/doc": 493,
+        "usr/share/doc/tyrell-video": 493
+      },
+      "executables": [
+        "/usr/bin/tyrell-video",
+        "/usr/lib/tyrell-video/tyrell-video",
+        "/usr/lib/tyrell-video/tyrell-video_zero_device"
+      ],
+      "files": {
+        "usr/bin/tyrell-video": "af5862e3949b98f8402f64d1cae2608c4693cb8009ce6f9d9b8a50aea14e9612",
+        "usr/lib/systemd/system/tyrell-video-hdmi.socket": "1dfec617d557f24c58e23b386723cdc2acb446c59fcadfeb16f1b36d56db8d80",
+        "usr/lib/systemd/system/tyrell-video-hdmi@.service": "6f1f8b6cfdc31ae483214bbffb49f3a5d9d2feabc75ad03733810a393f446b32",
+        "usr/lib/tyrell-video/tyrell-video-audio-session": "12c36f03b12f9ded5cfccbd6ac24b60ad2bd37132aed354ffc97a6cc6b50c1ad",
+        "usr/lib/tyrell-video/tyrell-video-hdmi-session": "aacc5742a29080838b908c71e81c8d551cb01ebd5bce47deed2e05cfa48a7dfb",
+        "usr/share/APPLaunch/applications/tyrell-video.desktop": "937a133163789654241ab0f4612bba667eff1ff1fe397a1dab8d8f14d935028d",
+        "usr/share/APPLaunch/share/images/tyrell-video.png": "9727e44e04916a3a7b7eb97d040b61139ffc36aeae4056d0749fdfe2d5fcf059",
+        "usr/share/doc/tyrell-video/LICENSE": "32ffb7f513a2faaac16d737dd235030b3992728c2a142434f9496bc4d3fa2a32",
+        "usr/share/doc/tyrell-video/README.md": "8b750c34e0d8a9074e80d67140be956478637b6eca1b8a99c4afa412878010f4",
+        "usr/share/doc/tyrell-video/THIRD_PARTY.md": "a868a275cb8b25f9983d7d38348311cbffc4d731d534d600747941e992bbec58",
+        "usr/share/doc/tyrell-video/lvgl-LICENCE.txt": "27a80bd36832ab42d35ad60c08b2b230a807a9bc0d58e94ec1531543dc49cbe8"
+      },
+      "md5": "c5183a7af6d3f42b577ce5207d9b15b8",
+      "package": "tyrell-video",
+      "scripts": {
+        "postinst": "bcc5690b88473aa7e173790a9aed07a3932ce216a987a64983fbdef1f064028f",
+        "postrm": "b09952812924697d603f06c54310f67bb9e22ece8579c6c734a62ec347c7dc60",
+        "prerm": "d70fdffa0725c4ab6989c0a49ecfb79daf0f8c0509bb917916129693823e4925"
+      },
+      "sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+      "version": "0.1.6-1"
+    },
+    {
+      "architecture": "arm64",
+      "bytes": 686346,
+      "control": {
+        "Architecture": "arm64",
+        "Depends": "gstreamer1.0-plugins-base (>= 1.26), gstreamer1.0-plugins-good (>= 1.26), gstreamer1.0-plugins-bad (>= 1.26), gstreamer1.0-libav (>= 1.26), gstreamer1.0-x (>= 1.26), fonts-dejavu-core, python3, systemd (>= 253), adduser, init-system-helpers (>= 1.56), libc6 (>= 2.38), libdrm2 (>= 2.4.61), libgcc-s1 (>= 3.0), libglib2.0-0t64 (>= 2.12.0), libgstreamer-plugins-base1.0-0 (>= 1.6.0), libgstreamer1.0-0 (>= 1.12.0), libpulse0 (>= 0.99.1), libstdc++6 (>= 13.1)",
+        "Description": "Keyboard-controlled local video player for the CardputerZero",
+        "Installed-Size": "1628",
+        "Maintainer": "Tyrell contributors <tyrell@localhost>",
+        "Package": "tyrell-video",
+        "Priority": "optional",
+        "Section": "video",
+        "Version": "0.1.7-1"
+      },
+      "desktop": "/usr/share/APPLaunch/applications/tyrell-video.desktop",
+      "directories": {
+        "usr": 493,
+        "usr/bin": 493,
+        "usr/lib": 493,
+        "usr/lib/systemd": 493,
+        "usr/lib/systemd/system": 493,
+        "usr/lib/tyrell-video": 493,
+        "usr/share": 493,
+        "usr/share/APPLaunch": 493,
+        "usr/share/APPLaunch/applications": 493,
+        "usr/share/APPLaunch/share": 493,
+        "usr/share/APPLaunch/share/images": 493,
+        "usr/share/doc": 493,
+        "usr/share/doc/tyrell-video": 493
+      },
+      "executables": [
+        "/usr/bin/tyrell-video",
+        "/usr/lib/tyrell-video/tyrell-video",
+        "/usr/lib/tyrell-video/tyrell-video_zero_device"
+      ],
+      "files": {
+        "usr/bin/tyrell-video": "640c7cf15167e41e3ffe6651baff6b88940af8f46c9c08d870552a566fdbf4b9",
+        "usr/lib/systemd/system/tyrell-video-hdmi.socket": "1dfec617d557f24c58e23b386723cdc2acb446c59fcadfeb16f1b36d56db8d80",
+        "usr/lib/systemd/system/tyrell-video-hdmi@.service": "6f1f8b6cfdc31ae483214bbffb49f3a5d9d2feabc75ad03733810a393f446b32",
+        "usr/lib/tyrell-video/tyrell-video-audio-session": "12c36f03b12f9ded5cfccbd6ac24b60ad2bd37132aed354ffc97a6cc6b50c1ad",
+        "usr/lib/tyrell-video/tyrell-video-hdmi-session": "aacc5742a29080838b908c71e81c8d551cb01ebd5bce47deed2e05cfa48a7dfb",
+        "usr/share/APPLaunch/applications/tyrell-video.desktop": "937a133163789654241ab0f4612bba667eff1ff1fe397a1dab8d8f14d935028d",
+        "usr/share/APPLaunch/share/images/tyrell-video.png": "9727e44e04916a3a7b7eb97d040b61139ffc36aeae4056d0749fdfe2d5fcf059",
+        "usr/share/doc/tyrell-video/LICENSE": "32ffb7f513a2faaac16d737dd235030b3992728c2a142434f9496bc4d3fa2a32",
+        "usr/share/doc/tyrell-video/README.md": "f6e26a90fe4f88d31316819a21c8459656d3c6b9ca9c8e6cc997fab7b5005b94",
+        "usr/share/doc/tyrell-video/THIRD_PARTY.md": "a868a275cb8b25f9983d7d38348311cbffc4d731d534d600747941e992bbec58",
+        "usr/share/doc/tyrell-video/lvgl-LICENCE.txt": "27a80bd36832ab42d35ad60c08b2b230a807a9bc0d58e94ec1531543dc49cbe8"
+      },
+      "md5": "68912cf85158c7163af039b79d8d1260",
+      "package": "tyrell-video",
+      "scripts": {
+        "postinst": "bcc5690b88473aa7e173790a9aed07a3932ce216a987a64983fbdef1f064028f",
+        "postrm": "b09952812924697d603f06c54310f67bb9e22ece8579c6c734a62ec347c7dc60",
+        "prerm": "d70fdffa0725c4ab6989c0a49ecfb79daf0f8c0509bb917916129693823e4925"
+      },
+      "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+      "version": "0.1.7-1"
+    }
+  ],
+  "schema": 1,
+  "store_source": "b02db122396a7d33c41c66199ab443437975cfee"
+}

@@ -1,0 +1,15 @@
+{
+  "files": {
+    "projects/LaunchWizard/main/src/main.cpp": {
+      "after": "2cf69fd4205f05c6bf1de49c6dc5cd219fc8a43914ddde4f6c911f23369cb68a",
+      "before": "a6a8be0768e0f5d52f351c3f880d2fa820836111340c34b35c78b778c81f9175"
+    },
+    "projects/LaunchWizard/main/ui/wizard_service.cpp": {
+      "after": "fc67d135922a80e8a8e661f8753095c93a091b63619e4f3f41dfe30d2bc844a6",
+      "before": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7"
+    }
+  },
+  "patch_sha256": "3d05a08131a374f35e35e81092dddb669bc85b9b7ee2353dee51cd02680435b8",
+  "revision": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+  "schema": 1
+}

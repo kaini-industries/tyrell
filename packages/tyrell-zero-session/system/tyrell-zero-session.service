@@ -1,0 +1,16 @@
+[Unit]
+Description=Tyrell Zero local native PAM session
+Requires=tyrell-zero-boot-state.service
+After=tyrell-zero-boot-state.service systemd-user-sessions.service
+Conflicts=getty@tty7.service
+ConditionPathExists=!/run/tyrell-zero/setup
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/greetd --config /run/tyrell-zero/greetd.config
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=10
