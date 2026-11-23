@@ -62,14 +62,16 @@ recovery and normal APPLaunch launch/exit. See the
 [0.1.7 report](docs/video-hdmi-017-validation.md) for measured limits; these results
 do not promise smooth playback of every source profile.
 
-The [0.1.7 Store preparation](store/tyrell-video/0.1.7/README.md) includes the
+The [0.1.7 submission snapshot](store/tyrell-video/0.1.7/README.md) includes the
 listing, icon, UI previews, permission declarations, qualification records,
 review notes and a local handoff archive builder. The exact package was
-[submitted to the Store as PR #324](https://github.com/CardputerZero/packages/pull/324),
-and the reviewed real-device recording is linked in the
+[accepted through Store PR #324](https://github.com/CardputerZero/packages/pull/324),
+merged on November 15, 2026, and promoted to the official
+[`apt-pool` release](https://github.com/CardputerZero/packages/releases/tag/apt-pool).
+The [current publication record](store/tyrell-video/README.md) verifies its approved
+generated catalog entry and exact package identity. The reviewed real-device
+recording is linked in the
 [PR conversation](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
-Automated submission checks passed. This first-app release awaits manual
-maintainer review and merge; it is not yet approved or live in the Store.
 
 The HDMI console lease preserves the running desktop and restores it afterward.
 A temporary user-session HDMI audio sink supplies TV sound when the stock audio

@@ -82,6 +82,49 @@ This capacity check does not guarantee currently free RAM. Stop other memory
 heavy work if the host is under pressure. Do not delete a VM that holds work
 you have not exported.
 
+## Restore relocated build storage
+
+The existing development setup keeps the VM backing disk, downloaded dependency
+caches and retained images on `/Volumes/garage/tyrell-build`. The workspace
+retains symlinks to those files; `build/image-storage.json` selects the image
+storage directory. Reconnecting the original volume restores those paths.
+
+Inspect the mount and links before starting a build:
+
+```sh
+df -h /Volumes/garage
+ls -ld build/lima/tyrell-build/disk build/downloads build/game-deps build/tanks-deps image-artifacts
+python3 scripts/builder info
+```
+
+If a link is dangling, mount its existing target volume at the recorded path.
+Keep the link and original data intact. Creating an empty replacement directory
+or a new VM does not restore its packages, jobs or image exports. The builder
+and image preflight checks reject unavailable backing storage and enforce the
+[storage budgets](image-building.md#storage-requirements).
+
+With the original dependency caches available, verify their pinned archives and
+extracted sources, then exercise the normal host build paths:
+
+```sh
+python3 scripts/game deps --backend headless
+make chess
+make chess-test
+make game GAME_BACKEND=headless
+make game-test GAME_BACKEND=headless
+```
+
+The dependency command reuses valid cached files; missing archives require a
+download. Retained extracted sources alone do not replace the original locked
+archive bytes. Host networking tests need loopback TCP/UDP access.
+
+For an existing stopped builder, `make builder-up` followed by
+`python3 scripts/builder shell uname -m` verifies that its original disk boots.
+`python3 scripts/builder shell dpkg --audit` checks guest package consistency.
+Return a builder started only for this check to its previous stopped state with
+`make builder-stop`. The [November 23 recovery record](build-storage-validation.md)
+documents the checked caches, image, frozen APT repository and VM boundaries.
+
 ## Build and package behavior
 
 Package and image jobs share a host lock and guest `flock`. A package build or

@@ -220,7 +220,7 @@ it is not automatically proof of the recovery branch, every qualification case
 or maintainer approval. Synthetic fixtures and rendered previews retain their
 separate labels.
 
-The [0.1.7 Store preparation](../store/tyrell-video/0.1.7/README.md) includes the
+The [0.1.7 submission snapshot](../store/tyrell-video/0.1.7/README.md) includes the
 completed hardware qualification and reviewed recording. The exact package was
 [submitted as PR #324](https://github.com/CardputerZero/packages/pull/324), with
 head `6022394add25e7e2e38dd38366765251b5da878b`; capture and validation CI passed.
@@ -228,6 +228,13 @@ The supplied recording and poster were uploaded alongside the package in the
 contributor's `czdev-buffer` release, preserving their prepared hashes, and
 linked in the PR comment above. The optional Store source URL remains omitted.
 A completed package build, an injected recovery test and an authentic device
-recording remain distinct evidence items. This first-app release awaits manual
-maintainer review and merge; submission does not establish Store approval or
-availability.
+recording remain distinct evidence items.
+
+Publication status was rechecked on November 23, 2026: [PR #324](https://github.com/CardputerZero/packages/pull/324)
+merged on November 15 at `16:32:35Z`, and the exact package was promoted to the
+official [`apt-pool` release](https://github.com/CardputerZero/packages/releases/tag/apt-pool)
+at `16:33:08Z`. The official generated catalog lists version `0.1.7-1` as approved.
+The [current publication record](../store/tyrell-video/README.md) links these sources
+and distinguishes catalog inclusion from a new check of the handheld's Store UI.
+The historical submission receipt, qualification evidence and package bytes are
+unchanged.

@@ -115,6 +115,8 @@ The default is `build/image-storage/`. Changing this location does not migrate
 the VM backing disk. The preflight checks these volumes and the internal host
 reserve. Export checks use measured output/input sizes. Mount external storage
 before starting a VM whose disk resides there.
+See [relocated-storage recovery](building.md#restore-relocated-build-storage)
+when existing cache, VM or image-export symlinks become unavailable.
 
 ## Build
 
