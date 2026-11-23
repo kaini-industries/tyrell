@@ -91,6 +91,7 @@ def capture(root, protect_files, execute=command):
     # avoids a circular digest dependency; the Store still path-protects it.
     required.discard("/usr/share/tyrell-zero/session-integration.json")
     required.discard("/usr/share/tyrell-zero/pre-image-qualification.json")
+    required.discard("/usr/share/tyrell-zero/image-activation.json")
     files = {}
     for name in sorted(required | set(protect_files)):
         path = trusted.at(name)

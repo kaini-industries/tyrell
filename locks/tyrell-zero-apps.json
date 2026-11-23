@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "profile": "tyrell-zero",
+  "complete": true,
+  "scope": "exact-custom-package-and-source-qualification-inputs",
+  "packages": [
+    {
+      "input_path": "dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb",
+      "filename": "tyrell-status_0.1.0-1_arm64.deb",
+      "sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+      "bytes": 546044,
+      "Package": "tyrell-status",
+      "Version": "0.1.0-1",
+      "Architecture": "arm64",
+      "source_manifest_sha256": "859c1f0411879711e826671244d0c2c5d282d03aa446518423df413436b95eb9"
+    },
+    {
+      "input_path": "artifacts/tyrell-zero/20261116T023454094402Z-0531c7d1/tyrell-zero-power-policy/tyrell-zero-power-policy_0.1.0-1_arm64.deb",
+      "filename": "tyrell-zero-power-policy_0.1.0-1_arm64.deb",
+      "sha256": "4583b3a90b37c59b61cde544626f5f10fd24a2104642678fa184085763290845",
+      "bytes": 9680,
+      "Package": "tyrell-zero-power-policy",
+      "Version": "0.1.0-1",
+      "Architecture": "arm64",
+      "source_manifest_sha256": "292c665e98b04479b83332954c3891cc6e09e6e1e60d3941063f286f933f865c"
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/tyrell-zero-session_0.3.0-1_arm64.deb",
+      "filename": "tyrell-zero-session_0.3.0-1_arm64.deb",
+      "sha256": "727a59eaa3a9b167a9913ee0aaa833796f710ccb16dabb03df36501aa283e76d",
+      "bytes": 1176636,
+      "Package": "tyrell-zero-session",
+      "Version": "0.3.0-1",
+      "Architecture": "arm64",
+      "source_manifest_sha256": "936e2f19104327f47806e14545e17f1ff9d502c96b9ca07c2a7769e747272995"
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/tyrell-zero-store_0.1.0-1_arm64.deb",
+      "filename": "tyrell-zero-store_0.1.0-1_arm64.deb",
+      "sha256": "feab044d72861432d3fc6fd627124bde41cef090f9f0fbd5205ca9211d7097e8",
+      "bytes": 24430,
+      "Package": "tyrell-zero-store",
+      "Version": "0.1.0-1",
+      "Architecture": "arm64",
+      "source_manifest_sha256": "bf84fa0a2f25fbe5b0e80a5ce749b53b791ebca99521816254c76f3713b474c9"
+    }
+  ],
+  "qualification": {
+    "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/pre-image-qualification.json",
+    "filename": "pre-image-qualification.json",
+    "sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
+    "bytes": 3209
+  },
+  "evidence": [
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/source-manifest.json",
+      "filename": "source-manifest.json",
+      "sha256": "0d2ac14a780990387d14682e7a0736ab17fd3ec2375c1e456c0ac314b5500fcf",
+      "bytes": 6893
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/session-build-manifest.json",
+      "filename": "session-build-manifest.json",
+      "sha256": "936e2f19104327f47806e14545e17f1ff9d502c96b9ca07c2a7769e747272995",
+      "bytes": 3497
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/store-build-manifest.json",
+      "filename": "store-build-manifest.json",
+      "sha256": "bf84fa0a2f25fbe5b0e80a5ce749b53b791ebca99521816254c76f3713b474c9",
+      "bytes": 1629
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/store-lifecycle.json",
+      "filename": "store-lifecycle.json",
+      "sha256": "ec45ddbc09884b32315d9e960ec7d6f863beac2c85032c5a75aaceff23ba757b",
+      "bytes": 1798
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/session-tests.txt",
+      "filename": "session-tests.txt",
+      "sha256": "596e06c5e1f6b68730754a11e65d1905a69d66568aa53feb393a88ff16ea3084",
+      "bytes": 919
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-native/20261123T161402256037Z-73a9f781/store-tests.txt",
+      "filename": "store-tests.txt",
+      "sha256": "bd696f46d4dbe91965a1c197801b53614dadf435c6ddeeb138be6b165652e6f1",
+      "bytes": 502
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/native-build-manifest.json",
+      "filename": "native-build-manifest.json",
+      "sha256": "fa4da40b2971c7c9cfa290c5b8d94f7e725a8729fde3ef4d42399e6cdaa312d7",
+      "bytes": 788
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/power-policy-build-manifest.json",
+      "filename": "power-policy-build-manifest.json",
+      "sha256": "292c665e98b04479b83332954c3891cc6e09e6e1e60d3941063f286f933f865c",
+      "bytes": 1519
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/status-provenance.json",
+      "filename": "status-provenance.json",
+      "sha256": "859c1f0411879711e826671244d0c2c5d282d03aa446518423df413436b95eb9",
+      "bytes": 914
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/system-qualification.json",
+      "filename": "system-qualification.json",
+      "sha256": "75c9a5c75afdd679c07bf610506ad454094dd1ebdf9ce227664c673f19d0b3bf",
+      "bytes": 3984
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/greetd-authentication.json",
+      "filename": "greetd-authentication.json",
+      "sha256": "e35b68717c2886146ad0ef961b5918192bb651eb2567aaca9b983cc1b7f76e1e",
+      "bytes": 1704
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/native-ldd.txt",
+      "filename": "native-ldd.txt",
+      "sha256": "4cb6cbcb452b1b91af131a72b39b43a90cbc4111c33af2a0670ad9a8125c4856",
+      "bytes": 59092
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/custom-install.txt",
+      "filename": "custom-install.txt",
+      "sha256": "0af4a1179ceae80e26146928179c631006fc00f356c344d322a63f0782e28bba",
+      "bytes": 1077
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/custom-apt-check.txt",
+      "filename": "custom-apt-check.txt",
+      "sha256": "75fd9149bd0dcc5ebffa2a404f88547567f01a0ec38734642e63bf99a33626bc",
+      "bytes": 161
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/installed-system.json",
+      "filename": "installed-system.json",
+      "sha256": "ed6a38a405346806dd64d9bfe936d1a21cc5c83f0e3abfddbbee36c7d3ced136",
+      "bytes": 57975
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/installed-with-apps.json",
+      "filename": "installed-with-apps.json",
+      "sha256": "ef4d3a73af8c47efbbd0bbd5f99d9d7c5831f81afa2a0cc1eb901a0281fbd078",
+      "bytes": 58224
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/authentication/InRelease",
+      "filename": "InRelease",
+      "sha256": "bfacad4ca61899ce20d4a0d439f29339f66541561b67506364efb88e27dee870",
+      "bytes": 140420
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/authentication/Packages.gz",
+      "filename": "Packages.gz",
+      "sha256": "dd3ed05e971bdc544b7d04b810cd07dd82dd244fba6442b8ea045b2e4a1bd39f",
+      "bytes": 12800988
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/authentication/Release",
+      "filename": "Release",
+      "sha256": "85db0e6a65df5e63f8fc362ea469eac0f123df5b639a7eefdd08435cac082e83",
+      "bytes": 138610
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/authentication/debian-archive-keyring.pgp",
+      "filename": "debian-archive-keyring.pgp",
+      "sha256": "506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017",
+      "bytes": 55918
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/authentication/greetd-control.json",
+      "filename": "greetd-control.json",
+      "sha256": "892acf0e316f1a05fc1800b900d99b3f250bee1d131ddc498a95eab33ddec342",
+      "bytes": 853
+    },
+    {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/runtime-system-qualification.json",
+      "filename": "runtime-system-qualification.json",
+      "sha256": "bbd359052f8e6f48c6c38bd912fc691c38bbeb4df50b85d1cfad7e8990255087",
+      "bytes": 3984
+    }
+  ],
+  "limitations": [
+    "No exported image, physical boot, hardware or battery qualification."
+  ]
+}

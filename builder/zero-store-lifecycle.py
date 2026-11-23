@@ -246,7 +246,7 @@ class Lifecycle:
             parsed = dict(row.split(": ", 1) for row in fields.splitlines() if ": " in row)
             key = parsed.get("Package")
             if key in {"tyrell-zero-session", "tyrell-zero-store"}:
-                version = {"tyrell-zero-session": "0.2.0-1", "tyrell-zero-store": "0.1.0-1"}[key]
+                version = {"tyrell-zero-session": "0.3.0-1", "tyrell-zero-store": "0.1.0-1"}[key]
                 if key in found or parsed.get("Version") != version or parsed.get("Architecture") != "arm64":
                     raise RuntimeError("ambiguous integration DEB identity")
                 found[key] = path

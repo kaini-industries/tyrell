@@ -11,7 +11,7 @@ import re
 import stat
 import tempfile
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 PROFILE = "tyrell-zero"
 WORKFLOW = "native-setup-v1"
 INTEGRATION = "/usr/share/tyrell-zero/session-integration.json"

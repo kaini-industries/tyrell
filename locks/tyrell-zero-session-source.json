@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "kind": "partial-native-session-source-audit",
-  "complete": false,
-  "state": "native-wizard-built-store-guard-implemented",
+  "kind": "selected-native-source-and-runtime-lock",
+  "complete": true,
+  "state": "frozen-native-inputs-qualified-in-offline-root",
   "plan_revision": 3,
-  "scope": "Exact native source archives and patch/config replay, actual offline ARM64 Wizard build and guarded Store implementation. Full assembled-image APT/resource/boot acceptance remains incomplete.",
+  "scope": "Selected native Wizard source closure, own Store guard sources, exact vendor executable/resource imports, and complete pinned OS/custom-package runtime inputs. Unused launcher monorepo gitlinks are audit references, not source inputs compiled by this profile. No exported-image or physical acceptance is asserted.",
   "launcher": {
     "repository": "https://github.com/CardputerZero/launcher.git",
     "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
@@ -27,7 +27,7 @@
       "path": "SDK",
       "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
       "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
-      "closure_status": "Exact archive and five selected third-party source archives materialized; isolated ARM64 build remains an acceptance gate.",
+      "closure_status": "Exact SDK and five selected third-party archives materialized; real offline ARM64 Wizard build completed and its resulting binary passed the final locked runtime dependency/resource checks.",
       "native_wizard_dependency": true,
       "guard_source_dependency": false
     },
@@ -35,9 +35,9 @@
       "path": "projects/AppStore",
       "repository": "https://github.com/CardputerZero/Store.git",
       "commit": "b02db122396a7d33c41c66199ab443437975cfee",
-      "closure_status": "Not recursively materialized or build-qualified",
+      "closure_status": "Pinned audit reference; not compiled or recursively materialized. The guard compiles only project-owned sources and preserves the exact original Store binary/resources from the locked applaunch 0.6.105 package.",
       "native_wizard_dependency": false,
-      "guard_source_dependency": true
+      "guard_source_dependency": false
     },
     {
       "path": "projects/Calculator",
@@ -227,15 +227,9 @@
       "schema": 1
     }
   ],
-  "wizard_assets_status": "Native ARM64 ELF and linked libraries verified; original vendor fonts bound during pre-image integration. Physical GUI/resources/audio acceptance and final image coverage remain gates.",
-  "store_guard_status": "Implemented files-only dispatcher/helper package, exact Status/Video catalog, protected base snapshot and scoped repair/rollback; final assembled-image closure and lifecycle remain gates.",
-  "unresolved_before_complete": [
-    "Freeze coherent Zero system/custom app APT closure and native compatibility locks; toolchain inventory does not prove a coherent runtime.",
-    "Revalidate both native completion paths and Store guard against final assembled image/resources and baseline snapshot.",
-    "Complete profile-aware runner, independent offline verifier and spare-card native hardware/boot acceptance."
-  ],
+  "wizard_assets_status": "Exact native Wizard ELF, all original APPLaunch resources and selected native/service/plugin ELF closure passed verification in the 959-package detached runtime. Physical GUI, provisioning, boot and hardware behavior remain unqualified.",
+  "store_guard_status": "Files-only dispatcher/helper packaging and isolated real-dpkg lifecycle passed; the actual 959-package runtime received the registered diversion, final protected base snapshot and bound native session receipts, then passed independent offline verification. Physical Store behavior remains a spare-card acceptance gate.",
   "device_access": false,
-  "image_build_ready": false,
   "cache_handling": "Explicit immutable fetch into ignored build/zero-vendor/downloads; offline replay into a fresh ignored source tree. No vendor checkout/branch edits or hardware access.",
   "native_source_replay": {
     "lock": "locks/tyrell-zero-vendor-inputs.json",
@@ -248,5 +242,46 @@
     "offline_source_policy": "Upstream SDK helper appended only after its original SHA256 matches; download and Conan helpers fail closed; check_component accepts only locked commit/URL/path identity.",
     "licenses": "Per-archive license-file path/SHA256 inventory retained in the vendor-input lock.",
     "kconfig_verification": "Pinned Cardputer defaults generated as tyrell_native_config.mk; real ARM64 compile completed with network namespace disabling external connectivity. Exact generated config hash and archive identities in native build receipt."
+  },
+  "history": [
+    {
+      "date_local": "2026-11-15",
+      "timezone": "America/Chicago",
+      "kind": "partial-native-session-source-audit",
+      "state": "native-wizard-built-store-guard-implemented",
+      "complete": false,
+      "scope": "Exact native source archives and patch/config replay, actual offline ARM64 Wizard build and guarded Store implementation. Full assembled-image APT/resource/boot acceptance remains incomplete."
+    }
+  ],
+  "native_qualification_sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
+  "runtime_closure_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
+  "image_build_readiness": "Evaluated dynamically by image/profiles.py using the bound pipeline qualification; this source lock does not assert image export or physical acceptance.",
+  "remaining_acceptance": [
+    "Build and independently qualify the first complete exported Zero image file.",
+    "Verify native setup, graphical behavior, peripherals and Store lifecycle on a spare card.",
+    "Complete baseline and candidate battery/power qualification before any tuning or battery-life claim."
+  ],
+  "runtime_qualification": {
+    "date_local": "2026-11-23",
+    "scope": "offline-assembled-root",
+    "report": {
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
+      "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
+      "bytes": 3710239
+    },
+    "metadata": {
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-metadata.json",
+      "sha256": "2a537355af4cf6d58f11ca5b69631eced980839b2b458aae1d42416eaea5f011",
+      "bytes": 1389
+    },
+    "checks_passed": 24458,
+    "installed_system_packages": 955,
+    "installed_total_packages": 959,
+    "native_elf_roots": 182,
+    "protected_hardware_entries": 6949,
+    "image_file_built": false,
+    "physical_boot_qualified": false,
+    "hardware_qualified": false,
+    "battery_qualified": false
   }
 }

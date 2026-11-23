@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Read-only validation for Tyrell Zero's first profile/contract foundation.
+"""Read-only structure and qualification gates for Tyrell Zero image inputs.
 
 This module does not launch pi-gen, Lima, package installation, or a device
 connection. Structural validity is deliberately separate from build readiness.
-The legacy stock and desktop-source runners do not implement this profile.
+Stock and desktop-source builds retain their independent legacy runners.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
 import re
+import runpy
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,7 +44,7 @@ LOCK_PATHS = {
     'apps': 'locks/tyrell-zero-apps.json',
     'native_compat': 'locks/tyrell-zero-native-compat.json',
 }
-CUSTOM_PACKAGES = ['tyrell-status', 'tyrell-zero-session', 'tyrell-zero-power-policy']
+CUSTOM_PACKAGES = ['tyrell-status', 'tyrell-zero-session', 'tyrell-zero-store', 'tyrell-zero-power-policy']
 TUNABLES = {
     'up_threshold': 50, 'ignore_nice_load': 0, 'powersave_bias': 0,
     'sampling_rate': 100000, 'io_is_busy': 0, 'sampling_down_factor': 50,
@@ -88,8 +89,8 @@ def _json(path, expected_sha256=None):
         # Validate the exact bytes that are parsed; a separate hash/read pair
         # could otherwise accept changed contents between the two operations.
         with path.open('rb') as stream:
-            data = stream.read(2 * 1024 * 1024 + 1)
-        if len(data) > 2 * 1024 * 1024:
+            data = stream.read(16 * 1024 * 1024 + 1)
+        if len(data) > 16 * 1024 * 1024:
             raise ProfileError('Profile/contract JSON exceeds supported size')
         if expected_sha256 is not None and hashlib.sha256(data).hexdigest() != expected_sha256:
             raise ProfileError('Input checksum mismatch: ' + str(path))
@@ -245,8 +246,10 @@ def _load_profile(path=DEFAULT_PROFILE, root=ROOT):
         'exclude_display_manager': 'lightdm', 'exclude_compositor': 'labwc',
         'retain_required_shared_libraries': True}, 'desktop policy')
     _keys(profile['readiness'], {'phase', 'image_build_enabled', 'reason'}, 'Readiness')
-    _equals(profile['readiness']['phase'], 'foundation', 'readiness phase')
-    _equals(profile['readiness']['image_build_enabled'], False, 'build enablement')
+    if profile['readiness']['phase'] not in {'foundation', 'pipeline'}:
+        raise ProfileError('Unsupported readiness phase')
+    if type(profile['readiness']['image_build_enabled']) is not bool:
+        raise ProfileError('Build enablement must be an explicit boolean')
     if not isinstance(profile['readiness']['reason'], str) or not profile['readiness']['reason'].strip():
         raise ProfileError('Foundation needs an actionable readiness reason')
     _keys(profile['contracts'], {'hardware', 'power'}, 'Contracts')
@@ -298,7 +301,7 @@ def load_profile(path=DEFAULT_PROFILE, root=ROOT):
 
 
 def inspect_profile(path=DEFAULT_PROFILE, root=ROOT):
-    """Report foundation validity and future build blockers without starting work."""
+    """Evaluate bound input/test receipts without starting a VM or image build."""
     root = Path(root).resolve()
     profile = load_profile(path, root=root)
     paths = [repository_path(root, path)]
@@ -306,6 +309,7 @@ def inspect_profile(path=DEFAULT_PROFILE, root=ROOT):
     paths += [repository_path(root, item['path']) for item in profile['vendor_inputs'].values()]
     paths.append(repository_path(root, LOCK_PATHS['seed_apt']))
     blockers = []
+    documents = {}
     for role in ['build', 'source', 'apt', 'apps', 'native_compat']:
         name = LOCK_PATHS[role]
         target = repository_path(root, name, required=False)
@@ -317,23 +321,127 @@ def inspect_profile(path=DEFAULT_PROFILE, root=ROOT):
                                     or data['schema_version'] != 1 or 'schema' in data):
                 raise ProfileError('Unsupported Zero build-input lock schema')
             paths.append(target)
-        incomplete = role == 'source' and present and data.get('complete') is False
-        blockers.append({'code': ('incomplete-source' if incomplete else 'unqualified-' + role)
-                                  if present else 'missing-' + role,
-                         'path': name,
-                         'detail': ('Complete and qualify the partial source audit: ' + name) if incomplete
-                         else ('Qualify the frozen ' if present else 'Create and qualify the frozen ')
-                              + role.replace('_', ' ') + ' lock: ' + name})
-    # Native packages have a separate pre-image integration workflow. Acceptance
-    # against the assembled Zero filesystem remains a gate, not an editable flag.
-    blockers.extend([
-        {'code': 'native-wizard-integration', 'detail': 'Revalidate the native Wizard, runtime/resource receipt and both completion routes against the assembled Zero image.'},
-        {'code': 'appstore-integration', 'detail': 'Qualify the guarded AppStore lifecycle, final base snapshot and dependency closure against the assembled Zero image.'},
-        {'code': 'zero-runner', 'detail': 'Implement a profile-aware stage0-2 runner and immutable attempt/resume identity.'},
-        {'code': 'zero-verifier', 'detail': 'Implement the independent Zero offline verifier before exporting an image.'},
-    ])
+        documents[role] = data
+    qualified = set()
+    input_error = None
+    if all(documents.get(role) for role in ('apt','apps','native_compat')):
+        try:
+            lock_api=runpy.run_path(str(repository_path(root,'image/zero-lock.py')))
+            lock_api['validate_inputs'](root)
+            qualified.update(('apt','apps','native_compat'))
+        except (OSError,ValueError,KeyError,TypeError,RuntimeError) as error:
+            input_error=str(error)
+    source=documents.get('source') or {}
+    if ('native_compat' in qualified and source.get('complete') is True
+            and source.get('runtime_closure_sha256')==sha256(root/LOCK_PATHS['native_compat'])
+            and source.get('native_qualification_sha256')==(documents['apps'].get('qualification') or {}).get('sha256')):
+        qualified.add('source')
+    proof_ok=False
+    proof_error=None
+    try:
+        reference=(documents.get('build') or {}).get('pipeline_qualification',{})
+        if not isinstance(reference,dict) or not {'path','sha256'}.issubset(reference):
+            raise ProfileError('Missing bound pre-image pipeline qualification record')
+        proof_path=repository_path(root,reference['path'])
+        proof=_json(proof_path,reference['sha256']);paths.append(proof_path)
+        if (proof.get('schema')!=1 or proof.get('profile')!='tyrell-zero' or proof.get('status')!='passed'
+                or proof.get('scope')!='pre-image-pipeline' or proof.get('hardware_qualified') is not False
+                or proof.get('tests')!={'host':'passed','runner_prepare':'passed','runtime_root':'passed',
+                                        'runner_failure':'passed','bsp_replay':'passed'}):
+            raise ProfileError('Pipeline qualification scope/tests differ')
+        bound={Path(LOCK_PATHS[role]).name:sha256(root/LOCK_PATHS[role])
+               for role in ('source','apt','apps','native_compat')}
+        if proof.get('locks_sha256')!=bound:raise ProfileError('Pipeline qualification locks changed')
+        versions={item['Package']:item['Version'] for item in documents['apps']['packages']}
+        if (documents.get('build') or {}).get('packages')!=versions:
+            raise ProfileError('Build package versions differ from qualified custom payloads')
+        required={'image/zero_pipeline.py','image/zero_resume.py','image/run-zero-job.py',
+                  'image/prepare-zero.py','builder/build-zero-image.sh','image/zero_activation.py',
+                  'image/verify-zero.py','image/zero-lock.py','image/build-image.py','image/profiles.py',
+                  'builder/zero-bsp-check.py','builder/zero-pipeline-smoke.py'}
+        files=proof.get('files_sha256',{})
+        if not required.issubset(files):raise ProfileError('Pipeline implementation proof is incomplete')
+        for name,identity in files.items():
+            target=repository_path(root,name)
+            if sha256(target)!=identity:raise ProfileError('Qualified implementation changed: '+name)
+            paths.append(target)
+        runtime=proof['runtime_verification']
+        record_path=repository_path(root,runtime['path'])
+        record=_json(record_path,runtime['sha256']);paths.append(record_path)
+        if (record.get('status')!='passed' or not record.get('checks') or
+                any(item.get('passed')is not True for item in record['checks'])
+                or record.get('hardware_qualified') is not False):
+            raise ProfileError('Assembled runtime qualification did not pass')
+        for key in ('runner_prepare','host_tests'):
+            ref=proof[key];target=repository_path(root,ref['path'])
+            value=_json(target,ref['sha256']);paths.append(target)
+            if value.get('schema')!=1 or value.get('status')!='passed':
+                raise ProfileError('Pipeline preparation/host qualification failed: '+key)
+            identities=value.get('files_sha256',{})
+            needed=({'image/prepare-zero.py','builder/build-zero-image.sh','image/zero-lock.py'}
+                    if key=='runner_prepare' else set(files))
+            if not needed.issubset(identities):
+                raise ProfileError('Pipeline preparation/host implementation binding is incomplete: '+key)
+            for name,identity in identities.items():
+                if files.get(name)!=identity:
+                    raise ProfileError('Pipeline preparation/host implementation changed: '+name)
+            if key=='runner_prepare' and (value.get('scope')!='captured-vendor-preparation'
+                    or value.get('stage2_export')is not True
+                    or value.get('image_build_performed')is not False
+                    or value.get('offline_apt')is not True
+                    or value.get('custom_install_order')!=['store-diversion','custom-debs','runtime-detach','activation']):
+                raise ProfileError('Captured vendor preparation did not pass')
+            if key=='host_tests' and (value.get('scope')!='pre-image-host-suites'
+                    or not value.get('suites') or any(
+                        item.get('exit_code')!=0 or type(item.get('tests'))is not int
+                        or item['tests']<1 or item.get('failures')!=0 or item.get('errors')!=0
+                        for item in value['suites'])):
+                raise ProfileError('Host pipeline test suites did not pass')
+        for key,scope in [('runner_failure_fixture','actual-zero-wrapper-failure-fixtures-only'),
+                          ('bsp_replay','two-fixed-path-bsp-builds-in-private-disposable-overlay-roots')]:
+            ref=proof[key];target=repository_path(root,ref['path'])
+            value=_json(target,ref['sha256']);paths.append(target)
+            if (value.get('status')!='passed' or value.get('scope')!=scope
+                    or value.get('full_image_build')is not False
+                    or value.get('physical_hardware_qualified')is not False):
+                raise ProfileError('Native pipeline evidence failed: '+key)
+            if key=='runner_failure_fixture' and (not value.get('checks') or any(item.get('passed')is not True for item in value['checks'])):
+                raise ProfileError('Native failure/interruption checks failed')
+            if key=='runner_failure_fixture' and (value.get('runner_sha256')!=sha256(root/'image/run-zero-job.py')
+                    or value.get('pipeline_sha256')!=sha256(root/'image/zero_pipeline.py')
+                    or value.get('smoke_helper_sha256')!=sha256(root/'builder/zero-pipeline-smoke.py')):
+                raise ProfileError('Native failure proof belongs to changed runner code')
+            if key=='bsp_replay' and any(value.get(name)is not True for name in (
+                    'retained_bsp_payload_unchanged','retained_package_database_unchanged',
+                    'retained_sampled_headers_unchanged','live_builder_dpkg_unchanged')):
+                raise ProfileError('BSP proof changed retained or live state')
+            if key=='bsp_replay' and (value.get('native_compat_sha256')!=sha256(root/LOCK_PATHS['native_compat'])
+                    or value.get('source_archive_sha256')!=PINS['bsp_archive_sha256']
+                    or value.get('helper_sha256')!=sha256(root/'builder/zero-bsp-check.py')):
+                raise ProfileError('BSP proof belongs to different native/source inputs')
+        proof_ok=True
+        qualified.add('build')
+    except (OSError,ValueError,KeyError,TypeError,AttributeError) as error:
+        proof_error=str(error)
+    for role in ('build','source','apt','apps','native_compat'):
+        if role in qualified:continue
+        data=documents.get(role)
+        incomplete=role=='source' and data is not None and data.get('complete') is False
+        code=('incomplete-source' if incomplete else 'unqualified-'+role) if data is not None else 'missing-'+role
+        blockers.append({'code':code,'path':LOCK_PATHS[role],
+                         'detail':('Complete and qualify the partial source audit: ' if incomplete else 'Qualify the frozen ')+LOCK_PATHS[role],
+                         **({'reason':input_error} if role in ('apt','apps','native_compat') and input_error else {})})
+    for code,detail in [
+        ('native-wizard-integration','Qualify native Wizard/runtime identities against the detached frozen Zero root.'),
+        ('appstore-integration','Qualify the guarded AppStore and final baseline against the detached frozen Zero root.'),
+        ('zero-runner','Qualify the profile runner, captured preparation and attempt/resume boundaries.'),
+        ('zero-verifier','Run the independent Zero verifier against the detached frozen runtime root.')]:
+        if not proof_ok or not {'source','apt','apps','native_compat'}.issubset(qualified):
+            blockers.append({'code':code,'detail':detail,**({'reason':proof_error} if proof_error else {})})
+    if profile['readiness']['image_build_enabled'] is not True:
+        blockers.append({'code':'build-disabled','detail':'Profile explicitly disables image builds.'})
     return {'schema': 1, 'profile_id': profile['id'], 'plan_revision': profile['plan_revision'],
-            'structural_valid': True, 'build_ready': False, 'phase': 'foundation',
+            'structural_valid': True, 'build_ready': not blockers, 'phase': profile['readiness']['phase'],
             'stages': profile['stages'], 'output': profile['output'],
             'power_preset': profile['selected_power_preset'],
             'hardware_capabilities': len(HARDWARE_IDS),

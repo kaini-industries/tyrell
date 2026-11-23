@@ -115,7 +115,9 @@ class ProfileTests(unittest.TestCase):
         value = self.read()
         value['readiness']['image_build_enabled'] = True
         self.write(value)
-        self.invalid('build enablement')
+        report=profiles.inspect_profile(PROFILE,root=self.root)
+        self.assertFalse(report['build_ready'])
+        self.assertIn('zero-runner',{item['code'] for item in report['blockers']})
 
     def test_profile_cannot_reuse_full_source_apt_selection(self):
         value = self.read()
@@ -242,6 +244,183 @@ class ProfileTests(unittest.TestCase):
         value['runtime_roots']['session'] = [{}]
         self.write(value)
         self.invalid('structure')
+
+    def pipeline_fixture(self):
+        """Bind a small proof graph; mock only the separately tested APT validator."""
+        implementations = [
+            'image/zero_pipeline.py', 'image/zero_resume.py', 'image/run-zero-job.py',
+            'image/prepare-zero.py', 'builder/build-zero-image.sh', 'image/zero_activation.py',
+            'image/verify-zero.py', 'image/zero-lock.py', 'image/build-image.py', 'image/profiles.py',
+            'builder/zero-bsp-check.py', 'builder/zero-pipeline-smoke.py']
+        for name in implementations:
+            target = self.root / name;target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / name, target)
+        files = {name: profiles.sha256(self.root / name) for name in implementations}
+        versions = {'tyrell-status': '0.1.0-1', 'tyrell-zero-session': '0.3.0-1',
+                    'tyrell-zero-power-policy': '0.1.0-1', 'tyrell-zero-store': '0.1.0-1'}
+        artifact = self.root / 'artifacts/fixture';artifact.mkdir(parents=True, exist_ok=True)
+        def put(name, value):
+            target = self.root / name;target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps(value, sort_keys=True, indent=2) + '\n')
+        def reference(name):
+            return {'path': name, 'sha256': profiles.sha256(self.root / name)}
+        source_path = 'artifacts/fixture/source-qualification.json'
+        put(source_path, {'schema': 1, 'status': 'passed', 'scope': 'pre-image-integration',
+                          'physical_hardware_qualified': False})
+        put(profiles.LOCK_PATHS['apt'], {'schema': 1, 'profile': 'tyrell-zero', 'complete': True})
+        put(profiles.LOCK_PATHS['native_compat'],
+            {'schema': 1, 'profile': 'tyrell-zero', 'complete': True, 'hardware_qualified': False})
+        put(profiles.LOCK_PATHS['apps'], {'schema': 1, 'profile': 'tyrell-zero', 'complete': True,
+            'packages': [{'Package': name, 'Version': version} for name, version in versions.items()],
+            'qualification': reference(source_path)})
+        put(profiles.LOCK_PATHS['source'], {'schema_version': 1, 'complete': True,
+            'runtime_closure_sha256': profiles.sha256(self.root / profiles.LOCK_PATHS['native_compat']),
+            'native_qualification_sha256': profiles.sha256(self.root / source_path)})
+        reports = {
+            'runtime_verification': {'schema_version': 1, 'status': 'passed', 'hardware_qualified': False,
+                                     'checks': [{'name': 'detached-root-closure', 'passed': True}]},
+            'runner_prepare': {'schema': 1, 'status': 'passed', 'scope': 'captured-vendor-preparation',
+                'stage2_export': True, 'image_build_performed': False, 'offline_apt': True,
+                'custom_install_order': ['store-diversion', 'custom-debs', 'runtime-detach', 'activation'],
+                'files_sha256': files.copy()},
+            'host_tests': {'schema': 1, 'status': 'passed', 'scope': 'pre-image-host-suites',
+                'suites': [{'name': 'image', 'exit_code': 0, 'tests': 42, 'failures': 0, 'errors': 0},
+                           {'name': 'builder', 'exit_code': 0, 'tests': 12, 'failures': 0, 'errors': 0}],
+                'files_sha256': files.copy()},
+            'runner_failure_fixture': {'status': 'passed', 'scope': 'actual-zero-wrapper-failure-fixtures-only',
+                'full_image_build': False, 'physical_hardware_qualified': False,
+                'checks': [{'name': 'durable-failure-and-replay', 'passed': True}],
+                'runner_sha256': files['image/run-zero-job.py'],
+                'pipeline_sha256': files['image/zero_pipeline.py'],
+                'smoke_helper_sha256': files['builder/zero-pipeline-smoke.py']},
+            'bsp_replay': {'status': 'passed', 'scope': 'two-fixed-path-bsp-builds-in-private-disposable-overlay-roots',
+                'full_image_build': False, 'physical_hardware_qualified': False,
+                'retained_bsp_payload_unchanged': True, 'retained_package_database_unchanged': True,
+                'retained_sampled_headers_unchanged': True, 'live_builder_dpkg_unchanged': True,
+                'native_compat_sha256': profiles.sha256(self.root / profiles.LOCK_PATHS['native_compat']),
+                'source_archive_sha256': profiles.PINS['bsp_archive_sha256'],
+                'helper_sha256': files['builder/zero-bsp-check.py']}}
+        proof = {'schema': 1, 'profile': 'tyrell-zero', 'status': 'passed', 'scope': 'pre-image-pipeline',
+            'hardware_qualified': False,
+            'tests': {'host': 'passed', 'runner_prepare': 'passed', 'runtime_root': 'passed',
+                      'runner_failure': 'passed', 'bsp_replay': 'passed'},
+            'locks_sha256': {Path(profiles.LOCK_PATHS[role]).name: profiles.sha256(self.root / profiles.LOCK_PATHS[role])
+                              for role in ('source', 'apt', 'apps', 'native_compat')},
+            'files_sha256': files}
+        for key, record in reports.items():
+            name = 'artifacts/fixture/' + key + '.json';put(name, record);proof[key] = reference(name)
+        fixture = {'proof': proof, 'proof_path': 'artifacts/fixture/pipeline.json',
+                   'build': {'schema_version': 1, 'packages': versions}}
+        self.publish_pipeline_fixture(fixture)
+        profile = self.read();profile['readiness'].update(phase='pipeline', image_build_enabled=True)
+        self.write(profile)
+        return fixture
+
+    def publish_pipeline_fixture(self, fixture):
+        self.write(fixture['proof'], fixture['proof_path'])
+        fixture['build']['pipeline_qualification'] = {'path': fixture['proof_path'],
+            'sha256': profiles.sha256(self.root / fixture['proof_path'])}
+        self.write(fixture['build'], profiles.LOCK_PATHS['build'])
+
+    def change_pipeline_report(self, fixture, key, mutate, *, rebind=True):
+        ref = fixture['proof'][key];value = self.read(ref['path']);mutate(value);self.write(value, ref['path'])
+        if rebind:
+            ref['sha256'] = profiles.sha256(self.root / ref['path'])
+            self.publish_pipeline_fixture(fixture)
+
+    def inspect_pipeline_fixture(self):
+        def validate(root): self.assertEqual(root, self.root)
+        with patch.object(profiles.runpy, 'run_path', return_value={'validate_inputs': validate}):
+            return profiles.inspect_profile(PROFILE, root=self.root)
+
+    def assert_pipeline_blocked(self, text):
+        report = self.inspect_pipeline_fixture()
+        self.assertFalse(report['build_ready'])
+        self.assertIn('unqualified-build', {item['code'] for item in report['blockers']})
+        self.assertTrue(any(text in item.get('reason', '') for item in report['blockers']), report['blockers'])
+
+    def test_fully_bound_pipeline_proof_enables_only_pre_image_build_readiness(self):
+        fixture = self.pipeline_fixture()
+        before = {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        report = self.inspect_pipeline_fixture()
+        self.assertTrue(report['build_ready'], report['blockers'])
+        self.assertEqual(report['blockers'], [])
+        self.assertEqual(before, {str(p.relative_to(self.root)): p.read_bytes() for p in self.root.rglob('*') if p.is_file()})
+        for key in ('runner_prepare', 'host_tests', 'runtime_verification', 'runner_failure_fixture', 'bsp_replay'):
+            self.assertIn(fixture['proof'][key]['path'], report['input_sha256'])
+
+    def test_changed_qualified_helper_bytes_disable_pipeline(self):
+        for name in ('builder/zero-bsp-check.py', 'builder/zero-pipeline-smoke.py'):
+            with self.subTest(name=name):
+                self.pipeline_fixture()
+                path = self.root / name;path.write_bytes(path.read_bytes() + b'\n# unqualified change\n')
+                self.assert_pipeline_blocked('Qualified implementation changed')
+
+    def test_helpers_cannot_be_omitted_from_all_bound_file_maps(self):
+        fixture = self.pipeline_fixture()
+        for name in ('builder/zero-bsp-check.py', 'builder/zero-pipeline-smoke.py'):
+            fixture['proof']['files_sha256'].pop(name)
+            for key in ('runner_prepare', 'host_tests'):
+                self.change_pipeline_report(fixture, key, lambda record, name=name: record['files_sha256'].pop(name))
+        self.publish_pipeline_fixture(fixture)
+        self.assert_pipeline_blocked('implementation proof is incomplete')
+
+    def test_rebound_native_reports_must_name_the_actual_helpers(self):
+        for key, field, reason in [('runner_failure_fixture', 'smoke_helper_sha256', 'changed runner code'),
+                                   ('bsp_replay', 'helper_sha256', 'different native/source inputs')]:
+            with self.subTest(key=key):
+                fixture = self.pipeline_fixture()
+                self.change_pipeline_report(fixture, key, lambda value, field=field: value.update({field: '0' * 64}))
+                self.assert_pipeline_blocked(reason)
+
+    def test_report_byte_tampering_is_rejected_before_promotion(self):
+        fixture = self.pipeline_fixture()
+        self.change_pipeline_report(fixture, 'host_tests', lambda value: value.update(status='failed'), rebind=False)
+        self.assert_pipeline_blocked('checksum mismatch')
+
+    def test_rebound_runner_preparation_must_show_offline_ordered_stage2_work(self):
+        mutations = [lambda value: value.update(status='failed'), lambda value: value.update(scope='full-image'),
+            lambda value: value.update(stage2_export=False), lambda value: value.update(image_build_performed=True),
+            lambda value: value.update(offline_apt=False),
+            lambda value: value.update(custom_install_order=['custom-debs', 'store-diversion', 'runtime-detach', 'activation'])]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                fixture = self.pipeline_fixture();self.change_pipeline_report(fixture, 'runner_prepare', mutate)
+                self.assert_pipeline_blocked('preparation')
+
+    def test_runner_preparation_requires_current_implementation_bindings(self):
+        fixture = self.pipeline_fixture()
+        self.change_pipeline_report(fixture, 'runner_prepare',
+            lambda value: value['files_sha256'].__setitem__('image/prepare-zero.py', '0' * 64))
+        self.assert_pipeline_blocked('implementation changed')
+
+    def test_host_reports_require_nonempty_successful_actual_test_counts(self):
+        mutations = [lambda value: value.update(suites=[]), lambda value: value.update(scope='manual-review'),
+            lambda value: value['suites'][0].update(exit_code=1), lambda value: value['suites'][0].update(tests=0),
+            lambda value: value['suites'][0].update(tests=True), lambda value: value['suites'][0].update(failures=1),
+            lambda value: value['suites'][0].update(errors=1)]
+        for mutate in mutations:
+            with self.subTest(mutate=mutate):
+                fixture = self.pipeline_fixture();self.change_pipeline_report(fixture, 'host_tests', mutate)
+                self.assert_pipeline_blocked('Host pipeline test suites')
+
+    def test_host_reports_must_bind_the_entire_qualified_implementation(self):
+        for mutate in [lambda value: value['files_sha256'].pop('image/verify-zero.py'),
+                       lambda value: value['files_sha256'].__setitem__('image/zero_pipeline.py', '0' * 64)]:
+            with self.subTest(mutate=mutate):
+                fixture = self.pipeline_fixture();self.change_pipeline_report(fixture, 'host_tests', mutate)
+                self.assert_pipeline_blocked('implementation')
+
+    def test_changed_custom_package_versions_cannot_reuse_pipeline_proof(self):
+        fixture = self.pipeline_fixture()
+        fixture['build']['packages']['tyrell-zero-session'] = '0.2.0-1'
+        self.publish_pipeline_fixture(fixture)
+        self.assert_pipeline_blocked('Build package versions differ')
+
+    def test_rebound_runtime_failure_cannot_be_hidden_by_passed_summary_flags(self):
+        fixture = self.pipeline_fixture()
+        self.change_pipeline_report(fixture, 'runtime_verification', lambda value: value['checks'][0].update(passed=False))
+        self.assert_pipeline_blocked('runtime qualification did not pass')
 
     def test_cli_distinguishes_valid_foundation_from_ready(self):
         report = profiles.inspect_profile(PROFILE, root=self.root)

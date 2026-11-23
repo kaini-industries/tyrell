@@ -1,13 +1,15 @@
 # Tyrell Zero native session
 
-This package supplies root-owned boot/readiness state,
+Version **0.3.0** supplies root-owned boot/readiness state,
 a direct normal-user launcher supervisor in greetd's PAM session, a fixed native
 recovery display, native Wizard completion, and inactive systemd/profile configuration.
 The integrated build also includes the patched native Wizard GUI; the guarded
 Store backend belongs to `tyrell-zero-store`. Its installed integration
-manifest says `complete: false`; it therefore routes to recovery and cannot
-mark an image session-ready. Never install/activate this base package on the
-persistent build VM or current CardputerZero.
+manifest says `complete: false`. Package installation therefore cannot mark an
+image session-ready or enable the native profile. The separate offline image
+activation tool must verify the assembled runtime and publish its bound receipts.
+Install/remove tests belong in disposable roots; do not activate this base
+package on the persistent build VM or current CardputerZero.
 
 Build in the existing Debian ARM64 builder:
 
@@ -30,9 +32,28 @@ from the project root for the source-verified native integration workflow.
 
 The package has no maintainer scripts and no enabled units. Its activation
 recipe under `/usr/share/tyrell-zero/profile/activation.json` is data for the
-image integrator, not an installer. Real image activation must first verify
-complete source/resource/runtime and package-guard acceptance, install greetd's
-PAM dependencies and qualify `_greetd` display access. The private Wizard runs
+image integrator. The repository's `image/zero_activation.py` owns image-only
+activation after the frozen runtime and all custom packages have been installed.
+It requires a canonical, root-owned offline root with no nested mounts and
+checks the source qualification receipt, exact installed package closure,
+native executable/resource/library/configuration identities and registered
+Store diversion before mutation.
+
+The explicit `--prepare-runtime` action removes detached debootstrap runtime
+contents, preserving the `proc`, `sys`, `dev` and `run` parent directories. It
+rejects runtime sockets, unsafe ownership, mounts and existing provisioning or
+activation records. Normal activation then requires those runtime trees empty.
+Neither action mounts an image or starts a service.
+
+Activation selects `multi-user.target` and the Zero target, masks competing
+desktop/legacy sessions, installs the logind and updater policies, and grants
+the existing unprivileged `_greetd` account only the required `video`/`input`
+group membership. The guarded Store baseline is captured after this fixed
+configuration; final session qualification and integration receipts bind that
+baseline. `/usr/share/tyrell-zero/image-activation.json` is published last.
+An interrupted operation leaves session integration incomplete; changed
+activated roots require a fresh assembly rather than silently accepting new
+identities. The private Wizard runs
 only in the root-latched setup mode. Native/recovery use the custom
 `tyrell-zero-session.service`, never greetd's packaged shell configuration.
 
@@ -57,6 +78,29 @@ completion helpers and Store module/policy/catalog. The actual fixed receipt at
 `/usr/share/tyrell-zero/pre-image-qualification.json` must match the manifest's
 receipt hash, assets and runtime map, with passed session/Wizard/Store suites.
 This pre-image receipt explicitly leaves physical hardware unqualified.
+The original source receipt remains separately preserved at
+`/usr/share/tyrell-zero/source-pre-image-qualification.json`; assembled-root
+receipts retain its identity instead of inventing new suite results.
+
+## Updates help
+
+Version 0.3.0 adds a fixed, read-only **Tyrell Zero Updates** screen to the
+recovery executable. Offline activation creates its APPLaunch entry. It explains
+that base/session updates use reviewed images, the known reference card should
+be retained, and the guarded Store manages qualified applications. Enter,
+Escape or Q on the native keyboard returns to the launcher; confirmations do
+not repeat. This screen runs as the normal launcher user and invokes no package
+manager or update command.
+
+The incompatible vendor launcher updater is masked and its supported status is
+seeded as `failed:incompatible`. Ordinary APT metadata/security maintenance is
+preserved; the help screen does not claim a replacement automatic base updater.
+Display-free guidance and a software-rendered preview are available for tests:
+
+```sh
+tyrell-zero-session-recovery --updates --text
+tyrell-zero-session-recovery --updates --render-ppm /tmp/zero-updates.ppm
+```
 
 ## Wizard completion API
 
@@ -102,8 +146,11 @@ not create a private D-Bus session or shell fallback. Recovery renders once to
 the framebuffer and waits for signals, with a fixed text fallback if access is
 unavailable.
 
-Unit and renderer tests are not hardware acceptance. Real first boot, active
+ARM64 builder, unit and renderer tests are not ARM64 device qualification.
+The Updates screen has software-rendered layout/CLI checks; its physical LCD
+and keyboard exit still require spare-card acceptance. Real first boot, active
 seat/framebuffer/input, `_greetd` recovery permissions, HDMI VT leasing, audio,
 USB authorization still require the complete
-integration and spare-card gates in revision 3. This package does not claim
-Z0/Z1 completion or battery benefit by itself.
+integration and spare-card gates in revision 3. This package alone does not
+qualify a bootable image, complete the hardware milestones or establish battery
+benefit. Earlier accepted 0.1.0/0.2.0 artifacts retain their original evidence.

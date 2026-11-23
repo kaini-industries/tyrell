@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "state": "exact-package-cached-not-installed-or-profile-qualified",
+  "state": "authenticated-frozen-runtime-qualified-offline",
   "package": "greetd",
   "version": "0.10.3-4",
   "architecture": "arm64",
   "bytes": 318812,
   "sha256": "8bf65899d76ca397ae8c64bf336bab65f00ec5e3385944a643e3aa70221935d0",
   "url": "https://deb.debian.org/debian/pool/main/g/greetd/greetd_0.10.3-4_arm64.deb",
-  "metadata_source": "Authenticated existing builder APT metadata; local SHA256 verified.",
+  "metadata_source": "Debian signed InRelease verified with the existing builder keyring; signed SHA256 Packages chain and exact cached DEB verified. The selected package and dependencies passed real isolated dpkg/APT checks and final detached-root verification.",
   "depends": [
     "libc6 (>= 2.34)",
     "libgcc-s1 (>= 4.2)",
@@ -17,7 +17,58 @@
   "pre_depends": [
     "init-system-helpers (>= 1.54~)"
   ],
-  "closure_complete": false,
+  "closure_complete": true,
   "installed_in_builder": false,
-  "zero_apt_lock_ready": false
+  "zero_apt_lock_ready": true,
+  "installed_in_disposable_runtime": true,
+  "history": [
+    {
+      "recorded_date_local": "2026-11-15",
+      "timezone": "America/Chicago",
+      "record": {
+        "schema": 1,
+        "state": "exact-package-cached-not-installed-or-profile-qualified",
+        "package": "greetd",
+        "version": "0.10.3-4",
+        "architecture": "arm64",
+        "bytes": 318812,
+        "sha256": "8bf65899d76ca397ae8c64bf336bab65f00ec5e3385944a643e3aa70221935d0",
+        "url": "https://deb.debian.org/debian/pool/main/g/greetd/greetd_0.10.3-4_arm64.deb",
+        "metadata_source": "Authenticated existing builder APT metadata; local SHA256 verified.",
+        "depends": [
+          "libc6 (>= 2.34)",
+          "libgcc-s1 (>= 4.2)",
+          "libpam0g (>= 0.99.7.1)",
+          "adduser"
+        ],
+        "pre_depends": [
+          "init-system-helpers (>= 1.54~)"
+        ],
+        "closure_complete": false,
+        "installed_in_builder": false,
+        "zero_apt_lock_ready": false
+      }
+    }
+  ],
+  "runtime_qualification": {
+    "verified_date_local": "2026-11-23",
+    "scope": "offline-assembled-root",
+    "apt_lock_sha256": "553a1c4c106835c0f9498d43b385ff5535ab4f252ebf472ab2d6f66a50ff5761",
+    "native_compat_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
+    "authentication": {
+      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/greetd-authentication.json",
+      "sha256": "e35b68717c2886146ad0ef961b5918192bb651eb2567aaca9b983cc1b7f76e1e",
+      "bytes": 1704
+    },
+    "report": {
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
+      "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
+      "bytes": 3710239
+    },
+    "system_package_count": 955,
+    "total_package_count": 959,
+    "image_file_built": false,
+    "physical_boot_qualified": false,
+    "hardware_qualified": false
+  }
 }

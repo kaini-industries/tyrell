@@ -195,7 +195,8 @@ python3 scripts/builder image-deps --check
 
 Stop the VM when finished to release its memory; the toolchain remains available for the next build.
 
-Revision 3 **Tyrell Zero** has separate foundation and native integration commands:
+Revision 3 **Tyrell Zero** has separate package, native integration and frozen
+stage0–2 pipeline commands:
 
 ```sh
 make zero-check       # Read-only structure and remaining image-build gates
@@ -203,15 +204,22 @@ make zero-packages    # ARM64 foundation packages; disposable install-test roots
 make zero-native-deps
 make zero-native-wizard
 make zero-integration WIZARD_ARTIFACTS=artifacts/tyrell-zero-native/WIZARD_JOB
+make zero-prepare     # Capture verified profile inputs; no image build or VM start
+# After the input and implementation qualification gates pass:
+make image-zero      # Launch the first Zero file-image build in the ARM64 VM
 ```
 
-These commands keep the handheld and its SD card untouched. The profile remains
-explicitly unready for an image build until the frozen Zero image pipeline and
-assembled-image qualification are complete. The native build uses the actual
-patched Wizard GUI and a guarded dispatcher preserving the vendor Store UI.
+These commands keep the handheld and its SD card untouched. The profile gates
+image builds on exact dependency/custom-package locks, native runtime receipts
+and qualified implementation hashes. The native build uses the actual patched
+Wizard GUI and a guarded dispatcher preserving the vendor Store UI. Offline
+activation, independent verification and attempt-bound stage2 resume have their
+own [frozen pipeline workflow](docs/tyrell-zero-pipeline.md).
 See the [native integration workflow](docs/tyrell-zero-native-integration.md) and
 [implementation progress](docs/tyrell-zero-progress.md) for package behavior,
 test boundaries and next gates.
+The first full Zero image build and spare-card hardware acceptance remain
+separate milestones.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).

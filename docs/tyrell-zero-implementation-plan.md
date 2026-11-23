@@ -10,8 +10,10 @@ is excluded.
 Implementation now includes inactive foundation packages, strict profile/contracts,
 the real native Wizard derivative and guarded AppStore integration built/tested
 in the ARM64 builder. See [implementation progress](tyrell-zero-progress.md)
-for what exists and its evidence. The full image pipeline and qualification
-remain incomplete; this document describes the complete target behavior.
+for what exists and its evidence. The stage0–2 pipeline, offline activation and
+independent verifier now have an [implemented workflow](tyrell-zero-pipeline.md).
+Full image construction and hardware/battery qualification remain separate;
+this document describes the complete target behavior.
 
 This is an implementation plan, not an implemented build profile. Commands and
 new interfaces marked **proposed** remain future work unless the progress record
@@ -577,11 +579,11 @@ measured for this plan. Budget input copies, stages, raw/compressed outputs,
 control images and reserves; preserve historical work. Extend capacity guards
 for job/profile sizing instead of reducing the existing reserves.
 
-## Proposed developer workflow
+## Developer workflow
 
-The package targets and profile inspector now exist as foundation commands.
-The profile image-build and Zero resume commands remain **proposed**. Existing
-job-observation/export forms retain their interface:
+The package targets, profile inspector, frozen image preparation and stage2
+resume interfaces are implemented. Input and implementation qualification gate
+the first image build. Existing job-observation/export forms retain their interface:
 
 ```sh
 # IMPLEMENTED FOUNDATION:
@@ -592,15 +594,15 @@ python3 scripts/builder zero check
 make zero-native-deps
 make zero-native-wizard
 make zero-integration WIZARD_ARTIFACTS=artifacts/tyrell-zero-native/WIZARD_JOB
-# PROPOSED IMAGE PIPELINE:
+# IMPLEMENTED FROZEN PIPELINE; full image build is the separate Z3 milestone:
 python3 scripts/builder image --profile image/profiles/tyrell-zero.json --prepare-only
 python3 scripts/builder image --profile image/profiles/tyrell-zero.json --no-wait
-# EXISTING lifecycle forms; Zero handling is part of the implementation:
+# IMPLEMENTED lifecycle forms, binding the selected Zero attempt:
 python3 scripts/builder image status --job JOB_ID
 python3 scripts/builder image logs --job JOB_ID
 python3 scripts/builder image wait --job JOB_ID
 python3 scripts/builder image export --job JOB_ID
-# PROPOSED; only after authoritative failure and completed stage1:
+# IMPLEMENTED; only after authoritative failure and completed stage1:
 python3 scripts/builder image resume --job JOB_ID --from stage2
 ```
 

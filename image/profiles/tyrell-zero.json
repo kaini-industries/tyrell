@@ -54,6 +54,7 @@
   "custom_packages": [
     "tyrell-status",
     "tyrell-zero-session",
+    "tyrell-zero-store",
     "tyrell-zero-power-policy"
   ],
   "selected_power_preset": "baseline",
@@ -122,9 +123,9 @@
     "automatic_security_deferral": false
   },
   "readiness": {
-    "phase": "foundation",
-    "image_build_enabled": false,
-    "reason": "Native Wizard, guarded AppStore, profile APT closure, Zero runner and verifier require implementation/qualification."
+    "phase": "pipeline",
+    "image_build_enabled": true,
+    "reason": "Input and implementation qualification are checked from bound receipts; image export, physical hardware and battery acceptance remain separate."
   },
   "vendor_inputs": {
     "apps": {

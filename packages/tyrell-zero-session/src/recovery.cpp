@@ -6,12 +6,16 @@
 #include <cstring>
 #include <fcntl.h>
 #include <fstream>
+#include <filesystem>
+#include <linux/input.h>
+#include <poll.h>
 #include <iostream>
 #include <linux/fb.h>
 #include <linux/kd.h>
 #include <string>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
 #include <vector>
@@ -52,10 +56,13 @@ std::array<uint8_t, 7> glyph(char c) {
     }
 }
 
-std::vector<uint32_t> render() {
+std::vector<uint32_t> render(bool updates = false) {
     std::vector<uint32_t> pixels(width * height, 0x101820);
-    const std::array<std::string, 6> lines = {
-        "TYRELL ZERO", "RECOVERY", "", "USE CONFIGURED SSH", "OR BOOT A KNOWN", "REFERENCE CARD"};
+    const std::array<std::string, 6> lines = updates
+        ? std::array<std::string, 6>{"TYRELL ZERO", "BASE UPDATES", "USE REVIEWED IMAGE",
+                                   "KEEP REFERENCE CARD", "STORE UPDATES APPS", "ENTER OR ESC TO EXIT"}
+        : std::array<std::string, 6>{"TYRELL ZERO", "RECOVERY", "", "USE CONFIGURED SSH",
+                                   "OR BOOT A KNOWN", "REFERENCE CARD"};
     for (size_t line = 0; line < lines.size(); ++line) {
         const int x0 = (width - static_cast<int>(lines[line].size()) * 12) / 2;
         const int y0 = 17 + static_cast<int>(line) * 23;
@@ -131,13 +138,75 @@ bool framebuffer(const std::vector<uint32_t> &pixels) {
     close(fd);
     return success;
 }
+
+int updates_wait() {
+    int keyboard = -1;
+    std::error_code error;
+    for (std::filesystem::directory_iterator it("/dev/input", error), end;
+         !error && it != end; it.increment(error)) {
+        if (it->path().filename().string().rfind("event", 0) != 0) continue;
+        const int file = open(it->path().c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOFOLLOW);
+        if (file < 0) continue;
+        struct stat info{};
+        std::array<char, 256> name{};
+        if (fstat(file, &info) == 0 && S_ISCHR(info.st_mode) &&
+            ioctl(file, EVIOCGNAME(name.size()), name.data()) >= 0 &&
+            std::string(name.data()).find("tca8418") != std::string::npos) {
+            keyboard = file;
+            break;
+        }
+        close(file);
+    }
+    if (keyboard < 0 && !isatty(STDIN_FILENO)) {
+        std::cerr << "Updates help requires the native keyboard\n";
+        return 78;
+    }
+    pollfd input{keyboard >= 0 ? keyboard : STDIN_FILENO, POLLIN, 0};
+    bool syncing = false;
+    while (!stopped) {
+        const int ready = poll(&input, 1, 500);
+        if (ready < 0) { if (errno == EINTR) continue; break; }
+        if (input.revents & (POLLERR | POLLHUP | POLLNVAL)) break;
+        if (!(input.revents & POLLIN)) continue;
+        if (keyboard >= 0) {
+            std::array<input_event, 32> events{};
+            const auto count = read(keyboard, events.data(), sizeof(events));
+            if (count < 0 && (errno == EAGAIN || errno == EINTR)) continue;
+            if (count <= 0 || count % sizeof(input_event)) break;
+            for (size_t i = 0; i < static_cast<size_t>(count) / sizeof(input_event); ++i) {
+                const auto &event = events[i];
+                if (event.type == EV_SYN && event.code == SYN_DROPPED) syncing = true;
+                else if (event.type == EV_SYN && event.code == SYN_REPORT) syncing = false;
+                else if (!syncing && event.type == EV_KEY && event.value == 1 &&
+                         (event.code == KEY_ENTER || event.code == KEY_KPENTER ||
+                          event.code == KEY_ESC || event.code == KEY_Q)) stopped = 1;
+            }
+        } else {
+            char value = 0;
+            if (read(STDIN_FILENO, &value, 1) != 1) break;
+            if (value == '\r' || value == '\n' || value == 27 || value == 'q' || value == 'Q') stopped = 1;
+        }
+    }
+    if (keyboard >= 0) close(keyboard);
+    return stopped ? 0 : 78;
+}
 }
 
 int main(int argc, char **argv) {
-    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "0.2.0\n"; return 0; }
-    const auto pixels = render();
-    if (argc == 3 && std::string(argv[1]) == "--render-ppm") {
-        std::ofstream output(argv[2], std::ios::binary);
+    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "0.3.0\n"; return 0; }
+    const bool updates = argc >= 2 && std::string(argv[1]) == "--updates";
+    if (updates && argc == 3 && std::string(argv[2]) == "--text") {
+        std::cout << "Tyrell Zero Updates\nUse a reviewed base image for OS/session updates.\n"
+                     "Keep the known reference card. The Store manages qualified apps.\n"
+                     "The vendor launcher updater is incompatible with the native session.\n"
+                     "Normal APT metadata and security maintenance remain enabled.\n"
+                     "Enter, Escape or Q returns to APPLaunch.\n";
+        return 0;
+    }
+    const auto pixels = render(updates);
+    const int offset = updates ? 1 : 0;
+    if (argc == 3 + offset && std::string(argv[1 + offset]) == "--render-ppm") {
+        std::ofstream output(argv[2 + offset], std::ios::binary);
         output << "P6\n320 170\n255\n";
         for (uint32_t rgb : pixels) {
             char pixel[] = {static_cast<char>(rgb >> 16), static_cast<char>(rgb >> 8), static_cast<char>(rgb)};
@@ -145,7 +214,7 @@ int main(int argc, char **argv) {
         }
         return output ? 0 : 1;
     }
-    if (argc != 1) return 64;
+    if (argc != 1 + offset) return 64;
     if (geteuid() == 0) { std::cerr << "Recovery requires an unprivileged session\n"; return 78; }
     sigset_t blocked{}, previous{};
     sigemptyset(&blocked);
@@ -153,8 +222,14 @@ int main(int argc, char **argv) {
     sigprocmask(SIG_BLOCK, &blocked, &previous);
     std::signal(SIGTERM, stop); std::signal(SIGINT, stop); std::signal(SIGHUP, stop);
     Terminal terminal;
-    if (!framebuffer(pixels))
+    if (!framebuffer(pixels)) {
         std::cerr << "TYRELL ZERO RECOVERY: use configured SSH or a known reference card\n";
+        if (updates) { sigprocmask(SIG_SETMASK, &previous, nullptr); return 78; }
+    }
+    if (updates) {
+        sigprocmask(SIG_SETMASK, &previous, nullptr);
+        return updates_wait();
+    }
     while (!stopped) sigsuspend(&previous);
     sigprocmask(SIG_SETMASK, &previous, nullptr);
     return 0;

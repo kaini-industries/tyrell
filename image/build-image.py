@@ -640,7 +640,7 @@ def preflight_stock_guest(bundle, resources):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', nargs='?', choices=['build', 'status', 'logs', 'wait', 'export'], default='build')
+    parser.add_argument('action', nargs='?', choices=['build', 'status', 'logs', 'wait', 'export', 'resume'], default='build')
     parser.add_argument('--storage', help='Existing image cache/output directory')
     parser.add_argument('--job', help='Tracked job ID; defaults to latest job')
     parser.add_argument('--prepare-only', action='store_true')
@@ -649,11 +649,28 @@ def parse_args(argv=None):
     parser.add_argument('--apt-repository', help='Verified frozen APT repository (default: STORAGE/apt-repository)')
     parser.add_argument('--discovery', action='store_true', help='Explicitly use mutable APT to capture a new lock')
     parser.add_argument('--stock-lock', help='Build from this locked official stock image, installing Tyrell offline')
+    parser.add_argument('--profile', help='Captured source-build profile; Zero uses its separate locked runner')
+    parser.add_argument('--from', dest='resume_stage', choices=['stage2'], help='Zero retry begins at completed-stage1 boundary')
+    parser.add_argument('--attempt', type=int, help='Observe/export a specific Zero attempt (default: current)')
+    parser.add_argument('--policy', choices=['baseline'], help='Zero power preset; optimized policies need later qualification')
     parser.add_argument('--follow', action='store_true', help='Follow the selected job log')
     parser.add_argument('--lines', type=int, default=100)
     args = parser.parse_args(argv)
-    if args.action != 'build' and any([args.prepare_only, args.resume_from, args.no_wait, args.apt_repository, args.discovery, args.stock_lock]):
+    if args.action not in {'build', 'resume'} and any([args.prepare_only, args.resume_from, args.no_wait, args.apt_repository, args.discovery, args.stock_lock, args.profile, args.policy]):
         parser.error('Build options are only valid with the build action')
+    if args.profile and any([args.stock_lock, args.discovery, args.resume_from]):
+        parser.error('--profile cannot be combined with stock/discovery/legacy resume options')
+    if args.policy and not args.profile:
+        parser.error('--policy requires a Zero profile build')
+    if args.action == 'resume':
+        if not args.job or args.resume_stage != 'stage2':
+            parser.error('Zero resume requires --job ID --from stage2')
+        if any([args.profile,args.policy,args.stock_lock,args.discovery,args.apt_repository,args.prepare_only,args.resume_from,args.attempt]):
+            parser.error('Zero resume reuses captured inputs; new selections are not allowed')
+    elif args.resume_stage:
+        parser.error('--from is only valid with Zero resume')
+    if args.attempt is not None and (args.attempt < 1 or args.action in {'build','resume'}):
+        parser.error('--attempt requires a positive observed/exported attempt')
     if args.stock_lock and any([args.resume_from, args.apt_repository, args.discovery]):
         parser.error('--stock-lock cannot be combined with source-build APT/discovery/resume options')
     if args.action != 'logs' and args.follow:
@@ -670,6 +687,12 @@ def main(argv=None):
     # Observational commands work even when little disk space remains. They do
     # not start the VM or prepare inputs. Use make builder-up if it is stopped.
     target = storage(check_space=False, override=args.storage)
+    zero = runpy.run_path(str(ROOT / 'image/zero_pipeline.py'))
+    if args.profile or args.action == 'resume' or (args.action != 'build' and zero['is_zero_job'](target, args.job)):
+        zero['main'](args, globals())
+        return
+    if args.attempt is not None:
+        raise RuntimeError('--attempt applies only to recorded Zero jobs')
     if args.action == 'build':
         with LOCK(ROOT):
             start_job(target, args)

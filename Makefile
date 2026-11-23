@@ -1,5 +1,6 @@
 .PHONY: builder-up builder-info builder-stop package image image-stock stock-check tanks-deps tanks tanks-test game-deps game game-test
 .PHONY: zero-check zero-packages zero-session-package zero-power-policy-package zero-native-deps zero-native-wizard zero-integration
+.PHONY: image-zero zero-prepare
 
 APP ?= status
 GAME_BACKEND ?= desktop
@@ -16,6 +17,12 @@ builder-stop:
 
 zero-check:
 	python3 scripts/builder zero check
+
+zero-prepare:
+	python3 scripts/builder image --profile image/profiles/tyrell-zero.json --prepare-only
+
+image-zero:
+	python3 scripts/builder image --profile image/profiles/tyrell-zero.json --no-wait
 
 zero-native-deps:
 	python3 builder/zero-integration.py deps
