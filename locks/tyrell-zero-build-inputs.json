@@ -1,13 +1,19 @@
 {
-  "schema_version": 1,
-  "milestone": "revision-3-foundation-packages",
-  "source_date_epoch": 1794528000,
-  "target": "Debian Trixie on the existing native ARM64 builder",
-  "packages": {
-    "tyrell-zero-session": "0.2.0-1",
-    "tyrell-zero-power-policy": "0.1.0-1"
-  },
   "builder_policy": "Use existing Lima instance and record installed toolchain. No global package installation, device credentials, hardware access or image build.",
-  "qualification": "Foundation only; native Wizard, Store guard, frozen Zero APT closure, boot integration and hardware/battery gates remain separate.",
-  "reproducibility": "Capture source hashes, package hashes and builder inventory. Byte-identical rebuilds are not claimed."
+  "milestone": "revision-3-pre-image-pipeline",
+  "packages": {
+    "tyrell-status": "0.1.0-1",
+    "tyrell-zero-power-policy": "0.1.0-1",
+    "tyrell-zero-session": "0.3.0-1",
+    "tyrell-zero-store": "0.1.0-1"
+  },
+  "pipeline_qualification": {
+    "path": "research/tyrell-zero-pipeline.json",
+    "sha256": "33034b7b44cb0bef68cc6babcd87c5db337504e2922906b8234dfe31ec2689e3"
+  },
+  "qualification": "Frozen native source/package inputs, exact OS/custom closure, detached activation and independent root verification passed. The pipeline receipt binds host tests, captured preparation, native failure/interruption fixtures and exact BSP replay. Full image export, physical boot, hardware and battery acceptance remain separate.",
+  "reproducibility": "Capture source hashes, package hashes and builder inventory. Byte-identical rebuilds are not claimed.",
+  "schema_version": 1,
+  "source_date_epoch": 1794528000,
+  "target": "Debian Trixie on the existing native ARM64 builder"
 }

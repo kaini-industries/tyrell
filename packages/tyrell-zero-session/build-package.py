@@ -51,8 +51,8 @@ def main():
         result.check_returncode()
         run(["cpack", "--config", str(build / "CPackConfig.cmake"), "-G", "DEB", "-B", str(output)])
         (output / "recovery.ppm").write_bytes((build / "recovery.ppm").read_bytes())
-    deb = output / "tyrell-zero-session_0.2.0-1_arm64.deb"
-    manifest = {"package": "tyrell-zero-session", "version": "0.2.0-1", "architecture": "arm64",
+    deb = output / "tyrell-zero-session_0.3.0-1_arm64.deb"
+    manifest = {"package": "tyrell-zero-session", "version": "0.3.0-1", "architecture": "arm64",
                 "source_date_epoch": int(epoch), "foundation_only": not bool(args.wizard_binary),
                 "native_wizard_sha256": hashlib.sha256(args.wizard_binary.read_bytes()).hexdigest() if args.wizard_binary else None,
                 "integration_complete": False, "service_activation_performed": False,

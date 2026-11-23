@@ -3,6 +3,9 @@
 Revision 3 now has a real native Wizard derivative and a guarded vendor Store
 boundary. These are inactive ARM64 packages and pre-image tests. They do not
 activate a session, build a Zero image, or access the Cardputer Zero or its SD card.
+Session 0.3.0 adds fixed native Updates guidance. The separate
+[frozen pipeline](tyrell-zero-pipeline.md) qualifies the complete dependency root
+and performs image-only activation; installing these packages remains inactive.
 
 ## Rebuild in the existing ARM64 builder
 
@@ -48,7 +51,7 @@ FreeType; only the cross compiler prefix is removed. Generic native defaults
 lack the framebuffer backend. Compilation runs inside a fresh network namespace
 and the SDK's downloader/Conan paths fail closed.
 
-`tyrell-zero-session 0.2.0-1` installs the derivative at
+`tyrell-zero-session 0.3.0-1` installs the derivative at
 `/usr/libexec/tyrell-zero/LaunchWizard`. The original packaged Wizard and M5 main
 remain untouched. The normal setup path and Imager path use one fixed root
 completion helper. The independent keyboard guide/account migration journal
