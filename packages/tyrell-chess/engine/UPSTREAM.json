@@ -1,0 +1,120 @@
+{
+  "repository": "https://github.com/kaini-industries/cardputer-chess",
+  "commit": "64419e29c828b77b420221472e8a314778713a07",
+  "files": [
+    {
+      "path": "src/chess_types.h",
+      "sha256": "bd09970780491b424d89d0838b632862d950da3c9fea1708f08b5d75659fc0d2"
+    },
+    {
+      "path": "src/chess_board.h",
+      "sha256": "7df2e23593ae3c5ca68c8d2bdb43c1b5b4fa1d4b1d2f7e994cb6d9f90c9eb809"
+    },
+    {
+      "path": "src/chess_board.cpp",
+      "sha256": "7e4e721e3d310671faa0fba08063a749d81a90a2c1d604ae5cd7becfed0fef3a"
+    },
+    {
+      "path": "src/chess_rules.h",
+      "sha256": "8b6270cee3389b2a62f897187a54abbfaf17f01a829840f48a5fd65bd35bef6a"
+    },
+    {
+      "path": "src/chess_rules.cpp",
+      "sha256": "0a1a81633567be0721a3e164ae360fa8b11257133fd6d55263d5090554186f41"
+    },
+    {
+      "path": "src/chess_ai.h",
+      "sha256": "5d554fca2796fccab0d3d802c3ba970e00c57cd2981d3228427f2284395e065e"
+    },
+    {
+      "path": "src/chess_ai.cpp",
+      "sha256": "2531a747d446d61d8222253e40d59857a0e5d06693edaddd44d7224520748e35"
+    },
+    {
+      "path": "src/chess_clock.h",
+      "sha256": "9e9fb0e03887e8aaa47e3bc1a05f08fde200010901d7a61713f4ecfb144e7549"
+    },
+    {
+      "path": "src/chess_clock.cpp",
+      "sha256": "f5f842b303b02141eb4ae3f1ebab4f61cf078fcac3adc28bea6c9685f5911980"
+    },
+    {
+      "path": "src/chess960.h",
+      "sha256": "e7624c7fd37bdcd632336ca3be1be92cdad3d5369803597ac67a7b9ff7b16c3c"
+    },
+    {
+      "path": "src/chess960.cpp",
+      "sha256": "035dbea74af8ca8b7ab3d3ab86ee8e77d5a74886244b569176112cb1df71ab62"
+    },
+    {
+      "path": "src/chess_zobrist.h",
+      "sha256": "7f9ba6ba8eb8b93eb889484a78c5811637322c9383476801aa392dfb0dbb6fbe"
+    },
+    {
+      "path": "src/chess_zobrist.cpp",
+      "sha256": "e082c31771811fa8ae75b35b1ea03a48be70d28b55b9ee40de65cfcca6db36aa"
+    },
+    {
+      "path": "src/chess_opening_book.h",
+      "sha256": "23c4d6f3e17674cb4c508abe0693fb5a6a648ad5f8323a4c6930eadd31986ff4"
+    },
+    {
+      "path": "src/chess_opening_book.cpp",
+      "sha256": "73bd99f9d53eaad23c2f9f849acf3148acd7b9623f758b7aa518c6c385b4de94"
+    },
+    {
+      "path": "src/puzzle_data.h",
+      "sha256": "317b5642d4509b6edd682baf7025c352cafc3340b27ce015c46e8820239f4830"
+    },
+    {
+      "path": "src/puzzle_data.cpp",
+      "sha256": "ee6013e7ffcdc5b5310d5c75a2d6718bcb7daf2f6ca120aba0fc873d8f777a65"
+    },
+    {
+      "path": "src/chess_storage_codec.h",
+      "sha256": "377b3947583ee1bcc4960cb44b861e60ac98936bf869058bb58a6647e952d56a"
+    },
+    {
+      "path": "src/chess_storage_codec.cpp",
+      "sha256": "6dee93ec664f2a1752dac00265e9972fdbfc0ba9a02117f33cdc3c8ed8f9b08b"
+    },
+    {
+      "path": "src/game_records.h",
+      "sha256": "63ff9f1d1911d59d267c7c2158a6d0785d2e9929fcd9a7878ad08e03dd0dbe38"
+    },
+    {
+      "path": "src/game_records.cpp",
+      "sha256": "b801641417b295aa08082b0b57042d787c3fa66e5f85b6bc462dd7e7f828a2ec"
+    },
+    {
+      "path": "src/profile_storage_codec.h",
+      "sha256": "90e68d2075fd2c354656469605ffa6819d6ddb03145840433b293e7c938425cc"
+    },
+    {
+      "path": "src/profile_storage_codec.cpp",
+      "sha256": "ef0593a5b1762d3722a436d2c513ededa24806b265eff5889be099b85ee821d8"
+    },
+    {
+      "path": "src/chess_sprites.h",
+      "sha256": "1e6cf8763462f4c00ffb663fbf00f44f260826bb10691e923d5a543f978bad3a"
+    },
+    {
+      "path": "src/cursor_navigation.h",
+      "sha256": "0fbd2d2cc9856a4009f26491541b7fec307662e92f8440b90c14e4ac4d2f7a22"
+    },
+    {
+      "path": "src/cursor_navigation.cpp",
+      "sha256": "18e554cd36d9b5780618c8ed8747425441cdba2bb59fe42579e1f503cdc5c537"
+    }
+  ],
+  "license": "MIT",
+  "adaptations": [
+    "Replace Arduino millis and ESP random with standard C++17 platform functions.",
+    "Use the same platform random source for Chess960.",
+    "Initialize Zobrist tables with std::call_once to support one AI worker alongside UI-thread rules.",
+    "Correct inherited two-knight insufficient-material detection: two knights can legally mate even though they cannot force mate. FIDE Laws articles 5.2.2 and 6.9 govern possible legal mating sequences.",
+    "The Zero application coordinate codec appends c for castling so adjacent-king Chess960 castles stay distinct from ordinary king moves in replay saves and LAN messages; PGN remains standard SAN.",
+    "Restore upstream display-coordinate directional navigation and independent Space cycling so legal-target arrows follow the shown board orientation."
+  ],
+  "rules_reference": "https://handbook.fide.com/chapter/E012023"
+}

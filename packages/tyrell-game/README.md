@@ -139,7 +139,11 @@ int main() {
 }
 ```
 
-`poll()` updates input edges and elapsed time. Call `begin_frame()` and
+`poll()` updates input edges and elapsed time. Drain `next_key()` for menu
+actions whose order matters: it preserves separate rapid taps received between
+display frames. Native key events exclude autorepeat and are frame-scoped,
+bounded to 128 edges; held/pressed/released queries retain their existing
+gameplay semantics. Call `begin_frame()` and
 `end_frame()` once per rendered frame; the latter presents and applies pacing.
 The runtime owns initialization and cleanup, so consumers do not call
 `InitWindow`, `CloseWindow`, native framebuffer APIs, or their own frame swaps.

@@ -7,7 +7,7 @@ bool valid_key(int key) { return key>0 && key<512; }
 }
 
 void NativeInputState::begin_frame() {
-    pressed_.fill(false); released_.fill(false); chars_.clear();
+    pressed_.fill(false); released_.fill(false); keys_.clear(); chars_.clear();
 }
 int NativeInputState::map_key(unsigned short code) {
     // Alphabetic physical positions in Linux input-event-codes.h.
@@ -60,7 +60,7 @@ void NativeInputState::feed(std::uint16_t type,std::uint16_t code,std::int32_t v
     if(type==0 && code==3) { // EV_SYN / SYN_DROPPED
         // Stop motion while input is uncertain. Poll restores the actual held
         // keys with EVIOCGKEY after the next SYN_REPORT, without press edges.
-        syncing_=true; down_.fill(false); pressed_.fill(false); released_.fill(false); chars_.clear();
+        syncing_=true; down_.fill(false); pressed_.fill(false); released_.fill(false); keys_.clear(); chars_.clear();
         return;
     }
     if(syncing_ || type!=1 || value<0 || value>2) return;
@@ -72,6 +72,7 @@ void NativeInputState::feed(std::uint16_t type,std::uint16_t code,std::int32_t v
     } else if(value==1) {
         if(down_[key]) return; // Duplicate makes are not extra edges/text.
         down_[key]=true; pressed_[key]=true;
+        if(keys_.size()<128) keys_.push_back(key);
         if(key==280) caps_=!caps_;
         const int c=ascii(key);
         if(c && chars_.size()<128) chars_.push_back(c);
@@ -83,7 +84,7 @@ void NativeInputState::feed(std::uint16_t type,std::uint16_t code,std::int32_t v
     }
 }
 void NativeInputState::resync(const std::vector<unsigned short>& held_codes,bool caps_lock) {
-    down_.fill(false); pressed_.fill(false); released_.fill(false); chars_.clear();
+    down_.fill(false); pressed_.fill(false); released_.fill(false); keys_.clear(); chars_.clear();
     for(const auto code:held_codes) { const int key=map_key(code); if(valid_key(key)) down_[key]=true; }
     caps_=caps_lock; syncing_=false;
 }
@@ -91,6 +92,7 @@ bool NativeInputState::sync_needed() const { return syncing_; }
 bool NativeInputState::key_down(int key) const { return valid_key(key) && down_[key]; }
 bool NativeInputState::key_pressed(int key) const { return valid_key(key) && pressed_[key]; }
 bool NativeInputState::key_released(int key) const { return valid_key(key) && released_[key]; }
+int NativeInputState::next_key() { if(keys_.empty()) return 0; const int key=keys_.front();keys_.pop_front();return key; }
 int NativeInputState::next_char() { if(chars_.empty()) return 0; const int c=chars_.front();chars_.pop_front();return c; }
 
 } // namespace tyrell::game

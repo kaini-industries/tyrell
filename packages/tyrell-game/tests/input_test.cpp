@@ -57,6 +57,24 @@ int main() {
     require(input.next_char()=='1'&&input.next_char()=='1',"Both digit locations must produce text");
     key(input,28,1);key(input,96,1);key(input,28,0);
     require(input.key_down(KEY_KP_ENTER)&&!input.key_down(KEY_ENTER),"Enter locations must keep independent held state");
+    // Native display transfer can take longer than a quick series of taps.
+    // A menu must receive both Down taps before Enter, not one bool per key
+    // queried later in the application's arbitrary key-enumeration order.
+    input.resync({},false);input.begin_frame();
+    key(input,108,1);key(input,108,0);key(input,108,1);key(input,108,0);key(input,28,1);key(input,28,0);
+    require(input.next_key()==KEY_DOWN&&input.next_key()==KEY_DOWN&&input.next_key()==KEY_ENTER&&input.next_key()==0,"ordered queue retains repeated taps received in one poll");
+    input.begin_frame();key(input,28,1);key(input,28,1);key(input,28,2);
+    require(input.next_key()==KEY_ENTER&&input.next_key()==0,"duplicate make and autorepeat do not confirm menus again");
+    key(input,28,0);key(input,108,1);input.begin_frame();
+    require(input.next_key()==0,"unconsumed frame key events cleared before next poll");
+    key(input,108,0);key(input,108,1);input.feed(0,3,0);
+    require(input.next_key()==0,"SYN_DROPPED discards uncertain queued edges");
+    key(input,28,1);input.resync({28},false);
+    require(input.next_key()==0&&!input.key_pressed(KEY_ENTER),"resync held snapshot never confirms a menu");
+    input.resync({},false);input.begin_frame();
+    for(int i=0;i<200;++i){key(input,108,1);key(input,108,0);}
+    for(int i=0;i<128;++i)require(input.next_key()==KEY_DOWN,"bounded queue retains its accepted prefix");
+    require(input.next_key()==0,"key queue is bounded to 128 events");
     std::cout<<"Tyrell input tests passed\n";
     return 0;
     } catch(const std::exception& e) {std::cerr<<"input test: "<<e.what()<<'\n';return 1;}

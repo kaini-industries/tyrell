@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Tyrell Chess
+Comment=Chess, puzzles and Chess960 on the Cardputer Zero
+Exec=/usr/bin/tyrell-chess
+Icon=tyrell-chess
+Terminal=false
+Categories=Game;BoardGame;
+StartupNotify=false

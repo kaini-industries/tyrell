@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Build Tyrell Chess locally or package it in the isolated Debian ARM64 builder.
+
+No command connects to the handheld. Package copies only source and verified
+raylib inputs to a unique VM directory; credentials never enter that archive.
+"""
+import argparse
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import runpy
+import subprocess
+import sys
+import tarfile
+import uuid
+
+ROOT = Path(__file__).resolve().parents[1]
+GAME = runpy.run_path(str(ROOT / 'scripts/game'))
+LOCK = GAME['LOCK']
+DEPS = GAME['DEPS']
+
+
+def run(*args, **kwargs):
+    return subprocess.run([str(value) for value in args], check=True, cwd=ROOT, **kwargs)
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def verify_raylib():
+    GAME['verify_source']('raylib', LOCK['raylib'])
+
+
+def build_directory(backend):
+    return ROOT / 'build' / ('chess-' + backend)
+
+
+def snapshot_inputs(destination):
+    """Hash exactly the bytes copied to the VM, even during concurrent edits."""
+    manifest = {}
+    directories = ('packages/tyrell-chess', 'packages/tyrell-game',
+                   'build/game-deps/' + LOCK['raylib']['directory'])
+    paths = [ROOT / 'scripts/chess', ROOT / 'scripts/game', ROOT / 'locks/game-build-inputs.json']
+    for directory in directories:
+        paths.extend(sorted((ROOT / directory).rglob('*')))
+    with tarfile.open(destination, 'w') as archive:
+        for path in paths:
+            if path.is_symlink():
+                raise RuntimeError('Input symlinks are unsupported: ' + str(path))
+            if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
+                continue
+            name = str(path.relative_to(ROOT))
+            data = path.read_bytes()
+            member = tarfile.TarInfo(name)
+            member.mode = 0o755 if path.stat().st_mode & 0o111 else 0o644
+            member.size = len(data)
+            archive.addfile(member, io.BytesIO(data))
+            manifest[name] = hashlib.sha256(data).hexdigest()
+    return manifest
+
+
+def configure(backend):
+    verify_raylib()
+    run('cmake', '-S', ROOT / 'packages/tyrell-chess', '-B', build_directory(backend),
+        '-DCMAKE_BUILD_TYPE=RelWithDebInfo', '-DBUILD_TESTING=ON',
+        '-DCHESS_BACKEND=' + backend.upper(),
+        '-DRAYLIB_SOURCE_DIR=' + str(DEPS / LOCK['raylib']['directory']))
+
+
+def package():
+    """Build/test/package on ARM64, preserving the builder's original power state."""
+    verify_raylib()
+    builder = runpy.run_path(str(ROOT / 'scripts/builder'))
+    work = ROOT / 'build' / ('chess-package-' + uuid.uuid4().hex)
+    work.mkdir(parents=True)
+    input_archive = work / 'input.tar'
+    manifest = snapshot_inputs(input_archive)
+    vm = 'tyrell-build'
+    guest_root = '/var/tmp/' + work.name
+    output = ROOT / 'artifacts/chess-native'
+    output.parent.mkdir(parents=True, exist_ok=True)
+    staging = work / 'export'
+    staging.mkdir()
+    with builder['shared_lock']():
+        before = 'Missing'
+        if (ROOT / 'build/lima' / vm / 'lima.yaml').exists():
+            before, _ = builder['instance_state']()
+        if before not in ('Running', 'Stopped', 'Missing'):
+            raise RuntimeError('Unexpected builder state: ' + before)
+        try:
+            builder['up']()
+            builder['assert_guest_idle']()
+            builder['guest']('mkdir', '-p', guest_root)
+            builder['lima']('copy', '--backend=scp', str(input_archive), vm + ':' + guest_root + '/input.tar')
+            # This script is fixed, and the sole dynamic path is a generated UUID.
+            script = '''set -euo pipefail
+cd "$1"
+tar -xf input.tar
+cmake -S packages/tyrell-chess -B out -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON -DCHESS_BACKEND=NATIVE -DRAYLIB_SOURCE_DIR="$PWD/build/game-deps/RAYLIB_DIR"
+cmake --build out --parallel 4
+python3 packages/tyrell-chess/tests/package_tools_test.py 2>&1 | tee package-tools-tests.txt
+ctest --test-dir out --output-on-failure 2>&1 | tee tests.txt
+cmake --build out --target package
+mkdir export
+cp out/tyrell-chess_*_arm64.deb export/
+cp tests.txt package-tools-tests.txt export/
+python3 packages/tyrell-chess/assets/check_package.py export/*.deb | tee export/package-check.txt
+python3 packages/tyrell-chess/assets/install_check.py export/*.deb 2>&1 | tee export/install-check.txt
+file out/tyrell-chess > export/binary.txt
+dpkg-deb --info export/*.deb > export/package-info.txt
+dpkg-deb --contents export/*.deb > export/package-contents.txt
+tar -czf export.tar.gz -C export .
+'''.replace('RAYLIB_DIR', LOCK['raylib']['directory'])
+            builder['guest']('flock', '-n', '/var/tmp/tyrell-locks/builder.lock',
+                             'bash', '-c', script, 'chess-package', guest_root)
+            exported = work / 'export.tar.gz'
+            builder['lima']('copy', '--backend=scp', vm + ':' + guest_root + '/export.tar.gz', str(exported))
+            with tarfile.open(exported) as archive:
+                for member in archive:
+                    destination = staging / member.name
+                    if not destination.resolve().is_relative_to(staging.resolve()) or not (member.isfile() or member.isdir()):
+                        raise RuntimeError('Unsafe output member: ' + member.name)
+                archive.extractall(staging, filter='data')
+            packages = list(staging.glob('tyrell-chess_*_arm64.deb'))
+            if len(packages) != 1:
+                raise RuntimeError('Expected exactly one versioned package in artifacts/chess-native')
+            provenance = {'source_sha256': manifest, 'raylib': LOCK['raylib'],
+                          'input_archive_sha256': digest(input_archive),
+                          'package_sha256': digest(packages[0]),
+                          'package': packages[0].name, 'build_directory': guest_root,
+                          'tests': 'Passed; see tests.txt'}
+            (staging / 'manifest.json').write_text(json.dumps(provenance, indent=2) + '\n')
+            (staging / 'SHA256SUMS').write_text(''.join(digest(p) + '  ' + p.name + '\n'
+                for p in sorted(staging.iterdir()) if p.is_file() and p.name != 'SHA256SUMS'))
+            # Failed builds never mix new bytes with the last verified manifest.
+            backup = work / 'previous-artifacts'
+            if output.exists():
+                output.rename(backup)
+            try:
+                staging.rename(output)
+            except BaseException:
+                if backup.exists():
+                    backup.rename(output)
+                raise
+            print('Package and provenance: ' + str(output))
+        finally:
+            if before in ('Stopped', 'Missing'):
+                builder['lima']('stop', vm)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=('deps', 'build', 'test', 'run', 'package'))
+    parser.add_argument('--backend', choices=('headless', 'desktop', 'native'), default='headless')
+    args, extra = parser.parse_known_args()
+    if extra[:1] == ['--']:
+        extra = extra[1:]
+    if extra and args.action != 'run':
+        parser.error('Extra arguments are only supported for run')
+    if args.action == 'deps':
+        # Uses the existing pinned/checksum-verified dependency cache.
+        GAME['deps']('headless')
+    elif args.action == 'package':
+        package()
+    elif args.action == 'build':
+        configure(args.backend)
+        run('cmake', '--build', build_directory(args.backend), '--parallel', min(os.cpu_count() or 2, 8))
+    elif args.action == 'test':
+        run('ctest', '--test-dir', build_directory(args.backend), '--output-on-failure')
+    else:
+        run(build_directory(args.backend) / 'tyrell-chess', *extra)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (RuntimeError, OSError, subprocess.CalledProcessError) as error:
+        print('chess: ' + str(error), file=sys.stderr)
+        sys.exit(1)

@@ -1,0 +1,58 @@
+# App-only package: no maintainer scripts, services, firmware or configuration.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  message(FATAL_ERROR "Tyrell Chess device packaging requires Debian ARM64 Linux")
+endif()
+execute_process(COMMAND dpkg --print-architecture OUTPUT_VARIABLE CHESS_DEBIAN_ARCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY)
+if(NOT CHESS_DEBIAN_ARCH STREQUAL "arm64")
+  message(FATAL_ERROR "Device package requires Debian ARM64; got ${CHESS_DEBIAN_ARCH}")
+endif()
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Install prefix" FORCE)
+endif()
+set(CHESS_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+if(NOT EXISTS "${RAYLIB_SOURCE_DIR}/LICENSE")
+  message(FATAL_ERROR "The pinned raylib source license is required")
+endif()
+find_package(Python3 3.12 REQUIRED COMPONENTS Interpreter)
+set(CHESS_NOTICES "${CMAKE_CURRENT_BINARY_DIR}/raylib-third-party-notices.txt")
+execute_process(COMMAND "${Python3_EXECUTABLE}"
+  "${CHESS_PACKAGE_SOURCE_DIR}/../tyrell-game/tools/make_notices.py"
+  "${RAYLIB_SOURCE_DIR}" "${CHESS_NOTICES}" COMMAND_ERROR_IS_FATAL ANY)
+install(TARGETS tyrell-chess RUNTIME DESTINATION bin)
+install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/assets/tyrell-chess.desktop"
+  DESTINATION share/APPLaunch/applications)
+install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/assets/tyrell-chess-standard.desktop"
+  DESTINATION share/applications RENAME tyrell-chess.desktop)
+install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/assets/tyrell-chess.png"
+  DESTINATION share/APPLaunch/share/images)
+install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/assets/tyrell-chess.png"
+  DESTINATION share/icons/hicolor/80x80/apps)
+install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/LICENSE" DESTINATION share/doc/tyrell-chess)
+install(FILES "${RAYLIB_SOURCE_DIR}/LICENSE"
+  DESTINATION share/doc/tyrell-chess RENAME raylib-LICENSE.txt)
+install(FILES "${CHESS_NOTICES}" DESTINATION share/doc/tyrell-chess)
+if(EXISTS "${CHESS_PACKAGE_SOURCE_DIR}/engine/UPSTREAM.json")
+  install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/engine/UPSTREAM.json" DESTINATION share/doc/tyrell-chess)
+endif()
+if(EXISTS "${CHESS_PACKAGE_SOURCE_DIR}/engine/LICENSE.upstream")
+  install(FILES "${CHESS_PACKAGE_SOURCE_DIR}/engine/LICENSE.upstream"
+    DESTINATION share/doc/tyrell-chess RENAME cardputer-chess-LICENSE.txt)
+endif()
+set(CPACK_GENERATOR DEB)
+set(CPACK_PACKAGE_NAME tyrell-chess)
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_CONTACT "Tyrell contributors <tyrell@localhost>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Tyrell Chess for the M5Stack CardputerZero")
+set(CPACK_PACKAGE_DESCRIPTION "Native chess with local play, computer opponents, Chess960 and puzzles. Includes a keyboard-first 320x170 interface and APPLaunch integration.")
+set(CPACK_PACKAGING_INSTALL_PREFIX /usr)
+set(CPACK_DEBIAN_PACKAGE_NAME tyrell-chess)
+set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_DEBIAN_PACKAGE_RELEASE 1)
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE arm64)
+set(CPACK_DEBIAN_PACKAGE_SECTION games)
+set(CPACK_DEBIAN_PACKAGE_PRIORITY optional)
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
+set(CPACK_PACKAGE_FILE_NAME "tyrell-chess_${PROJECT_VERSION}-1_arm64")
+include(CPack)

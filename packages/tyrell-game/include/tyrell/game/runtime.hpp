@@ -37,6 +37,9 @@ public:
     bool pressed(int key) const;
     bool down(int key) const;
     bool released(int key) const;
+    // Drain after poll(): preserves the order of taps received between frames.
+    // Native backend excludes autorepeat; zero means no more keys this frame.
+    int next_key();
     int character();
     double time() const;
     double elapsed() const;

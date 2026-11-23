@@ -9,6 +9,7 @@ published on
 
 | App | Package | Validation | Checksums and provenance |
 | --- | --- | --- | --- |
+| Tyrell Chess 0.1.1 | [ARM64 `.deb`](tyrell-chess/0.1.1/tyrell-chess_0.1.1-1_arm64.deb) | 17 ARM64 groups; install/remove; [native UI, keyboard and Wi-Fi checks](../docs/chess-ui-input-validation.md) | [SHA256SUMS](tyrell-chess/0.1.1/SHA256SUMS), [source manifest](tyrell-chess/0.1.1/manifest.json) |
 | Tyrell Video 0.1.7 | [ARM64 `.deb`](tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb) | 35 ARM64 tests; install/remove; [controlled recovery, ten-minute software HDMI run and normal launch](../docs/video-hdmi-017-validation.md) | [SHA256SUMS](tyrell-video/0.1.7/SHA256SUMS), [provenance](tyrell-video/0.1.7/provenance.json) |
 | Tyrell Video 0.1.6 | [ARM64 `.deb`](tyrell-video/0.1.6/tyrell-video_0.1.6-1_arm64.deb) | 34 ARM64 tests; nonroot console checks; [TV results and observed startup failure](../docs/video-hdmi-016-validation.md) | [SHA256SUMS](tyrell-video/0.1.6/SHA256SUMS), [provenance](tyrell-video/0.1.6/provenance.json) |
 | Tyrell Video 0.1.5 | [ARM64 `.deb`](tyrell-video/0.1.5/tyrell-video_0.1.5-1_arm64.deb) | 34 ARM64 tests; install/remove checks; native LCD and HDMI device checks | [SHA256SUMS](tyrell-video/0.1.5/SHA256SUMS), [provenance](tyrell-video/0.1.5/provenance.json) |
@@ -23,7 +24,7 @@ sudo apt install ./tyrell-video_0.1.7-1_arm64.deb
 ```
 
 For Status, use `dist/tyrell-status/0.1.0` and
-`tyrell-status_0.1.0-1_arm64.deb` instead. Start either app through APPLaunch.
+`tyrell-status_0.1.0-1_arm64.deb` instead. For Chess, use `dist/tyrell-chess/0.1.1` and `tyrell-chess_0.1.1-1_arm64.deb`. Start apps through APPLaunch.
 APT resolves the package's declared dependencies.
 
 Version 0.1.7 adds a one-shot software-video retry for a specific HDMI KMS

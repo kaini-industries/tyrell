@@ -206,6 +206,13 @@ bool Runtime::released(int key) const {
     return IsKeyReleased(key);
 #endif
 }
+int Runtime::next_key() {
+#if defined(TYRELL_GAME_SOFTWARE)
+    return impl_->input.next_key();
+#else
+    return GetKeyPressed();
+#endif
+}
 int Runtime::character() {
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.next_char();

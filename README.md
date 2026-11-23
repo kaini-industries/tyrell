@@ -138,6 +138,21 @@ The [installation validation](docs/tanks-install-validation.md) covers the
 earlier installed test binary. The reviewed framework build passed ARM64
 memory-rendering tests and still needs its own physical hardware acceptance.
 
+## Tyrell Chess
+
+[Tyrell Chess](packages/tyrell-chess/README.md) ports Cardputer ADV Chess to the
+Zero's native Linux display, keyboard and stock launcher. It adds a colorful
+pixel-art interface, asynchronous computer play, Chess960, clocked local/LAN
+matches, puzzle categories, checked saves, full offline replay and PGN export.
+Ordered keyboard input preserves rapid taps across display frames.
+The installed [0.1.1 update](docs/chess-ui-input-validation.md) adds spatial and
+held-key navigation, safe LAN confirmations and clearer game-state feedback.
+
+Build/test locally with `make chess` and `make chess-test`; `make chess-package`
+creates an ARM64 app-only Debian package in the isolated builder. See the
+[validation report](docs/chess-validation.md) for hardware tests, independent
+rules comparisons and adversarial fixes.
+
 ## Requirements
 
 Game and framework development builds directly on macOS or Linux with CMake

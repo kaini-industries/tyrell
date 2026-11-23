@@ -36,7 +36,10 @@ Sandline-specific assumptions.
 Construct `tyrell::game::Runtime` with `RuntimeOptions` once. The build chooses
 desktop, native, or memory rendering; `Backend::Default` uses that choice.
 `poll()` begins an input/update cycle. Use `elapsed()` with a fixed-step clock,
-read held/pressed/released keys, and drain `character()` for text input. Render
+read held/pressed/released keys, drain `next_key()` for ordered menu actions,
+and drain `character()` for text input. On the native backend, `next_key()`
+retains separate rapid taps in kernel event order, excludes autorepeat, and
+holds at most 128 rising edges for the current frame. Render
 between `begin_frame()` and `end_frame()`. Screenshots export the logical
 rendered image rather than a desktop screenshot containing unrelated windows.
 Only one runtime/context is allowed. Pacing accepts zero (unpaced) or 1–1000
