@@ -147,6 +147,8 @@ matches, puzzle categories, checked saves, full offline replay and PGN export.
 Ordered keyboard input preserves rapid taps across display frames.
 The installed [0.1.1 update](docs/chess-ui-input-validation.md) adds spatial and
 held-key navigation, safe LAN confirmations and clearer game-state feedback.
+Current [0.1.2 source](docs/chess-clock-validation.md) corrects clock-expiry
+handling; ARM64 package and device qualification remain pending for that version.
 
 Build/test locally with `make chess` and `make chess-test`; `make chess-package`
 creates an ARM64 app-only Debian package in the isolated builder. See the
