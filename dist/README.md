@@ -30,15 +30,17 @@ APT resolves the package's declared dependencies.
 Version 0.1.7 adds a one-shot software-video retry for a specific HDMI KMS
 buffer-pool activation failure after hardware output. It retains the dedicated
 nonroot helper introduced in 0.1.6. The
-[Store preparation](../store/tyrell-video/0.1.7/README.md) includes the completed
+[submission snapshot](../store/tyrell-video/0.1.7/README.md) includes the completed
 qualification and reviewed real-device recording. The results cover the stated
 hardware, H.264 profile and injected failure; other formats can have different
 performance. The exact 0.1.7 package was
-[submitted as Store PR #324](https://github.com/CardputerZero/packages/pull/324),
+[accepted through Store PR #324](https://github.com/CardputerZero/packages/pull/324),
 with its [real-device recording posted for review](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
-Automated submission checks passed; the first-app release awaits manual
-maintainer review and merge. Earlier package bytes and their original build
-provenance remain unchanged.
+The PR merged on November 15, 2026, and the exact package is published in the
+official [`apt-pool` release](https://github.com/CardputerZero/packages/releases/tag/apt-pool).
+The [current publication record](../store/tyrell-video/README.md) verifies its approved
+generated catalog entry. Earlier package bytes and their original build provenance
+remain unchanged.
 
 Each version folder retains the original build/source manifests and test logs.
 The original manifest describes the complete builder export; `SHA256SUMS`

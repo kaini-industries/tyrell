@@ -41,8 +41,8 @@ struct Args {
 Args arguments(int argc,char** argv) {
  Args a;
  for(int i=1;i<argc;++i){std::string s=argv[i];auto val=[&](){if(++i>=argc)throw std::runtime_error("Missing value for "+s);return std::string(argv[i]);};
- if(s=="--help"){std::cout<<"Tyrell Chess 0.1.1 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
- else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.1 (upstream 64419e29c828)\n";std::exit(0);}
+ if(s=="--help"){std::cout<<"Tyrell Chess 0.1.2 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
+ else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.2 (upstream 64419e29c828)\n";std::exit(0);}
  else if(s=="--headless")a.headless=true;else if(s=="--demo")a.demo=true;else if(s=="--quick")a.quick=true;
  else if(s=="--frames"){auto text=val();size_t n;long count=std::stol(text,&n);if(n!=text.size()||count<1||count>100000)throw std::runtime_error("Frames must be 1..100000");a.frames=int(count);}
  else if(s=="--screenshot")a.screenshot=val();else if(s=="--report")a.report=val();else if(s=="--state-dir"){a.state=val();if(a.state.empty())throw std::runtime_error("--state-dir must not be empty");a.explicitState=true;}else if(s=="--moves")a.moves=val();else if(s=="--script")a.script=val();else throw std::runtime_error("Unknown argument: "+s);
@@ -159,7 +159,7 @@ public:
  bool apply(const Move& m,bool remote=false){
    if(online()&&!networkHost&&!remote){if(awaitingMove)return false;std::ostringstream o;o<<"REQ "<<game.history.size()<<' '<<chess::uci(m);if(!lan.send(o.str())){notify("Connection unavailable");return false;}awaitingMove=true;pendingSince=time;clearSelection();return true;}
    if(game.options.mode==Mode::Puzzle&&!remote){if(game.puzzleStep>=game.solutionLength||!(m==game.solution[game.puzzleStep])){notify("Try another move. H for a hint");cursor=m.from;clearSelection();return false;}}
-   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,nowMs()))return false;
+   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,nowMs())){if(game.over())finished();return false;}
    clearOffers(true);animatedPiece=piece;animatedMove=m;animationStart=time;const bool keepCursor=(game.options.mode==Mode::Computer&&piece.color!=game.options.human)||(remote&&(online()||game.options.mode==Mode::Puzzle));cursor=keepCursor?oldCursor:m.to;if(keepCursor)focusPlayer();clearSelection();hintFrom=hintTo=NO_SQUARE;
    if(online()&&networkHost)broadcastMove();
    if(game.options.mode==Mode::Puzzle){
@@ -281,7 +281,7 @@ public:
      }
      if(dialog=="accept-draw"){
        if(menu==1&&online()&&networkPlaying&&!review&&!game.over()&&incomingDrawOffer){
-         if(networkHost){game.finish("1/2-1/2","Draw agreed",nowMs());finished();}
+         if(networkHost){game.agreeDraw(nowMs());finished();}
          else {lan.send("ACCEPTDRAW");incomingDrawOffer=false;status="Draw accepted; waiting";}
        }
        screen=Screen::Board;page.clear();return;
@@ -289,7 +289,7 @@ public:
      if(dialog=="castle"){for(const auto& m:promotions)if(m.isCastle==(menu==1)){screen=Screen::Board;apply(m);break;}return;}
      if(dialog=="resign"||dialog=="draw"){
        if(menu==1&&!game.over()){
-         if(dialog=="draw"){game.finish("1/2-1/2","Draw agreed",nowMs());finished();}
+         if(dialog=="draw"){game.agreeDraw(nowMs());finished();}
          else {auto side=online()?(networkHost?PieceColor::White:PieceColor::Black):game.options.mode==Mode::Computer?game.options.human:game.board.sideToMove();if(online()&&!networkHost)lan.send("RESIGN");else{game.resign(side,nowMs());finished();}}
        }
        screen=Screen::Board;page.clear();
@@ -370,7 +370,7 @@ public:
      else if(command=="SYNC"&&!networkHost&&networkPlaying){uint32_t w,b;size_t ply;in>>ply>>w>>b;if(in&&ply==game.history.size())game.clock.synchronizeRemainingMs(w,b,nowMs());}
      else if(command=="RESIGN"&&networkHost&&networkPlaying){if(!game.over()){game.resign(PieceColor::Black,nowMs());finished();}}
      else if(command=="DRAW"&&networkPlaying){if(!game.over()){incomingDrawOffer=true;status="Draw offered: Y yes";}}
-     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.finish("1/2-1/2","Draw agreed",nowMs());finished();}}
+     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.agreeDraw(nowMs());finished();}}
      else if(command=="END"&&!networkHost&&networkPlaying){std::string score,reason;in>>score;in.get();std::getline(in,reason);if(score!="1-0"&&score!="0-1"&&score!="1/2-1/2"){disconnect("Invalid result");break;}awaitingMove=false;game.finish(score,reason.substr(0,60),nowMs());finished();}
      else {disconnect("Unexpected peer message");break;}
    }
@@ -445,7 +445,7 @@ int main(int argc,char** argv){
      runtime.begin_frame();app.draw();runtime.end_frame();++frames;if(args.frames&&frames>=args.frames)break;
    }
    app.persist();if(!args.screenshot.empty())runtime.screenshot(args.screenshot);
-   if(!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.1\",\"frames\":"<<frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
+   if(!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.2\",\"frames\":"<<frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
    return 0;
  }catch(const std::exception& e){std::cerr<<"Tyrell Chess: "<<e.what()<<'\n';return 1;}
 }

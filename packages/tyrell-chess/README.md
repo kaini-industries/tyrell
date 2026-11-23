@@ -2,6 +2,11 @@
 
 A native Linux port of [Cardputer ADV Chess](https://github.com/kaini-industries/cardputer-chess), with a colorful pixel-art interface designed for the Zero's 320 × 170 LCD and keyboard. The portable engine is retained at upstream commit `64419e29c828b77b420221472e8a314778713a07`; licenses, original-file hashes and adaptations are in [engine/](engine/).
 
+Current source is **0.1.2**, with fixes for draw acceptance and move confirmation
+at clock expiry. The retained [0.1.1 ARM64 package](../../dist/tyrell-chess/0.1.1/README.md)
+remains the latest device-validated build. Version 0.1.2 still needs ARM64 package
+and device qualification; see the [clock-boundary review](../../docs/chess-clock-validation.md).
+
 ![Home](assets/preview-home.png)
 ![Board](assets/preview-board.png)
 
@@ -69,8 +74,8 @@ Local headless tests require loopback TCP access. The package command uses the e
 Install the exported package using the device's normal SSH user:
 
 ```sh
-scp artifacts/chess-native/tyrell-chess_0.1.1-1_arm64.deb user@cardputer:/tmp/
-ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.1-1_arm64.deb'
+scp artifacts/chess-native/tyrell-chess_0.1.2-1_arm64.deb user@cardputer:/tmp/
+ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.2-1_arm64.deb'
 ```
 
 The package adds only the app, launcher entries, icon and notices. It installs no services or firmware. Start native graphics from APPLaunch so it can manage display/input ownership. `tyrell-chess --help` and `--version` work over SSH without opening display devices.

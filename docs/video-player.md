@@ -193,10 +193,12 @@ Hardware-specific playback measurements and the LCD conversion changes are in th
 The [native display report](video-lcd-refresh-validation.md) records the 0.1.5
 framebuffer refresh correction and pause/caption clock-continuity tests.
 
-The [0.1.7 Store preparation](../store/tyrell-video/0.1.7/README.md) includes the
+The [0.1.7 submission snapshot](../store/tyrell-video/0.1.7/README.md) includes the
 completed hardware evidence and reviewed real-device recording. The package was
-[submitted as Store PR #324](https://github.com/CardputerZero/packages/pull/324),
-and the recording is linked in the
+[accepted through Store PR #324](https://github.com/CardputerZero/packages/pull/324),
+merged on November 15, 2026, and promoted to the official
+[`apt-pool` release](https://github.com/CardputerZero/packages/releases/tag/apt-pool).
+The [current publication record](../store/tyrell-video/README.md) verifies its approved
+generated catalog entry; the handheld's current Store screen was not rechecked.
+The recording is linked in the
 [review comment](https://github.com/CardputerZero/packages/pull/324#issuecomment-6890010512).
-Automated submission checks passed. This first-app release awaits manual
-maintainer review and merge before it becomes available in the Store.
