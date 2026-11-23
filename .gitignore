@@ -24,3 +24,7 @@ vendor/
 .DS_Store
 __pycache__/
 *.pyc
+
+!dist/tyrell-chess/0.1.0/tyrell-chess_0.1.0-1_arm64.deb
+
+!dist/tyrell-chess/0.1.1/tyrell-chess_0.1.1-1_arm64.deb

@@ -1,0 +1,40 @@
+Internal ctest changing into directory: /var/tmp/chess-package-832a9c3f46724306b846c4c8f1a3cb9b/out
+Test project /var/tmp/chess-package-832a9c3f46724306b846c4c8f1a3cb9b/out
+      Start  1: chess-lan
+ 1/17 Test  #1: chess-lan ........................   Passed    0.00 sec
+      Start  2: chess-controller
+ 2/17 Test  #2: chess-controller .................   Passed    0.89 sec
+      Start  3: chess-model
+ 3/17 Test  #3: chess-model ......................   Passed    0.02 sec
+      Start  4: chess-cli-help
+ 4/17 Test  #4: chess-cli-help ...................   Passed    0.00 sec
+      Start  5: chess-render
+ 5/17 Test  #5: chess-render .....................   Passed    0.01 sec
+      Start  6: chess-lifecycle
+ 6/17 Test  #6: chess-lifecycle ..................   Passed    0.00 sec
+      Start  7: chess-protocol-adversarial
+ 7/17 Test  #7: chess-protocol-adversarial .......   Passed    0.25 sec
+      Start  8: chess-faults
+ 8/17 Test  #8: chess-faults .....................   Passed    0.01 sec
+      Start  9: chess-runtime-fault
+ 9/17 Test  #9: chess-runtime-fault ..............   Passed    0.31 sec
+      Start 10: chess-keyboard-fault
+10/17 Test #10: chess-keyboard-fault .............   Passed    0.01 sec
+      Start 11: chess-keyboard-navigation
+11/17 Test #11: chess-keyboard-navigation ........   Passed    0.00 sec
+      Start 12: chess-flow-round2
+12/17 Test #12: chess-flow-round2 ................   Passed    0.01 sec
+      Start 13: chess-input-repeat
+13/17 Test #13: chess-input-repeat ...............   Passed    0.00 sec
+      Start 14: chess-render-state
+14/17 Test #14: chess-render-state ...............   Passed    0.06 sec
+      Start 15: chess-completion-overlay
+15/17 Test #15: chess-completion-overlay .........   Passed    0.04 sec
+      Start 16: chess-device-input-tools
+16/17 Test #16: chess-device-input-tools .........   Passed    0.09 sec
+      Start 17: chess-engine
+17/17 Test #17: chess-engine .....................   Passed    0.12 sec
+
+100% tests passed, 0 tests failed out of 17
+
+Total Test time (real) =   1.84 sec

@@ -1,0 +1,28 @@
+Internal ctest changing into directory: /var/tmp/chess-package-c70feae84bc94f2bbdb66799ed3f790e/out
+Test project /var/tmp/chess-package-c70feae84bc94f2bbdb66799ed3f790e/out
+      Start  1: chess-lan
+ 1/11 Test  #1: chess-lan ........................   Passed    0.00 sec
+      Start  2: chess-controller
+ 2/11 Test  #2: chess-controller .................   Passed    0.88 sec
+      Start  3: chess-model
+ 3/11 Test  #3: chess-model ......................   Passed    0.01 sec
+      Start  4: chess-cli-help
+ 4/11 Test  #4: chess-cli-help ...................   Passed    0.00 sec
+      Start  5: chess-render
+ 5/11 Test  #5: chess-render .....................   Passed    0.01 sec
+      Start  6: chess-lifecycle
+ 6/11 Test  #6: chess-lifecycle ..................   Passed    0.00 sec
+      Start  7: chess-protocol-adversarial
+ 7/11 Test  #7: chess-protocol-adversarial .......   Passed    0.24 sec
+      Start  8: chess-faults
+ 8/11 Test  #8: chess-faults .....................   Passed    0.01 sec
+      Start  9: chess-runtime-fault
+ 9/11 Test  #9: chess-runtime-fault ..............   Passed    0.30 sec
+      Start 10: chess-keyboard-fault
+10/11 Test #10: chess-keyboard-fault .............   Passed    0.00 sec
+      Start 11: chess-engine
+11/11 Test #11: chess-engine .....................   Passed    0.13 sec
+
+100% tests passed, 0 tests failed out of 11
+
+Total Test time (real) =   1.59 sec

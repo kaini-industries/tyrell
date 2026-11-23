@@ -1,0 +1,441 @@
+#include "chess_rules.h"
+#include "chess_zobrist.h"
+
+namespace ChessRules {
+
+// Direction offsets for sliding pieces
+static const int8_t BISHOP_DIRS[4][2] = {{-1,-1},{-1,1},{1,-1},{1,1}};
+static const int8_t ROOK_DIRS[4][2]   = {{-1,0},{1,0},{0,-1},{0,1}};
+static const int8_t KNIGHT_OFFS[8][2] = {
+    {-2,-1},{-2,1},{-1,-2},{-1,2},{1,-2},{1,2},{2,-1},{2,1}
+};
+static const int8_t KING_OFFS[8][2] = {
+    {-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}
+};
+
+// ─── Attack Detection ─────────────────────────────────────────────
+
+bool isAttacked(const ChessBoard& board, uint8_t col, uint8_t row, PieceColor byColor) {
+    // Knight attacks
+    for (int i = 0; i < 8; i++) {
+        int8_t nc = (int8_t)col + KNIGHT_OFFS[i][0];
+        int8_t nr = (int8_t)row + KNIGHT_OFFS[i][1];
+        if (nc >= 0 && nc < 8 && nr >= 0 && nr < 8) {
+            Piece p = board.at(nc, nr);
+            if (p.type == PieceType::Knight && p.color == byColor) return true;
+        }
+    }
+
+    // King attacks (adjacent squares)
+    for (int i = 0; i < 8; i++) {
+        int8_t nc = (int8_t)col + KING_OFFS[i][0];
+        int8_t nr = (int8_t)row + KING_OFFS[i][1];
+        if (nc >= 0 && nc < 8 && nr >= 0 && nr < 8) {
+            Piece p = board.at(nc, nr);
+            if (p.type == PieceType::King && p.color == byColor) return true;
+        }
+    }
+
+    // Pawn attacks
+    int8_t pawnDir = (byColor == PieceColor::White) ? 1 : -1;
+    // The attacking pawn would be on the row one step in its forward direction from target
+    int8_t pr = (int8_t)row - pawnDir;
+    if (pr >= 0 && pr < 8) {
+        for (int8_t dc = -1; dc <= 1; dc += 2) {
+            int8_t pc = (int8_t)col + dc;
+            if (pc >= 0 && pc < 8) {
+                Piece p = board.at(pc, pr);
+                if (p.type == PieceType::Pawn && p.color == byColor) return true;
+            }
+        }
+    }
+
+    // Bishop/Queen attacks (diagonals)
+    for (int d = 0; d < 4; d++) {
+        for (int dist = 1; dist < 8; dist++) {
+            int8_t nc = (int8_t)col + BISHOP_DIRS[d][0] * dist;
+            int8_t nr = (int8_t)row + BISHOP_DIRS[d][1] * dist;
+            if (nc < 0 || nc >= 8 || nr < 0 || nr >= 8) break;
+            Piece p = board.at(nc, nr);
+            if (!p.empty()) {
+                if (p.color == byColor &&
+                    (p.type == PieceType::Bishop || p.type == PieceType::Queen)) {
+                    return true;
+                }
+                break; // Blocked
+            }
+        }
+    }
+
+    // Rook/Queen attacks (orthogonals)
+    for (int d = 0; d < 4; d++) {
+        for (int dist = 1; dist < 8; dist++) {
+            int8_t nc = (int8_t)col + ROOK_DIRS[d][0] * dist;
+            int8_t nr = (int8_t)row + ROOK_DIRS[d][1] * dist;
+            if (nc < 0 || nc >= 8 || nr < 0 || nr >= 8) break;
+            Piece p = board.at(nc, nr);
+            if (!p.empty()) {
+                if (p.color == byColor &&
+                    (p.type == PieceType::Rook || p.type == PieceType::Queen)) {
+                    return true;
+                }
+                break; // Blocked
+            }
+        }
+    }
+
+    return false;
+}
+
+bool isInCheck(const ChessBoard& board, PieceColor c) {
+    Square king = board.findKing(c);
+    if (isNoSquare(king)) return false;
+
+    return isAttacked(board, king.col, king.row, opponent(c));
+}
+
+// ─── Pseudo-Legal Move Generation ─────────────────────────────────
+
+static void addPawnMoves(const ChessBoard& board, uint8_t col, uint8_t row,
+                         PieceColor color, MoveList& out) {
+    int8_t dir = (color == PieceColor::White) ? 1 : -1;
+    uint8_t startRow = (color == PieceColor::White) ? 1 : 6;
+    uint8_t promoRow = (color == PieceColor::White) ? 7 : 0;
+
+    auto addWithPromo = [&](Square from, Square to, bool isEP = false, bool isCapture = false) {
+        if (to.row == promoRow) {
+            // Generate all 4 promotion options
+            PieceType promos[] = {PieceType::Queen, PieceType::Rook,
+                                  PieceType::Bishop, PieceType::Knight};
+            for (auto pt : promos) {
+                Move m;
+                m.from = from;
+                m.to = to;
+                m.promotion = pt;
+                out.add(m);
+            }
+        } else {
+            Move m;
+            m.from = from;
+            m.to = to;
+            m.isEnPassant = isEP;
+            out.add(m);
+        }
+    };
+
+    Square from = makeSquare(col, row);
+
+    // Forward one
+    int8_t newRow = (int8_t)row + dir;
+    if (newRow >= 0 && newRow < 8 && board.at(col, newRow).empty()) {
+        addWithPromo(from, makeSquare(col, newRow));
+
+        // Forward two from start
+        int8_t twoRow = newRow + dir;
+        if (row == startRow && twoRow >= 0 && twoRow < 8 &&
+            board.at(col, twoRow).empty()) {
+            Move m;
+            m.from = from;
+            m.to = makeSquare(col, twoRow);
+            out.add(m);
+        }
+    }
+
+    // Captures (including en passant)
+    for (int8_t dc = -1; dc <= 1; dc += 2) {
+        int8_t nc = (int8_t)col + dc;
+        if (nc < 0 || nc >= 8 || newRow < 0 || newRow >= 8) continue;
+
+        Piece target = board.at(nc, newRow);
+        Square toSq = makeSquare(nc, newRow);
+
+        if (!target.empty() && target.color != color) {
+            addWithPromo(from, toSq, false, true);
+        }
+
+        // En passant
+        Square ep = board.enPassantTarget();
+        if (!isNoSquare(ep) && ep.col == nc && ep.row == (uint8_t)newRow) {
+            addWithPromo(from, toSq, true, true);
+        }
+    }
+}
+
+static void addSlidingMoves(const ChessBoard& board, uint8_t col, uint8_t row,
+                             PieceColor color, const int8_t dirs[][2], int numDirs,
+                             MoveList& out) {
+    Square from = makeSquare(col, row);
+    for (int d = 0; d < numDirs; d++) {
+        for (int dist = 1; dist < 8; dist++) {
+            int8_t nc = (int8_t)col + dirs[d][0] * dist;
+            int8_t nr = (int8_t)row + dirs[d][1] * dist;
+            if (nc < 0 || nc >= 8 || nr < 0 || nr >= 8) break;
+
+            Piece target = board.at(nc, nr);
+            if (target.empty()) {
+                Move m;
+                m.from = from;
+                m.to = makeSquare(nc, nr);
+                out.add(m);
+            } else {
+                if (target.color != color) {
+                    Move m;
+                    m.from = from;
+                    m.to = makeSquare(nc, nr);
+                    out.add(m);
+                }
+                break; // Blocked
+            }
+        }
+    }
+}
+
+static void addKnightMoves(const ChessBoard& board, uint8_t col, uint8_t row,
+                             PieceColor color, MoveList& out) {
+    Square from = makeSquare(col, row);
+    for (int i = 0; i < 8; i++) {
+        int8_t nc = (int8_t)col + KNIGHT_OFFS[i][0];
+        int8_t nr = (int8_t)row + KNIGHT_OFFS[i][1];
+        if (nc < 0 || nc >= 8 || nr < 0 || nr >= 8) continue;
+
+        Piece target = board.at(nc, nr);
+        if (target.empty() || target.color != color) {
+            Move m;
+            m.from = from;
+            m.to = makeSquare(nc, nr);
+            out.add(m);
+        }
+    }
+}
+
+static void addKingMoves(const ChessBoard& board, uint8_t col, uint8_t row,
+                          PieceColor color, MoveList& out) {
+    Square from = makeSquare(col, row);
+
+    // Normal king moves
+    for (int i = 0; i < 8; i++) {
+        int8_t nc = (int8_t)col + KING_OFFS[i][0];
+        int8_t nr = (int8_t)row + KING_OFFS[i][1];
+        if (nc < 0 || nc >= 8 || nr < 0 || nr >= 8) continue;
+
+        Piece target = board.at(nc, nr);
+        if (target.empty() || target.color != color) {
+            Move m;
+            m.from = from;
+            m.to = makeSquare(nc, nr);
+            out.add(m);
+        }
+    }
+
+    // Castling (generalized for standard and Chess960)
+    PieceColor opp = opponent(color);
+    uint8_t kingRow = (color == PieceColor::White) ? 0 : 7;
+
+    // Only if king is on its initial column
+    if (col != board.initKingCol() || row != kingRow) return;
+
+    // Don't castle out of check
+    if (isAttacked(board, col, row, opp)) return;
+
+    // Check that all squares in a range are empty, excluding two specific columns
+    auto squaresClear = [&](uint8_t a, uint8_t b, uint8_t exA, uint8_t exB) -> bool {
+        uint8_t lo = (a < b) ? a : b;
+        uint8_t hi = (a < b) ? b : a;
+        for (uint8_t c = lo; c <= hi; c++) {
+            if (c == exA || c == exB) continue;
+            if (!board.at(c, kingRow).empty()) return false;
+        }
+        return true;
+    };
+
+    // Check that king doesn't pass through or land on attacked square
+    auto kingPathSafe = [&](uint8_t fromCol, uint8_t toCol) -> bool {
+        uint8_t lo = (fromCol < toCol) ? fromCol : toCol;
+        uint8_t hi = (fromCol < toCol) ? toCol : fromCol;
+        for (uint8_t c = lo; c <= hi; c++) {
+            if (isAttacked(board, c, kingRow, opp)) return false;
+        }
+        return true;
+    };
+
+    // Kingside: king → g-file (col 6), rook → f-file (col 5)
+    if (board.canCastleKS(color)) {
+        uint8_t rookCol = board.initRookKS();
+        Piece rookPiece = board.at(rookCol, kingRow);
+        if (rookPiece.type == PieceType::Rook && rookPiece.color == color &&
+            squaresClear(col, 6, col, rookCol) &&
+            squaresClear(rookCol, 5, col, rookCol) &&
+            kingPathSafe(col, 6)) {
+            Move m;
+            m.from = from;
+            m.to = makeSquare(6, kingRow);
+            m.isCastle = true;
+            out.add(m);
+        }
+    }
+
+    // Queenside: king → c-file (col 2), rook → d-file (col 3)
+    if (board.canCastleQS(color)) {
+        uint8_t rookCol = board.initRookQS();
+        Piece rookPiece = board.at(rookCol, kingRow);
+        if (rookPiece.type == PieceType::Rook && rookPiece.color == color &&
+            squaresClear(col, 2, col, rookCol) &&
+            squaresClear(rookCol, 3, col, rookCol) &&
+            kingPathSafe(col, 2)) {
+            Move m;
+            m.from = from;
+            m.to = makeSquare(2, kingRow);
+            m.isCastle = true;
+            out.add(m);
+        }
+    }
+}
+
+static void generatePseudoLegal(const ChessBoard& board, MoveList& out) {
+    PieceColor side = board.sideToMove();
+
+    for (uint8_t r = 0; r < 8; r++) {
+        for (uint8_t c = 0; c < 8; c++) {
+            Piece p = board.at(c, r);
+            if (p.empty() || p.color != side) continue;
+
+            switch (p.type) {
+            case PieceType::Pawn:
+                addPawnMoves(board, c, r, side, out);
+                break;
+            case PieceType::Knight:
+                addKnightMoves(board, c, r, side, out);
+                break;
+            case PieceType::Bishop:
+                addSlidingMoves(board, c, r, side, BISHOP_DIRS, 4, out);
+                break;
+            case PieceType::Rook:
+                addSlidingMoves(board, c, r, side, ROOK_DIRS, 4, out);
+                break;
+            case PieceType::Queen: {
+                // Queen = bishop + rook directions
+                addSlidingMoves(board, c, r, side, BISHOP_DIRS, 4, out);
+                addSlidingMoves(board, c, r, side, ROOK_DIRS, 4, out);
+                break;
+            }
+            case PieceType::King:
+                addKingMoves(board, c, r, side, out);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
+// ─── Legal Move Generation ────────────────────────────────────────
+
+void generateLegalInto(ChessBoard& board, MoveList& legal, MoveList& scratch) {
+    legal.clear();
+    scratch.clear();
+    generatePseudoLegal(board, scratch);
+
+    PieceColor side = board.sideToMove();
+
+    for (uint8_t i = 0; i < scratch.count; i++) {
+        MoveRecord rec = board.makeMove(scratch.moves[i]);
+        if (!isInCheck(board, side)) {
+            legal.add(scratch.moves[i]);
+        }
+        board.unmakeMove(rec);
+    }
+}
+
+void generateLegal(ChessBoard& board, MoveList& out) {
+    MoveList scratch;
+    generateLegalInto(board, out, scratch);
+}
+
+void getLegalMovesFrom(ChessBoard& board, uint8_t col, uint8_t row, MoveList& out) {
+    out.clear();
+    MoveList allLegal;
+    allLegal.clear();
+    generateLegal(board, allLegal);
+
+    for (uint8_t i = 0; i < allLegal.count; i++) {
+        if (allLegal.moves[i].from.col == col && allLegal.moves[i].from.row == row) {
+            out.add(allLegal.moves[i]);
+        }
+    }
+}
+
+// ─── Game-End Detection ───────────────────────────────────────────
+
+bool isCheckmate(ChessBoard& board) {
+    MoveList legal;
+    legal.clear();
+    generateLegal(board, legal);
+    return legal.count == 0 && isInCheck(board, board.sideToMove());
+}
+
+bool isStalemate(ChessBoard& board) {
+    MoveList legal;
+    legal.clear();
+    generateLegal(board, legal);
+    return legal.count == 0 && !isInCheck(board, board.sideToMove());
+}
+
+bool isDraw50Move(const ChessBoard& board) {
+    return board.halfmoveClock() >= 100;
+}
+
+bool hasInsufficientMatingMaterial(const ChessBoard& board, PieceColor side) {
+    unsigned knights = 0, bishops = 0, bishopColors = 0;
+    bool anyPawnOrKnight = false, enemyCanBlockKnightMate = false;
+    for (uint8_t r = 0; r < 8; ++r) {
+        for (uint8_t c = 0; c < 8; ++c) {
+            const Piece piece = board.at(c, r);
+            if (piece.empty() || piece.type == PieceType::King) continue;
+            if (piece.type == PieceType::Bishop) bishopColors |= 1u << ((c + r) & 1);
+            if (piece.type == PieceType::Pawn || piece.type == PieceType::Knight)
+                anyPawnOrKnight = true;
+            if (piece.color != side) {
+                if (piece.type != PieceType::Queen) enemyCanBlockKnightMate = true;
+                continue;
+            }
+            if (piece.type == PieceType::Knight) ++knights;
+            else if (piece.type == PieceType::Bishop) ++bishops;
+            else return false; // Pawns can promote; rooks and queens can mate.
+        }
+    }
+    // A lone knight cannot mate a lone king or a king plus queens only.
+    // Two knights can produce a legal mate even though they cannot force it.
+    // Dead-position and flag-fall rules concern possible mate, not forced mate.
+    if (knights) return knights == 1 && bishops == 0 && !enemyCanBlockKnightMate;
+    if (bishops) return bishopColors != 3 && !anyPawnOrKnight;
+    return true; // Bare king.
+}
+
+bool isInsufficientMaterial(const ChessBoard& board) {
+    return hasInsufficientMatingMaterial(board, PieceColor::White) &&
+           hasInsufficientMatingMaterial(board, PieceColor::Black);
+}
+
+bool isThreefoldRepetition(const ChessBoard& board, const MoveRecord* history, uint8_t historyCount) {
+    uint32_t currentHash = ChessZobrist::repetitionHash(board);
+    uint8_t count = 1; // current position counts as one occurrence
+
+    ChessBoard tempBoard = board;
+
+    for (int i = (int)historyCount - 1; i >= 0; i--) {
+        tempBoard.unmakeMove(history[i]);
+        uint32_t h = ChessZobrist::repetitionHash(tempBoard);
+        if (h == currentHash) {
+            count++;
+            if (count >= 3) return true;
+        }
+        // Stop at irreversible moves (pawn move or capture)
+        if (history[i].movedPiece.type == PieceType::Pawn || !history[i].captured.empty()) {
+            break;
+        }
+    }
+
+    return false;
+}
+
+} // namespace ChessRules

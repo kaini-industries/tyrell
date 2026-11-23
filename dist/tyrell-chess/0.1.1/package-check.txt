@@ -1,0 +1,1 @@
+PASS: exact app payload, ARM64 ELF, dependencies, launcher/icon, licenses, and absence of system modifications

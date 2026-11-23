@@ -21,10 +21,13 @@ public:
     bool key_down(int key) const;
     bool key_pressed(int key) const;
     bool key_released(int key) const;
+    // Rising edges in evdev order, including repeated taps between frames.
+    // Does not include Linux autorepeat or synthesize edges during resync.
+    int next_key();
     int next_char();
 private:
     std::array<bool,512> down_{}, pressed_{}, released_{};
-    std::deque<int> chars_;
+    std::deque<int> keys_, chars_;
     bool caps_=false, syncing_=false;
     static int map_key(unsigned short code);
     int ascii(int key) const;

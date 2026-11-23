@@ -66,3 +66,13 @@ game:
 
 game-test:
 	python3 scripts/game test --backend $(GAME_BACKEND)
+
+.PHONY: chess chess-test chess-package
+chess:
+	python3 scripts/chess build --backend headless
+
+chess-test:
+	python3 scripts/chess test --backend headless
+
+chess-package:
+	python3 scripts/chess package
