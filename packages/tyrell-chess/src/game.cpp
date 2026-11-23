@@ -83,6 +83,10 @@ bool Game::puzzle(int index,uint32_t now) {
 }
 bool Game::humanTurn() const {return !over() && (options.mode!=Mode::Computer || board.sideToMove()==options.human);}
 void Game::finish(const std::string& score,const std::string& why,uint32_t now) {result=score;reason=why;clock.pause(now);}
+void Game::agreeDraw(uint32_t now) {
+    update(now);if(over())return;
+    finish("1/2-1/2","Draw agreed",now);
+}
 void Game::resign(PieceColor side,uint32_t now) {
     update(now);if(over())return;
     if(side!=PieceColor::White&&side!=PieceColor::Black)return;

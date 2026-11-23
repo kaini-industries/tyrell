@@ -45,6 +45,7 @@ public:
     bool undo(uint32_t now);
     void update(uint32_t now);
     void finish(const std::string& score,const std::string& why,uint32_t now);
+    void agreeDraw(uint32_t now);
     void resign(PieceColor side,uint32_t now);
     bool over() const { return result!="*"; }
     bool humanTurn() const;

@@ -54,6 +54,23 @@ void moveArrivesAfterFlag(const std::filesystem::path& dir) {
  CHECK(host.game.history.size()==1&&joiner.game.history.size()==1);
  CHECK(!host.game.clock.isRunning()&&!joiner.game.clock.isRunning());
 }
+void drawAcceptanceArrivesAfterFlag(const std::filesystem::path& dir) {
+ App host(dir/"draw-flag-host"),joiner(dir/"draw-flag-joiner");connect(host,joiner,TimeControl::Bullet1);
+ host.pauseMenu();host.menu=5;host.activate();
+ until([&]{host.update(2);joiner.update(2);return joiner.incomingDrawOffer;});
+ CHECK(host.game.clock.setRemainingMs(PieceColor::White,1,nowMs()));
+ joiner.key(KEY_Y);joiner.key(KEY_DOWN);joiner.key(KEY_ENTER);joiner.lan.poll();
+ std::this_thread::sleep_for(std::chrono::milliseconds(5));
+ // network() precedes the frame's general clock update. Acceptance must settle
+ // the authoritative host clock itself instead of overwriting its elapsed flag.
+ host.network();
+ until([&]{host.update(2);joiner.update(2);return joiner.game.over()||joiner.page=="disconnected";});
+ CHECK(host.screen==Screen::Board&&joiner.screen==Screen::Board);
+ CHECK(host.game.result=="0-1"&&joiner.game.result=="0-1");
+ CHECK(host.game.reason=="Time expired"&&joiner.game.reason=="Time expired");
+ CHECK(host.game.history.empty()&&joiner.game.history.empty());
+ CHECK(!host.game.clock.isRunning()&&!joiner.game.clock.isRunning());
+}
 void terminalDrawAction(const std::filesystem::path& dir) {
  App host(dir/"terminal-host"),joiner(dir/"terminal-joiner");connect(host,joiner,TimeControl::None);
  host.game.finish("1/2-1/2","Draw agreed",nowMs());host.finished();
@@ -68,7 +85,7 @@ void terminalDrawAction(const std::filesystem::path& dir) {
 int main() {
  const auto dir=std::filesystem::temp_directory_path()/("tyrell-chess-protocol-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
  try {
-  crossedDrawAcceptance(dir);moveArrivesAfterFlag(dir);terminalDrawAction(dir);
-  std::filesystem::remove_all(dir);std::puts("Protocol adversarial tests passed: crossed acceptance, flag fall during move transit, terminal menu actions.");return 0;
+  crossedDrawAcceptance(dir);moveArrivesAfterFlag(dir);drawAcceptanceArrivesAfterFlag(dir);terminalDrawAction(dir);
+  std::filesystem::remove_all(dir);std::puts("Protocol adversarial tests passed: crossed acceptance, flag fall during move/draw transit, terminal menu actions.");return 0;
  }catch(const std::exception& e){std::filesystem::remove_all(dir);std::fprintf(stderr,"%s\n",e.what());return 1;}
 }

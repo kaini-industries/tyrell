@@ -181,6 +181,32 @@ void savedGames(const std::filesystem::path& directory) {
     CHECK(loaded.options.position==0&&chess::fen(loaded.board)==chess::fen(game.board));
 }
 
+void drawAgreementAtFlag(const std::filesystem::path& directory) {
+    const auto file=directory/"draw-at-flag.save";
+    auto options=local();options.time=TimeControl::Bullet1;
+    std::string error;
+    // Agreement before the deadline draws; at/after it the existing timeout
+    // wins, even when no intervening UI update has settled the running clock.
+    for(const uint32_t timestamp:{60099u,60100u,60101u}) {
+        chess::Game game;game.start(options,100);game.agreeDraw(timestamp);
+        const bool expired=timestamp>=60100;
+        CHECK(game.result==(expired?"0-1":"1/2-1/2"));
+        CHECK(game.reason==(expired?"Time expired":"Draw agreed"));
+        CHECK(!game.clock.isRunning());
+        CHECK(game.save(file,timestamp+1000,error));
+        chess::Game loaded;CHECK(loaded.load(file,900000,error));
+        CHECK(loaded.result==game.result&&loaded.reason==game.reason);
+        CHECK(!loaded.clock.isRunning());
+        game.agreeDraw(timestamp+1000);
+        CHECK(game.result==loaded.result&&game.reason==loaded.reason);
+    }
+    chess::Game game;game.start(options,100);game.resign(PieceColor::White,500);
+    game.agreeDraw(60101);
+    CHECK(game.result=="0-1"&&game.reason=="Resigned");
+    game.start(local(),100);game.agreeDraw(60101);
+    CHECK(game.result=="1/2-1/2"&&game.reason=="Draw agreed");
+}
+
 void pgnAndPuzzles(const std::filesystem::path& directory) {
     chess::Game game;game.start(local(),0);play(game,{"f2f3","e7e5","g2g4","d8h4"});
     const auto file=directory/"game.pgn";std::string error;
@@ -243,7 +269,7 @@ int main() {
         ("tyrell-chess-test-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
     try {
         std::filesystem::create_directories(directory);
-        setupAndHistory();endings();materialEndings();sanSpecialMoves();savedGames(directory);pgnAndPuzzles(directory);chess960CastleCoordinates(directory);
+        setupAndHistory();endings();materialEndings();sanSpecialMoves();savedGames(directory);drawAgreementAtFlag(directory);pgnAndPuzzles(directory);chess960CastleCoordinates(directory);
         std::filesystem::remove_all(directory);
         std::puts("Chess model passed: variant reset, SAN, undo, outcomes, transactional saves, clocks, PGN, puzzles.");
         return 0;
