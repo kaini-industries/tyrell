@@ -28,13 +28,13 @@ checkout, records it and rejects source changes during execution. CI passes
 | Suite | Required environment and scope |
 | --- | --- |
 | `docs` | Standard-library Python; validates ledger bindings and local documentation links |
-| `python` | Linux CI; Python, CMake/CTest, FFmpeg/ffprobe and dpkg tools; existing builder/image/script/Zero/app-tool tests plus CI regression tests |
+| `python` | Linux CI; Python, OpenSSL 3, CMake/CTest, FFmpeg/ffprobe and dpkg tools; existing builder/image/script/Zero/app-tool tests plus CI, release and Catalog signature/cache regressions |
 | `game` | C/C++ compiler, CMake/CTest; pinned raylib/ENet; headless framework, native I/O fixtures, Beacon network and Sandline tests; X11/OpenGL development libraries, Xvfb/xauth for desktop lifecycle smoke checks |
 | `chess` | C/C++ compiler, CMake/CTest; pinned raylib; headless chess rules/controller/render/input/LAN tests plus actual desktop app build and Xvfb frame smoke (same desktop prerequisites as `game`) |
 | `chess-native` | Disposable Debian 13 ARM64; pinned raylib; native default Chess CTest and app-only DEB inspection, plus a separate enabled offline shell build and production-loop checks |
 | `status` | Disposable Debian 13 ARM64; pinned LVGL; CTest and app-only DEB construction, no live install |
 | `video` | Disposable Debian 13 ARM64; pinned LVGL, GStreamer >=1.26 development/runtime plugins, libdrm/libpulse and FFmpeg encoders; CTest and app-only DEB construction |
-| `zero-native` | Disposable Debian 13 ARM64 with CMake/Ninja/dpkg tools; foundation builds and install/reinstall/remove/purge in empty temporary roots |
+| `zero-native` | Disposable Debian 13 ARM64 with CMake/Ninja/dpkg tools; foundation builds and install/reinstall/remove/purge in empty temporary roots, plus the separate Catalog native app, locked LVGL, OpenSSL development headers, CTest and app-only DEB inspection |
 
 The workflow declares system prerequisites. Native checks reject a substitute
 distribution or architecture. Downloaded library archives use existing locks,
@@ -82,6 +82,13 @@ empty-root harness. They verify inactive package contents and scoped dpkg
 behavior; they do not prove the installed runtime closure, patched native Wizard,
 offline activation, PAM/VT, boot or hardware. No suite starts Lima, tunes power,
 flashes a card or contacts the handheld.
+
+C1's [separate Catalog checks](qualified-catalog.md) run in the existing Python
+and `zero-native` suites, keeping the eight-suite release contract. Catalog
+changes select both signature/cache regressions and native UI/package checks,
+including the unchanged original Store guard tests. Native previews and semantic
+bounds under `c1-previews/` are retained. No Catalog package is installed in the
+worker or added to the approved Store catalog/default image.
 
 ## Workflow selection and evidence
 

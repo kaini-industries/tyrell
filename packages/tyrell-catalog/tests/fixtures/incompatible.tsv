@@ -1,0 +1,5 @@
+CATALOG	1	incompatible	7	This base is not recognized. Discovery remains available.
+VALIDITY	1577836800	4102444800
+PACKAGE	tyrell-status@0.1.0-1	Tyrell Status	0.1.0-1	546044	downloadable	Read-only system status
+PACKAGE	tyrell-video@0.1.7-1	Tyrell Video	0.1.7-1	686346	cached	Video, captions and TV output
+PACKAGE	tyrell-video@0.1.6-1	Tyrell Video (previous)	0.1.6-1	685526	browse-only	Earlier qualified archive

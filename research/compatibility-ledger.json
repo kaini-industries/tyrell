@@ -85,6 +85,16 @@
       "id": "a3-lifecycle-validation",
       "path": "research/game-chess-lifecycle-validation.json",
       "sha256": "ec0f1c8b5d63753a51ac2c3ecc670b69dbfb29bb5467bbf5c98d6e7978f06227"
+    },
+    {
+      "id": "catalog-design",
+      "path": "docs/qualified-catalog.md",
+      "sha256": "6b521861a7d9289be74c0b2f8980222b94738a1a47d614a8e6c04843a80bf27f"
+    },
+    {
+      "id": "catalog-validation",
+      "path": "research/catalog-validation.json",
+      "sha256": "c121ccc1ea49f26ffe70ea97a46bc3d02083d34705db180fbe438e11b5e4d0f2"
     }
   ],
   "subjects": [
@@ -241,6 +251,21 @@
       "source_identity": "5adaecb09066d09140db4161e0f45b352a1e63d4; exact matched five-stage control capture",
       "availability": "external-not-revalidated",
       "sha256": "e4e0d73d4ec99377dab1c61e321a666a6c574ce519bdf9783a605999155704c0"
+    },
+    {
+      "id": "catalog-source",
+      "component": "catalog",
+      "kind": "current-source",
+      "version": "0.1.0",
+      "source_identity": "C1 discovery-only app/dependency boundary; final implementation revision bound after commit",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-catalog",
+        "packages/tyrell-app-common",
+        "packages/tyrell-zero-store/config",
+        "locks/build-inputs.json"
+      ],
+      "sha256": "ceee2d4dd93d2ca628da34ae1f1b499f934e4340673a1c75ce8327bbed5016a6"
     }
   ],
   "records": [
@@ -738,6 +763,67 @@
       "limitations": [
         "Physical acceptance remains unexecuted; unavailable accessories remain not tested.",
         "Requires an explicitly identified spare card/device and a concrete recovery procedure."
+      ]
+    },
+    {
+      "id": "catalog-current-original-m5",
+      "subject": "catalog-source",
+      "target": "original-m5",
+      "scenario": "Offline discovery, input, explicit verified downloads and normal exit for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source device compatibility scenario; automated CI evidence is separate",
+      "evidence": [
+        "catalog-design",
+        "catalog-validation"
+      ],
+      "limitations": [
+        "Optional discovery/verified-download frontend only; no install/remove/repair or changes to root Store callers, policy or vendor UI.",
+        "No physical acceptance of this frontend or transfer of historical app qualification. Signed entries identify only the existing exact approved package bytes.",
+        "Bundled offline seed only: live publisher key/endpoint deployment and image/Store inclusion are not qualified."
+      ]
+    },
+    {
+      "id": "catalog-current-tyrell-zero",
+      "subject": "catalog-source",
+      "target": "tyrell-zero",
+      "scenario": "Offline discovery, input, explicit verified downloads and normal exit for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source device compatibility scenario; automated CI evidence is separate",
+      "evidence": [
+        "catalog-design",
+        "catalog-validation"
+      ],
+      "limitations": [
+        "Optional discovery/verified-download frontend only; no install/remove/repair or changes to root Store callers, policy or vendor UI.",
+        "No physical acceptance of this frontend or transfer of historical app qualification. Signed entries identify only the existing exact approved package bytes.",
+        "Bundled offline seed only: live publisher key/endpoint deployment and image/Store inclusion are not qualified."
+      ]
+    },
+    {
+      "id": "catalog-current-gh0st",
+      "subject": "catalog-source",
+      "target": "gh0st",
+      "scenario": "Offline discovery, input, explicit verified downloads and normal exit for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source device compatibility scenario; automated CI evidence is separate",
+      "evidence": [
+        "catalog-design",
+        "catalog-validation"
+      ],
+      "limitations": [
+        "Optional discovery/verified-download frontend only; no install/remove/repair or changes to root Store callers, policy or vendor UI.",
+        "No physical acceptance of this frontend or transfer of historical app qualification. Signed entries identify only the existing exact approved package bytes.",
+        "Bundled offline seed only: live publisher key/endpoint deployment and image/Store inclusion are not qualified.",
+        "Native shell-linked launches are refused before backend/device acquisition until a separate lifecycle policy is qualified."
       ]
     }
   ]

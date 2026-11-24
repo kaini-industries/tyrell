@@ -23,6 +23,8 @@ APP_ROOTS = {
     'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'scripts/tanks',
                  'scripts/game', 'locks/game-build-inputs.json'],
     'beacon': ['packages/tyrell-game', 'scripts/game', 'locks/game-build-inputs.json'],
+    'catalog': ['packages/tyrell-catalog', 'packages/tyrell-app-common',
+                'packages/tyrell-zero-store/config', 'locks/build-inputs.json'],
 }
 TARGETS = {'original-m5', 'tyrell-zero', 'gh0st', 'stock-derived', 'full-source'}
 SCOPES = {'source-inspected', 'automated-tested', 'device-tested', 'not-tested'}
@@ -211,7 +213,7 @@ def validate_ledger(root: Path, ledger: dict | None = None) -> list[str]:
         except (OSError, ValueError, TypeError, KeyError, AttributeError) as error:
             errors.append(f'{identity}: {error}')
     if current_apps != set(APP_ROOTS):
-        errors.append('ledger must include exactly one current-source identity for each of the five apps')
+        errors.append('ledger must include exactly one current-source identity for each declared app')
     coverage = set()
     for identity, record in records.items():
         subject = _reference(subjects, record.get('subject'))

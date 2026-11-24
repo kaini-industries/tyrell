@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Tyrell Catalog
+Comment=Browse qualified apps and download verified archives
+Exec=/usr/bin/tyrell-catalog
+Icon=share/images/tyrell-catalog.png
+Terminal=false
+Categories=Utility;

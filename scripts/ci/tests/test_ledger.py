@@ -86,13 +86,14 @@ class LedgerTests(unittest.TestCase):
         row['roots'].remove('packages/tyrell-game')
         self.assertTrue(any('incomplete app source boundary' in e for e in self.errors()))
 
-    def test_shared_source_drift_invalidates_all_three_consumers(self):
+    def test_shared_source_drift_invalidates_each_consumer(self):
         common = self.root / 'packages/tyrell-app-common/commands.hpp'
         common.write_text('// changed command contract\n')
         errors = self.errors()
         self.assertTrue(any('video' in error and 'current source changed' in error for error in errors))
         self.assertTrue(any('chess' in error and 'current source changed' in error for error in errors))
         self.assertTrue(any('status' in error and 'current source changed' in error for error in errors))
+        self.assertTrue(any('catalog' in error and 'current source changed' in error for error in errors))
         self.assertFalse(any('sandline' in error and 'current source changed' in error for error in errors))
 
     def test_retained_package_tamper_fails_even_with_unchanged_reports(self):

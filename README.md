@@ -253,6 +253,11 @@ R1 adds [immutable candidate packaging and explicit promotion](docs/immutable-ca
 It seals exact binaries, inputs and evidence; publication requires a separate
 reviewed request and passing checks for those bytes. Missing device acceptance
 remains visible in development artifacts and blocks hardware-alpha promotion.
+C1 adds a separate [cached Catalog frontend](docs/qualified-catalog.md) with
+signed discovery, offline browsing and explicit verified downloads. It lists
+only the existing exact Store approvals and leaves installation authority and
+the original M5 Store unchanged. The bundled seed is offline; live refresh
+requires a separately configured publisher.
 Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package
