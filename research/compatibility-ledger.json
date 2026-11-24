@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "1cd5094edc500f5153288b461ecb8c827943bc60",
+  "reviewed_revision": "4042c90e89af5ee0b07496ff793027f7298b3dbc",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -96,8 +96,8 @@
       "id": "video-source",
       "component": "video",
       "kind": "current-source",
-      "version": "0.1.8",
-      "source_identity": "A1 Status idle-loop app/dependency boundary at 8f53d06ae4276eb423ef5e2d8a8cd9ea76ae25a9; digest must match the checkout",
+      "version": "0.1.9",
+      "source_identity": "A2 checkpoint/timing app/dependency boundary at 4042c90e89af5ee0b07496ff793027f7298b3dbc; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
@@ -105,7 +105,7 @@
         "locks/build-inputs.json",
         "locks/video-build-inputs.json"
       ],
-      "sha256": "90a60459190a3de45cb2a6888896f156af00f15090e1d42de311ec5474d8a00c"
+      "sha256": "154f5afed6d11f416824a4068d5b932291378f528cfbbf76a7067e3f440f9c24"
     },
     {
       "id": "chess-source",
@@ -345,6 +345,7 @@
         "video-device"
       ],
       "limitations": [
+        "A2 checkpoint/timing APIs and a fail-closed qualification guard exist. Active media remains unsupported: graph teardown can exceed 100 ms and external HDMI/audio/VT cleanup lacks completion proof.",
         "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -31,6 +32,7 @@ struct Status {
     bool playing = false;
     bool paused = false;
     bool buffering = false;
+    bool suspended = false; // Lifecycle checkpoint; distinct from user pause.
     bool output_switching = false; // HDMI desktop handoff is pending; LCD controls remain live.
     bool muted = false;
     double position = 0;
@@ -74,6 +76,51 @@ struct Status {
     double first_playing_seconds = -1;
 };
 
+// Metadata identity, not a content hash or an atomic seal against concurrent
+// writers. The accepted load identity is checked again before suspend/resume.
+struct FileIdentity {
+    std::string path;
+    std::string canonical_path;
+    std::uint64_t device = 0, inode = 0, bytes = 0;
+    std::int64_t modified_seconds = 0, modified_nanoseconds = 0;
+    std::int64_t changed_seconds = 0, changed_nanoseconds = 0;
+};
+
+enum class CheckpointPosition { FreshQuery, PendingTarget, EndOfFile };
+struct PlaybackCheckpoint {
+    FileIdentity media;
+    std::optional<FileIdentity> external_subtitle;
+    double position = 0, duration = 0;
+    CheckpointPosition position_source = CheckpointPosition::FreshQuery;
+    bool playing = false, ended = false;
+    int audio_track = -1, subtitle_track = -1;
+    double volume = 0.65;
+    bool muted = false;
+    Output preferred_output = Output::Lcd;
+    Output actual_output = Output::Lcd;
+    std::string requested_audio_sink;
+    bool requested_owned_audio = false;
+    bool software_video_preferred = false;
+    bool video_decode_retry_attempted = false;
+    std::uint64_t video_decode_fallbacks = 0;
+    std::string video_decode_fallback_reason;
+    bool audio_fallback_attempted = false;
+    bool audio_recovery_attempted = false;
+};
+
+struct PlaybackResources {
+    bool pipeline_present = false;
+    bool drm_fd_open = false;
+    bool desktop_lease_open = false;
+    bool audio_lease_open = false;
+    // Closing a lease is not confirmation that external VT/audio cleanup has
+    // finished. These services currently provide no completion acknowledgment.
+    bool external_cleanup_unconfirmed = false;
+    bool local_handles_released() const {
+        return !pipeline_present && !drm_fd_open && !desktop_lease_open && !audio_lease_open;
+    }
+};
+
 struct PlaybackOptions {
     // Explicit test-only audio output; normal playback always uses PulseAudio.
     bool fake_audio = false;
@@ -99,6 +146,8 @@ public:
     void poll();
     Status status() const;
     std::shared_ptr<const Frame> latest_frame() const;
+    // Suspended controls return false; volume/mute setters do nothing. Only
+    // resume, accepted replacement load, or destructive stop ends suspension.
     bool play();
     bool pause();
     bool toggle_pause();
@@ -110,6 +159,14 @@ public:
     bool set_audio_sink(const std::string& sink_name); // Empty restores automatic routing.
     void set_volume(double volume);
     void set_muted(bool muted);
+    // These calls may block in filesystem/GStreamer/driver operations. They
+    // are NOT sufficient to acknowledge a bounded shell pause deadline.
+    std::optional<PlaybackCheckpoint> capture_checkpoint();
+    bool suspend();
+    bool resume(); // Accepted rebuild may still preroll asynchronously.
+    bool suspended() const;
+    std::optional<PlaybackCheckpoint> checkpoint() const;
+    PlaybackResources resources() const;
     void stop();
     std::string diagnostics_json() const;
 

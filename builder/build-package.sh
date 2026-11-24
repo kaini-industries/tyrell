@@ -40,7 +40,11 @@ archive="$input/downloads/lvgl-$commit.tar.gz"
 printf '%s  %s\n' "$expected" "$archive" | sha256sum -c -
 tar -xzf "$archive" -C "$work/deps" --no-same-owner
 shell_options=()
-if test "$app" = status; then shell_options+=(-DTYRELL_ENABLE_SHELL_LINK=OFF); fi
+if test "$app" = status; then
+    shell_options+=(-DTYRELL_ENABLE_SHELL_LINK=OFF)
+elif test "$app" = video; then
+    shell_options+=(-DTYRELL_EXPERIMENTAL_SHELL_GUARD=OFF)
+fi
 cmake -S "$input/packages/$package" -B "$work/cmake" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DLVGL_SOURCE_DIR="$work/deps/lvgl-$commit" \

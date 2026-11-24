@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package": "tyrell-video",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "source_date_epoch": 1794528000,
   "media_dependencies": {
     "gstreamer_minimum": "1.26",
