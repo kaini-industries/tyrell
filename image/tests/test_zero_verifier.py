@@ -457,6 +457,23 @@ class ZeroVerifierTests(unittest.TestCase):
                          '[Service]\nExecStartPost=/bin/sh\n')
         self.fails('no_native_unit_dropin')
 
+    def test_legacy_userconfig_cannot_compete_with_native_setup(self):
+        f = self.fixture
+        mask = f.root / 'etc/systemd/system/userconfig.service'
+        mask.unlink();mask.symlink_to('/usr/lib/systemd/system/userconfig.service')
+        self.fails('mask_/etc/systemd/system/userconfig.service')
+        mask.unlink();mask.symlink_to('/dev/null')
+        f.link('/etc/systemd/system/multi-user.target.wants/userconfig.service',
+               '/usr/lib/systemd/system/userconfig.service')
+        self.fails('no_desktop_wants_etc/systemd/system/multi-user.target.wants/userconfig.service')
+
+    def test_unlocked_root_password_is_rejected_until_locked(self):
+        f = self.fixture
+        f.put('/etc/shadow', 'root:$6$synthetic-password:1:0:99999:7:::\npi:!:1:0:99999:7:::\n')
+        self.fails('no_bootstrap_password_root')
+        f.put('/etc/shadow', 'root:!$6$synthetic-password:1:0:99999:7:::\npi:!:1:0:99999:7:::\n')
+        self.assertEqual(f.verify()['status'], 'passed')
+
     def test_fat_projection_only_ignores_unstored_posix_metadata(self):
         expected = {'type': 'file', 'mode': 0o644, 'uid': 0, 'gid': 0, 'sha256': 'a' * 64}
         actual = dict(expected, mode=0o755)

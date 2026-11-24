@@ -48,27 +48,65 @@
         "installed_in_builder": false,
         "zero_apt_lock_ready": false
       }
+    },
+    {
+      "recorded_date_local": "2026-11-23",
+      "timezone": "America/Chicago",
+      "kind": "offline-runtime-qualification",
+      "runtime_qualification": {
+        "verified_date_local": "2026-11-23",
+        "scope": "offline-assembled-root",
+        "apt_lock_sha256": "553a1c4c106835c0f9498d43b385ff5535ab4f252ebf472ab2d6f66a50ff5761",
+        "native_compat_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
+        "authentication": {
+          "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/greetd-authentication.json",
+          "sha256": "e35b68717c2886146ad0ef961b5918192bb651eb2567aaca9b983cc1b7f76e1e",
+          "bytes": 1704
+        },
+        "report": {
+          "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
+          "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
+          "bytes": 3710239
+        },
+        "system_package_count": 955,
+        "total_package_count": 959,
+        "image_file_built": false,
+        "physical_boot_qualified": false,
+        "hardware_qualified": false
+      },
+      "note": "Historical detached-root verification retained unchanged; current qualification uses a fresh root and the same selected package bytes."
     }
   ],
   "runtime_qualification": {
-    "verified_date_local": "2026-11-23",
+    "verified_date_local": "2026-11-24",
     "scope": "offline-assembled-root",
     "apt_lock_sha256": "553a1c4c106835c0f9498d43b385ff5535ab4f252ebf472ab2d6f66a50ff5761",
     "native_compat_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
     "authentication": {
-      "input_path": "artifacts/tyrell-zero-lock/20261123T161500Z/greetd-authentication.json",
+      "input_path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/greetd-authentication.json",
       "sha256": "e35b68717c2886146ad0ef961b5918192bb651eb2567aaca9b983cc1b7f76e1e",
       "bytes": 1704
     },
     "report": {
-      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
-      "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
-      "bytes": 3710239
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
+      "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae",
+      "bytes": 3710616
     },
     "system_package_count": 955,
     "total_package_count": 959,
     "image_file_built": false,
     "physical_boot_qualified": false,
-    "hardware_qualified": false
+    "hardware_qualified": false,
+    "metadata": {
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-metadata.json",
+      "sha256": "6f8e3b5e10396edcf069a6f514014af12c1de3e69440a6a1202c1c3bc76ad271",
+      "bytes": 1389
+    },
+    "checks_passed": 24461,
+    "recapture_comparison": {
+      "input_path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
+      "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32",
+      "bytes": 1516
+    }
   }
 }

@@ -1,12 +1,14 @@
 """Adversarial byte-lock and private legacy replay tests; no VM/network access."""
 import base64
 import copy
+import contextlib
 import gzip
 import hashlib
 import io
 import json
 from pathlib import Path
 import runpy
+from types import SimpleNamespace
 import tempfile
 import tarfile
 import unittest
@@ -171,6 +173,54 @@ class ZeroLocks(unittest.TestCase):
             with patch.object(function.__globals__['subprocess'], 'check_output', inspect):
                 with self.assertRaisesRegex(ValueError, 'retained provenance: tyrell-zero-power-policy'):
                     function(native, status, power)
+
+    def test_fresh_root_is_locked_before_activation_but_read_only_recheck_is_not(self):
+        for verify_only in (False, True):
+            with self.subTest(verify_only=verify_only), tempfile.TemporaryDirectory() as name:
+                host = runpy.run_path(str(ROOT / 'builder/zero-lock.py'))
+                function = host['qualify_root']; namespace = function.__globals__
+                root = Path(name); namespace['ROOT'] = root
+                files = ['image/zero_activation.py', 'image/verify-zero.py', 'image/profiles/tyrell-zero.json',
+                         'image/contracts/tyrell-zero-hardware.json', 'image/contracts/tyrell-zero-power.json',
+                         'packages/tyrell-zero-session/src/state.py', 'packages/tyrell-zero-store/activate-image.py',
+                         'packages/tyrell-zero-store/guard.py', 'locks/tyrell-zero-apt.json',
+                         'locks/tyrell-zero-apps.json', 'locks/tyrell-zero-native-compat.json']
+                for item in files:
+                    path = root / item; path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes((ROOT / item).read_bytes())
+                apps_path = root / 'locks/tyrell-zero-apps.json'
+                apps = json.loads(apps_path.read_text()); apps['qualification']['input_path'] = 'qualification.json'
+                apps_path.write_text(json.dumps(apps)); (root / 'qualification.json').write_text('{}')
+                vendor = root / 'vendor'
+                for item in ['debian.sources', 'raspi.sources']:
+                    path = vendor / 'stage0/00-configure-apt/files' / item
+                    path.parent.mkdir(parents=True, exist_ok=True); path.write_text('Suites: RELEASE\n')
+                metadata = root / 'metadata.json'; metadata.write_text(json.dumps(host['canonical_metadata']()))
+                calls = []
+                api = dict(shared_lock=contextlib.nullcontext, instance_state=lambda: ('Running', 0),
+                           up=lambda: None, assert_guest_idle=lambda: None,
+                           guest=lambda *args, **kwargs: calls.append(args), lima=lambda *args: None)
+                namespace['export'] = lambda *args: None
+                original_run_path = runpy.run_path
+                def load(path):
+                    if str(path).endswith('scripts/builder'): return api
+                    if str(path).endswith('image/zero-lock.py'): return {'validate_inputs': lambda _: None}
+                    return original_run_path(path)
+                args = SimpleNamespace(action='verify-root' if verify_only else 'qualify-root',
+                                       guest_root='/var/tmp/tyrell-zero-lock-fixture/rootfs',
+                                       vendor_source=vendor, metadata=metadata)
+                commit = json.loads((root / 'image/profiles/tyrell-zero.json').read_text())['pins']['pi_gen_commit']
+                with patch.object(runpy, 'run_path', load), patch.object(namespace['subprocess'], 'check_output', return_value=commit):
+                    with contextlib.redirect_stdout(io.StringIO()): function(args)
+                lock_calls = [i for i, call in enumerate(calls) if 'passwd' in call]
+                if verify_only:
+                    self.assertEqual(lock_calls, [])
+                    self.assertFalse(any('--prepare-runtime' in call for call in calls))
+                else:
+                    self.assertEqual(len(lock_calls), 1)
+                    self.assertEqual(calls[lock_calls[0]], ('sudo', '-n', 'chroot', args.guest_root, 'passwd', '-l', 'root'))
+                    activation = next(i for i, call in enumerate(calls) if '--qualification' in call)
+                    self.assertLess(lock_calls[0], activation)
 
 
 if __name__ == '__main__':

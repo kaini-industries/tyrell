@@ -262,6 +262,9 @@ for n in ['debian.sources','raspi.sources']:
 '''
             if not verify_only:
                 api['guest']('sudo', '-n', 'python3', '-c', code, args.guest_root, guest)
+                # Match the image's stage99 policy without touching the retained
+                # lower root or the live builder's account database.
+                api['guest']('sudo', '-n', 'chroot', args.guest_root, 'passwd', '-l', 'root')
                 api['guest']('sudo', '-n', 'python3', guest + '/image/zero_activation.py', '--root', args.guest_root,
                              '--qualification', guest + '/pre-image-qualification.json', '--native-compat', guest + '/locks/tyrell-zero-native-compat.json')
             try:

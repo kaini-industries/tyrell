@@ -1,5 +1,10 @@
 # Tyrell Zero implementation progress
 
+November 24 baseline and matched-control construction is in progress. Fresh
+pre-image requalification passed 24,461 checks and 412 host tests (two platform
+skips); the builder is backed up and expanded to 160 GiB. See the
+[image validation record](tyrell-zero-image-validation.md) for current outcomes.
+
 The November 23, 2026 increment implements the frozen dependency locks, offline
 activation, profile runner and independent verifier. It qualifies a detached
 runtime assembly and the pipeline's preparation and failure boundaries. A
@@ -111,11 +116,10 @@ closure; the current runtime qualification uses a complete offline APT assembly.
 
 ## Next acceptance gates
 
-The builder was restored to `Stopped`. Its 64 GiB virtual filesystem has only
-3.76 GiB free after qualification. A fresh image build requires 30 GiB plus
-twice the captured input size; reclaim or expand guest storage before launching
-it. Input/implementation readiness does not waive this separate capacity check.
-The original retained stage2 root and the qualified detached root are preserved.
+The November 23 builder was returned to `Stopped` with 3.76 GiB free. On
+November 24 it was backed up and expanded to 160 GiB for image construction.
+Fresh jobs still require their measured capacity check. Retained roots and
+qualification artifacts are preserved.
 
 1. Build the baseline stage0–2 image from the qualified capture, then pass raw
    exported-image verification and checksum/provenance inspection.

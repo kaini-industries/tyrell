@@ -251,6 +251,35 @@
       "state": "native-wizard-built-store-guard-implemented",
       "complete": false,
       "scope": "Exact native source archives and patch/config replay, actual offline ARM64 Wizard build and guarded Store implementation. Full assembled-image APT/resource/boot acceptance remains incomplete."
+    },
+    {
+      "date_local": "2026-11-23",
+      "timezone": "America/Chicago",
+      "kind": "offline-runtime-qualification",
+      "runtime_qualification": {
+        "date_local": "2026-11-23",
+        "scope": "offline-assembled-root",
+        "report": {
+          "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
+          "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
+          "bytes": 3710239
+        },
+        "metadata": {
+          "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-metadata.json",
+          "sha256": "2a537355af4cf6d58f11ca5b69631eced980839b2b458aae1d42416eaea5f011",
+          "bytes": 1389
+        },
+        "checks_passed": 24458,
+        "installed_system_packages": 955,
+        "installed_total_packages": 959,
+        "native_elf_roots": 182,
+        "protected_hardware_entries": 6949,
+        "image_file_built": false,
+        "physical_boot_qualified": false,
+        "hardware_qualified": false,
+        "battery_qualified": false
+      },
+      "note": "Historical detached-root qualification retained unchanged. Superseded by the 2026-11-24 fresh-root qualification covering suppression of the competing vendor userconfig service."
     }
   ],
   "native_qualification_sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
@@ -262,19 +291,19 @@
     "Complete baseline and candidate battery/power qualification before any tuning or battery-life claim."
   ],
   "runtime_qualification": {
-    "date_local": "2026-11-23",
+    "date_local": "2026-11-24",
     "scope": "offline-assembled-root",
     "report": {
-      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
-      "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab",
-      "bytes": 3710239
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
+      "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae",
+      "bytes": 3710616
     },
     "metadata": {
-      "input_path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-metadata.json",
-      "sha256": "2a537355af4cf6d58f11ca5b69631eced980839b2b458aae1d42416eaea5f011",
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-metadata.json",
+      "sha256": "6f8e3b5e10396edcf069a6f514014af12c1de3e69440a6a1202c1c3bc76ad271",
       "bytes": 1389
     },
-    "checks_passed": 24458,
+    "checks_passed": 24461,
     "installed_system_packages": 955,
     "installed_total_packages": 959,
     "native_elf_roots": 182,
@@ -282,6 +311,17 @@
     "image_file_built": false,
     "physical_boot_qualified": false,
     "hardware_qualified": false,
-    "battery_qualified": false
+    "battery_qualified": false,
+    "recapture_comparison": {
+      "input_path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
+      "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32",
+      "bytes": 1516
+    },
+    "native_linux_activation_tests": {
+      "input_path": "artifacts/tyrell-zero-locks/activation-fixtures-20261124T164844Z/report.json",
+      "sha256": "5074370393ac81fc4c850f122d45fe791ea59ca76a91894f011e879fa54e75b2",
+      "bytes": 947
+    },
+    "requalification_reason": "The image first-boot policy now suppresses the competing vendor userconfig service while preserving native Wizard setup. A fresh retained-stage2 copy with identical selected OS/custom bytes passed final activation and independent offline verification."
   }
 }

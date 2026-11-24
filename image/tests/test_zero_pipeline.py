@@ -7,6 +7,8 @@ import json
 import os
 from pathlib import Path
 import runpy
+import shlex
+import subprocess
 import tarfile
 import tempfile
 from types import SimpleNamespace
@@ -17,6 +19,7 @@ ROOT=Path(__file__).resolve().parents[2]
 zero=runpy.run_path(str(ROOT/'image/zero_pipeline.py'))
 resume=runpy.run_path(str(ROOT/'image/zero_resume.py'))
 legacy=runpy.run_path(str(ROOT/'image/build-image.py'))
+prepare=runpy.run_path(str(ROOT/'image/prepare-zero.py'))
 ID='20261123T180000000000Z-1234abcd'
 
 
@@ -92,6 +95,76 @@ class CaptureTests(unittest.TestCase):
         zero['verify_guest_manifest'](self.root,zero['digest'](path),{'image.img.xz':'a'*64})
         with self.assertRaisesRegex(ValueError,'verified guest artifact'):
             zero['verify_guest_manifest'](self.root,zero['digest'](path),{'image.img.xz':'b'*64})
+
+
+class NativeSetupTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.vendor=Path(self.tmp.name)/'vendor';self.vendor.mkdir()
+        self.original='#!/bin/bash\n'+prepare['VENDOR_RENAME_GUARD']+'\nprintf "accepted\\n"\n'
+        (self.vendor/'build.sh').write_text(self.original)
+        (self.vendor/'tyrell-inputs.conf').write_text('')
+        recipe=(ROOT/'builder/build-zero-image.sh').read_text()
+        self.config=recipe.split('<<CONFIG\n',1)[1].split('\nCONFIG',1)[0]
+
+    def execute_guard(self, config=None):
+        script='vendor='+shlex.quote(str(self.vendor))+'\n'+(self.config if config is None else config)
+        script+='\n'+(self.vendor/'build.sh').read_text()
+        return subprocess.run(['/bin/bash','-c',script],text=True,capture_output=True)
+
+    def test_actual_zero_recipe_skips_vendor_rename_with_locked_factory_account(self):
+        self.assertNotEqual(self.execute_guard().returncode,0)
+        prepare['configure_native_setup'](self.vendor)
+        self.assertEqual(self.execute_guard().returncode,0)
+        for old,new in [('TYRELL_ZERO_NATIVE_SETUP=1','TYRELL_ZERO_NATIVE_SETUP=0'),
+                        ('ENABLE_SSH=0','ENABLE_SSH=1'),
+                        ('PASSWORDLESS_SUDO=0','PASSWORDLESS_SUDO=1'),
+                        ('FIRST_USER_NAME=pi','FIRST_USER_NAME=other')]:
+            with self.subTest(config=new):
+                self.assertNotEqual(self.execute_guard(self.config.replace(old,new)).returncode,0)
+        result=self.execute_guard(self.config+'\nprintf "identity:%s:%s\\n" "$DISABLE_FIRST_BOOT_USER_RENAME" "$FIRST_USER_PASS"')
+        self.assertIn('identity:1:\n',result.stdout)
+
+    def test_changed_vendor_guard_is_rejected_without_rewriting_it(self):
+        path=self.vendor/'build.sh'
+        changed=self.original.replace('FIRST_USER_PASS needs to be set','different vendor policy')
+        path.write_text(changed)
+        with self.assertRaisesRegex(ValueError,'guard differs'):
+            prepare['configure_native_setup'](self.vendor)
+        self.assertEqual(path.read_text(),changed)
+
+    def generated_install(self):
+        for directory in ('stage4/99-tyrell','stage2','export-image/02-set-sources'):
+            (self.vendor/directory).mkdir(parents=True,exist_ok=True)
+        (self.vendor/'stage2/SKIP_IMAGES').touch()
+        (self.vendor/'tyrell-prepared.json').write_text('{"prepared_files_sha256":{}}')
+        metadata={'profile_id':'tyrell-zero','stages':['stage0','stage1','stage2'],
+                  'selected_power_preset':'baseline','output':{},'profile_sha256':'a'*64,'locks_sha256':{}}
+        path=self.vendor/'metadata.json';path.write_text(json.dumps(metadata))
+        dependencies=SimpleNamespace(run_path=lambda name: {'configure_vendor':lambda *_args:None}
+            if str(name).endswith('zero-lock.py') else {'digest':zero['digest']})
+        with patch.dict(prepare['prepare'].__globals__,runpy=dependencies,
+                        subprocess=SimpleNamespace(run=lambda *_a,**_kw:None)):
+            report=prepare['prepare'](self.vendor,self.vendor/'assets',path)
+        self.assertEqual(report['prepared_files_sha256']['build.sh'],zero['digest'](self.vendor/'build.sh'))
+        stage=(self.vendor/'stage2/99-tyrell/00-run.sh').read_text()
+        return stage.split("on_chroot <<'TYRELL_ZERO_INSTALL'\n",1)[1].split('\nTYRELL_ZERO_INSTALL',1)[0]
+
+    def test_generated_install_reasserts_root_lock_and_fails_before_activation_on_error(self):
+        install=self.generated_install()
+        stubs='apt-get(){ echo "apt:$*"; }; dpkg(){ echo "dpkg:$*"; }; rm(){ echo "cleanup:$*"; };\n'
+        for status in (0,42):
+            script=stubs+'passwd(){ echo "passwd:$*"; return '+str(status)+'; };\n'+install+'\necho finished\n'
+            result=subprocess.run(['/bin/bash','-c',script],text=True,capture_output=True)
+            self.assertIn('passwd:-l root\n',result.stdout)
+            if status==0:
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertLess(result.stdout.index('passwd:-l root'),result.stdout.index('dpkg:--audit'))
+                self.assertIn('finished',result.stdout)
+            else:
+                self.assertNotEqual(result.returncode,0)
+                self.assertNotIn('dpkg:--audit',result.stdout)
+                self.assertNotIn('finished',result.stdout)
 
 
 class AttemptTests(unittest.TestCase):

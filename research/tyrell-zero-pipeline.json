@@ -13,7 +13,7 @@
     "builder/build-image.sh": "24ac6e0356b2c7e280999ebfaffb8cc4012fd907bbb9f364f0ac93d051e5a9fa",
     "builder/build-package.sh": "5af5f2fdca811ace96e1f63b1d0c4dac69bd0a54f5a8d038cc7916f24665a330",
     "builder/build-stock-image.sh": "bd913a336bf8358b96fa482be199aec8a5484fb6c25e118911649dc0e14b96a1",
-    "builder/build-zero-image.sh": "af4eb0e71d3f47075d12bf03c5d73a875097fdc803f0633b6634f7d88927980c",
+    "builder/build-zero-image.sh": "cb6b48240553f4e9e559d98ec3b4eec941ce6d72a92d6efe2fb7ac47a30198e1",
     "builder/build-zero-native.sh": "1b953712320afbebb3d7c467c464a134813a462e245fa14e03ed644f2a86d11e",
     "builder/build-zero-packages.sh": "2840d20236b14afcb64ea4d27bf9307e75f28c5b6a45f1973d8cad264226d345",
     "builder/ensure-image-deps.sh": "cdc3ef0f400501ee54cadf5de18f7b908430954bb76f06098cd18bf73b3d66de",
@@ -34,7 +34,7 @@
     "builder/zero-integration-guest.py": "8504f251d61ea1032faa9dabeadf2104f69b8566d38a6dd4630076dc0f5203d7",
     "builder/zero-integration.py": "0bec9ea9d01ff41f175f567a7f3249b22b96ca7a0fee238be4e2a86e6b0a71a2",
     "builder/zero-lock-guest.py": "0651738f834a964782e3e6db876b54fbe745f91fbb5f7a844a4cf303c005e78f",
-    "builder/zero-lock.py": "96188e018e280a2a7ecb4822c7e76fb3ffb5065907ef8e7651ec51ff7a15a936",
+    "builder/zero-lock.py": "bc4e646a7c3271597a962e1deebd6340a60291be21111860ef4f18ab35164abc",
     "builder/zero-native-guest.py": "827a1c66f1c0f7459d189dc9d23c4bf7547cf5cb83826c6bfd34c94a4e3f370f",
     "builder/zero-pipeline-smoke.py": "428c6a1f2378035260e54be3e1b6e35b1df83b314418701e3e6432b5eff59eec",
     "builder/zero-store-lifecycle.py": "e577c392c1b172b1025dbf1a32a7b24eeaeed21795566d1bac0f8be6bf3d249b",
@@ -50,7 +50,7 @@
     "image/contracts/tyrell-zero-power.json": "99803052bb1f7e03c5ccdeab8b14c831d019bee290248e199dd3bf0e4885465a",
     "image/overlay-stock.py": "9704dcc32a5932a72a8108d57ef59deecce8fafdd91bff7ea8cef304ee5a69de",
     "image/prepare-vendor.py": "1629f359b8efcb75ab2e8a8bfd51896957397904333b4e8d0075b2924dd8c93d",
-    "image/prepare-zero.py": "b4149cb747496d33f2c10b18a2c79b3ee8e633412af99fb947cf3c6eb639e896",
+    "image/prepare-zero.py": "74123936943aaf64cc5ca4524045d41ff799739e1a3676934e72b8dbbb680131",
     "image/profiles.py": "c6e8a4750e1c09d5298cb337a8b0bbd9b481f8d738ac5bcd1b01c326db19814c",
     "image/profiles/tyrell-zero.json": "c577001f30f7bbb7f1afdbfc6da6f320b4363bfe0f0e5d03bba5005c4c630f4b",
     "image/resources.py": "38b701287ace42d3300891ce1a818ffd0589602f4744e37eff7f1697cc93cd74",
@@ -70,15 +70,15 @@
     "image/tests/test_stock_image.py": "87b6cf5bf44cd542dfcd6bd41326eaadc175c54f78ea74dfbc87df432a11938e",
     "image/tests/test_stock_lifecycle.py": "78214977977024655ff3ac83807080184d6f2adb87a35bfc41b5316835a99b47",
     "image/tests/test_stock_verifier.py": "c00f3eda80324fc04c88195b452ae559dc799310d998644327acba222b867f98",
-    "image/tests/test_zero_activation.py": "54fd0b6241d4db8dbfefa4c7806f631b047c8d5c0849eac05197e98f39911adf",
-    "image/tests/test_zero_locks.py": "2606ab34a3e6adf6aa4b3680e41dd62deae8ccbd0cbc1141dcd6b6be94235f2f",
-    "image/tests/test_zero_pipeline.py": "cf70a5f69893d971ba03269c5d975690f90476560aea8c053c44c0379a0b62d2",
-    "image/tests/test_zero_verifier.py": "21650b95615f88ff1d4ba85b0258c203a415e2c38467db57a21f70f8c06f657a",
+    "image/tests/test_zero_activation.py": "d506c46ef5d86b11599ce8590cf44ce6cbc29f4030c340c972799c0dbec3b002",
+    "image/tests/test_zero_locks.py": "c905af356b11041012ee9b36ec644a54b3e6955cc86bc238927a6f9a53a37288",
+    "image/tests/test_zero_pipeline.py": "d2865b1944fecf1146becc6a219d817d275b42d866e13768af089b7698e1ba98",
+    "image/tests/test_zero_verifier.py": "6067ed38dcf95127b0680ac48cf81ace9ad071547789acbf4df08aebc776887f",
     "image/verify-image.py": "c94c55d630a147972090b7b62f03a4a9d763974f2e442b324bc25fb9d5bad718",
-    "image/verify-zero.py": "d48a5f895c24be70d474be10619a18417b98d29242bc70454a25548fe8e783cd",
+    "image/verify-zero.py": "74999c294b8026ed7828ef88f86a010bc1681ea648599f715b376e1544d2a00b",
     "image/write-manifest.py": "8b6f107164b3220d5ce358a661bd8e7d2bb984e7f836218d8883eba9a064eaa8",
     "image/zero-lock.py": "f2bd91bc3701fee74937df7b7a5d374033f8780bdf9a84dd07482382ad025dd8",
-    "image/zero_activation.py": "b9cb924c961574068e69be636ba5ab07d480f16045dc0974eae85df2f3ed987f",
+    "image/zero_activation.py": "98260ca3a29cd35088d68eda20d28c116efab6ad148c5a9a06381968e45b85b6",
     "image/zero_pipeline.py": "bcdc9385cf3af826f52766a54542a3e8ec0522d7c5f142b08f34454a96e48c6b",
     "image/zero_resume.py": "ce2fe0e79729d8d2cd43e03f350ff9aa5136e2dcaddd13f4bc7314012c4e76c7",
     "packages/tyrell-zero-power-policy/build-package.py": "4c35d9407e3509d9c47daf619da14a7ac216fe226bb24fd44ecf7ca3f214cc6c",
@@ -118,13 +118,17 @@
     "packages/tyrell-zero-store/tests/test_guard.py": "99bfab3a9f7507a1fd392e7ca1f8f698c306a8b38f64d001684c942eba795eed",
     "scripts/builder": "ffd5f12bf130d64dd1155baaf57f5a7a9f2fd57975cfa440ad45236126a451ba"
   },
+  "fresh_input_replay": {
+    "path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
+    "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32"
+  },
   "full_image_built": false,
   "hardware_qualified": false,
   "host_skipped_count": 2,
-  "host_test_count": 405,
+  "host_test_count": 412,
   "host_tests": {
-    "path": "artifacts/tyrell-zero-pipeline/20261123-pre-image/host-tests.json",
-    "sha256": "3e7b2e41d1b093d668f0c0835dce35a044c224148cd7fdd0ee698fe8a90a4f45"
+    "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/host-tests.json",
+    "sha256": "fc8c3c2f19b20a8d0d675089eea28bd9c22e4ff04fe488cab867fd41f19fdc98"
   },
   "limitations": [
     "Detached offline runtime verification does not prove assembled-image boot or GUI/seat behavior.",
@@ -136,24 +140,32 @@
     "tyrell-zero-apps.json": "6fa0cff9ff719a0ae391a8a7cff1d13729491169d99f277f49cc2795cb6c6336",
     "tyrell-zero-apt.json": "553a1c4c106835c0f9498d43b385ff5535ab4f252ebf472ab2d6f66a50ff5761",
     "tyrell-zero-native-compat.json": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
-    "tyrell-zero-session-source.json": "83a6a1383eaa0d160c2e479c6283b5b9b47c297b9b8ccdec4f5f303a406ba2d1"
+    "tyrell-zero-session-source.json": "54ad4e4cfaa617f1efead0bdf2c41036522ad114d3401b2bd4d58fd8636932f5"
+  },
+  "native_activation_linux": {
+    "path": "artifacts/tyrell-zero-locks/activation-fixtures-20261124T164844Z/report.json",
+    "sha256": "5074370393ac81fc4c850f122d45fe791ea59ca76a91894f011e879fa54e75b2"
   },
   "native_runner_assertion_count": 30,
   "os_package_count": 955,
+  "previous_qualification": {
+    "path": "research/tyrell-zero-pipeline-20261123.json",
+    "sha256": "33034b7b44cb0bef68cc6babcd87c5db337504e2922906b8234dfe31ec2689e3"
+  },
   "profile": "tyrell-zero",
-  "qualified_date": "2026-11-23",
+  "qualified_date": "2026-11-24",
   "runner_failure_fixture": {
     "path": "artifacts/tyrell-zero-locks/wrapper-smoke-20261123T165004267394Z-0f640f15/smoke-report.json",
     "sha256": "33d23e9bd27e2e74f04f14a8e2697637701060b11bd32f97d3169b6e01c86815"
   },
   "runner_prepare": {
-    "path": "artifacts/tyrell-zero-pipeline/20261123-pre-image/runner-prepare-verification.json",
-    "sha256": "4cd61eeea9ae6876c354ab97981716aaf71c83c978f77bd199c4364192c84949"
+    "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
+    "sha256": "e86b7acacd99fa642e6425eec58398d485a062fb0627d0c654a5458d223461f4"
   },
-  "runtime_check_count": 24458,
+  "runtime_check_count": 24461,
   "runtime_verification": {
-    "path": "artifacts/tyrell-zero-root-qualification/20261123T165807174621Z-50765342/image-verification.json",
-    "sha256": "474599a74b2f0ac3d1b2336eeac59377e87e88bf858a8d300940747a4ad7c7ab"
+    "path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
+    "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae"
   },
   "schema": 1,
   "scope": "pre-image-pipeline",
