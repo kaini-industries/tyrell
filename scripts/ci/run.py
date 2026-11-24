@@ -30,6 +30,7 @@ PYTHON_GROUPS = (
     ("packages/tyrell-chess/tests", "*_test.py"),
     ("scripts/release/tests", "test*.py"),
     ("packages/tyrell-catalog/tests", "test*.py"),
+    ("scripts/observe/tests", "test*.py"),
 )
 
 

@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1 implemented; L1/A1 implemented with physical gates pending; A2 checkpoint/timing phase implemented, live media admission gated**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation implemented, physical investigation pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -127,6 +127,12 @@ toolchain or touches a device. Required jobs are tied to the exact candidate
 commit/input identity, and failure or an unresolved required skip blocks promotion.
 
 ### F2 — Preserve and measure the unchanged baseline
+
+**Implemented preparation:** [bounded baseline observations](baseline-observations.md)
+provides opt-in read-only collection, exact retained-reference plans, bundle
+integrity checks and a conservative descriptive memory comparison. The tools
+never write a device or satisfy hardware acceptance. Z4 execution and Z5
+settled-memory/pressure evidence remain pending on an identified spare target.
 
 Add an opt-in, bounded collector and run-record format for exact image/app/BSP
 identities, effective power controls, MemAvailable/PSS, pressure, CPU/wakeups,
@@ -378,6 +384,11 @@ work, untrusted cache cannot change root policy, and all original M5 Store
 install/remove/repair/rollback and protected-base tests still pass.
 
 ### H1/H2/H3 — Hardware ideas with separate evidence
+
+**H1 preparation implemented:** the [backlight investigation](backlight-investigation.md)
+uses F2's read-only observations and separate owner/visual/electrical records.
+No Tyrell false-off fault or correction is established. Physical reproduction,
+baseline acceptance and any justified caller/BSP intervention remain separate.
 
 **H1: backlight.** Reproduce the reported brightness-zero false-off behavior on
 Tyrell's exact BSP/controller, checking visible light, dark/dim/wake behavior
