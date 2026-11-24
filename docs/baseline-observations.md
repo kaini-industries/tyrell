@@ -177,9 +177,9 @@ For the next investigation, see [H1 backlight procedure](backlight-investigation
 
 ## Automated validation
 
-Run `python3 -m unittest discover -s scripts/observe/tests -v` for the 30
+Run `python3 -m unittest discover -s scripts/observe/tests -v` for the 31
 fixture checks. They cover read/output/time bounds, missing/malformed sources,
-sysfs alias changes, PID reuse, cancellation, partial bundles and comparison
+sysfs alias changes, PID reuse, realistic scheduling delay, cancellation, partial bundles and comparison
 rejections. Their fake roots and clocks are explicit test inputs, unavailable
 as live CLI options. The required Python CI group runs these checks; no fixture
 result constitutes a physical backlight reproduction or baseline acceptance.

@@ -24,6 +24,7 @@ SNAPSHOT_BYTES = 768 * 1024
 OUTPUT_BYTES = 32 * 1024 * 1024
 RESULT_BYTES = 1024 * 1024
 SNAPSHOT_SECONDS = 2.0
+SCHEDULE_GRACE_SECONDS = 0.05
 MEMBERS = 16
 NAME = re.compile(r"[A-Za-z0-9_.:+-]{1,128}\Z")
 PROC = ("/proc/meminfo", "/proc/stat", "/proc/vmstat", "/proc/diskstats",
@@ -407,8 +408,10 @@ def collect(plan, output, root=Path("/"), *, clock=time.monotonic, sleep=time.sl
                 wait_until(scheduled)
                 if clock() - scheduled >= config["interval_seconds"]:
                     missed += 1
-                # Snapshot supervision adds at most 2s at the final boundary.
-                if clock() > deadline:
+                # Real waits return slightly after a scheduled boundary. Allow
+                # a bounded scheduling margin for the final sample, while
+                # missed full intervals still fail the completed run below.
+                if clock() > deadline + SCHEDULE_GRACE_SECONDS:
                     raise TimeoutError("collection deadline")
                 before = clock()
                 sample = take_snapshot(root, config["pids"], plan["reference"]["app_packages"], index == 0)
@@ -458,7 +461,9 @@ def collect(plan, output, root=Path("/"), *, clock=time.monotonic, sleep=time.sl
                        "dpkg_status_bytes": STATUS_BYTES, "snapshot_output_bytes": SNAPSHOT_BYTES,
                        "output_bytes": OUTPUT_BYTES, "enumerated_members_per_group": MEMBERS,
                        "result_reserved_bytes": RESULT_BYTES,
-                       "snapshot_seconds": SNAPSHOT_SECONDS, "maximum_samples": 181},
+                       "snapshot_seconds": SNAPSHOT_SECONDS,
+                       "final_sample_grace_seconds": SCHEDULE_GRACE_SECONDS,
+                       "maximum_samples": 181},
             "limitations": [
                 "Declared export/image/BSP identities are references, not proof of this running image.",
                 "Package versions/status do not authenticate installed files or DEB bytes.",

@@ -199,6 +199,19 @@ class CollectorTests(unittest.TestCase):
             self.run_collection()
         self.assertEqual((self.output() / "earlier-result").read_text(), "retain")
 
+    def test_small_realistic_wait_overshoot_allows_final_boundary_sample(self):
+        clock = VirtualClock()
+        def slightly_late(seconds):
+            clock.now += seconds + 0.000001
+        result = collector.collect(self.plan, self.output(), self.root, clock=clock.clock,
+                                   sleep=slightly_late)
+        self.assertEqual(result["status"], "completed", result)
+        self.assertEqual(result["sample_count"], 3)
+        self.assertEqual(result["timing"]["missed_samples"], 0)
+        self.assertGreater(result["timing"]["observed_seconds"], 2)
+        self.assertLess(result["timing"]["observed_seconds"], 2 + collector.SCHEDULE_GRACE_SECONDS)
+        self.assertEqual(records.inspect_bundle(self.output())[1]["status"], "completed")
+
     def test_unfilled_or_unbounded_plan_never_creates_output(self):
         self.plan["conditions"]["device_id"] = "UNRECORDED"
         with self.assertRaises(ValueError):
