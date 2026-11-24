@@ -218,7 +218,8 @@ def run_app(work, app, revision):
                     "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=OFF",
                     "-DTYRELL_BUILD_REVISION=" + revision,
                     *(("-DTYRELL_ENABLE_SHELL_LINK=OFF",) if app == "status" else ()))
-    required = {"status-model", "status-input-edges", "cli-version", "cli-help", "headless-render"} if app == "status" else {
+    required = {"status-model", "status-input-edges", "status-event-wait", "status-idle-gui",
+                "cli-version", "cli-help", "headless-render"} if app == "status" else {
         "video-media-fixture", "video-media-controls", "video-caption-clock", "video-lcd-geometry",
         "video-startup", "video-track-switch", "video-playback", "video-hdmi-lease", "video-hdmi-audio",
         "video-render-browser", "video-render-player", "video-cli-report-write-error",

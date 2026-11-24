@@ -1,5 +1,6 @@
 #include "status_model.h"
 #include "input_edges.h"
+#include "event_wait.h"
 #include "lvgl.h"
 #if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
 #include "shell_lifecycle.h"
@@ -36,7 +37,80 @@ namespace {
 constexpr int width = 320;
 constexpr int height = 170;
 volatile std::sig_atomic_t running = 1;
-void stop(int) { running = 0; }
+#if defined(__linux__)
+volatile std::sig_atomic_t shutdown_write_fd = -1;
+#endif
+void stop(int) {
+    const int saved_errno = errno;
+    running = 0;
+#if defined(__linux__)
+    const int fd = shutdown_write_fd;
+    if(fd >= 0) {
+        const unsigned char byte = 1;
+        // A full pipe is already readable. Signal handlers never wait.
+        ssize_t result;
+        do { result = ::write(fd, &byte, sizeof(byte)); } while(result < 0 && errno == EINTR);
+    }
+#endif
+    errno = saved_errno;
+}
+
+#if defined(__linux__)
+// Native Status is single-threaded (LV_OS_NONE, no workers). The byte makes
+// shutdown durable across the final running check and poll. Mask registration
+// and teardown on that thread so no handler can write a reused descriptor.
+class ShutdownWake {
+public:
+    ShutdownWake() {
+        if(::pipe2(pipe_, O_NONBLOCK | O_CLOEXEC) < 0)
+            throw std::system_error(errno, std::generic_category(), "Status shutdown pipe");
+        sigset_t previous;
+        block(previous);
+        struct sigaction action{};
+        action.sa_handler = stop;
+        ::sigemptyset(&action.sa_mask);
+        ::sigaddset(&action.sa_mask, SIGINT);
+        ::sigaddset(&action.sa_mask, SIGTERM);
+        if(::sigaction(SIGINT, &action, &old_int_) < 0) {
+            const int error = errno;
+            ::close(pipe_[0]); ::close(pipe_[1]);
+            ::sigprocmask(SIG_SETMASK, &previous, nullptr);
+            throw std::system_error(error, std::generic_category(), "Status SIGINT handler");
+        }
+        if(::sigaction(SIGTERM, &action, &old_term_) < 0) {
+            const int error = errno;
+            ::sigaction(SIGINT, &old_int_, nullptr);
+            ::close(pipe_[0]); ::close(pipe_[1]);
+            ::sigprocmask(SIG_SETMASK, &previous, nullptr);
+            throw std::system_error(error, std::generic_category(), "Status SIGTERM handler");
+        }
+        shutdown_write_fd = pipe_[1];
+        ::sigprocmask(SIG_SETMASK, &previous, nullptr);
+    }
+    ~ShutdownWake() {
+        sigset_t previous;
+        block(previous);
+        shutdown_write_fd = -1;
+        ::sigaction(SIGINT, &old_int_, nullptr);
+        ::sigaction(SIGTERM, &old_term_, nullptr);
+        ::close(pipe_[0]); ::close(pipe_[1]);
+        ::sigprocmask(SIG_SETMASK, &previous, nullptr);
+    }
+    ShutdownWake(const ShutdownWake&) = delete;
+    ShutdownWake& operator=(const ShutdownWake&) = delete;
+    int fd() const { return pipe_[0]; }
+private:
+    int pipe_[2]{-1, -1};
+    struct sigaction old_int_{}, old_term_{};
+    static void block(sigset_t& previous) {
+        sigset_t blocked;
+        ::sigemptyset(&blocked);
+        ::sigaddset(&blocked, SIGINT);
+        ::sigaddset(&blocked, SIGTERM);
+        ::sigprocmask(SIG_BLOCK, &blocked, &previous);
+    }
+};
+#endif
 std::uint32_t tick_ms() {
     using namespace std::chrono;
     return static_cast<std::uint32_t>(duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count());
@@ -164,6 +238,7 @@ void update_ui(Ui& ui) {
 class Keyboard {
 public:
     ~Keyboard() { release(); }
+    int fd() const { return fd_; }
     void release() {
         if(fd_ >= 0) close(fd_);
         fd_ = -1;
@@ -243,6 +318,13 @@ private:
 class GuiDevices {
 public:
     virtual ~GuiDevices() = default;
+    virtual int input_fd() const {
+#if defined(__linux__)
+        return keyboard_.fd();
+#else
+        return -1;
+#endif
+    }
     virtual bool acquire_input(const std::string& path) {
 #if defined(__linux__)
         return keyboard_.open_device(path);
@@ -274,6 +356,16 @@ public:
 #endif
     }
     virtual void idle() { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+    virtual void wait(const tyrell::status::WaitRequest& request) {
+#if defined(__linux__)
+        tyrell::status::wait_for_events(request);
+#else
+        // Native device mode is Linux-only. Desktop rendering keeps its SDL
+        // event-pump cadence and headless tools do not enter this wait.
+        (void)request;
+        idle();
+#endif
+    }
 private:
 #if defined(__linux__)
     Keyboard keyboard_;
@@ -298,8 +390,17 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
 #if !TYRELL_ENABLE_SDL
     if(options.simulator) throw std::runtime_error("SDL simulator was not enabled in this build");
 #endif
-    std::signal(SIGINT, stop);
-    std::signal(SIGTERM, stop);
+#if defined(__linux__)
+    std::optional<ShutdownWake> shutdown;
+    if(!headless && !options.simulator) shutdown.emplace();
+    else
+#endif
+    {
+        // Desktop/headless paths do not enter native poll or assume ownership
+        // of signal delivery on SDL's internal threads.
+        std::signal(SIGINT, stop);
+        std::signal(SIGTERM, stop);
+    }
     GuiDevices default_devices;
     auto& devices = injected_devices ? *injected_devices : default_devices;
 #if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
@@ -307,6 +408,25 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
     auto link = (!headless && !options.simulator)
         ? tyrell::app::ShellLink::from_environment() : tyrell::app::ShellLink{};
     const bool linked = link.connected() || link.closed();
+#endif
+    auto wait = [&](std::optional<tyrell::status::SteadyClock::time_point> deadline,
+                    bool foreground) {
+        if(!running) return;
+        tyrell::status::WaitRequest request;
+        request.deadline = deadline;
+        if(foreground) request.input_fd = devices.input_fd();
+#if defined(__linux__)
+        if(shutdown) request.shutdown_fd = shutdown->fd();
+#endif
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+        if(linked) {
+            request.link_fd = link.fd();
+            request.link_output = link.pending_output();
+        }
+#endif
+        devices.wait(request);
+    };
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
     tyrell::status::ShellLifecycle lifecycle;
     struct Hooks {
         GuiDevices& devices;
@@ -354,16 +474,19 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
                 std::cerr << "tyrell-status: shell hello timed out; leaving display and input untouched\n";
                 return 1;
             }
-            devices.idle();
+            if(!drained) continue;
+            wait(lifecycle.hello_seen() ? std::nullopt : std::make_optional(hello_deadline), false);
         }
         if(!running) return 0;
     }
 #endif
+    if(!running) return 0;
 #if defined(__linux__)
     if(!headless && !options.simulator && !devices.acquire_input(options.input)) {
         throw std::runtime_error("Cannot open Cardputer keyboard. Use --input PATH, or --json for display-free status.");
     }
 #endif
+    if(!running) { devices.release_input(); return 0; }
     lv_init();
     lv_tick_set_cb(tick_ms);
     lv_display_t* display = nullptr;
@@ -423,7 +546,8 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
         if(linked) {
             const bool drained = pump();
             if(lifecycle.exiting()) break;
-            if(!lifecycle.foreground() || !drained) { devices.idle(); continue; }
+            if(!drained) continue;
+            if(!lifecycle.foreground()) { wait(std::nullopt, false); continue; }
             if(hooks.dirty) {
                 lv_obj_invalidate(lv_screen_active());
                 ui.refresh = true;
@@ -435,6 +559,7 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
 #if defined(__linux__)
         if(!headless && !options.simulator && !devices.process_input(ui)) break;
 #endif
+        if(!running) break;
         const auto now = std::chrono::steady_clock::now();
         if(ui.refresh || now >= refresh_at) {
             ui.snapshot = tyrell::collect_status(options.paths);
@@ -442,10 +567,23 @@ int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
             ui.refresh = false;
             refresh_at = now + std::chrono::seconds(1);
         }
-        lv_timer_handler();
-        if(headless || full_redraw) lv_refr_now(display);
+        if(!running) break;
+        // Force ownership-driven redraw before calculating LVGL's next real
+        // deadline: refreshing pauses its display timer until invalidation.
+        if(full_redraw) lv_refr_now(display);
+        const auto ui_delay = lv_timer_handler();
+        if(headless) lv_refr_now(display);
         ++frame;
-        if(!headless) devices.idle();
+        if(!running || (limit && frame >= limit)) break;
+        if(!headless) {
+            if(options.simulator) devices.idle();
+            else {
+                auto deadline = refresh_at;
+                if(ui_delay != LV_NO_TIMER_READY)
+                    deadline = std::min(deadline, tyrell::status::SteadyClock::now() + std::chrono::milliseconds(ui_delay));
+                wait(deadline, true);
+            }
+        }
     }
     if(headless) write_ppm(options.screenshot, pixels);
     devices.release_input();

@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1 and U1 implemented; L1 experimental pilot implemented; physical L1 gates pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1 implemented; L1 experimental pilot and A1 Status idle loop implemented; physical acceptance pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -223,6 +223,9 @@ checks and separate physical tests against a pinned Gh0st image/build. If no
 Gh0st device test is available, mark integration experimental, not compatible.
 
 ### A1/A2 — Idle loops and Video lifecycle
+
+A1 Status implementation and comparison gates: [event-driven Status idle loop](status-idle-loop.md).
+Video checkpoint, lifecycle and idle changes remain separate A2 work.
 
 Split this into a Status idle-loop PR, a Video checkpoint/timing PR and a Video
 integration/idle-loop PR. Status waits on keyboard, link, shutdown and its real

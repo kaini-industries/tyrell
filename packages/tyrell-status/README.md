@@ -5,7 +5,7 @@ It shows uptime, used/total memory, battery status and network link state.
 It makes no network requests, invokes no shell commands, and needs no root
 privileges. Missing or malformed telemetry remains unknown.
 
-Current source is **0.1.1**. The retained 0.1.0 package below keeps its existing
+Current source is **0.1.2**. The retained 0.1.0 package below keeps its existing
 provenance; it does not contain the experimental shell integration.
 
 The verified [0.1.0 ARM64 package](../../dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
@@ -33,6 +33,11 @@ input devices. `--proc-root` and `--sys-root` support deterministic offline
 fixtures. The headless screenshot is a real LVGL software-rendered PPM image.
 An optional SDL desktop simulator is available with `TYRELL_ENABLE_SDL=ON` and
 `--simulator`; SDL is disabled in the device package to avoid extra dependencies.
+
+The native GUI uses an [event-driven idle loop](../../docs/status-idle-loop.md):
+it waits for keyboard/shell/shutdown events and telemetry/LVGL deadlines rather
+than waking every 10 ms. Telemetry still refreshes once per second. Hidden
+shell-linked instances stop input, telemetry and rendering until explicit resume.
 
 ## Experimental Gh0st pilot
 

@@ -71,8 +71,8 @@ There are no Status worker processes or background-resume promises.
 
 The reviewed shell waits about 100 ms for `paused`, then may send `SIGSTOP`
 regardless of acknowledgment. A late acknowledgment does not guarantee a later
-resume. Status retains its existing 10 ms active loop; event-driven idle work
-belongs to A1. Bounded packet/input batches do not establish a hard deadline:
+resume. [A1's Status idle loop](status-idle-loop.md) replaces the native 10 ms
+polling loop introduced before L1. Bounded packet/input batches do not establish a hard deadline:
 device operations, synchronous telemetry reads and OS scheduling can stall.
 Fake-shell checks establish ordering, not a hardware latency or shutdown bound.
 
