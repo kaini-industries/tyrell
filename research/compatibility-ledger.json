@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "8f53d06ae4276eb423ef5e2d8a8cd9ea76ae25a9",
+  "reviewed_revision": "1cd5094edc500f5153288b461ecb8c827943bc60",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -83,7 +83,7 @@
       "component": "status",
       "kind": "current-source",
       "version": "0.1.2",
-      "source_identity": "A1 Status idle-loop boundary with EOF observation test; digest must match the checkout",
+      "source_identity": "A1 Status idle-loop app/dependency boundary at 1cd5094edc500f5153288b461ecb8c827943bc60; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-status",
