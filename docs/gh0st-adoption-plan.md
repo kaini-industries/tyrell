@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation implemented; H2 offline policy rehearsal implemented; physical testing and live power activation pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -422,6 +422,13 @@ fallback. Requalify M5 apps, Tyrell media/games, dirty/full redraws, tearing,
 idle IRQs, brightness, HDMI handoff and crash recovery before promotion. A higher
 transfer count alone does not establish visible benefit or justify changing the
 protected baseline.
+
+**H3 preparation:** the [pinned source audit](panel-source-audit.md),
+[inactive experiment and counter analysis](panel-experiment.md) bind the ABI,
+license and kernel/BSP differences without changing current applications or
+active image profiles. Recorded SPI rates use parent capture envelopes and
+remain separate from optical refresh. Accepted baseline, a coherent candidate
+build and all physical H3 gates remain open.
 
 ## First implementation increment
 

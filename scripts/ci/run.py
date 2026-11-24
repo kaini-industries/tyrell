@@ -32,6 +32,7 @@ PYTHON_GROUPS = (
     ("packages/tyrell-catalog/tests", "test*.py"),
     ("scripts/observe/tests", "test*.py"),
     ("scripts/power/tests", "test*.py"),
+    ("scripts/panel/tests", "test*.py"),
 )
 
 

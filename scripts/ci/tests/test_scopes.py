@@ -59,6 +59,12 @@ class ScopesTests(unittest.TestCase):
         self.assertEqual(scopes.select(["scripts/observe/collect.py"]), ["docs", "python"])
         self.assertEqual(scopes.select(["scripts/power/transaction.py"]), ["docs", "python"])
 
+    def test_panel_code_and_audited_metadata_require_parsing_checks(self):
+        for name in ("scripts/panel/counters.py", "research/panel-source-audit.json",
+                     "research/panel-experiment-template.json"):
+            with self.subTest(name=name):
+                self.assertEqual(scopes.select([name]), ["docs", "python"])
+
     def test_git_parser_keeps_deleted_and_both_renamed_paths(self):
         data = b"D\0packages/tyrell-video/src/removed.cpp\0R100\0packages/tyrell-chess/old.cpp\0docs/new name\n.md\0"
         paths = scopes.parse_name_status(data)

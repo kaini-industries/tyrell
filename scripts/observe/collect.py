@@ -415,9 +415,12 @@ def collect(plan, output, root=Path("/"), *, clock=time.monotonic, sleep=time.sl
                     raise TimeoutError("collection deadline")
                 before = clock()
                 sample = take_snapshot(root, config["pids"], plan["reference"]["app_packages"], index == 0)
+                after = clock()
                 identity = sample.pop("identity", identity)
                 sample.update(schema=1, index=index, monotonic_seconds=before,
                               elapsed_seconds=before - observed_start,
+                              capture_started_seconds=before - observed_start,
+                              capture_finished_seconds=after - observed_start,
                               wall_time_utc=datetime.now(timezone.utc).isoformat(),
                               observer_cpu_seconds=time.process_time() - cpu_start)
                 blob = encoded(sample)
@@ -470,6 +473,7 @@ def collect(plan, output, root=Path("/"), *, clock=time.monotonic, sleep=time.sl
                 "Missing, denied, unsafe, oversized and malformed data are not zero or a pass.",
                 "Read-only observations include observer overhead and do not exercise physical hardware.",
                 "Interrupt occurrences are not wakeups; SPI counters are not rendered frames or optical scanout.",
+                "Parent capture windows include snapshot startup/IPC; child read_seconds alone is not a capture-time bound.",
                 "Raw gauge/PWM/backlight state is not validated electrical energy or proof of darkness.",
                 "No service/timer inventory or Wi-Fi power-save command is executed; record independent evidence.",
                 "A kernel-stalled child is killed without an unbounded reap wait; the kernel may delay its exit.",

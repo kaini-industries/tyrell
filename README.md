@@ -266,6 +266,9 @@ H2 adds an [offline guarded-power rehearsal](docs/guarded-power-rehearsal.md)
 for fixed preset intents, identity/topology checks and generation-bound recovery.
 It simulates synthetic snapshots in memory; live power activation and battery
 qualification remain pending.
+H3 supplies a [pinned panel audit and inactive experiment](docs/panel-experiment.md),
+with offline analysis of recorded SPI counters. Current fbdev/fsync paths remain
+in use; a driver candidate still requires separate baseline/BSP/device acceptance.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
