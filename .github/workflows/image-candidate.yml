@@ -1,74 +1,135 @@
-name: image candidate input preflight
+name: immutable candidate assembly
 
-# Construction stays in the existing captured-input pipeline. This read-only
-# dispatch verifies restored inputs; it cannot publish or certify an image.
+# Restore selected bytes; never construct an image or publish from this job.
 on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: Exact clean source commit recorded in the captured bundle
+        description: Exact clean source commit that produced the selected artifacts
+        required: true
+        type: string
+      checks_run_id:
+        description: Successful full eight-suite checks run for that source
         required: true
         type: string
       artifact_run_id:
-        description: Workflow run in this repository retaining image-input.tar
-        required: true
+        description: Optional run retaining an image/input tree (pair with artifact_name)
+        required: false
         type: string
       artifact_name:
-        description: Exact retained artifact name (must contain image-input.tar)
+        description: Optional exact retained input artifact name
+        required: false
+        type: string
+      selection_path:
+        description: Optional reviewed selection JSON in the tooling checkout (app-only needs no input artifact)
+        required: false
+        type: string
+      selection_sha256:
+        description: SHA-256 of the reviewed release-selection.json bytes
         required: true
         type: string
-      bundle_sha256:
-        description: Expected SHA-256 of the retained image-input.tar
-        required: true
-        type: string
-
 permissions:
   contents: read
   actions: read
-
 jobs:
-  input-preflight:
+  assemble:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Validate immutable input selection
         env:
           SOURCE_SHA: ${{ inputs.source_sha }}
-          BUNDLE_SHA: ${{ inputs.bundle_sha256 }}
+          SELECTION_SHA: ${{ inputs.selection_sha256 }}
           RUN_ID: ${{ inputs.artifact_run_id }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name }}
+          SELECTION_PATH: ${{ inputs.selection_path }}
+          CHECKS_ID: ${{ inputs.checks_run_id }}
         run: |
           python3 - <<'PY'
           import os, re
-          for key, pattern in [('SOURCE_SHA', r'[0-9a-f]{40}'),
-                               ('BUNDLE_SHA', r'[0-9a-f]{64}'), ('RUN_ID', r'[1-9][0-9]*')]:
+          for key, pattern in [('SOURCE_SHA', r'[0-9a-f]{40}'), ('SELECTION_SHA', r'[0-9a-f]{64}'),
+                               ('CHECKS_ID', r'[1-9][0-9]*')]:
               if not re.fullmatch(pattern, os.environ[key]):
                   raise SystemExit('Invalid immutable input: ' + key)
+          if bool(os.environ['RUN_ID']) != bool(os.environ['ARTIFACT_NAME']):
+              raise SystemExit('Retained artifact run and name must be selected together')
+          if os.environ['RUN_ID'] and not re.fullmatch(r'[1-9][0-9]*', os.environ['RUN_ID']):
+              raise SystemExit('Invalid artifact run')
+          if not os.environ['RUN_ID'] and not os.environ['SELECTION_PATH']:
+              raise SystemExit('Select retained inputs or a reviewed app selection')
           PY
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out trusted tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check out selected binary source as data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.source_sha }}
+          path: build/release-source
           persist-credentials: false
-      - name: Restore exact retained bundle (no dependency rebuilding)
+      - name: Restore exact selected inputs without rebuilding
+        if: inputs.artifact_run_id != ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ inputs.artifact_run_id }}
           name: ${{ inputs.artifact_name }}
-          path: build/ci/candidate-input
-      - name: Verify capture without executing or extracting its recipes
+          path: build/release-input
+      - name: Stage reviewed selection and retained app checks
+        if: inputs.selection_path != ''
         env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
           SOURCE_SHA: ${{ inputs.source_sha }}
-          BUNDLE_SHA: ${{ inputs.bundle_sha256 }}
+          CHECKS_ID: ${{ inputs.checks_run_id }}
+          SELECTION_PATH: ${{ inputs.selection_path }}
+          SELECTION_SHA: ${{ inputs.selection_sha256 }}
         run: |
-          python3 scripts/ci/candidate.py \
-            --bundle build/ci/candidate-input/image-input.tar --sha256 "$BUNDLE_SHA" \
-            --expected-revision "$SOURCE_SHA" --report build/ci/candidate.json
-      - name: Retain preflight result
+          python3 scripts/release/stage.py --repository "$REPOSITORY" --run-id "$CHECKS_ID" \
+            --source-sha "$SOURCE_SHA" --selection "$SELECTION_PATH" --selection-sha256 "$SELECTION_SHA" \
+            --inputs-root build/release-input --report build/ci/candidate-staging.json
+      - name: Authenticate source checks and selected build reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          CHECKS_ID: ${{ inputs.checks_run_id }}
+          SELECTION_SHA: ${{ inputs.selection_sha256 }}
+        run: |
+          python3 scripts/release/github.py authenticate-selection \
+            --repository "$REPOSITORY" --run-id "$CHECKS_ID" --source-sha "$SOURCE_SHA" \
+            --inputs-root build/release-input --selection-sha256 "$SELECTION_SHA" \
+            --download-root build/release-authenticated-checks --report build/ci/candidate-source-checks.json
+      - name: Seal and independently verify candidate
+        env:
+          TOOLING_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          CHECKS_ID: ${{ inputs.checks_run_id }}
+        run: |
+          python3 scripts/release/candidate.py assemble \
+            --selection build/release-input/release-selection.json --inputs-root build/release-input \
+            --repository-root build/release-source --output-root build/release-output \
+            --report build/ci/candidate-assembly.json
+          python3 scripts/release/github.py record-candidate \
+            --assembly build/ci/candidate-assembly.json --source-run-id "$CHECKS_ID" \
+            --tooling-sha "$TOOLING_SHA" --run-id "$RUN_ID" --destination build/release-retained \
+            --report build/ci/candidate-verification.json
+      - name: Retain sealed development candidate
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-candidate-${{ github.run_id }}
+          path: build/release-retained/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+      - name: Retain verification diagnostics
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: candidate-input-preflight-${{ github.run_id }}
-          path: build/ci/candidate.json
-          if-no-files-found: error
+          name: candidate-diagnostics-${{ github.run_id }}
+          path: build/ci/candidate-*.json
+          if-no-files-found: warn
           retention-days: 14

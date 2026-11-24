@@ -115,17 +115,13 @@ qualification. Historical ledger results are never automatically upgraded by CI.
 
 ## Manual candidate input preflight
 
-`.github/workflows/image-candidate.yml` is a separate manual dispatch. It needs
-an exact source commit, retained artifact run/name in this repository and the
-expected SHA-256 of an existing `image-input.tar`. Restore that exact archive;
-missing retained inputs fail rather than triggering a replacement download or
-rebuild. The workflow does not upload private local archives automatically.
-The selected source commit must contain these F1 tools. Earlier Z3 captures
-remain historical evidence; dispatch cannot retroactively test their old commits
-with files that did not exist there. Prepare a new capture at a clean F1-or-later
-commit for this workflow, without overwriting the accepted Z3 pair.
+The F1 read-only preflight remains a local command. Restore the exact captured
+archive and select its clean source checkout; missing retained bytes fail rather
+than triggering a replacement download or rebuild. The selected checkout must
+contain these preflight tools. Earlier Z3 captures remain historical evidence;
+do not relabel them as a later source revision.
 
-Local equivalent, on a clean selected checkout:
+On a clean selected checkout:
 
 ```sh
 python3 scripts/ci/candidate.py \
@@ -141,5 +137,13 @@ Archive self-consistency is not a proof of a complete vendor/dependency closure
 or image-build readiness; those remain the frozen pipeline's independent gates.
 This preflight is deliberately **not an image build or promotable result**.
 Construction/activation/image verification still use the
-[frozen pipeline](tyrell-zero-pipeline.md). R1's immutable release packaging and
-promotion remain future work; required hardware evidence remains explicit.
+[frozen pipeline](tyrell-zero-pipeline.md).
+
+R1 upgrades `.github/workflows/image-candidate.yml` to manually restored,
+hash-selected [immutable candidate assembly](immutable-candidates.md). It
+authenticates all eight source suites and compares selected reports with their
+retained hosted artifacts. A separate default-branch manual promotion workflow
+rechecks that exact candidate and reviewed qualification request before a
+serialized immutable prerelease publication. Release tooling regression tests
+are required in the Python suite. Neither workflow builds an image or writes a
+device; missing physical gates remain explicit and block hardware-alpha claims.

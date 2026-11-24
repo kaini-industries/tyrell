@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "release_version": "chess-0.1.4-dev-r1-example",
+  "source_commit": "6be169bcfccf9b6760533c52cc210ff37da7556e",
+  "target": "original-m5",
+  "optimized_power": false,
+  "image": null,
+  "packages": [
+    {
+      "path": "checks-chess-native-6be169bcfccf9b6760533c52cc210ff37da7556e/evidence/chess-native/chess-native-1fi1t3d_/packages/tyrell-chess_0.1.4-1_arm64.deb",
+      "sha256": "e0f68ab1fd5ca7fdb3a4101261143e0240fced6648f05d2e8a375e8534d209e3",
+      "package": "tyrell-chess",
+      "version": "0.1.4-1",
+      "architecture": "arm64",
+      "build_report": "checks-chess-native-6be169bcfccf9b6760533c52cc210ff37da7556e/chess-native.json"
+    }
+  ],
+  "checks": [
+    {
+      "path": "checks-docs-6be169bcfccf9b6760533c52cc210ff37da7556e/docs.json",
+      "sha256": "dac3b78483a5d052e63438328a25ef80c08e90541aeda2fa5c0e3fb23cbe8805"
+    },
+    {
+      "path": "checks-python-6be169bcfccf9b6760533c52cc210ff37da7556e/python.json",
+      "sha256": "5f2056c6af6131426098a76e8e90b73cb370c0e61525f1c4789b3d4c6fe0bc8e"
+    },
+    {
+      "path": "checks-game-6be169bcfccf9b6760533c52cc210ff37da7556e/game.json",
+      "sha256": "53db94f3aaf91600df14bfa6e7bf112f3c95606f1fec51190b6ee634c21c1a38"
+    },
+    {
+      "path": "checks-chess-6be169bcfccf9b6760533c52cc210ff37da7556e/chess.json",
+      "sha256": "5963085c84ce90fca020afabb2778e7fe41b6fbe9601c79ba4519d211ac03f20"
+    },
+    {
+      "path": "checks-chess-native-6be169bcfccf9b6760533c52cc210ff37da7556e/chess-native.json",
+      "sha256": "52c0a7f61f621405ac71ef927ad8778b87abbbb09b102c081a980aa9b3b4fb7c"
+    },
+    {
+      "path": "checks-status-6be169bcfccf9b6760533c52cc210ff37da7556e/status.json",
+      "sha256": "1323814e5deee023da1ecfa1787d1f2e211b19388059ec029b84fd4a2573d4c4"
+    },
+    {
+      "path": "checks-video-6be169bcfccf9b6760533c52cc210ff37da7556e/video.json",
+      "sha256": "7a50dae958921e71bcb125b2c6b5f21cb5cec71910bf1e7a08001cf141b99e98"
+    },
+    {
+      "path": "checks-zero-native-6be169bcfccf9b6760533c52cc210ff37da7556e/zero-native.json",
+      "sha256": "d965982cfd7308533ff0d02f205f694b523ee1aa4f95028a543120778e1c621a"
+    }
+  ],
+  "documents": [
+    {
+      "path": "research/r1-example/qualification.json",
+      "sha256": "59b7fb79c58deeeeaa4602af6b835165e057feab5390cb22aa787a01d94032f7",
+      "role": "qualification"
+    },
+    {
+      "path": "research/r1-example/known-issues.md",
+      "sha256": "dcfb39a00d0c691559d66e90299feaf153d6f363a750be0ccaaf6161220cc656",
+      "role": "known-issues"
+    },
+    {
+      "path": "research/r1-example/recovery.md",
+      "sha256": "f133b615aa1ff1733bb182def918455cf7ee0a43c6fefedd652ad1ee831e115b",
+      "role": "recovery"
+    },
+    {
+      "path": "research/r1-example/license-notices.md",
+      "sha256": "223dfc333fb4660557574e94c6833677f36f7a338c6b8568e6be210cadd72653",
+      "role": "license"
+    },
+    {
+      "path": "research/r1-example/inventory.json",
+      "sha256": "b2349dd4edfd3f5296c3276597962d5f47fe1188db936902858328a06249c904",
+      "role": "inventory"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "32ffb7f513a2faaac16d737dd235030b3992728c2a142434f9496bc4d3fa2a32",
+      "role": "license"
+    },
+    {
+      "path": "packages/tyrell-chess/engine/LICENSE.upstream",
+      "sha256": "4915563e25bad428e9dccf77a9684c83e4c399d4dffbcf7890fef4e60e14c6b1",
+      "role": "license"
+    },
+    {
+      "path": "locks/game-build-inputs.json",
+      "sha256": "4757eacbac9c40b318186a48e7038f02e4ef0cc27ea0f1215286dfb1c419f18b",
+      "role": "input-manifest"
+    }
+  ]
+}

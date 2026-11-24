@@ -28,6 +28,7 @@ PYTHON_GROUPS = (
     ("packages/tyrell-zero-store/tests", "test*.py"),
     ("packages/tyrell-zero-power-policy/tests", "test*.py"),
     ("packages/tyrell-chess/tests", "*_test.py"),
+    ("scripts/release/tests", "test*.py"),
 )
 
 

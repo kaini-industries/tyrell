@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "artifact_sha256": "e0f68ab1fd5ca7fdb3a4101261143e0240fced6648f05d2e8a375e8534d209e3",
+      "target": "original-m5",
+      "gate": "app-acceptance",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "evidence": [],
+      "limitations": [
+        "This exact CI package has automated checks, not physical M5 acceptance.",
+        "Historical Chess 0.1.1 device evidence does not qualify this 0.1.4 binary."
+      ]
+    }
+  ]
+}
