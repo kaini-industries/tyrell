@@ -56,6 +56,8 @@ flashes a card or contacts the handheld.
 
 `.github/workflows/checks.yml` runs an always-present planner and one
 **compatibility gate**. Documentation-only changes select documentation checks.
+Pull requests and main-branch pushes run checks; feature-branch pushes do not
+duplicate an open PR's jobs. Manual dispatch selects every suite.
 Package READMEs/assets remain package inputs. Shared game code selects games and
 Chess; shared locks, builder/image code, the ledger and CI infrastructure receive
 broader checks. Unknown inputs and unavailable comparison history select all
@@ -63,6 +65,8 @@ suites. There is no workflow-level path filter that leaves a required gate pendi
 
 Portable jobs use Ubuntu workers; native jobs use Debian 13 containers on ARM64
 workers. Base-integration packages are never installed into their live root.
+The native container explicitly trusts only its mounted checkout in its own Git
+configuration; checkout's temporary configuration is not assumed to persist.
 The gate requires all selected matrix jobs to succeed for the planned source
 SHA. An unselected native matrix can be skipped; a selected job cannot.
 Configure this gate as a required repository check when adopting branch

@@ -4,6 +4,7 @@ name: checks
 # in the planner, not trigger path filters that can leave checks pending.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -24,7 +25,7 @@ jobs:
       native_matrix: ${{ steps.scopes.outputs.native_matrix }}
       has_native: ${{ steps.scopes.outputs.has_native }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
@@ -44,7 +45,7 @@ jobs:
           fi
           python3 scripts/ci/scopes.py "${args[@]}"
       - name: Retain selection record
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: check-selection-${{ steps.scopes.outputs.source_sha }}
           path: build/ci/plan.json
@@ -59,7 +60,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.portable_matrix) }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           persist-credentials: false
@@ -78,7 +79,7 @@ jobs:
             --report "build/ci/$SUITE.json"
       - name: Retain suite evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: checks-${{ matrix.suite }}-${{ needs.plan.outputs.source_sha }}
           path: |
@@ -107,10 +108,14 @@ jobs:
           apt-get install -y --no-install-recommends \
             python3 cmake ninja-build g++ make git curl ca-certificates pkg-config dpkg-dev file binutils xz-utils ffmpeg
           test "$(dpkg --print-architecture)" = arm64
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.plan.outputs.source_sha }}
           persist-credentials: false
+      - name: Trust only this mounted workspace in the container's Git config
+        # Checkout's temporary HOME does not persist into ordinary container
+        # steps. Do not weaken Git ownership checks for any other path.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Install Video development and fixture prerequisites
         if: matrix.suite == 'video'
         env:
@@ -130,7 +135,7 @@ jobs:
             --report "build/ci/$SUITE.json"
       - name: Retain suite evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: checks-${{ matrix.suite }}-${{ needs.plan.outputs.source_sha }}
           path: |
