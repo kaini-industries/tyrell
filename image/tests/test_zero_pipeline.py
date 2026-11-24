@@ -230,6 +230,84 @@ class AttemptTests(unittest.TestCase):
             zero['reconcile_launch'](self.job,self.attempt,self.common,{'guest':lambda *a:None})
 
 
+class LaunchTests(unittest.TestCase):
+    def launch_case(self, old, *, fail=None, pointer_error=None, observed=None):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);directory=root/'jobs'/ID;directory.mkdir(parents=True)
+            (root/'build').mkdir();(directory/'image-input.tar').write_bytes(b'captured')
+            job={'job_id':ID,'bundle_sha256':'a'*64,'guest_input':zero['GUEST_BASE']+'/'+ID+'/input',
+                 'active_attempt':0,'attempts':[]}
+            state=dict(old);calls=[];result=root/'durable-result.json'
+            original_write=zero['write_json']
+            def write(path,value):
+                if Path(path)==root/'build/image-job.json' and pointer_error:raise pointer_error
+                original_write(path,value)
+            def guest(*args,**_kwargs):
+                calls.append(args)
+                if args[:2]==('python3','-c'):
+                    return SimpleNamespace(stdout='100000000000')
+                # Every guest mutation must follow the durable host attempt.
+                self.assertEqual(json.loads((directory/'job.json').read_text())['active_attempt'],1)
+                if 'systemctl' in args:
+                    action=args[3]
+                    if fail==action:raise subprocess.CalledProcessError(1,args)
+                    if action=='stop' and state.get('LoadState')=='not-found':
+                        raise subprocess.CalledProcessError(5,args)
+                    state.update(LoadState='not-found',ActiveState='inactive',Environment='')
+                elif 'mkdir' in args and fail=='mkdir':
+                    raise OSError('attempt directory preparation failed')
+                elif 'systemd-run' in args:
+                    if fail=='systemd-run':raise subprocess.TimeoutExpired(args,1)
+                    state.update(LoadState='loaded',ActiveState='active',Environment=
+                        f'TYRELL_IMAGE_JOB_ID={ID} TYRELL_IMAGE_ATTEMPT_ID=1 TYRELL_IMAGE_INPUT_SHA256='+'a'*64)
+                elif args[:4]==('sudo','-n','python3','-c'):
+                    original_write(result,json.loads(args[-1]))
+                return SimpleNamespace(stdout='')
+            common={'assert_idle':lambda:dict(old),'unit_state':lambda:observed if observed is not None else state,
+                    'UNIT':'tyrell-image.service','GUEST_LOCK':'/var/tmp/test-image.lock'}
+            resources=SimpleNamespace(run_path=lambda _name:{'preflight':lambda *_a,**_kw:None})
+            error=None;attempt=None
+            with patch.dict(zero['launch'].__globals__,ROOT=root,api=lambda:{'guest':guest},
+                            runpy=resources,write_json=write),contextlib.redirect_stdout(io.StringIO()):
+                try:attempt=zero['launch'](root,job,common)
+                except Exception as caught:error=caught
+            return {'error':error,'attempt':attempt,'calls':calls,'job':json.loads((directory/'job.json').read_text()),
+                    'result':json.loads(result.read_text()) if result.exists() else None}
+
+    def test_reset_garbage_collects_failed_transient_without_a_following_stop(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''})
+        self.assertIsNone(case['error']);self.assertEqual(case['attempt']['attempt_id'],1)
+        self.assertEqual([args[3] for args in case['calls'] if 'systemctl' in args],['reset-failed'])
+        self.assertIsNone(case['result'])
+
+    def test_completed_loaded_unit_stops_without_reset(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'active','SubState':'exited','Environment':''})
+        self.assertIsNone(case['error'])
+        self.assertEqual([args[3] for args in case['calls'] if 'systemctl' in args],['stop'])
+
+    def test_cleanup_and_preparation_failures_have_durable_bound_failure(self):
+        for action in ('reset-failed','mkdir','systemd-run'):
+            with self.subTest(action=action):
+                case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''},fail=action)
+                self.assertIsNotNone(case['error']);self.assertIsNone(case['attempt'])
+                self.assertEqual(case['result'],{'job_id':ID,'attempt_id':1,'bundle_sha256':'a'*64,
+                    'exit_status':125,'manifest_sha256':None,'launch_failed':True})
+
+    def test_pointer_write_after_attempt_persistence_is_reconciled(self):
+        for error in (OSError('pointer write failed'),ValueError('redirected pointer')):
+            with self.subTest(error=error):
+                case=self.launch_case({'LoadState':'not-found','Environment':''},pointer_error=error)
+                self.assertIs(case['error'],error);self.assertEqual(case['job']['active_attempt'],1)
+                self.assertEqual(case['result']['exit_status'],125)
+                self.assertFalse(any('systemd-run' in args for args in case['calls']))
+
+    def test_unknown_cleanup_state_remains_reattach_only(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''},fail='reset-failed',
+                              observed={'LoadState':'error','ActiveState':'unknown'})
+        self.assertIsInstance(case['error'],ValueError)
+        self.assertIn('reattach',str(case['error']));self.assertIsNone(case['result'])
+
+
 class ExportTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)

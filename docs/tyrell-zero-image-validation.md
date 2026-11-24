@@ -23,7 +23,7 @@ The November 24 read-only comparison of the checked-in locks found:
 | Seed stage2 within Zero | All 950 identities retained unchanged in Zero's 955-package OS closure |
 | Zero additions to seed stage2 | `greetd`, `liblua5.4-0`, `libwireplumber-0.5-0`, `pkexec`, `wireplumber` |
 | Full-source stage4 and Zero | 954 common identities, with identical versions, architectures and DEB SHA-256 values |
-| Full-source-only OS identities | 725 |
+| Full-source-only stage candidates | 725 |
 | Zero-only OS identity versus full-source stage4 | `greetd` |
 
 The compared seed APT lock is
@@ -65,7 +65,7 @@ The corrected Zero recipe gives native Wizard sole first-boot ownership while
 keeping the factory account disabled. Vendor stage2 already locks root; the
 final custom stage reasserts that invariant before activation. Fresh selected-lock
 qualification passed 24,461 checks, all 23 native Linux activation tests passed,
-and 415 host tests passed with two documented platform skips. All selected
+and 421 host tests passed with two documented platform skips. All selected
 package and runtime identities remain unchanged.
 
 ## First cold-build correction
@@ -85,6 +85,14 @@ isolated APT simulation reproduced exit 100 before and exit 0 after, preserving
 all 4,348 APT/dpkg state entries on the corrected probe. The initial probe changed
 only an APT planner log; both probe records disclose it. The failed capture,
 result and work remain preserved; the corrected recipe requires a new job.
+
+The next capture, `20261124T170652391801Z-c13b81cd`, stopped before executing
+image work: resetting the previous failed transient unit unloaded it before a
+redundant stop command. The job now has an explicit durable exit 125 failure.
+Both launchers use state-appropriate cleanup; Zero reconciles every preparation
+failure after attempt persistence. Host lifecycle regressions and the current
+30-check native wrapper fixture passed. Neither initial trial received a
+controlled interruption signal.
 
 ## Construction and export evidence
 
@@ -106,6 +114,10 @@ report frozen APT, the same pinned vendor/native inputs and the exact common
 Status payload. Confirm common installed package/native/BSP bytes after both
 builds, recording any difference before drawing comparison claims. Frozen
 package selection does not by itself establish an isolated network namespace.
+
+The 1,679 seed stage4 rows are candidates, including transients. Measure the
+post-export installed/status inventory rather than treating that count as a
+measured final OS total.
 
 Measure rootfs apparent and allocated usage with the method and exclusions
 recorded. Raw/XZ sizes describe distribution footprint. The historical November

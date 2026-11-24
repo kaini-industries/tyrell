@@ -55,6 +55,31 @@ class LifecycleTests(unittest.TestCase):
             prepare.assert_not_called()
             new_job.assert_not_called()
 
+    def test_start_cleans_failed_or_completed_transient_unit_with_one_action(self):
+        for active,expected in [('failed','reset-failed'),('active','stop')]:
+            with self.subTest(active=active),tempfile.TemporaryDirectory() as temporary:
+                root=Path(temporary);directory=root/'job';directory.mkdir();(root/'build').mkdir()
+                bundle=directory/'image-input.tar';bundle.write_bytes(b'captured')
+                state={'LoadState':'loaded','ActiveState':active,'SubState':'exited'};actions=[];launched=[]
+                def guest(*args,**_kwargs):
+                    if 'sha256sum' in args:return subprocess.CompletedProcess(args,0,builder.sha(bundle)+'  input.tar\n')
+                    if 'systemctl' in args:
+                        action=args[3];actions.append(action)
+                        if state['LoadState']=='not-found':raise subprocess.CalledProcessError(5,args)
+                        state['LoadState']='not-found'  # reset-failed can immediately GC a transient unit.
+                    if 'systemd-run' in args:launched.append(args)
+                    return subprocess.CompletedProcess(args,0,'')
+                tools={'up':lambda:None,'guest':guest,'lima':lambda *_a,**_kw:None,'INSTANCE':'test',
+                       'digest':lambda path:digest(Path(path).read_bytes())}
+                args=builder.parse_args(['--discovery','--no-wait'])
+                with patch.object(builder,'ROOT',root),patch.object(builder,'B',tools), \
+                     patch.object(builder,'assert_idle',return_value=dict(state)), \
+                     patch.object(builder,'new_job',return_value=directory), \
+                     patch.object(builder,'prepare',return_value=bundle), \
+                     patch.object(builder.runpy,'run_path',return_value={'preflight':lambda *_a,**_kw:None}):
+                    builder.start_job(root,args)
+                self.assertEqual(actions,[expected]);self.assertEqual(len(launched),1)
+
     def test_archive_detects_source_edit_between_hash_and_capture(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'input.tar'

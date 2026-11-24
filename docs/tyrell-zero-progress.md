@@ -1,7 +1,7 @@
 # Tyrell Zero implementation progress
 
 November 24 baseline and matched-control construction is in progress. Fresh
-pre-image requalification passed 24,461 checks and 415 host tests (two platform
+pre-image requalification passed 24,461 checks and 421 host tests (two platform
 skips); the builder is backed up and expanded to 160 GiB. See the
 [image validation record](tyrell-zero-image-validation.md) for current outcomes.
 

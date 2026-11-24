@@ -47,7 +47,6 @@
       ]
     },
     "full_source_stage4_vs_zero": {
-      "source_os_count": 1679,
       "zero_os_count": 955,
       "common_identities": 954,
       "changed_common_versions_or_architectures": 0,
@@ -55,7 +54,9 @@
       "source_only_count": 725,
       "zero_only": [
         "greetd"
-      ]
+      ],
+      "source_stage4_candidate_count": 1679,
+      "candidate_inventory_limit": "Seed stage4 candidates include transients; actual final installed/status inventory is measured after export."
     },
     "required_common_inputs": {
       "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
@@ -103,7 +104,7 @@
       "correction": "Zero-only guarded disabled-login setup configuration; explicit userconfig mask/no legacy wants; root lock reasserted after custom install. Vendor stage2 already locks root.",
       "evidence": {
         "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
-        "sha256": "9b1f1d6e6bfa7fa167e3a9ac6623d7d06ca1bfb67c91d097695879738d9802e8"
+        "sha256": "44a8931f624a79a0f80d85c111cb1fe82477c5ffe6564b7654a1aee898a426e4"
       }
     },
     "runtime_requalification": {
@@ -126,9 +127,9 @@
       "status": "passed",
       "report": {
         "path": "research/tyrell-zero-pipeline.json",
-        "sha256": "bb2c169e319daf347afa37a73737be200cbbbe8891cb73168615de0a17566fa3"
+        "sha256": "214253b6d98e84d978620978d659f575badc3785ace19161e217ae7878af604a"
       },
-      "host_tests": 415,
+      "host_tests": 421,
       "host_platform_skips": 2
     },
     "frozen_removal_normalization": {
@@ -140,6 +141,16 @@
         "path": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/report.json",
         "sha256": "2d77acfe5ca96e89908efa2d3483330dc7ff3ff059e43a2968947aea1d194f29"
       }
+    },
+    "launch_lifecycle_fix": {
+      "status": "qualified",
+      "problem": "reset-failed garbage-collected the old transient unit before redundant stop; failure happened before launch reconciliation.",
+      "correction": "Failed loaded units reset only; other completed loaded units stop only. All post-attempt-persistence Zero launch preparation reconciles proven failures.",
+      "native_wrapper_checks": {
+        "path": "artifacts/tyrell-zero-locks/wrapper-smoke-20261124T171133Z/report.json",
+        "sha256": "112279e22e3e2127d4755c72213811a4cc732da1ad44e503c599b6feab6accca"
+      },
+      "host_regressions": "41 Zero pipeline tests and 16 legacy lifecycle tests, included in host qualification."
     }
   },
   "zero_image": {
@@ -339,6 +350,18 @@
       "input_archive_sha256": "b50d4b42908ff854747c640611095e678938d4000d22bc84db10e1c2615e01e0",
       "evidence_directory": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/failed-job",
       "failed_capture_and_work_preserved": true
+    },
+    {
+      "job_id": "20261124T170652391801Z-c13b81cd",
+      "attempt_id": 1,
+      "source_commit": "49a907be73487baffec021aa662aa2423e3bfc68",
+      "status": "failed-before-start",
+      "reason": "Redundant stop after reset-failed unloaded prior transient unit.",
+      "controlled_signal_sent": false,
+      "input_archive_sha256": "96129d9af3c7d9fca0c345a4e2bdef5405313f54a7c4546f4c7a35135c430811",
+      "durable_exit_status": 125,
+      "evidence_directory": "artifacts/tyrell-zero-pipeline/20261124-pre-image/launch-failure-20261124T170652391801Z-c13b81cd",
+      "captured_inputs_preserved": true
     }
   ]
 }

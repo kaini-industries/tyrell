@@ -354,11 +354,12 @@ def launch(target, job, common, *, mode='fresh'):
                    '--authorize-attempt',str(number))
     job['attempts'].append(attempt); job['active_attempt'] = number
     write_json(directory / 'job.json', job)
-    write_json(ROOT / 'build/image-job.json', {'job_id':job['job_id'],'storage':str(Path(target).resolve())})
-    if old.get('LoadState') == 'loaded':
-        b['guest']('sudo','-n','systemctl','reset-failed',common['UNIT'])
-        b['guest']('sudo','-n','systemctl','stop',common['UNIT'])
     try:
+        write_json(ROOT / 'build/image-job.json', {'job_id':job['job_id'],'storage':str(Path(target).resolve())})
+        if old.get('LoadState') == 'loaded':
+            # reset-failed may garbage-collect a failed transient unit immediately.
+            action = 'reset-failed' if old.get('ActiveState') == 'failed' else 'stop'
+            b['guest']('sudo','-n','systemctl',action,common['UNIT'])
         b['guest']('sudo','-n','mkdir','-m','700','-p',attempt['guest_dir'])
         b['guest']('sudo','-n','systemd-run','--unit=' + common['UNIT'].removesuffix('.service'),
             '--no-block','--service-type=oneshot','--property=RemainAfterExit=yes',
@@ -369,7 +370,7 @@ def launch(target, job, common, *, mode='fresh'):
             '--property=StandardError=inherit','/usr/bin/flock','--nonblock',common['GUEST_LOCK'],
             '/usr/bin/python3',job['guest_input'] + '/image/run-zero-job.py',
             '--job',job['job_id'],'--attempt',str(number),'--bundle-sha256',job['bundle_sha256'],'--mode',mode)
-    except (OSError,subprocess.CalledProcessError):
+    except (OSError,ValueError,subprocess.SubprocessError):
         if not reconcile_launch(job,attempt,common,b):raise
     print(f"Started Zero job {job['job_id']} attempt {number}",flush=True)
     return attempt

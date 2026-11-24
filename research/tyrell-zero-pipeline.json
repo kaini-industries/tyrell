@@ -43,7 +43,7 @@
     "builder/zero.py": "dd3e885a58e0570c90f5a7f8d313e8d9fce7c89cd1579d8fa253a6c6bc453e04",
     "image/apt-lock.py": "6bf3f2c3c5ccd464e3287ab0e01ccc7a561b142acbf9989d699bce38f8a80de7",
     "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
-    "image/build-image.py": "bed9d17499d13bf498e3e5bff72292baf5cf51e95036dc58469ecb8fe0821a96",
+    "image/build-image.py": "d3f35ede1337d25b00400869e4e7b50dcb78852ba07145701ddba5f984be9629",
     "image/build_lock.py": "4c54ec45634b9672c99163b86d04c2d425fa79bd211a8bfc7a6b9614ac07c82a",
     "image/camera-packages.json": "070cf852959bd4981827cf0ed79c143ecf29d73226c4f168e9831b4a1938b8ef",
     "image/contracts/tyrell-zero-hardware.json": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491",
@@ -62,7 +62,7 @@
     "image/tests/apt_integration.py": "4f14df8a21d9ef5c37c47e2330224131bf90e9b10cb1b5b0b15b2997ffabf865",
     "image/tests/guest_lifecycle_smoke.py": "70748a6754bbffaa484ea2f540e0fbd587fdb4254d893dfd74be949e4d2f762c",
     "image/tests/test_apt_lock.py": "b347b246506e1623b4306ff0fd9b2b059de91300f88ffd06d0891c3751f2c0f9",
-    "image/tests/test_lifecycle.py": "c0b7bb90ad90e22d76e6ed1eae59b2db583dfee603193199056f9565f8044855",
+    "image/tests/test_lifecycle.py": "09dc34095d65edad676c118dae58a482cc9bdc875cdd4c448f9c465aa02e3324",
     "image/tests/test_overlay_stock.py": "6cc0cf6e8f796adf621e20ebc8f02d240aa40e5266c40bcbd044b0f6b55bc30c",
     "image/tests/test_profiles.py": "cb34b43a9693bfe13c5289f2e91c636fdbddbe712f913ed97b28d10f9ce16b11",
     "image/tests/test_resources.py": "810095785b4d58fc7e14f5fb3890c2bac7f27ac2986b1798ac0d94fc0fa25fde",
@@ -72,14 +72,14 @@
     "image/tests/test_stock_verifier.py": "c00f3eda80324fc04c88195b452ae559dc799310d998644327acba222b867f98",
     "image/tests/test_zero_activation.py": "d506c46ef5d86b11599ce8590cf44ce6cbc29f4030c340c972799c0dbec3b002",
     "image/tests/test_zero_locks.py": "c905af356b11041012ee9b36ec644a54b3e6955cc86bc238927a6f9a53a37288",
-    "image/tests/test_zero_pipeline.py": "d2865b1944fecf1146becc6a219d817d275b42d866e13768af089b7698e1ba98",
+    "image/tests/test_zero_pipeline.py": "418ed211bd61c51a3a802b02baa4e42eec743b96b52adbb6d07575d65d7d6ce3",
     "image/tests/test_zero_verifier.py": "6067ed38dcf95127b0680ac48cf81ace9ad071547789acbf4df08aebc776887f",
     "image/verify-image.py": "c94c55d630a147972090b7b62f03a4a9d763974f2e442b324bc25fb9d5bad718",
     "image/verify-zero.py": "74999c294b8026ed7828ef88f86a010bc1681ea648599f715b376e1544d2a00b",
     "image/write-manifest.py": "8b6f107164b3220d5ce358a661bd8e7d2bb984e7f836218d8883eba9a064eaa8",
     "image/zero-lock.py": "f2bd91bc3701fee74937df7b7a5d374033f8780bdf9a84dd07482382ad025dd8",
     "image/zero_activation.py": "98260ca3a29cd35088d68eda20d28c116efab6ad148c5a9a06381968e45b85b6",
-    "image/zero_pipeline.py": "bcdc9385cf3af826f52766a54542a3e8ec0522d7c5f142b08f34454a96e48c6b",
+    "image/zero_pipeline.py": "16d9a7d38330098e2ba99bdb3dc79bc66e8c304852cab14b200a023d407cfced",
     "image/zero_resume.py": "ce2fe0e79729d8d2cd43e03f350ff9aa5136e2dcaddd13f4bc7314012c4e76c7",
     "packages/tyrell-zero-power-policy/build-package.py": "4c35d9407e3509d9c47daf619da14a7ac216fe226bb24fd44ecf7ca3f214cc6c",
     "packages/tyrell-zero-power-policy/config/power-policy.json": "78edb50bbe4b0c054b6dd186fa405f96b106a67ccfd3f8dc7df6abbc322884a9",
@@ -125,10 +125,10 @@
   "full_image_built": false,
   "hardware_qualified": false,
   "host_skipped_count": 2,
-  "host_test_count": 415,
+  "host_test_count": 421,
   "host_tests": {
     "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/host-tests.json",
-    "sha256": "d003aa219fbd4864f27b0312f23c4f378845aea61be80fcb2cf3ce339f308177"
+    "sha256": "e6b3b6f9b6254c1c3d46ca41cfe71b2dd508cf083a262fda1266867f7def2e30"
   },
   "limitations": [
     "Detached offline runtime verification does not prove assembled-image boot or GUI/seat behavior.",
@@ -155,12 +155,12 @@
   "profile": "tyrell-zero",
   "qualified_date": "2026-11-24",
   "runner_failure_fixture": {
-    "path": "artifacts/tyrell-zero-locks/wrapper-smoke-20261123T165004267394Z-0f640f15/smoke-report.json",
-    "sha256": "33d23e9bd27e2e74f04f14a8e2697637701060b11bd32f97d3169b6e01c86815"
+    "path": "artifacts/tyrell-zero-locks/wrapper-smoke-20261124T171133Z/report.json",
+    "sha256": "112279e22e3e2127d4755c72213811a4cc732da1ad44e503c599b6feab6accca"
   },
   "runner_prepare": {
     "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
-    "sha256": "9b1f1d6e6bfa7fa167e3a9ac6623d7d06ca1bfb67c91d097695879738d9802e8"
+    "sha256": "44a8931f624a79a0f80d85c111cb1fe82477c5ffe6564b7654a1aee898a426e4"
   },
   "runtime_check_count": 24461,
   "runtime_verification": {
