@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "aa378d7d299bae14ee0df3a0550f2f1b2989edee",
+  "reviewed_revision": "1d8c13ea91d366b53a5d5ff376f47080c85c6e34",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -83,7 +83,7 @@
       "component": "status",
       "kind": "current-source",
       "version": "0.1.1",
-      "source_identity": "L1 app/dependency boundary; digest must match the checkout",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-status",
@@ -97,7 +97,7 @@
       "component": "video",
       "kind": "current-source",
       "version": "0.1.8",
-      "source_identity": "L1 app/dependency boundary; digest must match the checkout",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
@@ -112,7 +112,7 @@
       "component": "chess",
       "kind": "current-source",
       "version": "0.1.3",
-      "source_identity": "L1 app/dependency boundary; digest must match the checkout",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
