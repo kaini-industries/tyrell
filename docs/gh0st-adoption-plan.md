@@ -332,6 +332,14 @@ resume remains bound to the original captured inputs.
 
 ### C1 — Qualified catalog and separate cached frontend
 
+**Implemented source increment:** the optional Catalog 0.1.0 frontend, signed
+offline metadata generator, pinned trust/base/sequence policy and bounded
+normal-user cache are described in [qualified catalog](qualified-catalog.md).
+Discovery, explicit refresh and verified downloads have automated/native
+coverage; install/remove/repair remain with the original Store. The bundled seed
+has no live endpoint or continuing signing key. New root approvals, live feed
+deployment, image inclusion and physical acceptance remain separate gates.
+
 This is lower priority than app/UI and baseline acceptance, and can be deferred
 if the small qualified catalog does not justify another frontend.
 

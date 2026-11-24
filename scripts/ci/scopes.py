@@ -46,6 +46,8 @@ def select(paths):
             selected.update(("python", "status"))
         elif path.startswith("packages/tyrell-video/"):
             selected.update(("python", "video"))
+        elif path.startswith("packages/tyrell-catalog/"):
+            selected.update(("python", "zero-native"))
         elif path.startswith("packages/tyrell-zero-"):
             selected.update(("python", "zero-native"))
         elif path in ("scripts/game", "scripts/tanks", "locks/game-build-inputs.json"):

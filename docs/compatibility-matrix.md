@@ -5,7 +5,7 @@ F1, November 24, 2026. The machine-readable inventory is
 It records exact source/package identities and finite evidence, not a general
 compatibility certificate or release approval.
 
-The five current app source boundaries are snapshotted separately from retained
+The six current app source boundaries are snapshotted separately from retained
 packages and historical device builds. Existing evidence must not migrate to a
 new binary merely because the app's version string or target architecture is
 unchanged. CI run reports describe the checkout they actually test; they do not
@@ -20,6 +20,7 @@ upgrade the device results in this ledger.
 | Chess | 0.1.4, optional offline lifecycle | Retained `0.1.1-1`, SHA `c14cb5fe…` | Retained 0.1.1 UI/input, Wi-Fi LAN and launcher-return evidence. | New native/default-package and fake-shell checks cover source behavior; device acceptance remains untested. Shell support defaults off and linked LAN is gated; not in the default Zero payload. |
 | Sandline Tanks | 0.1.0 with GameRuntime 0.1.1 | Earlier native test package SHA `961beb67…`, available only in ignored local artifacts | Historical pre-extraction package has synthetic input/display and Zero-host LAN evidence; opposite LAN direction did not complete. | New shared runtime hooks do not enable an app lifecycle policy or qualify a new binary, Zero image inclusion or Gh0st operation. |
 | Beacon Arena | Framework/example 0.1.1 | No retained qualified device package | Framework/headless/network test history exists; no physical M5 app acceptance. | No default Zero inclusion, app lifecycle policy or Gh0st qualification. |
+| Catalog | 0.1.0, optional signed offline discovery and cache | Development CI packages only; no retained qualified device artifact | Native/headless software checks; physical launch/input/exit acceptance pending | Exact legacy Store approvals remain separate. No install verbs, default image inclusion, live feed or Gh0st lifecycle qualification. |
 
 The ledger has a current-source row for every app on original M5, Zero and
 Gh0st. These runtime scenarios remain **not tested for the current snapshot**;
@@ -108,6 +109,11 @@ L1's [experimental Status pilot](shell-link-status.md) adds the common source
 boundary to Status too. Its default build disables shell IPC; an enabled build
 has separate fake-shell tests. The retained 0.1.0 package and image payload stay
 bound to their original bytes and receipts.
+
+C1's [cached Catalog frontend](qualified-catalog.md) has its own source boundary,
+including shared commands, locked LVGL and the reviewed Store configuration.
+Its signed seed is discovery data. It cannot authorize another version, transfer
+historical device evidence, change root callers or upgrade a runtime result.
 
 For a new qualified package, retain a new version's exact bytes/manifests,
 register their SHA-256, source identity and evidence, then add scoped records.

@@ -29,6 +29,7 @@ PYTHON_GROUPS = (
     ("packages/tyrell-zero-power-policy/tests", "test*.py"),
     ("packages/tyrell-chess/tests", "*_test.py"),
     ("scripts/release/tests", "test*.py"),
+    ("packages/tyrell-catalog/tests", "test*.py"),
 )
 
 
@@ -332,6 +333,36 @@ def run_app(work, app, revision):
     return results
 
 
+def run_catalog(work, revision):
+    """Optional normal-user app, separate from the preserved Store packages."""
+    native_preflight()
+    require_tools("openssl")
+    dependency_work = work / "catalog-deps"
+    dependency_work.mkdir()
+    deps = dependencies(dependency_work, ("lvgl",))
+    source = ROOT / "packages/tyrell-catalog"
+    build = work / "catalog"
+    configure_build(source, build, "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]),
+                    "-DTYRELL_BUILD_REVISION=" + revision)
+    required = {"catalog-model", "catalog-artwork", "catalog-backend-process", "catalog-entry-guard",
+                "catalog-cli-help", "catalog-cli-version", "catalog-ui-artwork", "catalog-ui-preview-no-transfer",
+                "catalog-ui-fresh", "catalog-ui-expired", "catalog-ui-clock-unknown",
+                "catalog-ui-incompatible", "catalog-ui-empty", "catalog-ui-error",
+                "catalog-ui-details", "catalog-ui-help"}
+    results = [ctest(build, work, required)]
+    packages = work / "packages"
+    packages.mkdir()
+    command("cpack", "--config", build / "CPackConfig.cmake", "-G", "DEB", "-B", packages)
+    debs = list(packages.glob("*.deb"))
+    if len(debs) != 1:
+        raise RuntimeError("Expected one optional native Catalog package")
+    inspection = command(sys.executable, source / "tools/check_package.py", debs[0], capture=True).stdout.strip()
+    results.append({"kind": "package-build", "status": "passed", "path": str(debs[0].relative_to(ROOT)),
+                    "sha256": digest(debs[0]), "inspection": inspection, "installed": False,
+                    "root_store_authorized": False, "image_included": False})
+    return results
+
+
 def run_python(work):
     require_tools("cmake", "ctest", "ffmpeg", "ffprobe", "dpkg", "dpkg-deb", "dpkg-divert")
     results = []
@@ -379,6 +410,9 @@ def export_evidence(work, suite):
     for directory in ("game", "game-desktop", "tanks", "chess", "chess-native", "chess-native-shell"):
         selected.update((work / directory).rglob("a3-*.json"))
     for previews in work.glob("*/u1-previews"):
+        selected.update(path for path in previews.rglob("*")
+                        if path.suffix in {".png", ".ppm", ".json"})
+    for previews in work.glob("*/c1-previews"):
         selected.update(path for path in previews.rglob("*")
                         if path.suffix in {".png", ".ppm", ".json"})
     selected.update(work.glob("*.tsv"))
@@ -445,6 +479,7 @@ def main(argv=None):
             import native
             native_work = work / "foundations"
             data["results"] = [native.run_zero_native(ROOT, native_work)]
+            data["results"].extend(run_catalog(work, before["commit"]))
         after = source_identity()
         if after != before:
             raise RuntimeError("Source inputs changed during checks; result cannot certify this checkout")

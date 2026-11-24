@@ -51,6 +51,10 @@ class ScopesTests(unittest.TestCase):
         self.assertEqual(scopes.select(["dist/tyrell-video/0.1.7/package.deb"]),
                          ["docs", "python", "zero-native"])
 
+    def test_catalog_changes_keep_native_frontend_and_guard_coverage(self):
+        self.assertEqual(scopes.select(["packages/tyrell-catalog/catalog_cache.py"]),
+                         ["docs", "python", "zero-native"])
+
     def test_git_parser_keeps_deleted_and_both_renamed_paths(self):
         data = b"D\0packages/tyrell-video/src/removed.cpp\0R100\0packages/tyrell-chess/old.cpp\0docs/new name\n.md\0"
         paths = scopes.parse_name_status(data)

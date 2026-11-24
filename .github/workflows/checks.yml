@@ -69,7 +69,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            python3 cmake ninja-build g++ make curl ca-certificates ffmpeg dpkg-dev file binutils xz-utils
+            python3 openssl cmake ninja-build g++ make curl ca-certificates ffmpeg dpkg-dev file binutils xz-utils
       - name: Install isolated desktop runtime prerequisites
         if: matrix.suite == 'game' || matrix.suite == 'chess'
         run: |
@@ -112,7 +112,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            python3 cmake ninja-build g++ make git curl ca-certificates pkg-config dpkg-dev file binutils xz-utils ffmpeg
+            python3 openssl cmake ninja-build g++ make git curl ca-certificates pkg-config dpkg-dev file binutils xz-utils ffmpeg
           test "$(dpkg --print-architecture)" = arm64
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -132,6 +132,11 @@ jobs:
             gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-x \
             fonts-dejavu-core libsdl2-dev
+      - name: Install Catalog native image-verification prerequisite
+        if: matrix.suite == 'zero-native'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: apt-get install -y --no-install-recommends libssl-dev
       - name: Run selected native suite in disposable roots
         env:
           SOURCE_SHA: ${{ needs.plan.outputs.source_sha }}
