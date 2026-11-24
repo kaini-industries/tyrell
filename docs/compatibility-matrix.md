@@ -15,7 +15,7 @@ upgrade the device results in this ledger.
 
 | Component | Current source | Exact retained or reported artifact | Original M5 evidence | Zero / Gh0st boundary |
 | --- | --- | --- | --- | --- |
-| Status | 0.1.0 | Retained `0.1.0-1`, SHA `15471a8f…`; historical device `0.1.0-1`, SHA `9f8ad2f3…` | Retained package has automated ARM64 build/install/remove evidence. A **different** same-version package has real LCD, synthetic input and launcher-return evidence. | Zero file image contains retained `15471a8f…`; physical Zero and Gh0st acceptance pending. |
+| Status | 0.1.1, experimental optional shell link | Retained `0.1.0-1`, SHA `15471a8f…`; historical device `0.1.0-1`, SHA `9f8ad2f3…` | Retained package has automated ARM64 build/install/remove evidence. A **different** same-version package has real LCD, synthetic input and launcher-return evidence. | Zero file image contains retained `15471a8f…`; new Status sources and Gh0st acceptance pending. |
 | Video | 0.1.8 | Retained `0.1.7-1`, SHA `7ddf4ead…` | Specific H.264 HDMI/software-recovery, audio/caption, ten-minute run and launcher-return evidence applies to retained 0.1.7. | New 0.1.8 commands/UI have automated coverage; device, Zero native-session and Gh0st media/resource handoff remain unqualified. |
 | Chess | 0.1.3 | Retained `0.1.1-1`, SHA `c14cb5fe…` | Retained 0.1.1 UI/input, Wi-Fi LAN and launcher-return evidence. | New 0.1.3 commands/UI have automated/native build coverage; device acceptance and Gh0st remain untested; not in the default Zero payload. |
 | Sandline Tanks | 0.1.0 with extracted framework | Earlier native test package SHA `961beb67…`, available only in ignored local artifacts | Historical pre-extraction package has synthetic input/display and Zero-host LAN evidence; opposite LAN direction did not complete. | That result does not qualify a new framework binary, Zero image inclusion or Gh0st operation. |
@@ -103,6 +103,11 @@ U1's [shared command/UI implementation](shared-commands-ui.md) adds the common
 source boundary to Video and Chess. Its new source versions and automated UI
 checks do not transfer the retained packages' physical acceptance or extend the
 approved Store catalog. Current runtime scenarios remain separately untested.
+
+L1's [experimental Status pilot](shell-link-status.md) adds the common source
+boundary to Status too. Its default build disables shell IPC; an enabled build
+has separate fake-shell tests. The retained 0.1.0 package and image payload stay
+bound to their original bytes and receipts.
 
 For a new qualified package, retain a new version's exact bytes/manifests,
 register their SHA-256, source identity and evidence, then add scoped records.

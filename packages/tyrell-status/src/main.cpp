@@ -1,8 +1,14 @@
 #include "status_model.h"
+#include "input_edges.h"
 #include "lvgl.h"
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+#include "shell_lifecycle.h"
+#include <cstdlib>
+#endif
 
 #include <algorithm>
 #include <chrono>
+#include <cerrno>
 #include <csignal>
 #include <cstdio>
 #include <cstring>
@@ -45,9 +51,11 @@ struct Options {
     int page = 0;
     bool json = false;
     bool simulator = false;
+    bool framebuffer_explicit = false;
+    bool input_explicit = false;
 };
 
-void usage() {
+[[maybe_unused]] void usage() {
     std::cout << "tyrell-status " TYRELL_VERSION "\n"
               << "  --json                    Print read-only telemetry; never open display/input\n"
               << "  --version                 Print version and source revision\n"
@@ -93,7 +101,7 @@ void build_ui(Ui& ui) {
     lv_obj_set_style_pad_all(screen, 0, 0);
     text(screen, "TYRELL", 10, 6, 88, lv_color_hex(0x69dcc8));
     ui.page_name = text(screen, "SYSTEM STATUS", 106, 7, 204, lv_color_hex(0xe6edf2), &lv_font_montserrat_12);
-    const std::string build = std::string("v") + TYRELL_VERSION + " / " + TYRELL_REVISION;
+    const std::string build = std::string("v") + TYRELL_VERSION + " / " + std::string(TYRELL_REVISION).substr(0, 12);
     text(screen, build.c_str(), 10, 25, 300, lv_color_hex(0x8fa7b6), &lv_font_montserrat_12);
     for(int i = 0; i < 3; ++i) {
         const int y = 47 + i * 32;
@@ -155,8 +163,15 @@ void update_ui(Ui& ui) {
 #if defined(__linux__)
 class Keyboard {
 public:
-    ~Keyboard() { if(fd_ >= 0) close(fd_); }
+    ~Keyboard() { release(); }
+    void release() {
+        if(fd_ >= 0) close(fd_);
+        fd_ = -1;
+        edges_.reset();
+    }
     bool open_device(const std::string& requested) {
+        release();
+        if(!path_.empty()) return open_path(path_, false);
         if(!requested.empty()) return open_path(requested, false);
         if(open_path("/dev/input/cardputer-zero-internal", false)) return true;
         std::error_code error;
@@ -165,10 +180,19 @@ public:
         }
         return false;
     }
-    void process(Ui& ui) {
+    bool process(Ui& ui) {
         input_event event{};
-        while(read(fd_, &event, sizeof(event)) == sizeof(event)) {
-            if(event.type != EV_KEY || event.value != 1) continue;
+        // A noisy device must not starve the shell's next pause request.
+        for(unsigned n = 0; n < 64; ++n) {
+            const auto count = read(fd_, &event, sizeof(event));
+            if(count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) return true;
+            if(count != sizeof(event)) { release(); return false; }
+            if(event.type == EV_SYN && event.code == SYN_DROPPED) { edges_.dropped(); continue; }
+            if(edges_.needs_sync()) {
+                if(event.type == EV_SYN && event.code == SYN_REPORT && !synchronize()) { release(); return false; }
+                continue;
+            }
+            if(event.type != EV_KEY || !edges_.press(event.code, event.value)) continue;
             switch(event.code) {
                 case KEY_ESC: key(ui, LV_KEY_ESC); break;
                 case KEY_Q: key(ui, 'q'); break;
@@ -178,9 +202,21 @@ public:
                 default: break;
             }
         }
+        return true;
     }
 private:
     int fd_ = -1;
+    std::string path_;
+    tyrell::status::InputEdges edges_;
+    bool synchronize() {
+        unsigned char bits[(KEY_MAX + 8) / 8]{};
+        if(ioctl(fd_, EVIOCGKEY(sizeof(bits)), bits) < 0) return false;
+        tyrell::status::InputEdges::State held{};
+        for(unsigned code = 0; code <= KEY_MAX && code < held.size(); ++code)
+            held[code] = (bits[code / 8] & (1U << (code % 8))) != 0;
+        edges_.reset(held);
+        return true;
+    }
     bool open_path(const std::string& path, bool check_name) {
         int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if(fd < 0) return false;
@@ -189,10 +225,60 @@ private:
             close(fd); return false;
         }
         fd_ = fd;
+        // A fresh evdev client has no old seat queue. Drop the bounded batch
+        // that arrived during open, then baseline held keys before accepting
+        // any commands. A continuously flooded device fails closed.
+        input_event stale{};
+        unsigned n = 0;
+        while(n < 256 && read(fd_, &stale, sizeof(stale)) == sizeof(stale)) ++n;
+        if(n == 256 || !synchronize()) { release(); return false; }
+        path_ = path;
         return true;
     }
 };
 #endif
+
+// The injected backend lets lifecycle tests exercise this exact GUI loop and
+// LVGL renderer without opening a framebuffer or evdev device.
+class GuiDevices {
+public:
+    virtual ~GuiDevices() = default;
+    virtual bool acquire_input(const std::string& path) {
+#if defined(__linux__)
+        return keyboard_.open_device(path);
+#else
+        (void)path; return false;
+#endif
+    }
+    virtual void release_input() {
+#if defined(__linux__)
+        keyboard_.release();
+#endif
+    }
+    virtual bool process_input(Ui& ui) {
+#if defined(__linux__)
+        return keyboard_.process(ui);
+#else
+        (void)ui; return true;
+#endif
+    }
+    virtual lv_display_t* create_display(const std::string& path) {
+#if defined(__linux__)
+        auto* display = lv_linux_fbdev_create();
+        if(display && lv_linux_fbdev_set_file(display, path.c_str()) != LV_RESULT_OK) {
+            lv_display_delete(display); return nullptr;
+        }
+        return display;
+#else
+        (void)path; return nullptr;
+#endif
+    }
+    virtual void idle() { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+private:
+#if defined(__linux__)
+    Keyboard keyboard_;
+#endif
+};
 
 void write_ppm(const std::string& path, const std::vector<std::uint32_t>& pixels) {
     std::ofstream out(path, std::ios::binary);
@@ -205,15 +291,76 @@ void write_ppm(const std::string& path, const std::vector<std::uint32_t>& pixels
     if(!out) throw std::runtime_error("Failed writing screenshot: " + path);
 }
 
-int gui(const Options& options) {
+int gui(const Options& requested, GuiDevices* injected_devices = nullptr) {
+    Options options = requested;
     const bool headless = !options.screenshot.empty();
     if(headless && options.simulator) throw std::runtime_error("Choose either headless screenshot or SDL simulator");
 #if !TYRELL_ENABLE_SDL
     if(options.simulator) throw std::runtime_error("SDL simulator was not enabled in this build");
 #endif
+    std::signal(SIGINT, stop);
+    std::signal(SIGTERM, stop);
+    GuiDevices default_devices;
+    auto& devices = injected_devices ? *injected_devices : default_devices;
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+    // Display-free/desktop tools never inspect or adopt native shell IPC.
+    auto link = (!headless && !options.simulator)
+        ? tyrell::app::ShellLink::from_environment() : tyrell::app::ShellLink{};
+    const bool linked = link.connected() || link.closed();
+    tyrell::status::ShellLifecycle lifecycle;
+    struct Hooks {
+        GuiDevices& devices;
+        Options& options;
+        Ui* ui = nullptr;
+        bool started = false;
+        bool dirty = true;
+        void pause() { devices.release_input(); }
+        bool resume() {
+            dirty = true;
+            if(ui) ui->refresh = true;
+            return !started || devices.acquire_input(options.input);
+        }
+        void redraw() { dirty = true; }
+    } hooks{devices, options};
+    auto pump = [&]() {
+        bool drained = false;
+        for(unsigned n = 0; n < 32; ++n) {
+            const auto event = link.next_event();
+            if(event == tyrell::app::ShellEvent::None) { drained = true; break; }
+            lifecycle.handle(event, link, hooks);
+            if(lifecycle.exiting()) break;
+        }
+        // Read superseding resume first, so a deferred old paused ack cannot
+        // be sent after the app has already reacquired the seat.
+        link.service();
+        // A send can discover peer loss after receive saw EAGAIN. Fence the
+        // very next input/display operation in this same iteration as well.
+        if(link.closed()) lifecycle.handle(tyrell::app::ShellEvent::Lost, link, hooks);
+        return drained;
+    };
+    if(linked) {
+        if(!options.framebuffer_explicit) {
+            if(const char* path = std::getenv("LV_LINUX_FBDEV_DEVICE"); path && *path) options.framebuffer = path;
+        }
+        if(!options.input_explicit) {
+            if(const char* path = std::getenv("LV_LINUX_KEYBOARD_DEVICE"); path && *path) options.input = path;
+        }
+        const auto hello_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+        while(running) {
+            const bool drained = pump();
+            if(lifecycle.exiting()) return 0;
+            if(lifecycle.hello_seen() && lifecycle.foreground() && drained) break;
+            if(!lifecycle.hello_seen() && std::chrono::steady_clock::now() >= hello_deadline) {
+                std::cerr << "tyrell-status: shell hello timed out; leaving display and input untouched\n";
+                return 1;
+            }
+            devices.idle();
+        }
+        if(!running) return 0;
+    }
+#endif
 #if defined(__linux__)
-    Keyboard keyboard;
-    if(!headless && !options.simulator && !keyboard.open_device(options.input)) {
+    if(!headless && !options.simulator && !devices.acquire_input(options.input)) {
         throw std::runtime_error("Cannot open Cardputer keyboard. Use --input PATH, or --json for display-free status.");
     }
 #endif
@@ -239,10 +386,7 @@ int gui(const Options& options) {
 #endif
 #if defined(__linux__)
     else {
-        display = lv_linux_fbdev_create();
-        if(display && lv_linux_fbdev_set_file(display, options.framebuffer.c_str()) != LV_RESULT_OK) {
-            lv_display_delete(display); display = nullptr;
-        }
+        display = devices.create_display(options.framebuffer);
     }
 #endif
     if(!display) { lv_deinit(); throw std::runtime_error("Cannot initialize display; use --json or --headless-screenshot for offline operation"); }
@@ -254,6 +398,10 @@ int gui(const Options& options) {
     ui.snapshot = tyrell::collect_status(options.paths);
     build_ui(ui);
     update_ui(ui);
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+    hooks.ui = &ui;
+    hooks.started = true;
+#endif
 #if TYRELL_ENABLE_SDL
     if(options.simulator) {
         auto* input = lv_sdl_keyboard_create();
@@ -266,14 +414,26 @@ int gui(const Options& options) {
         }, LV_EVENT_KEY, &ui);
     }
 #endif
-    std::signal(SIGINT, stop);
-    std::signal(SIGTERM, stop);
     auto refresh_at = std::chrono::steady_clock::now();
     const unsigned limit = options.frames ? options.frames : (headless ? 2 : 0);
     unsigned frame = 0;
     while(running && (!limit || frame < limit)) {
+        bool full_redraw = false;
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+        if(linked) {
+            const bool drained = pump();
+            if(lifecycle.exiting()) break;
+            if(!lifecycle.foreground() || !drained) { devices.idle(); continue; }
+            if(hooks.dirty) {
+                lv_obj_invalidate(lv_screen_active());
+                ui.refresh = true;
+                hooks.dirty = false;
+                full_redraw = true;
+            }
+        }
+#endif
 #if defined(__linux__)
-        if(!headless && !options.simulator) keyboard.process(ui);
+        if(!headless && !options.simulator && !devices.process_input(ui)) break;
 #endif
         const auto now = std::chrono::steady_clock::now();
         if(ui.refresh || now >= refresh_at) {
@@ -283,17 +443,21 @@ int gui(const Options& options) {
             refresh_at = now + std::chrono::seconds(1);
         }
         lv_timer_handler();
-        if(headless) lv_refr_now(display);
+        if(headless || full_redraw) lv_refr_now(display);
         ++frame;
-        if(!headless) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if(!headless) devices.idle();
     }
     if(headless) write_ppm(options.screenshot, pixels);
+    devices.release_input();
+    // The pinned LVGL fbdev DELETE callback only unmaps/closes/frees. It does
+    // not restore or clear framebuffer pixels, including on hidden EOF/exit.
     lv_display_delete(display);
     lv_deinit();
     return 0;
 }
 } // namespace
 
+#ifndef TYRELL_STATUS_NO_MAIN
 int main(int argc, char** argv) {
     try {
         Options options;
@@ -308,8 +472,8 @@ int main(int argc, char** argv) {
             if(arg == "--json") options.json = true;
             else if(arg == "--proc-root") options.paths.proc_root = value();
             else if(arg == "--sys-root") options.paths.sys_root = value();
-            else if(arg == "--framebuffer") options.framebuffer = value();
-            else if(arg == "--input") options.input = value();
+            else if(arg == "--framebuffer") { options.framebuffer = value(); options.framebuffer_explicit = true; }
+            else if(arg == "--input") { options.input = value(); options.input_explicit = true; }
             else if(arg == "--headless-screenshot") options.screenshot = value();
             else if(arg == "--simulator") options.simulator = true;
             else if(arg == "--frames") {
@@ -336,3 +500,4 @@ int main(int argc, char** argv) {
         return 1;
     }
 }
+#endif

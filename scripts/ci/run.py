@@ -216,8 +216,9 @@ def run_app(work, app, revision):
     build = work / app
     configure_build(ROOT / ("packages/tyrell-" + app), build,
                     "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=OFF",
-                    "-DTYRELL_BUILD_REVISION=" + revision)
-    required = {"status-model", "cli-version", "cli-help", "headless-render"} if app == "status" else {
+                    "-DTYRELL_BUILD_REVISION=" + revision,
+                    *(("-DTYRELL_ENABLE_SHELL_LINK=OFF",) if app == "status" else ()))
+    required = {"status-model", "status-input-edges", "cli-version", "cli-help", "headless-render"} if app == "status" else {
         "video-media-fixture", "video-media-controls", "video-caption-clock", "video-lcd-geometry",
         "video-startup", "video-track-switch", "video-playback", "video-hdmi-lease", "video-hdmi-audio",
         "video-render-browser", "video-render-player", "video-cli-report-write-error",
@@ -231,6 +232,16 @@ def run_app(work, app, revision):
         raise RuntimeError("Expected one native app package")
     results.append({"kind": "package-build", "status": "passed", "path": str(debs[0].relative_to(ROOT)),
                     "sha256": digest(debs[0]), "installed": False})
+    if app == "status":
+        # The package retains the default M5 build. Exercise experimental IPC
+        # separately with a fake shell and memory display, never device nodes.
+        pilot = work / "status-shell"
+        configure_build(ROOT / "packages/tyrell-status", pilot,
+                        "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=OFF",
+                        "-DTYRELL_ENABLE_SHELL_LINK=ON",
+                        "-DTYRELL_BUILD_REVISION=" + revision)
+        results.append(ctest(pilot, work, required | {
+            "status-shell-lifecycle", "status-shell-gui", "tyrell-shell-link", "tyrell-app-commands"}))
     if app == "video":
         # Compile and exercise the raw SDL repeat adapter too. It is absent
         # from the shipped native build, so do not rerun media tests or package it.

@@ -17,7 +17,7 @@ loader.exec_module(builder)
 
 
 class BuilderTests(unittest.TestCase):
-    def test_video_bundle_requires_unredirected_shared_source(self):
+    def test_app_bundle_requires_unredirected_shared_source(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'packages').mkdir()
@@ -29,14 +29,16 @@ class BuilderTests(unittest.TestCase):
             with patch.object(builder, 'ROOT', root), patch.object(builder, 'STATE', state), \
                     patch.object(builder, 'inputs', return_value=locked), \
                     patch.object(builder, 'fetch', return_value=archive):
-                with self.assertRaisesRegex(RuntimeError, 'shared application command source'):
-                    builder.bundle('video')
+                for app in ('status', 'video'):
+                    with self.subTest(app=app), self.assertRaisesRegex(RuntimeError, 'shared application source'):
+                        builder.bundle(app)
                 outside = root / 'not-an-input'
                 outside.mkdir()
                 (outside / 'CMakeLists.txt').write_text('project(unrelated)')
                 (root / 'packages/tyrell-app-common').symlink_to(outside, target_is_directory=True)
-                with self.assertRaisesRegex(RuntimeError, 'shared application command source'):
-                    builder.bundle('video')
+                for app in ('status', 'video'):
+                    with self.subTest(app=app), self.assertRaisesRegex(RuntimeError, 'shared application source'):
+                        builder.bundle(app)
 
     def test_video_bundle_includes_only_allowlisted_validation_tools(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -83,11 +85,39 @@ class BuilderTests(unittest.TestCase):
         with patch.object(builder.shutil, 'disk_usage', return_value=usage(2**30, 0, 2**30)):
             builder.require_space(Path('/tmp'), 1024, 'source transfer')
 
+    def test_status_bundle_captures_shell_link_source_and_rejects_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ('packages/tyrell-status', 'packages/tyrell-app-common/src', 'builder', 'locks', 'scripts', 'build'):
+                (root / name).mkdir(parents=True, exist_ok=True)
+            (root / 'packages/tyrell-status/CMakeLists.txt').write_text('project(status)')
+            (root / 'packages/tyrell-app-common/CMakeLists.txt').write_text('project(common)')
+            source = root / 'packages/tyrell-app-common/src/shell_link.cpp'
+            source.write_text('// transport input')
+            (root / 'scripts/builder').write_text('# builder')
+            state = root / 'build'
+            archive = state / 'lvgl.tar.gz'
+            archive.write_bytes(b'verified-cache-fixture')
+            locked = {'package': 'tyrell-status', 'version': '0.1.1', 'source_date_epoch': 1}
+            with patch.object(builder, 'ROOT', root), patch.object(builder, 'STATE', state), \
+                    patch.object(builder, 'inputs', return_value=locked), \
+                    patch.object(builder, 'fetch', return_value=archive), patch.object(builder, 'require_space'):
+                bundle = builder.bundle('status')
+                with builder.tarfile.open(bundle) as tar:
+                    self.assertIn(str(source.relative_to(root)), tar.getnames())
+                manifest = json.loads((state / 'source-manifest.json').read_text())
+                self.assertEqual(manifest['source_files'][str(source.relative_to(root))], builder.digest(source))
+                (source.parent / '.env.shell').write_text('not an input')
+                with self.assertRaisesRegex(RuntimeError, 'Credential file'):
+                    builder.bundle('status')
+
     def test_failed_source_bundle_removes_partial_transfer(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'packages/tyrell-status').mkdir(parents=True)
             (root / 'packages/tyrell-status/CMakeLists.txt').write_text('project(test)')
+            (root / 'packages/tyrell-app-common').mkdir()
+            (root / 'packages/tyrell-app-common/CMakeLists.txt').write_text('project(common)')
             (root / 'builder').mkdir()
             (root / 'locks').mkdir()
             (root / 'scripts').mkdir()

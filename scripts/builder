@@ -190,10 +190,10 @@ def bundle(app='status'):
     locked = inputs(app)
     selected = []
     bases = [ROOT / ('packages/' + locked['package']), ROOT / 'builder', ROOT / 'locks']
-    if app == 'video':
+    if app in {'status', 'video'}:
         common = ROOT / 'packages/tyrell-app-common'
         if common.is_symlink() or not (common / 'CMakeLists.txt').is_file():
-            raise RuntimeError('Missing shared application command source')
+            raise RuntimeError('Missing shared application source')
         bases.append(common)
     for base in bases:
         for path in sorted(base.rglob('*')):

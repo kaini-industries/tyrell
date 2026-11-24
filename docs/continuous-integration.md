@@ -50,6 +50,12 @@ and shared-model checks with dummy SDL drivers. The native package remains
 SDL-disabled. Chess/Video require their new U1 command/layout groups; generated
 preview images and semantic bounds JSON are retained in the evidence artifact.
 
+Status packages use shell support disabled. A separate enabled build requires
+the [L1 transport, input and production-loop fake-shell checks](shell-link-status.md)
+in addition to the model, CLI and headless renderer tests. No device node or
+actual Gh0st process is used; passing does not establish physical compatibility
+or a 100 ms pause guarantee.
+
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg
 behavior; they do not prove the installed runtime closure, patched native Wizard,

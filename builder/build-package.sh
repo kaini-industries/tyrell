@@ -39,11 +39,13 @@ export TZ=UTC LC_ALL=C.UTF-8
 archive="$input/downloads/lvgl-$commit.tar.gz"
 printf '%s  %s\n' "$expected" "$archive" | sha256sum -c -
 tar -xzf "$archive" -C "$work/deps" --no-same-owner
+shell_options=()
+if test "$app" = status; then shell_options+=(-DTYRELL_ENABLE_SHELL_LINK=OFF); fi
 cmake -S "$input/packages/$package" -B "$work/cmake" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DLVGL_SOURCE_DIR="$work/deps/lvgl-$commit" \
     -DTYRELL_BUILD_REVISION="$revision" \
-    -DTYRELL_ENABLE_SDL=OFF -DBUILD_TESTING=ON
+    -DTYRELL_ENABLE_SDL=OFF -DBUILD_TESTING=ON "${shell_options[@]}"
 cmake --build "$work/cmake" --parallel 4
 ctest --test-dir "$work/cmake" --output-on-failure | tee "$work/artifacts/tests.txt"
 cp "$work/cmake/Testing/Temporary/LastTest.log" "$work/artifacts/ctest-detail.txt"

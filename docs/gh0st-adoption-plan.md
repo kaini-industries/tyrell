@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1 and U1 implemented; later work planned**.
+Plan revision 1, November 24, 2026. Status: **F1 and U1 implemented; L1 experimental pilot implemented; physical L1 gates pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -178,6 +178,10 @@ held keys and `SYN_DROPPED`. No game rules or network protocol changes. This can
 ship independently of Gh0st support.
 
 ### L1 — Optional shell link, piloted in Status
+
+Implementation: [optional shell link and Status pilot](shell-link-status.md).
+The default M5 build keeps integration disabled. Automated fake-shell checks
+exercise the pilot; physical M5 and pinned-Gh0st acceptance remain pending.
 
 First document a pinned supported protocol subset, then add a dependency-light
 C++17 `Tyrell::ShellLink` target in `packages/tyrell-app-common/`, separate from
@@ -369,8 +373,9 @@ protected baseline.
 
 **F1: compatibility ledger and scoped CI** supplies the initial records,
 reusable checks and portable CI without rebuilding images or changing device
-behavior. **U1** adds shared app commands and UI checks. The next app integration
-increment is **L1's Status pilot**; its optional shell protocol remains separate.
+behavior. **U1** adds shared app commands and UI checks. **L1's experimental
+Status pilot** adds an optional shell protocol with explicit ownership and loss
+policy. Its device gates remain open before compatibility can be claimed.
 Prepare F2 collectors/fixtures in parallel; leave physical execution explicitly
 pending until a concrete spare target is identified.
 
