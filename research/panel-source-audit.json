@@ -1,0 +1,310 @@
+{
+  "schema": 1,
+  "kind": "panel-source-audit",
+  "reviewed_date": "2026-11-24",
+  "scope": "source-inspected-only",
+  "upstream": {
+    "repository": "therezor/CardPuterZeroOS",
+    "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+    "kernel_release": "6.18.60+rpt-rpi-v8",
+    "kernel_package_version": "1:6.18.60-1+rpt1",
+    "bsp_commit": "a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4"
+  },
+  "tyrell_baseline": {
+    "kernel_release": "6.18.39+rpt-rpi-v8",
+    "kernel_package_version": "1:6.18.39-1+rpt1",
+    "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "te_driver_setup": "compiled out",
+    "te_gpio_overlay": "commented out",
+    "spi_max_frequency_hz": 60000000,
+    "existing_fallback": "app-owned mmap/fbdev plus fsync; preserve unchanged"
+  },
+  "retrieval": {
+    "provider": "connected GitHub fetch_file/fetch",
+    "requested_ref": "immutable full commit SHA for every file",
+    "verification": "UTF-8 content byte count and Git blob SHA-1 recomputed and matched connector blob identity; SHA-256 computed over the same bytes",
+    "network_failure": false,
+    "remote_code_executed": false,
+    "full_source_vendored": false
+  },
+  "files": [
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "docs/panel-driver.md",
+      "git_blob_sha1": "e111999f86f364cbb3200f40d94424c177ef47f3",
+      "sha256": "4bd3d2518bd1a81dc88404018ad09609399318aea6b9a6bf231a0b28e7f62fc8",
+      "bytes": 3390,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/docs/panel-driver.md",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c",
+      "git_blob_sha1": "4129557f17be2bdc0e53f6f7f9082b6babea31cc",
+      "sha256": "a9eb3cba7c6779ba9610843ad146db0c545301f15cf3b6f3b14e715750f3e7a1",
+      "bytes": 36630,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c",
+      "license_evidence": "File SPDX GPL-2.0; MODULE_LICENSE(\"GPL\"); root MIT does not replace this declaration"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/kernel/panel-mipi-dbi-m/Makefile",
+      "git_blob_sha1": "540cbb946db7637ac04700e372dbe4bca4663958",
+      "sha256": "f6b098f3b1a57b0d7af2aa46eb7b20de683f264dd42fa4068484c05df1e66b6e",
+      "bytes": 253,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/kernel/panel-mipi-dbi-m/Makefile",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/kernel/panel-mipi-dbi-m/gh0st-panel-te.dts",
+      "git_blob_sha1": "3acb8ce341a3575bea15c2ea3f9cb76e8123cb29",
+      "sha256": "0cf96db089a43dfee7c3240d17146a22e7bc476ac32f3da71815e47dd522f89e",
+      "bytes": 367,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/kernel/panel-mipi-dbi-m/gh0st-panel-te.dts",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/kernel/panel-mipi-dbi-m/install.sh",
+      "git_blob_sha1": "116f0d8fcf15e7e8b6f7102fea40905c639d839d",
+      "sha256": "83b7122104b6643a0edf209d70ce52cb0fce13c2e6bb10742fc608427fabf157",
+      "bytes": 1333,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/kernel/panel-mipi-dbi-m/install.sh",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "scripts/tear-test.sh",
+      "git_blob_sha1": "fdfeeb7d4135576c486dc305f5eb0c72dd2610a3",
+      "sha256": "610274f7d7d12c1ba6361050cd522adadf9ee04259d1607f2953c217da5e1c1c",
+      "bytes": 1192,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/scripts/tear-test.sh",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "LICENSE",
+      "git_blob_sha1": "d727f49dd0e62f5782dcff3ba169733e12946d62",
+      "sha256": "9239781c294eac9dc276e99ff72b35d3e1e7031cc38e8f2526a451fd5e42b122",
+      "bytes": 1062,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/LICENSE",
+      "license_evidence": "Repository MIT license, Copyright 2026 REZOR"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "crates/gh0st-ui/src/display.rs",
+      "git_blob_sha1": "06c5954cac6cd91917ce4fd3864514acbcb1a5e3",
+      "sha256": "d1a7d04436e78c86234762f3d01e24a74f13f4c85aa04fd761485ea00329a05e",
+      "bytes": 4191,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/crates/gh0st-ui/src/display.rs",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "crates/gh0st-ui/src/fb.rs",
+      "git_blob_sha1": "1be373a8dedc695b21559b6d4999b7191485fbe5",
+      "sha256": "7092c6ad39cad26ee69e327f4b9f75aca81d1329c79524a849c9c8fc91257014",
+      "bytes": 11046,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/crates/gh0st-ui/src/fb.rs",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/packages/gh0st-panel-modules/stage.sh",
+      "git_blob_sha1": "4b1be38d5c1ba1705b5da42ab70568a6717060e9",
+      "sha256": "370cf91fe4517c482ca18151552a9266ebbc552b93c2f30a1c5a4dde3491251e",
+      "bytes": 3266,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/packages/gh0st-panel-modules/stage.sh",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/packages/gh0st-panel-modules/DEBIAN/control",
+      "git_blob_sha1": "178b753d93e5b50adda284008dd8acd33edefa28",
+      "sha256": "ea257add8c57af2585578922406a0494867cb16a3efe4c188edd76baba971086",
+      "bytes": 596,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/packages/gh0st-panel-modules/DEBIAN/control",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/packages/gh0st-panel-modules/DEBIAN/postinst",
+      "git_blob_sha1": "3038650b72d4d37302a3936520ec4e518c6b4b0d",
+      "sha256": "e695e4eb7148fe29e38c59277be953e219bbde84008b4a18415af259324d9953",
+      "bytes": 393,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/packages/gh0st-panel-modules/DEBIAN/postinst",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/packages/gh0st-panel-modules/DEBIAN/postrm",
+      "git_blob_sha1": "1fda4d3603476bb2fdc7dd6f2919404a120b2128",
+      "sha256": "5701fad497ff04406316f9cba61858a0f7a044a137b845b92c3c7985810d669b",
+      "bytes": 108,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/packages/gh0st-panel-modules/DEBIAN/postrm",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/packages/gh0st-panel-modules/root/usr/lib/systemd/system/fb_load.service",
+      "git_blob_sha1": "179ef4f6473eff7a6704cf815c2e7ee92d4e3327",
+      "sha256": "5f5505056b596b14e46e64f363fb1c1ca167bd78ae80c2e77935d3ef054596d9",
+      "bytes": 623,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/packages/gh0st-panel-modules/root/usr/lib/systemd/system/fb_load.service",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "therezor/CardPuterZeroOS",
+      "commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+      "path": "os/lock.json",
+      "git_blob_sha1": "d290aeb76d2148870fdfc11a16fe28befb759eb8",
+      "sha256": "2589e143eb2294cae051342bc0ec2c44e39a118fd14624ad0c633e9a912d2626",
+      "bytes": 7476,
+      "url": "https://github.com/therezor/CardPuterZeroOS/blob/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5/os/lock.json",
+      "license_evidence": "No file SPDX inspected; repository root MIT applies subject to any distinct upstream content"
+    },
+    {
+      "repository": "m5stack/m5stack-linux-dtoverlays",
+      "commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+      "path": "modules/st7789v-1.0/panel-mipi-dbi-m.c",
+      "git_blob_sha1": "e2d7262432174df44cbe7d817d9f8e5bae9ffbc0",
+      "sha256": "e667b837a31397a835600b6e8faee92102f70186781f2a920c200ae70b28b158",
+      "bytes": 20301,
+      "url": "https://github.com/m5stack/m5stack-linux-dtoverlays/blob/75518549a2640486f5d13ea72ca4935b198d7c20/modules/st7789v-1.0/panel-mipi-dbi-m.c",
+      "license_evidence": "File SPDX GPL-2.0; MODULE_LICENSE(\"GPL\"); root MIT does not replace this declaration"
+    },
+    {
+      "repository": "m5stack/m5stack-linux-dtoverlays",
+      "commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+      "path": "modules/CardputerZero/cardputerzero-v5-overlay.dts",
+      "git_blob_sha1": "2a51797d2092a7feb81a11a7c841b470fbb4513c",
+      "sha256": "ab46df7faa21d517199889e639d5839209529d628b687bbf9d3f698a6dd3b110",
+      "bytes": 24301,
+      "url": "https://github.com/m5stack/m5stack-linux-dtoverlays/blob/75518549a2640486f5d13ea72ca4935b198d7c20/modules/CardputerZero/cardputerzero-v5-overlay.dts",
+      "license_evidence": "No per-file SPDX in inspected overlay; complete distribution license/source obligations require separate review"
+    }
+  ],
+  "abi": {
+    "name": "GH0ST_FBIO_PRESENT",
+    "macro": "_IO('F', 0xC0)",
+    "asm_generic_value": 18112,
+    "asm_generic_hex": "0x46c0",
+    "payload_bytes": 0,
+    "version_negotiation": false,
+    "capability_query_available": false,
+    "argument_used": false,
+    "driver_configuration_required": "CONFIG_DRM_FBDEV_EMULATION",
+    "handler_source_lines": {
+      "first": 801,
+      "last": 812
+    },
+    "completion": "Flush pending framebuffer deferred work and DRM helper damage work; handler then returns zero",
+    "spi_error_returned_to_caller": false,
+    "optical_completion_proof": false,
+    "foreground_arbitration_provided": false,
+    "explicit_overall_deadline": false,
+    "unknown_commands": "Delegate original fb_ioctl if available, otherwise -ENOTTY",
+    "stock_unsupported": "Expected ENOTTY according to pinned upstream docs; not executed on Tyrell"
+  },
+  "findings": [
+    {
+      "id": "kernel-bsp-mismatch",
+      "source_paths": [
+        "os/lock.json",
+        "os/packages/gh0st-panel-modules/stage.sh"
+      ],
+      "finding": "Upstream module targets newer kernel and different M5 BSP; stage checks module vermagic against selected kernel. These are not Tyrell's frozen inputs.",
+      "consequence": "A port needs a distinct coherent kernel/header/module/overlay profile and fresh qualification; do not replace retained module bytes."
+    },
+    {
+      "id": "te-state",
+      "source_paths": [
+        "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c",
+        "os/kernel/panel-mipi-dbi-m/gh0st-panel-te.dts"
+      ],
+      "finding": "Overlay adds GPIO5 TE to the v5 panel node. Driver requests both-edge IRQ with NO_AUTOEN and IRQ_DISABLE_UNLAZY. IRQ learns timing and disables after idle count exceeds te_idle_edges; default20 therefore disables on the 21st counted edge.",
+      "consequence": "Require actual wiring/overlay validation and measured active/idle IRQ behavior; source comments do not establish electrical behavior."
+    },
+    {
+      "id": "te-wait-fallback",
+      "source_paths": [
+        "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c"
+      ],
+      "finding": "Missing TE or disabled parameter bypasses waits. Each default wait times out after50ms with a warning, then execution may proceed without reliable phase. Scan selection tries up to4 times; runtime parameters and workqueue/SPI/mutex scheduling prevent an overall hard-deadline claim.",
+      "consequence": "Record blind/fresh/slept/timeout behavior separately and do not infer tear-free output from a completed request."
+    },
+    {
+      "id": "copy-path",
+      "source_paths": [
+        "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c"
+      ],
+      "finding": "Native RGB565 fast path copies each damaged row to scratch memory, then swaps/transposes into the transfer buffer. It rejects I/O-memory and imported GEM buffers; generic conversion/transpose remains the fallback.",
+      "consequence": "Host ordinary-RAM copy tests cannot reproduce write-combined GEM cost, kernel behavior, SPI timing or scanout."
+    },
+    {
+      "id": "present-error-scope",
+      "source_paths": [
+        "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c"
+      ],
+      "finding": "PRESENT drains deferred/damage work and returns0; display transfer failures are logged in the void dirty callback rather than returned through this ioctl.",
+      "consequence": "Neither0 nor ioctl throughput is successful optical completion or a transfer-error counter. A userspace timeout cannot bound an already blocked kernel operation."
+    },
+    {
+      "id": "caller-fallback",
+      "source_paths": [
+        "crates/gh0st-ui/src/fb.rs",
+        "crates/gh0st-ui/src/display.rs",
+        "docs/panel-driver.md"
+      ],
+      "finding": "Rust framebuffer opening executes PRESENT as a capability probe. Later present returns false for unavailable/failed ioctl. Display abstraction permits a caller timer; docs describe20ms fallback. Framebuffer sync invokes fsync but discards its result.",
+      "consequence": "Do not copy the probe or error suppression into Tyrell. Preserve current fbdev/fsync behavior and foreground/input lifecycle; unsupported and failed operations need separate diagnostics."
+    },
+    {
+      "id": "installation-boundary",
+      "source_paths": [
+        "os/kernel/panel-mipi-dbi-m/install.sh",
+        "os/packages/gh0st-panel-modules/DEBIAN/postinst",
+        "os/packages/gh0st-panel-modules/DEBIAN/postrm"
+      ],
+      "finding": "Standalone installer writes live module and boot paths and edits boot configuration. Package postinst copies overlays to FAT boot; postrm runs depmod and does not establish complete restoration of copied boot files.",
+      "consequence": "No inspected installer was executed. These paths are not an accepted Tyrell staging, rollback or recovery workflow."
+    },
+    {
+      "id": "mixed-license",
+      "source_paths": [
+        "LICENSE",
+        "os/kernel/panel-mipi-dbi-m/panel-mipi-dbi-m.c"
+      ],
+      "finding": "Repository root declares MIT but driver explicitly declares GPL-2.0 with original Noralf Tronnes authorship. A Rust SDK/root license cannot relicense this kernel source.",
+      "consequence": "No driver code or header is copied here. Any later distribution requires complete applicable license notices and corresponding source/build material review."
+    }
+  ],
+  "not_established": [
+    "Tyrell module build or kernel ABI compatibility",
+    "Accepted baseline hardware or spare-card boot",
+    "Tear-free or50fps output on Tyrell",
+    "Optical scanout timestamps",
+    "Electrical energy or battery improvement",
+    "Bounded live pause/present/crash recovery",
+    "Complete corresponding-source closure for a redistributed driver"
+  ],
+  "grants_release_approval": false,
+  "hardware_qualified": false,
+  "performance_qualified": false,
+  "live_operations_performed": false
+}

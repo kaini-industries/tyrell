@@ -1,0 +1,76 @@
+{
+  "baseline": {
+    "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+    "evidence_sha256": "616d50163a30a6cbe65584096e2d9872bcb12e64781c64b27a35e78aad6256b6",
+    "export_manifest_sha256": "736898edff86bffe39c9ef20a2fc9a99f8d5f371bad3ae682bbe280a57dfa885",
+    "hardware_acceptance": "not-tested",
+    "kernel_release": "6.18.39+rpt-rpi-v8",
+    "raw_image_sha256": "207fcf45b222ec834468b6ecbe81cef663b0e709df282052b8450c5b5f85372a",
+    "source_commit": "5adaecb09066d09140db4161e0f45b352a1e63d4"
+  },
+  "candidate": {
+    "artifacts": [],
+    "build_source_commit": null,
+    "kernel_release": null,
+    "license_notice": null,
+    "source_export": null
+  },
+  "enabled": false,
+  "gates": {
+    "apps": {
+      "beacon": "not-tested",
+      "catalog": "not-tested",
+      "chess": "not-tested",
+      "m5-applaunch": "not-tested",
+      "sandline": "not-tested",
+      "status": "not-tested",
+      "video": "not-tested"
+    },
+    "hardware": {
+      "audio": "not-tested",
+      "bluetooth": "not-tested",
+      "boot_sd": "not-tested",
+      "camera": "not-tested",
+      "ethernet": "not-tested",
+      "expansion": "not-tested",
+      "hdmi": "not-tested",
+      "imu_compass": "not-tested",
+      "infrared": "not-tested",
+      "keyboard": "not-tested",
+      "lcd_backlight": "not-tested",
+      "power_gauge": "not-tested",
+      "rtc": "not-tested",
+      "usb_modes": "not-tested",
+      "wifi_ssh": "not-tested"
+    },
+    "scenarios": {
+      "abi-compatibility": "not-tested",
+      "abnormal-exit-recovery": "not-tested",
+      "baseline-acceptance": "not-tested",
+      "battery-measurement": "not-tested",
+      "brightness-dark-wake": "not-tested",
+      "bsp-source-and-license": "not-tested",
+      "dirty-full-redraw": "not-tested",
+      "fbdev-fsync-fallback": "not-tested",
+      "foreground-ownership": "not-tested",
+      "hdmi-audio-vt-return": "not-tested",
+      "idle-irq-cpu": "not-tested",
+      "missing-te-fallback": "not-tested",
+      "optical-observation": "not-tested",
+      "present-error-visibility": "not-tested",
+      "rgb565-color-orientation": "not-tested",
+      "te-timeout": "not-tested",
+      "te-wait": "not-tested"
+    }
+  },
+  "grants_release_approval": false,
+  "id": "h3-panel-present",
+  "kind": "tyrell-panel-experiment",
+  "notes": "Planning metadata only. Candidate bytes, ABI, BSP build and physical outcomes remain unverified.",
+  "schema": 1,
+  "source_audit": {
+    "path": "research/panel-source-audit.json",
+    "sha256": "15c38c995cb9e14a39c6742cada896449067794c5e7b5428ffbfce240b9309ef",
+    "upstream_commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5"
+  }
+}

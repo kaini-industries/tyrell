@@ -104,6 +104,12 @@ change copied dictionaries only. Scoped `scripts/power/` changes select docs
 and Python; the original power package and native foundation checks remain
 independent. A successful rehearsal cannot authorize live tuning or promotion.
 
+H3's [panel preparation](panel-experiment.md) requires Python checks for inactive
+metadata, pinned audit/baseline bindings and recorded SPI analysis. Source-audit
+or experiment-template JSON changes select those checks too. F2 fixtures cover
+parent snapshot timing envelopes; no collector runs against CI hardware. The
+tests do not load modules, probe PRESENT or change current app display paths.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

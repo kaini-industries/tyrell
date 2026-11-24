@@ -212,6 +212,23 @@ class CollectorTests(unittest.TestCase):
         self.assertLess(result["timing"]["observed_seconds"], 2 + collector.SCHEDULE_GRACE_SECONDS)
         self.assertEqual(records.inspect_bundle(self.output())[1]["status"], "completed")
 
+    def test_parent_capture_window_includes_snapshot_startup_and_return(self):
+        clock = VirtualClock()
+        def delayed(*args):
+            clock.now += 0.2
+            sample = collector.snapshot(*args)
+            sample["read_seconds"] = 0.01
+            clock.now += 0.3
+            return sample
+        result = collector.collect(self.plan, self.output(), self.root, clock=clock.clock,
+                                   sleep=clock.sleep, take_snapshot=delayed)
+        self.assertEqual(result["status"], "completed")
+        samples = [json.loads(line) for line in (self.output() / "samples.jsonl").read_text().splitlines()]
+        for sample in samples:
+            self.assertEqual(sample["capture_started_seconds"], sample["elapsed_seconds"])
+            self.assertAlmostEqual(sample["capture_finished_seconds"] - sample["capture_started_seconds"], 0.5)
+            self.assertLess(sample["read_seconds"], sample["capture_finished_seconds"] - sample["capture_started_seconds"])
+
     def test_unfilled_or_unbounded_plan_never_creates_output(self):
         self.plan["conditions"]["device_id"] = "UNRECORDED"
         with self.assertRaises(ValueError):

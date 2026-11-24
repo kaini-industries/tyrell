@@ -100,6 +100,11 @@ against synthetic snapshots. It does not change this package or install a live
 backend. Real board/topology observation, boot/tmpfiles/maintenance ordering,
 baseline acceptance and battery qualification remain open.
 
+H3's [panel preparation](panel-experiment.md) adds a pinned driver/ABI/license
+audit, inactive experiment metadata and recorded SPI-counter analysis. It
+preserves current apps, BSP, profiles and locks. Baseline acceptance and any
+candidate driver build, boot or optical/energy qualification remain pending.
+
 Headless package, activation and verifier tests do not establish actual account
 provisioning, PAM/VT/seat behavior, framebuffer/HDMI rendering, Wi-Fi/audio,
 Store interaction or battery performance on the handheld. Those remain

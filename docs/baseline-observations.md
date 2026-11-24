@@ -79,6 +79,13 @@ counters, selected-process stat/PSS, and available sysfs CPU controls, thermal,
 backlight, battery/raw gauge, USB power, network and SPI statistics. Each sample
 has a bounded collection deadline; a missed deadline remains failed evidence.
 
+New samples include parent-measured `capture_started_seconds` and
+`capture_finished_seconds`, relative to the observation window. These bracket
+the entire snapshot call, including child startup and return. The child's
+`read_seconds` excludes that overhead and cannot bound an individual counter's
+capture time. Older bundles remain records of their original scope; missing
+capture envelopes cannot be reconstructed as measured bounds.
+
 Retain the complete bundle and its plan. Validate it after copying it off:
 
 ```sh
@@ -177,7 +184,7 @@ For the next investigation, see [H1 backlight procedure](backlight-investigation
 
 ## Automated validation
 
-Run `python3 -m unittest discover -s scripts/observe/tests -v` for the 31
+Run `python3 -m unittest discover -s scripts/observe/tests -v` for the 32
 fixture checks. They cover read/output/time bounds, missing/malformed sources,
 sysfs alias changes, PID reuse, realistic scheduling delay, cancellation, partial bundles and comparison
 rejections. Their fake roots and clocks are explicit test inputs, unavailable

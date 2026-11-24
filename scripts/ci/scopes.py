@@ -66,7 +66,9 @@ def select(paths):
             selected.update(("python", "zero-native"))
         elif path.startswith("scripts/tests/"):
             selected.add("python")
-        elif path.startswith(("scripts/observe/", "scripts/power/")):
+        elif path.startswith(("scripts/observe/", "scripts/power/", "scripts/panel/")):
+            selected.add("python")
+        elif path in ("research/panel-source-audit.json", "research/panel-experiment-template.json"):
             selected.add("python")
         elif path.startswith(("docs/", "research/")) or path in ("README.md", "LICENSE"):
             pass
