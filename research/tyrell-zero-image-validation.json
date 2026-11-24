@@ -1,0 +1,559 @@
+{
+  "schema": 1,
+  "kind": "baseline-image-construction-and-export-validation",
+  "opened_date": "2026-11-24",
+  "timezone": "America/Chicago",
+  "status": "passed-file-image-validation",
+  "scope": "Zero baseline and fresh matched full-source file images; physical acceptance remains separate",
+  "profile_id": "tyrell-zero",
+  "selected_power_preset": "baseline",
+  "input_comparison": {
+    "status": "verified-lock-relationship",
+    "verified_date": "2026-11-24",
+    "method": "Read-only JSON comparison of package/version/architecture stage rows and common package DEB SHA-256 identities",
+    "seed_apt": {
+      "path": "locks/image-apt.json",
+      "sha256": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e"
+    },
+    "zero_apt": {
+      "path": "locks/tyrell-zero-apt.json",
+      "sha256": "553a1c4c106835c0f9498d43b385ff5535ab4f252ebf472ab2d6f66a50ff5761"
+    },
+    "zero_apps": {
+      "path": "locks/tyrell-zero-apps.json",
+      "sha256": "6fa0cff9ff719a0ae391a8a7cff1d13729491169d99f277f49cc2795cb6c6336"
+    },
+    "stage0": {
+      "seed_count": 209,
+      "zero_count": 209,
+      "rows_identical": true
+    },
+    "stage1": {
+      "seed_count": 239,
+      "zero_count": 239,
+      "rows_identical": true
+    },
+    "stage2": {
+      "seed_count": 950,
+      "zero_count": 955,
+      "unchanged_seed_identities_in_zero": 950,
+      "changed_seed_identities": 0,
+      "zero_additions": [
+        "greetd",
+        "liblua5.4-0",
+        "libwireplumber-0.5-0",
+        "pkexec",
+        "wireplumber"
+      ]
+    },
+    "full_source_stage4_vs_zero": {
+      "zero_os_count": 955,
+      "common_identities": 954,
+      "changed_common_versions_or_architectures": 0,
+      "changed_common_deb_sha256": 0,
+      "source_only_count": 725,
+      "zero_only": [
+        "greetd"
+      ],
+      "source_stage4_candidate_count": 1679,
+      "candidate_inventory_limit": "Seed stage4 candidates include transients; actual final installed/status inventory is measured after export."
+    },
+    "required_common_inputs": {
+      "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+      "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
+      "kernel_release": "6.18.39+rpt-rpi-v8",
+      "kernel_package": "1:6.18.39-1+rpt1",
+      "applaunch_version": "0.6.105",
+      "status_version": "0.1.0-1",
+      "status_sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+      "power_policy": "Original baseline settings; no optimized policy"
+    },
+    "legacy_default_status_sha256": "86b0f912c39f63eade505596e25db34c289fc776b8cdd32b82b73eed546c78e3",
+    "intentional_differences": [
+      "Full-source stage3/4 desktop package closure",
+      "Zero native session, guarded Store and baseline policy integration"
+    ],
+    "qualification_limit": "Lock comparison only; final captures and installed image bytes require their own recorded verification"
+  },
+  "preparation": {
+    "status": "passed",
+    "storage": {
+      "status": "passed",
+      "backup_evidence": {
+        "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/storage/backup.json",
+        "sha256": "880ae3d48f4ea3a64c641ff2bf31989d18a84fd7ccba4fd41160e14588e09078"
+      },
+      "growth_evidence": {
+        "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/storage/disk-growth.json",
+        "sha256": "edb068c4a8933a3970cdaa691c0cb54e3ee11b93c58c6fa5dae3054f1c25d8d3"
+      },
+      "capacity_evidence": {
+        "virtual_disk_bytes": 171798691840,
+        "free_bytes_after_growth": 101385093120,
+        "original_disk_and_instance_backup_preserved": true
+      },
+      "builder_status_unchanged_during_growth": true,
+      "preexisting_builder_package_updates": "November23 unattended upgrades occurred after the older BSP receipt; stopped backup matches current package status87dba0a1... exactly.",
+      "temporary_update_units_masked_during_jobs": true,
+      "restore_runtime_masks_before_final_stop": true
+    },
+    "first_boot_configuration_fix": {
+      "status": "qualified",
+      "source_commit": "5adaecb09066d09140db4161e0f45b352a1e63d4",
+      "problem": "Vendor export enabled userconfig.service on tty8, competing with native Wizard firstboot.",
+      "correction": "Zero-only guarded disabled-login setup configuration; explicit userconfig mask/no legacy wants; root lock reasserted after custom install. Vendor stage2 already locks root.",
+      "evidence": {
+        "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
+        "sha256": "44a8931f624a79a0f80d85c111cb1fe82477c5ffe6564b7654a1aee898a426e4"
+      }
+    },
+    "runtime_requalification": {
+      "status": "passed",
+      "report": {
+        "path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
+        "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae"
+      },
+      "passed_checks": 24461,
+      "native_linux_activation_tests": {
+        "path": "artifacts/tyrell-zero-locks/activation-fixtures-20261124T164844Z/report.json",
+        "sha256": "5074370393ac81fc4c850f122d45fe791ea59ca76a91894f011e879fa54e75b2"
+      },
+      "fresh_lock_comparison": {
+        "path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
+        "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32"
+      }
+    },
+    "final_input_qualification": {
+      "status": "passed",
+      "report": {
+        "path": "research/tyrell-zero-pipeline.json",
+        "sha256": "214253b6d98e84d978620978d659f575badc3785ace19161e217ae7878af604a"
+      },
+      "host_tests": 421,
+      "host_platform_skips": 2
+    },
+    "frozen_removal_normalization": {
+      "status": "qualified",
+      "selector": "firmware-marvell-prestera-",
+      "action": "Recorded no-op removal only; reject source drift, locked target or unexpectedly installed target.",
+      "selected_package_or_firmware_bytes_changed": false,
+      "actual_apt_simulation": {
+        "path": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/report.json",
+        "sha256": "2d77acfe5ca96e89908efa2d3483330dc7ff3ff059e43a2968947aea1d194f29"
+      }
+    },
+    "launch_lifecycle_fix": {
+      "status": "qualified",
+      "problem": "reset-failed garbage-collected the old transient unit before redundant stop; failure happened before launch reconciliation.",
+      "correction": "Failed loaded units reset only; other completed loaded units stop only. All post-attempt-persistence Zero launch preparation reconciles proven failures.",
+      "native_wrapper_checks": {
+        "path": "artifacts/tyrell-zero-locks/wrapper-smoke-20261124T171133Z/report.json",
+        "sha256": "112279e22e3e2127d4755c72213811a4cc732da1ad44e503c599b6feab6accca"
+      },
+      "host_regressions": "41 Zero pipeline tests and 16 legacy lifecycle tests, included in host qualification."
+    }
+  },
+  "zero_image": {
+    "status": "passed-file-image-verification-and-export",
+    "job_id": "20261124T171522036978Z-f7c1a8bc",
+    "attempt_id": 2,
+    "source_commit": "5adaecb09066d09140db4161e0f45b352a1e63d4",
+    "capture": {
+      "archive_path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/image-input.tar",
+      "archive_sha256": "d3fa16bd60222aabf8d2df6d04466ce16ae54f7a8f6ff9d780845b87f6174268",
+      "metadata_path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/build-inputs.json",
+      "metadata_sha256": "1ca9746a147105ff9e10c98d8701243ead8176983dd296b57c38f9ade59d3316"
+    },
+    "result": {
+      "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/actual-stage2-recovery/attempt-0002-result.json",
+      "sha256": "cebe13da307988511bf109203190dd8d8d7e062f252ad9e6c763f412880abb4c",
+      "bytes": 265,
+      "exit_status": 0,
+      "manifest_sha256": "51681e70788196e9a82922df86486b133b035fc010414a5500a1134945dc6b44"
+    },
+    "verification": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/image-verification.json",
+      "sha256": "d657c55b46981af419aaf20659a6a9244b6706bec69c39900ff3acce6aaa0a2a",
+      "bytes": 3712682,
+      "scope": "offline-read-only-image",
+      "passed_checks": 24478,
+      "failed_checks": 0
+    },
+    "raw_image": {
+      "bytes": 4328521728,
+      "name": "tyrell-zero-trixie-arm64-lite.img",
+      "sha256_after": "207fcf45b222ec834468b6ecbe81cef663b0e709df282052b8450c5b5f85372a",
+      "sha256_before": "207fcf45b222ec834468b6ecbe81cef663b0e709df282052b8450c5b5f85372a"
+    },
+    "export": {
+      "directory": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002",
+      "guest_manifest": {
+        "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/guest-image-manifest.json",
+        "sha256": "51681e70788196e9a82922df86486b133b035fc010414a5500a1134945dc6b44",
+        "bytes": 4273072
+      },
+      "host_manifest": {
+        "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/image-manifest.json",
+        "sha256": "736898edff86bffe39c9ef20a2fc9a99f8d5f371bad3ae682bbe280a57dfa885",
+        "bytes": 4273481
+      },
+      "checksums": {
+        "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/SHA256SUMS",
+        "sha256": "ee4ea93a9ac5a244720417361c3b4fcaa9ba78e12cb3bd40542c126217104ab4",
+        "bytes": 1123
+      },
+      "published_pointer": "/Users/ericanderson/Workspaces/tyrell/image-artifacts-zero"
+    },
+    "compressed_image": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/tyrell-zero-trixie-arm64-lite.img.xz",
+      "bytes": 1201240412,
+      "sha256": "ec038dd34456668e3ab5b98bc4280cb9c8a7c5920a433a6b81621eae5369e388",
+      "payload_sha256": "207fcf45b222ec834468b6ecbe81cef663b0e709df282052b8450c5b5f85372a",
+      "matches_verified_raw": true
+    },
+    "installed_inventory": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002/image-verification.json",
+      "sha256": "d657c55b46981af419aaf20659a6a9244b6706bec69c39900ff3acce6aaa0a2a",
+      "bytes": 3712682,
+      "section": "packages",
+      "package_count": 959
+    },
+    "rootfs_usage": {
+      "apparent_bytes": 2937382746,
+      "allocated_bytes": 3106742272,
+      "filesystem_capacity_bytes": 3649323008,
+      "filesystem_used_bytes": 3107672064,
+      "method": "GNU du -x -B1 -s, with --apparent-size for apparent bytes; boot is measured separately. Raw images are loop-attached read-only; ext4 uses ro,noload; image programs are never executed.",
+      "exclusions": [
+        "Separate boot filesystem is measured independently; du -x stays on the selected filesystem."
+      ]
+    },
+    "cleanup": {
+      "status": "passed-by-offline-raw-verifier",
+      "errors": [],
+      "remaining_mounts": 0,
+      "basis": "Every image-adapter cleanup check passed; rawSHA before/after equal.",
+      "remaining_image_loops": 0,
+      "raw_hash_unchanged": true
+    },
+    "source_dirty": false,
+    "boot_usage": {
+      "du_allocated_bytes": 78512640,
+      "du_apparent_bytes": 78362746,
+      "filesystem_capacity_bytes": 528592896,
+      "filesystem_used_bytes": 78512640
+    }
+  },
+  "full_source_control": {
+    "status": "passed-file-image-verification-and-export",
+    "apt_profile": "frozen",
+    "stages": [
+      "stage0",
+      "stage1",
+      "stage2",
+      "stage3",
+      "stage4"
+    ],
+    "job_id": "20261124T172859067303Z-cfd88df2",
+    "attempt_id": null,
+    "source_commit": "5adaecb09066d09140db4161e0f45b352a1e63d4",
+    "capture": {
+      "archive_path": "/Volumes/garage/tyrell-build/jobs/20261124T172859067303Z-cfd88df2/image-input.tar",
+      "archive_sha256": "9dee76d61f25f60e5ba21e912bd496374fa39de2e879c1a90d8ef9fafefe05fc",
+      "metadata_path": "/Volumes/garage/tyrell-build/jobs/20261124T172859067303Z-cfd88df2/image-metadata.json",
+      "metadata_sha256": "17c1e4382f2ccaa533f8c5448c71a719cd2cdd1648134302dc5fd3e250019289"
+    },
+    "result": {
+      "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/matched-source-control/durable-result.json",
+      "sha256": "991205a2cc29b62fbc66a0927cad0e0a713c3a088038f36e41d03b74f254b9bf",
+      "bytes": 149,
+      "exit_status": 0
+    },
+    "verification": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2/image-verification.json",
+      "sha256": "7633289abb5bf9b08593b04b5253708ac3f2376a2bbb563b3f1984b4dd3e9c92",
+      "bytes": 24049,
+      "scope": "Offline contents, filesystem, package and chroot checks only; physical boot and peripherals are untested.",
+      "passed_checks": 134,
+      "failed_checks": 0
+    },
+    "raw_image": {
+      "name": "tyrell-trixie-arm64.img",
+      "bytes": 7172259840,
+      "sha256_before": "e4e0d73d4ec99377dab1c61e321a666a6c574ce519bdf9783a605999155704c0",
+      "sha256_after": "e4e0d73d4ec99377dab1c61e321a666a6c574ce519bdf9783a605999155704c0"
+    },
+    "export": {
+      "directory": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2",
+      "guest_manifest": {
+        "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/guest-control-image-manifest.json",
+        "sha256": "7841d218bec71b150157ec7a63887787f350caaa79d4f9f7c3e4536426bcd580",
+        "bytes": 33680
+      },
+      "host_manifest": {
+        "path": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2/image-manifest.json",
+        "sha256": "2ce622cd8c27749ee538c5a0471fdf521662027e8135d39ebd5fa755f1f08255",
+        "bytes": 33978
+      },
+      "checksums": {
+        "path": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2/SHA256SUMS",
+        "sha256": "c1e1af8471acc5e36142b68e7c7c976d1a48def6d7139004366d34d6b356e9f4",
+        "bytes": 1669
+      },
+      "published_pointer": "/Users/ericanderson/Workspaces/tyrell/image-artifacts-control"
+    },
+    "compressed_image": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2/tyrell-trixie-arm64.img.xz",
+      "bytes": 1935646992,
+      "sha256": "ca3e15a91de242396372b8a78cabaac5b1c366e2ced7859577ae53a983b059f9",
+      "payload_sha256": "e4e0d73d4ec99377dab1c61e321a666a6c574ce519bdf9783a605999155704c0",
+      "matches_verified_raw": true
+    },
+    "installed_inventory": {
+      "path": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2/image-packages.tsv",
+      "sha256": "5cfc9332ebcb148906e5daf29b306316375350cbdda1d7a6ca28d5cacf50fcd7",
+      "bytes": 89177,
+      "package_count": 1679,
+      "os_packages": 1678,
+      "custom_packages": 1,
+      "rows_including_residual": 1680,
+      "states": {
+        "deinstall ok config-files": 1,
+        "hold ok installed": 38,
+        "install ok installed": 1641
+      },
+      "residual_config_only": [
+        "rpi-connect-lite:arm64 2.15.0"
+      ]
+    },
+    "rootfs_usage": {
+      "apparent_bytes": 5305789644,
+      "allocated_bytes": 5635518464,
+      "filesystem_capacity_bytes": 6441254912,
+      "filesystem_used_bytes": 5637144576,
+      "method": "GNU du -x -B1 -s, with --apparent-size for apparent bytes; boot is measured separately. Raw images are loop-attached read-only; ext4 uses ro,noload; image programs are never executed.",
+      "exclusions": [
+        "Separate boot filesystem is measured independently; du -x stays on the selected filesystem."
+      ]
+    },
+    "cleanup": {
+      "status": "passed",
+      "errors": [],
+      "remaining_image_loops": 0,
+      "raw_hash_unchanged": true
+    },
+    "source_dirty": false,
+    "source_clean_basis": "Worktree preflight clean; every captured recipe file SHA equals the declared Git commit blob.",
+    "execution": "One fresh full-source execution; legacy jobs have no numbered attempt identifier.",
+    "boot_usage": {
+      "du_allocated_bytes": 91470848,
+      "du_apparent_bytes": 91320980,
+      "filesystem_capacity_bytes": 528592896,
+      "filesystem_used_bytes": 91470848
+    }
+  },
+  "assembled_image_comparison": {
+    "status": "passed-scoped-input-and-content-comparison",
+    "report": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/comparison.json",
+      "sha256": "06972fd13a4bdee746438c4cca59c62645102a02bb40f8197007174734a66025",
+      "bytes": 4618111
+    },
+    "summary": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/compact-summary.json",
+      "sha256": "85f53fe5c8e4d5fed4cae424b55648e3b78d9660cdc253a63e39e7805e53732d",
+      "bytes": 1945
+    },
+    "helper": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/compare-zero-control.py",
+      "sha256": "2809770255c427723ba14cafe6c06bdbcf8bde57148213b3330afd2c82f8e28b",
+      "bytes": 17822
+    },
+    "helper_review": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/helper-review.json",
+      "sha256": "893f404c10684dd7e68abd499147ad685e4bd1dadcc2a666c458b265953f0566",
+      "bytes": 807
+    },
+    "evidence_checksums": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/SHA256SUMS",
+      "sha256": "9c53181544bcbf8798966e5e11be6320ffcecde3b42754d8a3ed9d9e7f0e91ce",
+      "bytes": 1905
+    },
+    "common_package_bytes": {
+      "common_installed_packages_including_status": 954,
+      "common_installed_os_packages": 953,
+      "version_architecture_or_input_deb_hash_changes": 0,
+      "control_only_installed_packages": 725,
+      "zero_only_installed_packages": [
+        "greetd:arm64",
+        "rpi-connect-lite:arm64",
+        "tyrell-zero-power-policy:arm64",
+        "tyrell-zero-session:arm64",
+        "tyrell-zero-store:arm64"
+      ],
+      "control_residual_configuration": {
+        "rpi-connect-lite:arm64": {
+          "Architecture": "arm64",
+          "Package": "rpi-connect-lite",
+          "Status": "deinstall ok config-files",
+          "Version": "2.15.0"
+        }
+      }
+    },
+    "native_and_bsp_bytes": {
+      "protected_hardware_identities": 6949,
+      "differences": [],
+      "unlisted_hardware": {
+        "zero": 0,
+        "control": 0
+      },
+      "original_m5_main_and_mapped_vendor_store_match": true,
+      "original_pins_match_both_images": {
+        "zero": true,
+        "control": true
+      }
+    },
+    "baseline_power_settings": {
+      "zero_preset": "baseline",
+      "boot_configuration_matches_both_images": true,
+      "boot_configuration_sha256": "40de4f7dfbb833723928a97c89e8a38923adcfac5e12aaced7d7d3f0378d5a28",
+      "optimized_policy_applied": false,
+      "runtime_power_and_battery_not_measured": true
+    },
+    "intentional_scoped_payload_changes": {
+      "changed_public_store_dispatcher": [
+        "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore"
+      ],
+      "additional_zero_scoped_files": 39,
+      "original_store_preserved_as_vendor_copy": true
+    },
+    "unexpected_differences": [],
+    "scope_limit": "Package equality covers identities/input DEB bytes; payload comparison covers the declared hardware/vendor/custom scope, not every mutable configuration file."
+  },
+  "actual_stage2_recovery": {
+    "status": "passed",
+    "job_id": "20261124T171522036978Z-f7c1a8bc",
+    "attempt_ids": [
+      1,
+      2
+    ],
+    "evidence": {
+      "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/actual-stage2-recovery/recovery-evidence.json",
+      "sha256": "ff1d1a5e064ca2a07a7a7869b24c5c94aed964659a689ef10cead8db48e95634",
+      "bytes": 3514
+    }
+  },
+  "builder_final_state": {
+    "status": "passed",
+    "initial_state": "Stopped",
+    "final_state": "Stopped",
+    "evidence": {
+      "path": "artifacts/tyrell-zero-image-validation/20261124-comparison/final-builder-state.json",
+      "sha256": "461454f1eaffd70cf27638ce828737f2e3c532e38557fbfee646141ad10b5d55",
+      "bytes": 1838
+    },
+    "final_guest_free_bytes": 44998352896,
+    "backing_disk_bytes": 171798691840,
+    "normal_update_unit_enablement_restored": true,
+    "live_package_state_matches_stopped_backup": true
+  },
+  "acceptance": {
+    "full_image_built": true,
+    "exported_image_qualified": true,
+    "matched_control_qualified": true,
+    "hardware": {
+      "status": "deferred-by-user-file-image-scope",
+      "qualified": false,
+      "capability_count": 15,
+      "contract": "image/contracts/tyrell-zero-hardware.json",
+      "report": null
+    },
+    "footprint_and_memory": {
+      "status": "file-footprint-measured; settled-memory-unmeasured",
+      "qualified": false,
+      "report": null,
+      "disk_footprint_measured": true
+    },
+    "battery": {
+      "status": "not-tested",
+      "qualified": false,
+      "benefit_claimed": false,
+      "report": null
+    },
+    "device_access_performed_for_this_record": false,
+    "sd_card_access_performed_for_this_record": false,
+    "physical_scope_requested_this_turn": "File-image validation only; user explicitly deferred spare-card/device acceptance."
+  },
+  "historical_references": {
+    "source": {
+      "directory": "/Volumes/garage/tyrell-build/images/20261113T185524Z",
+      "offline_checks": 134,
+      "role": "Historical source export; APT recorded rather than frozen, not the new matched control"
+    },
+    "stock": {
+      "directory": "/Volumes/garage/tyrell-build/images/20261114T182824879955Z-b309a99d",
+      "offline_checks": 582,
+      "role": "Retained compatibility/recovery reference; spare-card hardware acceptance pending"
+    }
+  },
+  "limitations": [
+    "Pending fields do not assert successful construction, export or physical acceptance.",
+    "The November 23 detached-root and failure-fixture receipts retain their original pre-image scope.",
+    "Raw/XZ sizes alone do not demonstrate installed-rootfs or settled-memory improvement.",
+    "Battery claims require the separate matched battery-powered protocol; optimized policy remains disabled.",
+    "Frozen DEB resolution does not imply whole-build network isolation: vendor finalization can fetch APT changelog and optional GitHub metadata after runtime sources are restored. No byte-identical image rebuild claim is made."
+  ],
+  "construction_trials": [
+    {
+      "job_id": "20261124T165428867682Z-ef80d584",
+      "attempt_id": 1,
+      "source_commit": "f0b329a85df5bee9b78b24a4b2826aa1016032a7",
+      "status": "failed-stage2-before-export",
+      "reason": "APT could not resolve the absent firmware-marvell-prestera- removal selector.",
+      "controlled_signal_sent": false,
+      "input_archive_sha256": "b50d4b42908ff854747c640611095e678938d4000d22bc84db10e1c2615e01e0",
+      "evidence_directory": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/failed-job",
+      "failed_capture_and_work_preserved": true
+    },
+    {
+      "job_id": "20261124T170652391801Z-c13b81cd",
+      "attempt_id": 1,
+      "source_commit": "49a907be73487baffec021aa662aa2423e3bfc68",
+      "status": "failed-before-start",
+      "reason": "Redundant stop after reset-failed unloaded prior transient unit.",
+      "controlled_signal_sent": false,
+      "input_archive_sha256": "96129d9af3c7d9fca0c345a4e2bdef5405313f54a7c4546f4c7a35135c430811",
+      "durable_exit_status": 125,
+      "evidence_directory": "artifacts/tyrell-zero-pipeline/20261124-pre-image/launch-failure-20261124T170652391801Z-c13b81cd",
+      "captured_inputs_preserved": true
+    }
+  ],
+  "matched_control_preparation": {
+    "status": "passed-host-only",
+    "report": {
+      "path": "/Volumes/garage/tyrell-build/jobs/20261124T172113786008Z-54bd1ea7/host-preparation/control-preparation.json",
+      "sha256": "06b8702c992a63881f691f2eeb6212bf5ea840833aaa5775e4d4d7d2c0b3df35",
+      "bytes": 3416
+    },
+    "actual_build_is_separate_job": true,
+    "preserved_original_guest_work": {
+      "path": "/Volumes/garage/tyrell-build/control-preparation/20261124-preservation-before-frozen-control.json",
+      "sha256": "0e1162a4741ec635e1dc71d7f6af997f7b8932e6ef8603fca334e24c533c650d",
+      "bytes": 2018
+    }
+  },
+  "measurements": {
+    "allocated_rootfs_reduction_bytes": 2528776192,
+    "allocated_rootfs_reduction_percent": 44.8721126220056,
+    "distribution_raw_reduction_percent": 39.64912280701755,
+    "distribution_xz_reduction_percent": 37.941142317545065,
+    "runtime_ram_or_battery_claim": false
+  },
+  "completed_date": "2026-11-24",
+  "local_publication_pointers": {
+    "zero": "image-artifacts-zero",
+    "matched_control": "image-artifacts-control",
+    "retained_stock": "image-artifacts",
+    "retained_stock_pointer_unchanged": true
+  }
+}

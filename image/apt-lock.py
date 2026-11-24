@@ -25,6 +25,21 @@ import urllib.request
 
 STAGES = tuple('stage' + str(n) for n in range(5))
 IDENTITY = ('Package', 'Version', 'Architecture')
+ABSENT_REMOVAL_PACKAGE = 'firmware-marvell-prestera'
+ABSENT_REMOVAL_FILE = 'stage2/02-net-tweaks/00-packages'
+ABSENT_REMOVAL_SOURCE_SHA256 = 'cd85c096f317e549a88d5bfe2233db6e84be473f21d3bc44e70dae00f3f7ebd9'
+ABSENT_REMOVAL_RECORD = 'tyrell-frozen-removal-normalization.json'
+ABSENT_REMOVAL_GUARD = '''# The pinned vendor removal is a no-op only for this absent frozen package.
+on_chroot << 'TYRELL_ABSENT_FIRMWARE_REMOVAL'
+set -e
+query_status=0
+package_state="$(dpkg-query --show --showformat='${Status}' firmware-marvell-prestera 2>/dev/null)" || query_status=$?
+case "$query_status:$package_state" in
+    1:|"0:unknown ok not-installed") ;;
+    *) echo 'Frozen removal normalization requires firmware-marvell-prestera to be absent' >&2; exit 1 ;;
+esac
+TYRELL_ABSENT_FIRMWARE_REMOVAL
+'''
 
 
 def digest(path):
@@ -438,10 +453,28 @@ def capture(work, assets, output):
         raise
 
 
+def absent_removal_plan(vendor, lock):
+    """Normalize only the pinned removal of a package absent from every lock set."""
+    path = Path(vendor) / ABSENT_REMOVAL_FILE
+    if path.is_symlink() or not path.is_file() or digest(path) != ABSENT_REMOVAL_SOURCE_SHA256:
+        raise ValueError('Pinned vendor firmware removal request differs')
+    names = {item['Package'] for item in lock['packages']}
+    names.update(row[0] for rows in lock['stages'].values() for row in rows)
+    names.update(row[0] for row in lock.get('installed', []))
+    if ABSENT_REMOVAL_PACKAGE in {name.split(':', 1)[0] for name in names}:
+        raise ValueError('Frozen removal target appears in a locked candidate/inventory')
+    source = path.read_text()
+    token = ABSENT_REMOVAL_PACKAGE + '-'
+    if source.split().count(token) != 1:
+        raise ValueError('Pinned vendor firmware removal selector differs')
+    return source.replace(' ' + token, '', 1)
+
+
 def configure_vendor(vendor, repository):
     """Patch a prepared tree to use only a guest-loopback frozen APT server."""
     vendor, repository = Path(vendor), Path(repository)
     lock = verify_repository(repository)
+    normalized_removal = absent_removal_plan(vendor, lock)
     runtime = vendor / 'tyrell-runtime-apt'
     runtime.mkdir()
     for name in ['debian.sources', 'raspi.sources']:
@@ -477,7 +510,17 @@ TYRELL_FROZEN_APT
                      'dpkg --add-architecture armhf\napt-get update'))
     for stage in STAGES[1:]:
         path = vendor / stage / 'prerun.sh'
-        path.write_text(path.read_text() + '\n' + configure.replace('STAGE', stage))
+        guard = ABSENT_REMOVAL_GUARD if stage == 'stage2' else ''
+        path.write_text(path.read_text() + '\n' + guard + configure.replace('STAGE', stage))
+    (vendor / ABSENT_REMOVAL_FILE).write_text(normalized_removal)
+    normalization = {'schema': 1, 'kind': 'tyrell-frozen-removal-normalization',
+        'package': ABSENT_REMOVAL_PACKAGE, 'request': ABSENT_REMOVAL_PACKAGE + '-',
+        'action': 'no-op-removal-of-absent-package', 'apt_lock_sha256': digest(repository / 'apt-lock.json'),
+        'absent_from': ['package_records', 'all_stage_candidates', 'installed_inventory_when_present'],
+        'source': {'path': ABSENT_REMOVAL_FILE, 'before_sha256': ABSENT_REMOVAL_SOURCE_SHA256,
+                   'after_sha256': digest(vendor / ABSENT_REMOVAL_FILE)},
+        'runtime_absence_guard': {'path': 'stage2/prerun.sh', 'sha256': digest(vendor / 'stage2/prerun.sh')}}
+    (vendor / ABSENT_REMOVAL_RECORD).write_text(json.dumps(normalization, indent=2) + '\n')
     # Eliminate the direct kernel pool download too; hashes remain the vendor's.
     firmware = vendor / 'stage0/02-firmware/01-run.sh'
     text = firmware.read_text()
@@ -502,7 +545,8 @@ find "$ROOTFS_DIR/var/lib/apt/lists" -type f -delete
     changed = ['scripts/common', 'stage0/prerun.sh', 'stage0/00-configure-apt/00-run.sh',
                'stage0/02-firmware/01-run.sh', 'export-image/02-set-sources/01-run.sh',
                'tyrell-runtime-apt/debian.sources', 'tyrell-runtime-apt/raspi.sources',
-               'tyrell-apt-lock.json', *(stage + '/prerun.sh' for stage in STAGES[1:])]
+               'tyrell-apt-lock.json', ABSENT_REMOVAL_FILE, ABSENT_REMOVAL_RECORD,
+               *(stage + '/prerun.sh' for stage in STAGES[1:])]
     report['prepared_files_sha256'].update({name: digest(vendor / name) for name in changed})
     report['apt_profile'] = 'frozen'
     report['apt_lock_sha256'] = digest(repository / 'apt-lock.json')

@@ -315,6 +315,18 @@ class ActivationTests(unittest.TestCase):
         self.assertFalse(os.path.lexists(folder / "APPLaunch.service"))
         self.assertTrue((folder / "pipewire.service").is_symlink())
 
+    def test_vendor_userconfig_is_masked_removed_and_bound_in_final_receipts(self):
+        folder = self.root / "etc/systemd/system/multi-user.target.wants"
+        folder.mkdir(parents=True)
+        (folder / "userconfig.service").symlink_to("/usr/lib/systemd/system/userconfig.service")
+        result = self.activate()
+        self.assertFalse(os.path.lexists(folder / "userconfig.service"))
+        mask = "/etc/systemd/system/userconfig.service"
+        self.assertEqual(os.readlink(self.root / mask.lstrip("/")), "/dev/null")
+        self.assertEqual(result["files"][mask]["target"], "/dev/null")
+        baseline = json.loads((self.root / activation.STORE.INVARIANTS.lstrip("/")).read_text())
+        self.assertEqual(baseline["files"][mask], {"symlink": "/dev/null"})
+
     def test_duplicate_lock_fields_and_nonroot_cli_fail(self):
         self.compat_path.write_text('{"schema":1,"schema":1}')
         with self.assertRaisesRegex(activation.ActivationError, "duplicate"):

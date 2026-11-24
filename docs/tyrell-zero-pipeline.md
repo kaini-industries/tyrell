@@ -102,10 +102,11 @@ with `image status --job JOB_ID`; it remains `prepared` until an attempt starts.
 
 After input and implementation qualification passes:
 
-Check guest capacity before launch. The qualified November 23 builder has only
-3.76 GiB free; a fresh image build requires 30 GiB plus twice the captured bundle
-size. Reclaim or expand guest storage first. The runner enforces this capacity
-check independently of the input readiness receipt.
+Check guest capacity before launch. The November 24 builder was backed up and
+expanded to 160 GiB, with about 94 GiB free before fresh qualification. A new
+image job requires 30 GB plus twice the captured bundle size. The runner checks
+current capacity independently of the input readiness receipt; retained jobs
+consume additional space.
 
 ```sh
 python3 scripts/builder image \
@@ -165,6 +166,9 @@ workflow. Extra power tuning remains disabled.
 
 Host adversarial tests, native package tests, disposable-root qualification and
 captured vendor preparation establish this pipeline's implementation boundaries.
-The first complete Zero image build, exported-image qualification and spare-card
-hardware/battery acceptance retain their own milestones in the
+The first Zero baseline and matched frozen full-source control have completed
+file-image validation, including an actual stage2 interruption/resume. See the
+[validation record](tyrell-zero-image-validation.md) for captured identities,
+checksums, comparisons and local artifact pointers. Spare-card hardware and
+battery acceptance retain their own gates in the
 [implementation plan](tyrell-zero-implementation-plan.md).

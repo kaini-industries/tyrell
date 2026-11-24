@@ -218,8 +218,10 @@ own [frozen pipeline workflow](docs/tyrell-zero-pipeline.md).
 See the [native integration workflow](docs/tyrell-zero-native-integration.md) and
 [implementation progress](docs/tyrell-zero-progress.md) for package behavior,
 test boundaries and next gates.
-The first full Zero image build and spare-card hardware acceptance remain
-separate milestones.
+The Zero baseline and matched frozen full-source control now have verified
+file-image exports and measured disk footprints; see the
+[image validation record](docs/tyrell-zero-image-validation.md). Spare-card
+hardware acceptance and runtime/battery measurements remain separate gates.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
@@ -309,8 +311,9 @@ The first image has been built and passed 134 offline checks, including app
 execution inside the image and a compressed/raw payload checksum comparison.
 It has not been physically booted. See the [image validation report](docs/image-validation.md).
 The subsequent [workflow hardening and adversarial review](docs/image-hardening-validation.md)
-passed regression tests and real ARM64 builder checks. A complete image rebuild
-using the hardened workflow has not yet been run.
+passed regression tests and real ARM64 builder checks. A fresh frozen full-source
+control and the Zero baseline have now completed construction and offline export
+validation; see the [November 24 results](docs/tyrell-zero-image-validation.md).
 
 ### Manage image jobs
 
@@ -418,7 +421,7 @@ docs/                    Build guides, hardware notes, validation, and roadmap
 
 ## Firmware roadmap
 
-The application/package loop is working, and the image recipe builds on the vendor's [pi-gen fork](https://github.com/CardputerZero/pi-gen). Next steps are a complete rebuild with frozen inputs, recovery-media preparation, and physical acceptance on a spare card. Kernel/driver updates, a minimal userspace, replacement launchers, and transactional updates are later work.
+The application/package loop and frozen image builds are working on the vendor's [pi-gen fork](https://github.com/CardputerZero/pi-gen). Zero and the matched full-source control have verified file exports. Next steps are recovery-media preparation and physical acceptance on a spare card, followed by runtime and battery measurements. Kernel/driver updates and transactional updates remain later work.
 
 Preserve the factory microSD and test OS images on a spare card. Keep the separate M5IOE1/PY32 controller firmware at its working version during initial Linux image work.
 

@@ -609,8 +609,9 @@ def start_job(target, args):
     B['guest']('tar', '-xf', guest_bundle, '-C', job['guest_input'])
     write_json(ROOT / 'build/image-job.json', {'job_id': job['job_id'], 'storage': str(target)})
     if old.get('LoadState') == 'loaded':
-        B['guest']('sudo', '-n', 'systemctl', 'reset-failed', UNIT)
-        B['guest']('sudo', '-n', 'systemctl', 'stop', UNIT)
+        # A failed transient unit can disappear as soon as reset-failed returns.
+        action = 'reset-failed' if old.get('ActiveState') == 'failed' else 'stop'
+        B['guest']('sudo', '-n', 'systemctl', action, UNIT)
     B['guest']('sudo', '-n', 'systemd-run', '--unit=' + UNIT.removesuffix('.service'), '--no-block',
                '--service-type=oneshot', '--property=RemainAfterExit=yes',
                '--property=Environment=TYRELL_IMAGE_JOB_ID=' + job['job_id'],

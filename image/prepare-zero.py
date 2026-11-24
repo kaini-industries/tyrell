@@ -10,6 +10,26 @@ import subprocess
 import sys
 
 ROOT=Path(__file__).resolve().parents[1]
+VENDOR_RENAME_GUARD = '''if [[ "$DISABLE_FIRST_BOOT_USER_RENAME" == "1" ]] && [ -z "${FIRST_USER_PASS}" ]; then
+\techo "To disable user rename on first boot, FIRST_USER_PASS needs to be set"
+\techo "Not setting FIRST_USER_PASS makes your system vulnerable and open to cyberattacks"
+\texit 1
+fi'''
+
+
+def configure_native_setup(vendor):
+    """Keep the factory account locked while Zero's native Wizard owns setup."""
+    build=Path(vendor)/'build.sh'
+    source=build.read_text()
+    if source.count(VENDOR_RENAME_GUARD)!=1:
+        raise ValueError('Pinned vendor first-boot password guard differs')
+    replacement=VENDOR_RENAME_GUARD.replace(
+        '[ -z "${FIRST_USER_PASS}" ]; then',
+        '[ -z "${FIRST_USER_PASS}" ] &&\n'
+        '   ! { [ "${TYRELL_ZERO_NATIVE_SETUP:-0}" = "1" ] &&\n'
+        '       [ "${FIRST_USER_NAME}" = "pi" ] && [ "${ENABLE_SSH}" = "0" ] &&\n'
+        '       [ "${PASSWORDLESS_SUDO}" = "0" ]; }; then',1)
+    build.write_text(source.replace(VENDOR_RENAME_GUARD,replacement,1))
 
 
 def prepare(vendor, assets, metadata_path):
@@ -22,6 +42,7 @@ def prepare(vendor, assets, metadata_path):
     apt=json.loads((ROOT/'locks/tyrell-zero-apt.json').read_text())
     profile=json.loads((ROOT/'image/profiles/tyrell-zero.json').read_text())
     subprocess.run([sys.executable,str(ROOT/'image/prepare-vendor.py'),str(vendor),str(assets),str(metadata_path)],check=True)
+    configure_native_setup(vendor)
     # Reuse the reviewed vendor patching without exporting a desktop stage.
     shutil.rmtree(vendor/'stage4/99-tyrell')
     (vendor/'stage2/SKIP_IMAGES').unlink()
@@ -45,6 +66,8 @@ def prepare(vendor, assets, metadata_path):
               'python3 '+shlex.quote(str(ROOT/'packages/tyrell-zero-store/activate-image.py'))+' prepare --root "$ROOTFS_DIR"',
               "on_chroot <<'TYRELL_ZERO_INSTALL'",'set -e',
               'apt-get install -y --no-install-recommends '+runtime+' '+package_files,
+              '# Vendor stage2 already locks root; reassert after custom package installation.',
+              'passwd -l root',
               'dpkg --audit','apt-get check','rm -rf /var/tmp/tyrell-zero-packages',
               'TYRELL_ZERO_INSTALL','unmount "$ROOTFS_DIR"',
               'python3 '+shlex.quote(str(ROOT/'image/zero_activation.py'))+' --prepare-runtime --root "$ROOTFS_DIR"',
@@ -69,7 +92,7 @@ def prepare(vendor, assets, metadata_path):
     sha=runpy.run_path(str(ROOT/'image/zero_pipeline.py'))['digest']
     report['prepared_files_sha256'].pop('stage4/99-tyrell/00-run.sh',None)
     report['prepared_files_sha256'].pop('stage2/SKIP_IMAGES',None)
-    for name in ['stage2/99-tyrell/00-run.sh','export-image/02-set-sources/01-run.sh']:
+    for name in ['build.sh','stage2/99-tyrell/00-run.sh','export-image/02-set-sources/01-run.sh']:
         report['prepared_files_sha256'][name]=sha(vendor/name)
     report_path.write_text(json.dumps(report,indent=2)+'\n')
     return report

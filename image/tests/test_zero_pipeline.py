@@ -7,6 +7,8 @@ import json
 import os
 from pathlib import Path
 import runpy
+import shlex
+import subprocess
 import tarfile
 import tempfile
 from types import SimpleNamespace
@@ -17,6 +19,7 @@ ROOT=Path(__file__).resolve().parents[2]
 zero=runpy.run_path(str(ROOT/'image/zero_pipeline.py'))
 resume=runpy.run_path(str(ROOT/'image/zero_resume.py'))
 legacy=runpy.run_path(str(ROOT/'image/build-image.py'))
+prepare=runpy.run_path(str(ROOT/'image/prepare-zero.py'))
 ID='20261123T180000000000Z-1234abcd'
 
 
@@ -94,6 +97,76 @@ class CaptureTests(unittest.TestCase):
             zero['verify_guest_manifest'](self.root,zero['digest'](path),{'image.img.xz':'b'*64})
 
 
+class NativeSetupTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.vendor=Path(self.tmp.name)/'vendor';self.vendor.mkdir()
+        self.original='#!/bin/bash\n'+prepare['VENDOR_RENAME_GUARD']+'\nprintf "accepted\\n"\n'
+        (self.vendor/'build.sh').write_text(self.original)
+        (self.vendor/'tyrell-inputs.conf').write_text('')
+        recipe=(ROOT/'builder/build-zero-image.sh').read_text()
+        self.config=recipe.split('<<CONFIG\n',1)[1].split('\nCONFIG',1)[0]
+
+    def execute_guard(self, config=None):
+        script='vendor='+shlex.quote(str(self.vendor))+'\n'+(self.config if config is None else config)
+        script+='\n'+(self.vendor/'build.sh').read_text()
+        return subprocess.run(['/bin/bash','-c',script],text=True,capture_output=True)
+
+    def test_actual_zero_recipe_skips_vendor_rename_with_locked_factory_account(self):
+        self.assertNotEqual(self.execute_guard().returncode,0)
+        prepare['configure_native_setup'](self.vendor)
+        self.assertEqual(self.execute_guard().returncode,0)
+        for old,new in [('TYRELL_ZERO_NATIVE_SETUP=1','TYRELL_ZERO_NATIVE_SETUP=0'),
+                        ('ENABLE_SSH=0','ENABLE_SSH=1'),
+                        ('PASSWORDLESS_SUDO=0','PASSWORDLESS_SUDO=1'),
+                        ('FIRST_USER_NAME=pi','FIRST_USER_NAME=other')]:
+            with self.subTest(config=new):
+                self.assertNotEqual(self.execute_guard(self.config.replace(old,new)).returncode,0)
+        result=self.execute_guard(self.config+'\nprintf "identity:%s:%s\\n" "$DISABLE_FIRST_BOOT_USER_RENAME" "$FIRST_USER_PASS"')
+        self.assertIn('identity:1:\n',result.stdout)
+
+    def test_changed_vendor_guard_is_rejected_without_rewriting_it(self):
+        path=self.vendor/'build.sh'
+        changed=self.original.replace('FIRST_USER_PASS needs to be set','different vendor policy')
+        path.write_text(changed)
+        with self.assertRaisesRegex(ValueError,'guard differs'):
+            prepare['configure_native_setup'](self.vendor)
+        self.assertEqual(path.read_text(),changed)
+
+    def generated_install(self):
+        for directory in ('stage4/99-tyrell','stage2','export-image/02-set-sources'):
+            (self.vendor/directory).mkdir(parents=True,exist_ok=True)
+        (self.vendor/'stage2/SKIP_IMAGES').touch()
+        (self.vendor/'tyrell-prepared.json').write_text('{"prepared_files_sha256":{}}')
+        metadata={'profile_id':'tyrell-zero','stages':['stage0','stage1','stage2'],
+                  'selected_power_preset':'baseline','output':{},'profile_sha256':'a'*64,'locks_sha256':{}}
+        path=self.vendor/'metadata.json';path.write_text(json.dumps(metadata))
+        dependencies=SimpleNamespace(run_path=lambda name: {'configure_vendor':lambda *_args:None}
+            if str(name).endswith('zero-lock.py') else {'digest':zero['digest']})
+        with patch.dict(prepare['prepare'].__globals__,runpy=dependencies,
+                        subprocess=SimpleNamespace(run=lambda *_a,**_kw:None)):
+            report=prepare['prepare'](self.vendor,self.vendor/'assets',path)
+        self.assertEqual(report['prepared_files_sha256']['build.sh'],zero['digest'](self.vendor/'build.sh'))
+        stage=(self.vendor/'stage2/99-tyrell/00-run.sh').read_text()
+        return stage.split("on_chroot <<'TYRELL_ZERO_INSTALL'\n",1)[1].split('\nTYRELL_ZERO_INSTALL',1)[0]
+
+    def test_generated_install_reasserts_root_lock_and_fails_before_activation_on_error(self):
+        install=self.generated_install()
+        stubs='apt-get(){ echo "apt:$*"; }; dpkg(){ echo "dpkg:$*"; }; rm(){ echo "cleanup:$*"; };\n'
+        for status in (0,42):
+            script=stubs+'passwd(){ echo "passwd:$*"; return '+str(status)+'; };\n'+install+'\necho finished\n'
+            result=subprocess.run(['/bin/bash','-c',script],text=True,capture_output=True)
+            self.assertIn('passwd:-l root\n',result.stdout)
+            if status==0:
+                self.assertEqual(result.returncode,0,result.stderr)
+                self.assertLess(result.stdout.index('passwd:-l root'),result.stdout.index('dpkg:--audit'))
+                self.assertIn('finished',result.stdout)
+            else:
+                self.assertNotEqual(result.returncode,0)
+                self.assertNotIn('dpkg:--audit',result.stdout)
+                self.assertNotIn('finished',result.stdout)
+
+
 class AttemptTests(unittest.TestCase):
     def setUp(self):
         self.job={'job_id':ID,'bundle_sha256':'a'*64,'active_attempt':2,'attempts':[]}
@@ -155,6 +228,84 @@ class AttemptTests(unittest.TestCase):
         self.unit={'LoadState':'error','ActiveState':'unknown','Environment':''}
         with self.assertRaisesRegex(ValueError,'reattach'):
             zero['reconcile_launch'](self.job,self.attempt,self.common,{'guest':lambda *a:None})
+
+
+class LaunchTests(unittest.TestCase):
+    def launch_case(self, old, *, fail=None, pointer_error=None, observed=None):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary);directory=root/'jobs'/ID;directory.mkdir(parents=True)
+            (root/'build').mkdir();(directory/'image-input.tar').write_bytes(b'captured')
+            job={'job_id':ID,'bundle_sha256':'a'*64,'guest_input':zero['GUEST_BASE']+'/'+ID+'/input',
+                 'active_attempt':0,'attempts':[]}
+            state=dict(old);calls=[];result=root/'durable-result.json'
+            original_write=zero['write_json']
+            def write(path,value):
+                if Path(path)==root/'build/image-job.json' and pointer_error:raise pointer_error
+                original_write(path,value)
+            def guest(*args,**_kwargs):
+                calls.append(args)
+                if args[:2]==('python3','-c'):
+                    return SimpleNamespace(stdout='100000000000')
+                # Every guest mutation must follow the durable host attempt.
+                self.assertEqual(json.loads((directory/'job.json').read_text())['active_attempt'],1)
+                if 'systemctl' in args:
+                    action=args[3]
+                    if fail==action:raise subprocess.CalledProcessError(1,args)
+                    if action=='stop' and state.get('LoadState')=='not-found':
+                        raise subprocess.CalledProcessError(5,args)
+                    state.update(LoadState='not-found',ActiveState='inactive',Environment='')
+                elif 'mkdir' in args and fail=='mkdir':
+                    raise OSError('attempt directory preparation failed')
+                elif 'systemd-run' in args:
+                    if fail=='systemd-run':raise subprocess.TimeoutExpired(args,1)
+                    state.update(LoadState='loaded',ActiveState='active',Environment=
+                        f'TYRELL_IMAGE_JOB_ID={ID} TYRELL_IMAGE_ATTEMPT_ID=1 TYRELL_IMAGE_INPUT_SHA256='+'a'*64)
+                elif args[:4]==('sudo','-n','python3','-c'):
+                    original_write(result,json.loads(args[-1]))
+                return SimpleNamespace(stdout='')
+            common={'assert_idle':lambda:dict(old),'unit_state':lambda:observed if observed is not None else state,
+                    'UNIT':'tyrell-image.service','GUEST_LOCK':'/var/tmp/test-image.lock'}
+            resources=SimpleNamespace(run_path=lambda _name:{'preflight':lambda *_a,**_kw:None})
+            error=None;attempt=None
+            with patch.dict(zero['launch'].__globals__,ROOT=root,api=lambda:{'guest':guest},
+                            runpy=resources,write_json=write),contextlib.redirect_stdout(io.StringIO()):
+                try:attempt=zero['launch'](root,job,common)
+                except Exception as caught:error=caught
+            return {'error':error,'attempt':attempt,'calls':calls,'job':json.loads((directory/'job.json').read_text()),
+                    'result':json.loads(result.read_text()) if result.exists() else None}
+
+    def test_reset_garbage_collects_failed_transient_without_a_following_stop(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''})
+        self.assertIsNone(case['error']);self.assertEqual(case['attempt']['attempt_id'],1)
+        self.assertEqual([args[3] for args in case['calls'] if 'systemctl' in args],['reset-failed'])
+        self.assertIsNone(case['result'])
+
+    def test_completed_loaded_unit_stops_without_reset(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'active','SubState':'exited','Environment':''})
+        self.assertIsNone(case['error'])
+        self.assertEqual([args[3] for args in case['calls'] if 'systemctl' in args],['stop'])
+
+    def test_cleanup_and_preparation_failures_have_durable_bound_failure(self):
+        for action in ('reset-failed','mkdir','systemd-run'):
+            with self.subTest(action=action):
+                case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''},fail=action)
+                self.assertIsNotNone(case['error']);self.assertIsNone(case['attempt'])
+                self.assertEqual(case['result'],{'job_id':ID,'attempt_id':1,'bundle_sha256':'a'*64,
+                    'exit_status':125,'manifest_sha256':None,'launch_failed':True})
+
+    def test_pointer_write_after_attempt_persistence_is_reconciled(self):
+        for error in (OSError('pointer write failed'),ValueError('redirected pointer')):
+            with self.subTest(error=error):
+                case=self.launch_case({'LoadState':'not-found','Environment':''},pointer_error=error)
+                self.assertIs(case['error'],error);self.assertEqual(case['job']['active_attempt'],1)
+                self.assertEqual(case['result']['exit_status'],125)
+                self.assertFalse(any('systemd-run' in args for args in case['calls']))
+
+    def test_unknown_cleanup_state_remains_reattach_only(self):
+        case=self.launch_case({'LoadState':'loaded','ActiveState':'failed','Environment':''},fail='reset-failed',
+                              observed={'LoadState':'error','ActiveState':'unknown'})
+        self.assertIsInstance(case['error'],ValueError)
+        self.assertIn('reattach',str(case['error']));self.assertIsNone(case['result'])
 
 
 class ExportTests(unittest.TestCase):

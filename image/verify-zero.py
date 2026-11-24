@@ -37,7 +37,7 @@ ACTIVATION = '/usr/share/tyrell-zero/image-activation.json'
 BASELINE = '/usr/share/tyrell-zero/base-invariants.json'
 MASKS = tuple('/etc/systemd/system/' + name for name in (
     'greetd.service', 'getty@tty1.service', 'getty@tty7.service',
-    'LaunchWizard.service', 'applaunch-updater.service', 'lightdm.service',
+    'LaunchWizard.service', 'applaunch-updater.service', 'userconfig.service', 'lightdm.service',
     'display-manager.service')) + ('/etc/systemd/user/APPLaunch.service',)
 DIGEST = re.compile(r'[0-9a-f]{64}\Z')
 PACKAGE = re.compile(r'[a-z0-9][a-z0-9+.-]*(?::(?:arm64|all))?\Z')
@@ -702,7 +702,8 @@ def verify_activation(image, compat, metadata, actual, check):
         for p in folder.rglob('*'):
             if p.is_symlink() and '.wants' in p.parent.name:
                 check('no_desktop_wants_' + str(p.relative_to(image.root)),
-                      p.name not in {'lightdm.service', 'labwc.service', 'APPLaunch.service', 'LaunchWizard.service'})
+                      p.name not in {'lightdm.service', 'labwc.service', 'APPLaunch.service', 'LaunchWizard.service',
+                                     'userconfig.service'})
     verify_pam_session(image, compat['configuration_files'], check)
     unit_contracts = {
         'tyrell-zero-boot-state.service': {

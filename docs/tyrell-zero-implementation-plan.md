@@ -12,8 +12,8 @@ the real native Wizard derivative and guarded AppStore integration built/tested
 in the ARM64 builder. See [implementation progress](tyrell-zero-progress.md)
 for what exists and its evidence. The stage0–2 pipeline, offline activation and
 independent verifier now have an [implemented workflow](tyrell-zero-pipeline.md).
-Full image construction and hardware/battery qualification remain separate;
-this document describes the complete target behavior.
+Z3 file-image construction has passed. Hardware/battery qualification remains
+separate; this document describes the complete target behavior.
 
 This is an implementation plan, not an implemented build profile. Commands and
 new interfaces marked **proposed** remain future work unless the progress record
@@ -30,6 +30,11 @@ default. The fallback is the
 lighter native image with its original power policy. It claims no additional
 tuning benefit; a whole-image battery claim requires its own comparison against
 the matched full-source control.
+
+November 24 status: Z3 baseline and matched frozen full-source file images are
+built and verified, including actual stage2 recovery. See the
+[image validation record](tyrell-zero-image-validation.md). Spare-card hardware,
+settled-memory and battery acceptance remain later gates.
 
 ## Decisions
 

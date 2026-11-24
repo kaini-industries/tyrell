@@ -9,7 +9,7 @@
   },
   "pipeline_qualification": {
     "path": "research/tyrell-zero-pipeline.json",
-    "sha256": "33034b7b44cb0bef68cc6babcd87c5db337504e2922906b8234dfe31ec2689e3"
+    "sha256": "214253b6d98e84d978620978d659f575badc3785ace19161e217ae7878af604a"
   },
   "qualification": "Frozen native source/package inputs, exact OS/custom closure, detached activation and independent root verification passed. The pipeline receipt binds host tests, captured preparation, native failure/interruption fixtures and exact BSP replay. Full image export, physical boot, hardware and battery acceptance remain separate.",
   "reproducibility": "Capture source hashes, package hashes and builder inventory. Byte-identical rebuilds are not claimed.",

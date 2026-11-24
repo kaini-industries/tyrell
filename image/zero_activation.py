@@ -23,7 +23,7 @@ UPDATER_STATUS = "/var/lib/applaunch-updater/status"
 UPDATES_DESKTOP = "/usr/share/APPLaunch/applications/tyrell-zero-updates.desktop"
 UPDATES_TEXT = "/usr/share/tyrell-zero/updates.txt"
 SYSTEM_MASKS = ("greetd.service", "getty@tty1.service", "getty@tty7.service",
-                "LaunchWizard.service", "applaunch-updater.service")
+                "LaunchWizard.service", "applaunch-updater.service", "userconfig.service")
 SERVICE_FILES = ("tyrell-zero.target", "tyrell-zero-boot-state.service",
                  "tyrell-zero-session.service", "tyrell-zero-wizard.service")
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
@@ -461,7 +461,7 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
         for folder in root.at(prefix).glob("*"):
             if not folder.name.endswith((".wants", ".requires")): continue
             root.files.secure("/" + str(folder.relative_to(root.root)), directory=True)
-            for name in ("lightdm.service", "labwc.service", "APPLaunch.service", "LaunchWizard.service"):
+            for name in ("lightdm.service", "labwc.service", "APPLaunch.service", "LaunchWizard.service", "userconfig.service"):
                 old = folder / name
                 if os.path.lexists(old):
                     if not old.is_symlink() or old.lstat().st_uid != owner:
