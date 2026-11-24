@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "1cd5094edc500f5153288b461ecb8c827943bc60",
+  "reviewed_revision": "4042c90e89af5ee0b07496ff793027f7298b3dbc",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -97,7 +97,7 @@
       "component": "video",
       "kind": "current-source",
       "version": "0.1.9",
-      "source_identity": "A2 checkpoint/timing app/dependency boundary; digest must match the checkout",
+      "source_identity": "A2 checkpoint/timing app/dependency boundary at 4042c90e89af5ee0b07496ff793027f7298b3dbc; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",

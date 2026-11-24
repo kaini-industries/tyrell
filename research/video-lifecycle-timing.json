@@ -392,7 +392,7 @@
   ],
   "worker_packages_path": "research/video-lifecycle-worker-packages.tsv",
   "worker_base_image": "debian@sha256:3cda3ca472ce45507a5109c6a3907093e24d9ae67d55954c9a07a45665dafba2",
-  "source_binding": "Producer file hashes at measurement time; implementation commit bound after commit",
+  "source_binding": "Producer file hashes match the implementation commit; timing tests do not qualify active shell admission",
   "known_transition_during_development": {
     "baseline_commit": "1729e43e276ee16de1e5577df1cf714cb9e8c54f",
     "baseline_video_version": "0.1.8",
@@ -402,5 +402,6 @@
     "baseline_log": "pause/seek\naudio1\ncaption0\n",
     "development_candidate_log": "pause/seek\naudio1\ncaption0\n",
     "observation": "Both reproductions timed out at caption0; restore ordering was subsequently fixed, without claiming all direct control transitions are resolved."
-  }
+  },
+  "implementation_commit": "4042c90e89af5ee0b07496ff793027f7298b3dbc"
 }
