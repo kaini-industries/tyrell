@@ -1,15 +1,17 @@
 # Tyrell Zero implementation progress
 
-November 24 baseline and matched-control construction is in progress. Fresh
-pre-image requalification passed 24,461 checks and 421 host tests (two platform
-skips); the builder is backed up and expanded to 160 GiB. See the
-[image validation record](tyrell-zero-image-validation.md) for current outcomes.
+November 24 file-image validation is complete: Zero passed 24,478 raw-image
+checks and its matched full-source control passed 134. Actual stage2 recovery
+passed. All 954 common package identities/input hashes and 6,949 hardware
+identities match. Allocated rootfs is 3.11 GB versus 5.64 GB. The builder is
+backed up, expanded to 160 GiB and stopped with update settings restored. See the
+[image validation record](tyrell-zero-image-validation.md) for exact evidence.
 
 The November 23, 2026 increment implements the frozen dependency locks, offline
 activation, profile runner and independent verifier. It qualifies a detached
-runtime assembly and the pipeline's preparation and failure boundaries. A
-complete Zero image has not yet been built or booted. No handheld, firmware or
-SD card was accessed.
+runtime assembly and the pipeline's preparation and failure boundaries. The
+subsequent file-image build is recorded above; physical boot remains untested.
+No handheld, firmware or SD card was accessed.
 
 ## Current pipeline increment
 
@@ -121,13 +123,11 @@ November 24 it was backed up and expanded to 160 GiB for image construction.
 Fresh jobs still require their measured capacity check. Retained roots and
 qualification artifacts are preserved.
 
-1. Build the baseline stage0–2 image from the qualified capture, then pass raw
-   exported-image verification and checksum/provenance inspection.
-2. Exercise successful image execution and stage2 recovery with actual pi-gen
-   output, in addition to the implemented host and native failure fixtures.
-3. Boot a spare card and complete native setup/session/Store and the protected
-   hardware contract. Measure footprint and battery behavior separately before
-   enabling any optimized policy.
+Z3 file construction/export and actual stage2 recovery have passed. The user
+selected file-image validation for this increment. Next are Z4 spare-card setup,
+session/Store and all protected hardware rows, then Z5 settled-memory/pressure
+comparison and Z6 battery-policy acceptance. Disk-footprint measurements alone
+do not complete those runtime gates.
 
 The [revision 3 plan](tyrell-zero-implementation-plan.md) remains the full target.
 Existing desktop-source and stock-derived image interfaces remain available.

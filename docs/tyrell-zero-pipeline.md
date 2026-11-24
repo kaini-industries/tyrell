@@ -166,6 +166,9 @@ workflow. Extra power tuning remains disabled.
 
 Host adversarial tests, native package tests, disposable-root qualification and
 captured vendor preparation establish this pipeline's implementation boundaries.
-The first complete Zero image build, exported-image qualification and spare-card
-hardware/battery acceptance retain their own milestones in the
+The first Zero baseline and matched frozen full-source control have completed
+file-image validation, including an actual stage2 interruption/resume. See the
+[validation record](tyrell-zero-image-validation.md) for captured identities,
+checksums, comparisons and local artifact pointers. Spare-card hardware and
+battery acceptance retain their own gates in the
 [implementation plan](tyrell-zero-implementation-plan.md).
