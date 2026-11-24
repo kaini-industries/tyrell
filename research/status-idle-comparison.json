@@ -53,7 +53,7 @@
     "packages/tyrell-app-common/include/tyrell/app/shell_link.hpp": "b70bbc077c9f366a7bde3183318ea1241119c7b7d026840df8dc1e0b2aa4cc3b",
     "locks/build-inputs.json": "cee132cfa43d059854094f94084e4e724e27a956d2f0137c785e58bfe903d54f"
   },
-  "candidate_source_binding": "file hashes at measurement time; implementation commit bound after commit",
+  "candidate_source_binding": "Measurement input file hashes match the implementation commit; no hardware or release qualification",
   "worker": {
     "distribution": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.8\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
     "architecture": "aarch64",
@@ -1077,5 +1077,6 @@
     "url": "https://github.com/lvgl/lvgl/archive/85aa60d18b3d5e5588d7b247abf90198f07c8a63.tar.gz",
     "sha256": "b32747cf6568d86a5cb9d30f53970bec1c7a322cb624c4158d4b0e348324146b"
   },
-  "benchmark_layout_identity": "Both variants use version/revision text bench and the same telemetry fixture, LVGL configuration, model, input edges and shell transport."
+  "benchmark_layout_identity": "Both variants use version/revision text bench and the same telemetry fixture, LVGL configuration, model, input edges and shell transport.",
+  "candidate_implementation_commit": "8f53d06ae4276eb423ef5e2d8a8cd9ea76ae25a9"
 }
