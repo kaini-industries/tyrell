@@ -103,7 +103,7 @@
       "correction": "Zero-only guarded disabled-login setup configuration; explicit userconfig mask/no legacy wants; root lock reasserted after custom install. Vendor stage2 already locks root.",
       "evidence": {
         "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
-        "sha256": "e86b7acacd99fa642e6425eec58398d485a062fb0627d0c654a5458d223461f4"
+        "sha256": "9b1f1d6e6bfa7fa167e3a9ac6623d7d06ca1bfb67c91d097695879738d9802e8"
       }
     },
     "runtime_requalification": {
@@ -126,10 +126,20 @@
       "status": "passed",
       "report": {
         "path": "research/tyrell-zero-pipeline.json",
-        "sha256": "31e44d2f25c0e105a028f3ea8da4cd8a5a5414a3d85436905581db1ec5ae91fa"
+        "sha256": "bb2c169e319daf347afa37a73737be200cbbbe8891cb73168615de0a17566fa3"
       },
-      "host_tests": 412,
+      "host_tests": 415,
       "host_platform_skips": 2
+    },
+    "frozen_removal_normalization": {
+      "status": "qualified",
+      "selector": "firmware-marvell-prestera-",
+      "action": "Recorded no-op removal only; reject source drift, locked target or unexpectedly installed target.",
+      "selected_package_or_firmware_bytes_changed": false,
+      "actual_apt_simulation": {
+        "path": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/report.json",
+        "sha256": "2d77acfe5ca96e89908efa2d3483330dc7ff3ff059e43a2968947aea1d194f29"
+      }
     }
   },
   "zero_image": {
@@ -317,5 +327,18 @@
     "The November 23 detached-root and failure-fixture receipts retain their original pre-image scope.",
     "Raw/XZ sizes alone do not demonstrate installed-rootfs or settled-memory improvement.",
     "Battery claims require the separate matched battery-powered protocol; optimized policy remains disabled."
+  ],
+  "construction_trials": [
+    {
+      "job_id": "20261124T165428867682Z-ef80d584",
+      "attempt_id": 1,
+      "source_commit": "f0b329a85df5bee9b78b24a4b2826aa1016032a7",
+      "status": "failed-stage2-before-export",
+      "reason": "APT could not resolve the absent firmware-marvell-prestera- removal selector.",
+      "controlled_signal_sent": false,
+      "input_archive_sha256": "b50d4b42908ff854747c640611095e678938d4000d22bc84db10e1c2615e01e0",
+      "evidence_directory": "artifacts/tyrell-zero-locks/apt-removal-regression-20261124T170239Z/failed-job",
+      "failed_capture_and_work_preserved": true
+    }
   ]
 }

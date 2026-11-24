@@ -65,8 +65,26 @@ The corrected Zero recipe gives native Wizard sole first-boot ownership while
 keeping the factory account disabled. Vendor stage2 already locks root; the
 final custom stage reasserts that invariant before activation. Fresh selected-lock
 qualification passed 24,461 checks, all 23 native Linux activation tests passed,
-and 412 host tests passed with two documented platform skips. All selected
+and 415 host tests passed with two documented platform skips. All selected
 package and runtime identities remain unchanged.
+
+## First cold-build correction
+
+The first job, `20261124T165428867682Z-ef80d584`, completed stage1 and failed
+naturally during stage2 before any controlled interruption. The vendor requests
+`firmware-marvell-prestera-`: the suffix denotes removal, while the frozen index
+contains neither that absent package nor references to its name. APT could not
+resolve the otherwise unnecessary removal. All positive package requests are
+represented by their stage candidates.
+
+Shared frozen preparation now normalizes only that exact pinned removal token,
+records its disposition and refuses an unexpectedly installed target. Source
+drift or a lock containing the target fails closed. Both Zero and the control
+use this preparation. No firmware or selected package bytes changed. An actual
+isolated APT simulation reproduced exit 100 before and exit 0 after, preserving
+all 4,348 APT/dpkg state entries on the corrected probe. The initial probe changed
+only an APT planner log; both probe records disclose it. The failed capture,
+result and work remain preserved; the corrected recipe requires a new job.
 
 ## Construction and export evidence
 

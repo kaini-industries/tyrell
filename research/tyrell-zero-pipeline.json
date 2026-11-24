@@ -41,7 +41,7 @@
     "builder/zero-vendor-dependencies.txt": "b5964f56d0952d0b8f19814c3926e20eac7c0750ef04e2d1d3b8001b64f18ca6",
     "builder/zero-vendor.py": "3f04e3fb9429321346c2df29ce299cf3430efcaecd6443f015ef48d5de4c341d",
     "builder/zero.py": "dd3e885a58e0570c90f5a7f8d313e8d9fce7c89cd1579d8fa253a6c6bc453e04",
-    "image/apt-lock.py": "377a4c26182ebb4cc3696da7e30fddba9f3f20bed2e721173927856fcf30912d",
+    "image/apt-lock.py": "6bf3f2c3c5ccd464e3287ab0e01ccc7a561b142acbf9989d699bce38f8a80de7",
     "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
     "image/build-image.py": "bed9d17499d13bf498e3e5bff72292baf5cf51e95036dc58469ecb8fe0821a96",
     "image/build_lock.py": "4c54ec45634b9672c99163b86d04c2d425fa79bd211a8bfc7a6b9614ac07c82a",
@@ -61,7 +61,7 @@
     "image/stock-image.py": "f74ef9288e798ad0e74ee5ec8c69e670bc5a2da830a01018f73ad262823a4c88",
     "image/tests/apt_integration.py": "4f14df8a21d9ef5c37c47e2330224131bf90e9b10cb1b5b0b15b2997ffabf865",
     "image/tests/guest_lifecycle_smoke.py": "70748a6754bbffaa484ea2f540e0fbd587fdb4254d893dfd74be949e4d2f762c",
-    "image/tests/test_apt_lock.py": "1e3ffc95c571d8beea26eab34c249f489adfcf5d02c28435b255ee2ce485703a",
+    "image/tests/test_apt_lock.py": "b347b246506e1623b4306ff0fd9b2b059de91300f88ffd06d0891c3751f2c0f9",
     "image/tests/test_lifecycle.py": "c0b7bb90ad90e22d76e6ed1eae59b2db583dfee603193199056f9565f8044855",
     "image/tests/test_overlay_stock.py": "6cc0cf6e8f796adf621e20ebc8f02d240aa40e5266c40bcbd044b0f6b55bc30c",
     "image/tests/test_profiles.py": "cb34b43a9693bfe13c5289f2e91c636fdbddbe712f913ed97b28d10f9ce16b11",
@@ -125,10 +125,10 @@
   "full_image_built": false,
   "hardware_qualified": false,
   "host_skipped_count": 2,
-  "host_test_count": 412,
+  "host_test_count": 415,
   "host_tests": {
     "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/host-tests.json",
-    "sha256": "fc8c3c2f19b20a8d0d675089eea28bd9c22e4ff04fe488cab867fd41f19fdc98"
+    "sha256": "d003aa219fbd4864f27b0312f23c4f378845aea61be80fcb2cf3ce339f308177"
   },
   "limitations": [
     "Detached offline runtime verification does not prove assembled-image boot or GUI/seat behavior.",
@@ -160,7 +160,7 @@
   },
   "runner_prepare": {
     "path": "artifacts/tyrell-zero-pipeline/20261124-pre-image/runner-prepare-verification.json",
-    "sha256": "e86b7acacd99fa642e6425eec58398d485a062fb0627d0c654a5458d223461f4"
+    "sha256": "9b1f1d6e6bfa7fa167e3a9ac6623d7d06ca1bfb67c91d097695879738d9802e8"
   },
   "runtime_check_count": 24461,
   "runtime_verification": {

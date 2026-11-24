@@ -2,13 +2,18 @@ import base64
 import gzip
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
 SPEC = importlib.util.spec_from_file_location('tyrell_apt_lock', Path(__file__).parents[1] / 'apt-lock.py')
 apt = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(apt)
+PINNED_NETWORK_REQUESTS = ('wpasupplicant wireless-tools firmware-atheros firmware-brcm80211 '
+    'firmware-libertas firmware-realtek firmware-mediatek firmware-marvell-prestera-\n'
+    'raspberrypi-net-mods\nnetwork-manager\nnet-tools\n')
 
 
 class FrozenAptTests(unittest.TestCase):
@@ -205,6 +210,7 @@ class FrozenAptTests(unittest.TestCase):
                 'stage0/00-configure-apt/files/debian.sources': 'Suites: RELEASE\n',
                 'stage0/00-configure-apt/files/raspi.sources': 'Suites: RELEASE\n',
                 'stage0/02-firmware/01-run.sh': 'curl "https://archive.raspberrypi.com/debian/pool/main/l/linux/${filename}"\n',
+                'stage2/02-net-tweaks/00-packages': PINNED_NETWORK_REQUESTS,
                 'export-image/02-set-sources/01-run.sh': 'apt-get update\napt-get dist-upgrade\n',
                 'tyrell-prepared.json': '{"prepared_files_sha256":{}}',
             }
@@ -225,6 +231,61 @@ class FrozenAptTests(unittest.TestCase):
             report = json.loads((vendor / 'tyrell-prepared.json').read_text())
             self.assertEqual(report['apt_profile'], 'frozen')
             self.assertIn('export-image/02-set-sources/01-run.sh', report['prepared_files_sha256'])
+            normalized = vendor / apt.ABSENT_REMOVAL_FILE
+            self.assertEqual(normalized.read_text(), PINNED_NETWORK_REQUESTS.replace(' firmware-marvell-prestera-', ''))
+            record = json.loads((vendor / apt.ABSENT_REMOVAL_RECORD).read_text())
+            self.assertEqual(record['action'], 'no-op-removal-of-absent-package')
+            self.assertEqual(record['apt_lock_sha256'], apt.digest(repository / 'apt-lock.json'))
+            self.assertEqual(record['source']['before_sha256'], apt.ABSENT_REMOVAL_SOURCE_SHA256)
+            self.assertEqual(record['source']['after_sha256'], apt.digest(normalized))
+            self.assertEqual(record['runtime_absence_guard']['sha256'], apt.digest(vendor / 'stage2/prerun.sh'))
+            for name in (apt.ABSENT_REMOVAL_FILE, apt.ABSENT_REMOVAL_RECORD, 'stage2/prerun.sh'):
+                self.assertEqual(report['prepared_files_sha256'][name], apt.digest(vendor / name))
+            stage2 = (vendor / 'stage2/prerun.sh').read_text()
+            self.assertLess(stage2.index('copy_previous'), stage2.index('query_status=0'))
+            self.assertLess(stage2.index('query_status=0'), stage2.index('apt-get update'))
+
+    def test_absent_removal_requires_exact_pinned_negative_request(self):
+        for source in (PINNED_NETWORK_REQUESTS.replace('firmware-marvell-prestera-', 'firmware-marvell-prestera'),
+                       PINNED_NETWORK_REQUESTS.replace('firmware-marvell-prestera-', ''),
+                       PINNED_NETWORK_REQUESTS + '# changed vendor request source\n'):
+            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
+                vendor = Path(directory)
+                path = vendor / apt.ABSENT_REMOVAL_FILE;path.parent.mkdir(parents=True);path.write_text(source)
+                lock = {'packages': [], 'stages': {'stage2': []}}
+                with self.assertRaisesRegex(ValueError, 'request differs'):
+                    apt.absent_removal_plan(vendor, lock)
+                self.assertEqual(path.read_text(), source)
+
+    def test_absent_removal_cannot_hide_a_locked_candidate_or_inventory(self):
+        for field in ('packages', 'stages', 'installed'):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                vendor = Path(directory)
+                path = vendor / apt.ABSENT_REMOVAL_FILE;path.parent.mkdir(parents=True);path.write_text(PINNED_NETWORK_REQUESTS)
+                lock = {'packages': [], 'stages': {'stage0': [], 'stage2': []}, 'installed': []}
+                target = apt.ABSENT_REMOVAL_PACKAGE
+                if field == 'packages': lock[field].append({'Package': target})
+                elif field == 'stages': lock[field]['stage0'].append([target, '1', 'all'])
+                else: lock[field].append([target + ':arm64', '1', 'arm64'])
+                with self.assertRaisesRegex(ValueError, 'locked candidate/inventory'):
+                    apt.absent_removal_plan(vendor, lock)
+                self.assertEqual(path.read_text(), PINNED_NETWORK_REQUESTS)
+
+    def test_generated_absence_guard_rejects_installed_configured_and_query_errors(self):
+        guard = apt.ABSENT_REMOVAL_GUARD.split("on_chroot << 'TYRELL_ABSENT_FIRMWARE_REMOVAL'\n", 1)[1]
+        guard = guard.split('\nTYRELL_ABSENT_FIRMWARE_REMOVAL', 1)[0]
+        # Exercise the generated shell transaction without running host dpkg.
+        script = 'dpkg-query(){ printf "%s" "$STUB_PACKAGE_STATE"; return "$STUB_QUERY_STATUS"; };\n'
+        script += guard + '\nprintf "accepted\\n"\n'
+        for status, state, accepted in [(1, '', True), (0, 'unknown ok not-installed', True),
+                (0, 'install ok installed', False), (0, 'hold ok installed', False),
+                (0, 'deinstall ok config-files', False), (0, 'install ok unpacked', False),
+                (2, '', False), (1, 'unexpected', False), (0, '', False)]:
+            with self.subTest(status=status, state=state):
+                result = subprocess.run(['/bin/bash', '-c', script], text=True, capture_output=True,
+                    env={**os.environ, 'STUB_QUERY_STATUS': str(status), 'STUB_PACKAGE_STATE': state})
+                self.assertEqual(result.returncode == 0, accepted, result.stderr)
+                self.assertEqual('accepted' in result.stdout, accepted)
 
 
 if __name__ == '__main__':
