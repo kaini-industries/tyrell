@@ -1,0 +1,170 @@
+name: checks
+
+# Keep one required gate even for documentation-only changes. Selection lives
+# in the planner, not trigger path filters that can leave checks pending.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      source_sha: ${{ steps.scopes.outputs.source_sha }}
+      portable_matrix: ${{ steps.scopes.outputs.portable_matrix }}
+      native_matrix: ${{ steps.scopes.outputs.native_matrix }}
+      has_native: ${{ steps.scopes.outputs.has_native }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select suites for the immutable source revision
+        id: scopes
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          FULL_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          args=(--head "$SOURCE_SHA" --output build/ci/plan.json --github-output "$GITHUB_OUTPUT")
+          if [ "$FULL_RUN" = true ]; then
+            args+=(--all)
+          elif [ -n "$BASE_SHA" ]; then
+            args+=(--base "$BASE_SHA")
+          fi
+          python3 scripts/ci/scopes.py "${args[@]}"
+      - name: Retain selection record
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: check-selection-${{ steps.scopes.outputs.source_sha }}
+          path: build/ci/plan.json
+          if-no-files-found: error
+          retention-days: 14
+
+  portable:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.portable_matrix) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          persist-credentials: false
+      - name: Install explicit portable prerequisites
+        if: matrix.suite != 'docs'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3 cmake ninja-build g++ make curl ca-certificates ffmpeg dpkg-dev file binutils xz-utils
+      - name: Run selected portable suite
+        env:
+          SOURCE_SHA: ${{ needs.plan.outputs.source_sha }}
+          SUITE: ${{ matrix.suite }}
+        run: |
+          python3 scripts/ci/run.py --suite "$SUITE" --expected-revision "$SOURCE_SHA" \
+            --report "build/ci/$SUITE.json"
+      - name: Retain suite evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: checks-${{ matrix.suite }}-${{ needs.plan.outputs.source_sha }}
+          path: |
+            build/ci/*.json
+            build/ci/evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+  native:
+    needs: plan
+    if: needs.plan.outputs.has_native == 'true'
+    runs-on: ubuntu-24.04-arm
+    # The package CMake files require native ARM64. Debian 13 also supplies
+    # the GStreamer >=1.26 API; Ubuntu 24.04's packages do not.
+    container: debian:trixie
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.native_matrix) }}
+    steps:
+      - name: Install disposable native toolchain
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            python3 cmake ninja-build g++ make git curl ca-certificates pkg-config dpkg-dev file binutils xz-utils ffmpeg
+          test "$(dpkg --print-architecture)" = arm64
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ needs.plan.outputs.source_sha }}
+          persist-credentials: false
+      - name: Install Video development and fixture prerequisites
+        if: matrix.suite == 'video'
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get install -y --no-install-recommends \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libdrm-dev libpulse-dev \
+            gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-x \
+            fonts-dejavu-core
+      - name: Run selected native suite in disposable roots
+        env:
+          SOURCE_SHA: ${{ needs.plan.outputs.source_sha }}
+          SUITE: ${{ matrix.suite }}
+        run: |
+          python3 scripts/ci/run.py --suite "$SUITE" --expected-revision "$SOURCE_SHA" \
+            --report "build/ci/$SUITE.json"
+      - name: Retain suite evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: checks-${{ matrix.suite }}-${{ needs.plan.outputs.source_sha }}
+          path: |
+            build/ci/*.json
+            build/ci/evidence/
+          if-no-files-found: error
+          retention-days: 14
+
+  gate:
+    name: compatibility gate
+    needs: [plan, portable, native]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require selected checks for this exact revision
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOURCE_SHA: ${{ needs.plan.outputs.source_sha }}
+          PLAN_RESULT: ${{ needs.plan.result }}
+          PORTABLE_RESULT: ${{ needs.portable.result }}
+          NATIVE_RESULT: ${{ needs.native.result }}
+          HAS_NATIVE: ${{ needs.plan.outputs.has_native }}
+        run: |
+          python3 - <<'PY'
+          import os
+          expected_native = 'success' if os.environ['HAS_NATIVE'] == 'true' else 'skipped'
+          valid = (
+              os.environ['PLAN_RESULT'] == 'success'
+              and os.environ['SOURCE_SHA'] == os.environ['EXPECTED_SHA']
+              and os.environ['PORTABLE_RESULT'] == 'success'
+              and os.environ['NATIVE_RESULT'] == expected_native
+          )
+          if not valid:
+              raise SystemExit('Selected checks did not pass for the expected source revision')
+          print('Selected checks passed; no package, image or hardware promotion is implied')
+          PY

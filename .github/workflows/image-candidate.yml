@@ -1,0 +1,74 @@
+name: image candidate input preflight
+
+# Construction stays in the existing captured-input pipeline. This read-only
+# dispatch verifies restored inputs; it cannot publish or certify an image.
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact clean source commit recorded in the captured bundle
+        required: true
+        type: string
+      artifact_run_id:
+        description: Workflow run in this repository retaining image-input.tar
+        required: true
+        type: string
+      artifact_name:
+        description: Exact retained artifact name (must contain image-input.tar)
+        required: true
+        type: string
+      bundle_sha256:
+        description: Expected SHA-256 of the retained image-input.tar
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  input-preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Validate immutable input selection
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          BUNDLE_SHA: ${{ inputs.bundle_sha256 }}
+          RUN_ID: ${{ inputs.artifact_run_id }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          for key, pattern in [('SOURCE_SHA', r'[0-9a-f]{40}'),
+                               ('BUNDLE_SHA', r'[0-9a-f]{64}'), ('RUN_ID', r'[1-9][0-9]*')]:
+              if not re.fullmatch(pattern, os.environ[key]):
+                  raise SystemExit('Invalid immutable input: ' + key)
+          PY
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - name: Restore exact retained bundle (no dependency rebuilding)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.artifact_run_id }}
+          name: ${{ inputs.artifact_name }}
+          path: build/ci/candidate-input
+      - name: Verify capture without executing or extracting its recipes
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          BUNDLE_SHA: ${{ inputs.bundle_sha256 }}
+        run: |
+          python3 scripts/ci/candidate.py \
+            --bundle build/ci/candidate-input/image-input.tar --sha256 "$BUNDLE_SHA" \
+            --expected-revision "$SOURCE_SHA" --report build/ci/candidate.json
+      - name: Retain preflight result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: candidate-input-preflight-${{ github.run_id }}
+          path: build/ci/candidate.json
+          if-no-files-found: error
+          retention-days: 14

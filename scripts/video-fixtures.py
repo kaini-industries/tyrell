@@ -13,6 +13,10 @@ import subprocess
 def ffmpeg(args):
     destination = Path(args[-1])
     existed = destination.exists() or destination.is_symlink()
+    # Some FFmpeg versions return success when -n declines an existing output.
+    # Reject it ourselves so callers cannot mistake a no-op for a fresh encode.
+    if existed:
+        raise FileExistsError('Refusing existing output: ' + str(destination))
     try:
         subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-nostdin',
                         '-n', *args], check=True)

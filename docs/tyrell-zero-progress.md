@@ -131,3 +131,10 @@ do not complete those runtime gates.
 
 The [revision 3 plan](tyrell-zero-implementation-plan.md) remains the full target.
 Existing desktop-source and stock-derived image interfaces remain available.
+
+The [Gh0st adoption plan](gh0st-adoption-plan.md) now has F1's
+[compatibility ledger](compatibility-matrix.md) and
+[scoped CI](continuous-integration.md). It separates historical exact artifacts
+from current source checks and keeps required skips and physical gates visible.
+UI/help, shell lifecycle, idle-loop and release/catalog work remain planned;
+F1 adds no image, optimized power or hardware acceptance.

@@ -1,0 +1,722 @@
+{
+  "schema": 1,
+  "kind": "compatibility-evidence-ledger",
+  "reviewed_date": "2026-11-24",
+  "reviewed_revision": "45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a",
+  "grants_release_approval": false,
+  "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
+  "evidence": [
+    {
+      "id": "status-provenance",
+      "path": "dist/tyrell-status/0.1.0/provenance.json",
+      "sha256": "859c1f0411879711e826671244d0c2c5d282d03aa446518423df413436b95eb9"
+    },
+    {
+      "id": "status-manifest",
+      "path": "dist/tyrell-status/0.1.0/manifest.json",
+      "sha256": "2dd2f1ae85e98c4aab55b3d335a852767ceae9f49836f91b810260f06b57b184"
+    },
+    {
+      "id": "status-device",
+      "path": "docs/device-validation.md",
+      "sha256": "9a6658e335aa81eea9c1de65519b547286edfcf28dd633aea44769579edaeb86"
+    },
+    {
+      "id": "video-provenance",
+      "path": "dist/tyrell-video/0.1.7/provenance.json",
+      "sha256": "cc54a65de129d2c74f17c642d12570091e929257603e5d3b394d8225ccb683a1"
+    },
+    {
+      "id": "video-device",
+      "path": "docs/video-hdmi-017-validation.md",
+      "sha256": "112a9526100da95c07e073f7423fae92be3fdcd1f28282d692586f2e7632f959"
+    },
+    {
+      "id": "chess-manifest",
+      "path": "dist/tyrell-chess/0.1.1/manifest.json",
+      "sha256": "b4fe0ea0c675f15943e1b32eb24a102b2aeed846f3e759da844f093b17a8a95f"
+    },
+    {
+      "id": "chess-device",
+      "path": "docs/chess-ui-input-validation.md",
+      "sha256": "418861e6f069cde0531a5ca6daf562d52b2effeac2e420980428986a7fd20552"
+    },
+    {
+      "id": "chess-clock-source",
+      "path": "docs/chess-clock-validation.md",
+      "sha256": "c9c22e51dfbc72233c0acdc4a7a52807ad49b64f1a1acc4b1500cf0e60268422"
+    },
+    {
+      "id": "tanks-device",
+      "path": "docs/tanks-install-validation.md",
+      "sha256": "494e812984f6449ec57d01df4aef2da09b5e76a8677862d007636ad3c32f3030"
+    },
+    {
+      "id": "game-framework",
+      "path": "docs/game-framework-validation.md",
+      "sha256": "bad095af6f2a3390ab0b3e7b58bdda229d857bfa05e1c724b72a0d06089b7da4"
+    },
+    {
+      "id": "stock-image",
+      "path": "docs/stock-image-validation.md",
+      "sha256": "be2e8b51637fdc09eb7ba6b7609bf5b521e4bb943109c288695cd2c645be3fee"
+    },
+    {
+      "id": "zero-images",
+      "path": "research/tyrell-zero-image-validation.json",
+      "sha256": "616d50163a30a6cbe65584096e2d9872bcb12e64781c64b27a35e78aad6256b6"
+    },
+    {
+      "id": "zero-image-report",
+      "path": "docs/tyrell-zero-image-validation.md",
+      "sha256": "bb227a88587ae53909b95e3f816eff53229c22761d7895760a8b547892c1934c"
+    },
+    {
+      "id": "zero-hardware-contract",
+      "path": "image/contracts/tyrell-zero-hardware.json",
+      "sha256": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "status-source",
+      "component": "status",
+      "kind": "current-source",
+      "version": "0.1.0",
+      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-status",
+        "locks/build-inputs.json"
+      ],
+      "sha256": "3de39167ad44a78c1f7c0d717fc6d40693d4d8a0361f4c97ac5553093a21a891"
+    },
+    {
+      "id": "video-source",
+      "component": "video",
+      "kind": "current-source",
+      "version": "0.1.7",
+      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-video",
+        "locks/build-inputs.json",
+        "locks/video-build-inputs.json"
+      ],
+      "sha256": "7583e0dc957c2d315da62192bc387ce6567cb443fad75cba6889642f3a965ab5"
+    },
+    {
+      "id": "chess-source",
+      "component": "chess",
+      "kind": "current-source",
+      "version": "0.1.2",
+      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-chess",
+        "packages/tyrell-game",
+        "scripts/chess",
+        "scripts/game",
+        "locks/game-build-inputs.json"
+      ],
+      "sha256": "5814aac25a8a992d75758130b0414e24ee154bb6acd726f7331fcaee4a91d401"
+    },
+    {
+      "id": "sandline-source",
+      "component": "sandline",
+      "kind": "current-source",
+      "version": "0.1.0",
+      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-tanks",
+        "packages/tyrell-game",
+        "scripts/tanks",
+        "scripts/game",
+        "locks/game-build-inputs.json"
+      ],
+      "sha256": "ce7817ae1a6615d889e91f22beb56149c3948f8fc3790823e2e9a754c7c978a8"
+    },
+    {
+      "id": "beacon-source",
+      "component": "beacon",
+      "kind": "current-source",
+      "version": "0.1.0",
+      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "availability": "checkout",
+      "roots": [
+        "packages/tyrell-game",
+        "scripts/game",
+        "locks/game-build-inputs.json"
+      ],
+      "sha256": "78b97fecc393459667a96f89078f73d420aa5be55c3d708e30c737eb1835f821"
+    },
+    {
+      "id": "status-retained",
+      "component": "status",
+      "kind": "retained-package",
+      "version": "0.1.0-1",
+      "source_identity": "src-6f8a42e27baf; 37cdb2a14d8c2a28611610a5b0d17a729c51ae44",
+      "availability": "checkout",
+      "path": "dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb",
+      "sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+      "manifest": "status-provenance"
+    },
+    {
+      "id": "video-retained",
+      "component": "video",
+      "kind": "retained-package",
+      "version": "0.1.7-1",
+      "source_identity": "src-03a5a269b185; 8cba407dcce3675844acc4b203fa78a664044dc3",
+      "availability": "checkout",
+      "path": "dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb",
+      "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+      "manifest": "video-provenance"
+    },
+    {
+      "id": "chess-retained",
+      "component": "chess",
+      "kind": "retained-package",
+      "version": "0.1.1-1",
+      "source_identity": "Captured source_files map in bound manifest; retained source imported at 5e2d717; see chess-clock-source evidence",
+      "availability": "checkout",
+      "path": "dist/tyrell-chess/0.1.1/tyrell-chess_0.1.1-1_arm64.deb",
+      "sha256": "c14cb5fee72c2d2123d7f78ececfa539dd3b8ce67cc9a8e8f60c8541d0616ca4",
+      "manifest": "chess-manifest"
+    },
+    {
+      "id": "status-device-build",
+      "component": "status",
+      "kind": "documented-package",
+      "version": "0.1.0-1",
+      "source_identity": "src-aafb85a69389; exact source archive is not committed",
+      "availability": "external-not-revalidated",
+      "sha256": "9f8ad2f3562c251ee9cb2c3c1b1292bb2d3fce069e257a55fb60cf656c1396bb"
+    },
+    {
+      "id": "sandline-device-build",
+      "component": "sandline",
+      "kind": "documented-package",
+      "version": "0.1.0-1",
+      "source_identity": "Earlier pre-framework extraction test build; exact source manifest retained only under ignored artifacts/tanks-native",
+      "availability": "external-not-revalidated",
+      "sha256": "961beb67b647536a894534bffd3c968e425a0a52af4cfdc5b9a319e95ce59ae2"
+    },
+    {
+      "id": "stock-image-reviewed",
+      "component": "image",
+      "kind": "file-image",
+      "version": "20261114T182824879955Z-b309a99d",
+      "source_identity": "e4933fa63a638cc1d8041de2039223323c43dacc; stock-derived recipe capture",
+      "availability": "external-not-revalidated",
+      "sha256": "a1c25eac2a7c3989773666bdd3f883a06d9f455c47ad5bc2312f73650afedff5"
+    },
+    {
+      "id": "zero-image-reviewed",
+      "component": "image",
+      "kind": "file-image",
+      "version": "20261124T171522036978Z-f7c1a8bc-attempt-2",
+      "source_identity": "5adaecb09066d09140db4161e0f45b352a1e63d4; exact frozen Z3 baseline capture",
+      "availability": "external-not-revalidated",
+      "sha256": "207fcf45b222ec834468b6ecbe81cef663b0e709df282052b8450c5b5f85372a"
+    },
+    {
+      "id": "full-source-image-reviewed",
+      "component": "image",
+      "kind": "file-image",
+      "version": "20261124T172859067303Z-cfd88df2-attempt-1",
+      "source_identity": "5adaecb09066d09140db4161e0f45b352a1e63d4; exact matched five-stage control capture",
+      "availability": "external-not-revalidated",
+      "sha256": "e4e0d73d4ec99377dab1c61e321a666a6c574ce519bdf9783a605999155704c0"
+    }
+  ],
+  "records": [
+    {
+      "id": "status-current-original-m5",
+      "subject": "status-source",
+      "target": "original-m5",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "status-manifest",
+        "status-device"
+      ],
+      "limitations": [
+        "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "status-current-tyrell-zero",
+      "subject": "status-source",
+      "target": "tyrell-zero",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "status-manifest",
+        "status-device"
+      ],
+      "limitations": [
+        "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "status-current-gh0st",
+      "subject": "status-source",
+      "target": "gh0st",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "status-manifest",
+        "status-device"
+      ],
+      "limitations": [
+        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "video-current-original-m5",
+      "subject": "video-source",
+      "target": "original-m5",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "video-provenance",
+        "video-device"
+      ],
+      "limitations": [
+        "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "video-current-tyrell-zero",
+      "subject": "video-source",
+      "target": "tyrell-zero",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "video-provenance",
+        "video-device"
+      ],
+      "limitations": [
+        "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "video-current-gh0st",
+      "subject": "video-source",
+      "target": "gh0st",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "video-provenance",
+        "video-device"
+      ],
+      "limitations": [
+        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "chess-current-original-m5",
+      "subject": "chess-source",
+      "target": "original-m5",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "chess-clock-source",
+        "chess-device"
+      ],
+      "limitations": [
+        "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "chess-current-tyrell-zero",
+      "subject": "chess-source",
+      "target": "tyrell-zero",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "chess-clock-source",
+        "chess-device"
+      ],
+      "limitations": [
+        "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "chess-current-gh0st",
+      "subject": "chess-source",
+      "target": "gh0st",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "chess-clock-source",
+        "chess-device"
+      ],
+      "limitations": [
+        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "sandline-current-original-m5",
+      "subject": "sandline-source",
+      "target": "original-m5",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework",
+        "tanks-device"
+      ],
+      "limitations": [
+        "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "sandline-current-tyrell-zero",
+      "subject": "sandline-source",
+      "target": "tyrell-zero",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework",
+        "tanks-device"
+      ],
+      "limitations": [
+        "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "sandline-current-gh0st",
+      "subject": "sandline-source",
+      "target": "gh0st",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework",
+        "tanks-device"
+      ],
+      "limitations": [
+        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "beacon-current-original-m5",
+      "subject": "beacon-source",
+      "target": "original-m5",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework"
+      ],
+      "limitations": [
+        "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "beacon-current-tyrell-zero",
+      "subject": "beacon-source",
+      "target": "tyrell-zero",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework"
+      ],
+      "limitations": [
+        "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "beacon-current-gh0st",
+      "subject": "beacon-source",
+      "target": "gh0st",
+      "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
+      "implementation": "planned",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "current-source",
+      "toolchain": "Not run for this current-source compatibility scenario",
+      "evidence": [
+        "game-framework"
+      ],
+      "limitations": [
+        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "Host/ARM64 CI results are separate run reports, not device acceptance."
+      ]
+    },
+    {
+      "id": "status-retained-automated",
+      "subject": "status-retained",
+      "target": "original-m5",
+      "scenario": "ARM64 build, four CTests and isolated package install/remove",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "automated-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Debian 13 ARM64 Lima builder; GCC 14.2.0; CMake 3.31.6, as bound manifest records",
+      "evidence": [
+        "status-manifest",
+        "status-provenance"
+      ],
+      "limitations": [
+        "Applies only to retained 15471a8f package bytes; not the differently hashed package in the historical device report.",
+        "Tests did not establish physical M5/Zero/Gh0st acceptance for this retained package."
+      ]
+    },
+    {
+      "id": "status-historical-device",
+      "subject": "status-device-build",
+      "target": "original-m5",
+      "scenario": "CLI/telemetry, real LCD, synthetic evdev navigation and launcher return",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "device-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Existing CardputerZero Debian installation; kernel 6.18.39+rpt-rpi-v8; APPLaunch 0.6.105",
+      "evidence": [
+        "status-device"
+      ],
+      "limitations": [
+        "Package/source archive and raw captures remain outside the checkout; only the committed report is validated here.",
+        "Physical switches, gauge accuracy, charging transitions and prolonged behavior were not tested."
+      ]
+    },
+    {
+      "id": "video-retained-device",
+      "subject": "video-retained",
+      "target": "original-m5",
+      "scenario": "Qualified H.264 HDMI/software retry, audio/captions, ten-minute run and launcher return",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "device-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Debian 13 ARM64 builder and stock CardputerZero; exact source/toolchain in retained provenance/manifests",
+      "evidence": [
+        "video-provenance",
+        "video-device"
+      ],
+      "limitations": [
+        "Specific tested media profile and bounded injected KMS failure; not every codec/profile.",
+        "Zero native session and Gh0st are not covered."
+      ]
+    },
+    {
+      "id": "chess-retained-device",
+      "subject": "chess-retained",
+      "target": "original-m5",
+      "scenario": "Native UI, synthetic keyboard navigation, Wi-Fi LAN exchange and launcher return",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "device-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Debian ARM64 builder and stock CardputerZero, as bound package/device records describe",
+      "evidence": [
+        "chess-manifest",
+        "chess-device"
+      ],
+      "limitations": [
+        "Applies to retained 0.1.1 only; current 0.1.2 source still needs ARM64/device qualification.",
+        "Physical switches/Fn rollover, external keyboard and prolonged matches not established."
+      ]
+    },
+    {
+      "id": "sandline-historical-device",
+      "subject": "sandline-device-build",
+      "target": "original-m5",
+      "scenario": "Earlier native test package: launcher/input/display and Zero-host LAN match",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "device-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Debian ARM64 builder; raylib 6.2 software rendering and ENet 1.3.18; stock CardputerZero",
+      "evidence": [
+        "tanks-device"
+      ],
+      "limitations": [
+        "Earlier pre-framework extraction binary; exact package/source/raw reports are only in ignored local artifacts.",
+        "Reverse LAN direction did not complete; current framework binary, physical rollover and sustained match not qualified."
+      ]
+    },
+    {
+      "id": "stock-derived-historical-file-verification",
+      "subject": "stock-image-reviewed",
+      "target": "stock-derived",
+      "scenario": "File-image construction, read-only verification and compressed payload/export binding",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "automated-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Dedicated Debian 13 ARM64 Lima toolchain; captured job, exact inputs and verification in bound report",
+      "evidence": [
+        "stock-image"
+      ],
+      "limitations": [
+        "Historical capture only; external raw/compressed image bytes are not opened or revalidated by this ledger.",
+        "No physical boot, settled-memory, runtime peripheral or battery acceptance follows from file checks."
+      ]
+    },
+    {
+      "id": "stock-derived-physical-pending",
+      "subject": "stock-image-reviewed",
+      "target": "stock-derived",
+      "scenario": "Spare-card cold boot, provisioning, native peripherals and normal-user application acceptance",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Not run; physical CardputerZero and spare target required",
+      "evidence": [
+        "stock-image"
+      ],
+      "limitations": [
+        "Physical acceptance remains unexecuted; unavailable accessories remain not tested.",
+        "Requires an explicitly identified spare card/device and a concrete recovery procedure."
+      ]
+    },
+    {
+      "id": "full-source-historical-file-verification",
+      "subject": "full-source-image-reviewed",
+      "target": "full-source",
+      "scenario": "File-image construction, read-only verification and compressed payload/export binding",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "automated-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Dedicated Debian 13 ARM64 Lima toolchain; captured job, exact inputs and verification in bound report",
+      "evidence": [
+        "zero-images",
+        "zero-image-report"
+      ],
+      "limitations": [
+        "Historical capture only; external raw/compressed image bytes are not opened or revalidated by this ledger.",
+        "No physical boot, settled-memory, runtime peripheral or battery acceptance follows from file checks."
+      ]
+    },
+    {
+      "id": "full-source-physical-pending",
+      "subject": "full-source-image-reviewed",
+      "target": "full-source",
+      "scenario": "Spare-card cold boot, provisioning, native peripherals and normal-user application acceptance",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Not run; physical CardputerZero and spare target required",
+      "evidence": [
+        "zero-images",
+        "zero-image-report"
+      ],
+      "limitations": [
+        "Physical acceptance remains unexecuted; unavailable accessories remain not tested.",
+        "Requires an explicitly identified spare card/device and a concrete recovery procedure."
+      ]
+    },
+    {
+      "id": "tyrell-zero-historical-file-verification",
+      "subject": "zero-image-reviewed",
+      "target": "tyrell-zero",
+      "scenario": "File-image construction, read-only verification and compressed payload/export binding",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "automated-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Dedicated Debian 13 ARM64 Lima toolchain; captured job, exact inputs and verification in bound report",
+      "evidence": [
+        "zero-images",
+        "zero-image-report"
+      ],
+      "limitations": [
+        "Historical capture only; external raw/compressed image bytes are not opened or revalidated by this ledger.",
+        "No physical boot, settled-memory, runtime peripheral or battery acceptance follows from file checks."
+      ]
+    },
+    {
+      "id": "tyrell-zero-physical-pending",
+      "subject": "zero-image-reviewed",
+      "target": "tyrell-zero",
+      "scenario": "Spare-card cold boot, provisioning, native peripherals and normal-user application acceptance",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Not run; physical CardputerZero and spare target required",
+      "evidence": [
+        "zero-images",
+        "zero-image-report"
+      ],
+      "limitations": [
+        "Physical acceptance remains unexecuted; unavailable accessories remain not tested.",
+        "Requires an explicitly identified spare card/device and a concrete recovery procedure."
+      ]
+    }
+  ]
+}
