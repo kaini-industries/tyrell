@@ -94,6 +94,12 @@ bookkeeping. Baseline application is an explicit no-op; optimized application
 still exits 78. No active tuning units, sysfs writes or power-saving claims are
 introduced. Normal authenticated security maintenance remains available.
 
+H2's separate [offline power rehearsal](guarded-power-rehearsal.md) now models
+eligibility, partial application, generation invalidation and guarded rollback
+against synthetic snapshots. It does not change this package or install a live
+backend. Real board/topology observation, boot/tmpfiles/maintenance ordering,
+baseline acceptance and battery qualification remain open.
+
 Headless package, activation and verifier tests do not establish actual account
 provisioning, PAM/VT/seat behavior, framebuffer/HDMI rendering, Wi-Fi/audio,
 Store interaction or battery performance on the handheld. Those remain

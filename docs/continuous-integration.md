@@ -97,6 +97,13 @@ Python checks. CI infrastructure changes still select all eight suites. Fixtures
 use private mock roots; CI never runs collection against the worker's hardware
 or turns synthetic observations into Z4/Z5/H1 acceptance.
 
+H2's [power rehearsal](guarded-power-rehearsal.md) adds required Python checks
+for exact preset intents, integrated-topology modeling, generation revocation,
+partial apply, failed readback, identity loss and guarded recovery. Its events
+change copied dictionaries only. Scoped `scripts/power/` changes select docs
+and Python; the original power package and native foundation checks remain
+independent. A successful rehearsal cannot authorize live tuning or promotion.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

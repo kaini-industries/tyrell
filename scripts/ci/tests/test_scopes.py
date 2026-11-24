@@ -57,6 +57,7 @@ class ScopesTests(unittest.TestCase):
 
     def test_observation_tools_require_portable_checks_without_device_jobs(self):
         self.assertEqual(scopes.select(["scripts/observe/collect.py"]), ["docs", "python"])
+        self.assertEqual(scopes.select(["scripts/power/transaction.py"]), ["docs", "python"])
 
     def test_git_parser_keeps_deleted_and_both_renamed_paths(self):
         data = b"D\0packages/tyrell-video/src/removed.cpp\0R100\0packages/tyrell-chess/old.cpp\0docs/new name\n.md\0"

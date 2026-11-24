@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation implemented, physical investigation pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation implemented; H2 offline policy rehearsal implemented; physical testing and live power activation pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -406,6 +406,14 @@ wake, traffic, USB modes, peripheral hotplug, latency/media and at least the
 initial three paired counterbalanced battery trials. Keep baseline as a valid
 fallback. Do not import schedutil, ID-only USB rules or different GPU/CMA/swap
 settings into this experiment.
+
+**H2 offline increment:** [guarded power rehearsal](guarded-power-rehearsal.md)
+models exact preset intents, topology/identity checks and generation-bound
+apply/invalidation/recovery using copied synthetic snapshots. It provides no
+live hardware backend or runtime override and does not change the retained
+power package, its closed activation gate or the accepted image inputs.
+Unverified observations remain blocked; real observer/ordering/maintenance
+integration and Z4/Z5/Z6 acceptance remain required before any live activation.
 
 **H3: panel.** Study TE synchronization, fast copy and present ioctl in a separate
 experimental BSP profile after baseline acceptance. Keep kernel, headers,
