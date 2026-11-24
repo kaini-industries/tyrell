@@ -7,8 +7,10 @@
 #include "cursor_navigation.h"
 #include "tyrell/game/runtime.hpp"
 #include "raylib.h"
+#include "tyrell/app/commands.hpp"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <ctime>
 #include <fstream>
 #include <future>
@@ -29,11 +31,18 @@ namespace {
 uint32_t nowMs() {return uint32_t(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
 std::string scoreName(const Game& g) {return g.result=="1-0"?"White wins":g.result=="0-1"?"Black wins":g.result=="1/2-1/2"?"Draw":"In progress";}
 std::string modeName(Mode mode) {switch(mode){case Mode::Local:return "TWO PLAYERS";case Mode::Computer:return "VS COMPUTER";case Mode::Puzzle:return "PUZZLE";default:return "LAN MATCH";}}
+enum class Action { Exit, Up, Down, Left, Right, Confirm, Back, Help, Flip, Contrast,
+ Review, Export, Hint, NextPuzzle, Undo, AcceptDraw, CycleTargets, AddressCharacter,
+ AddressErase, AddressDelete, Return, HelpPrevious, HelpNext };
+using Command = tyrell::app::Command<Action>;
+using Repeat = tyrell::app::Repeat;
+using Confirmation = tyrell::app::Confirmation;
 const char* times[]={"No timer","1+0 Bullet","3+2 Blitz","5+3 Blitz","10+0 Rapid"};
 const char* diffs[]={"None","Easy","Medium","Hard"};
 struct Args {
  bool headless=false,demo=false,quick=false;
  int frames=0;
+ double uiTime=-1;
  std::string screenshot,report,moves,script;
  std::filesystem::path state;
  bool explicitState=false;
@@ -41,14 +50,16 @@ struct Args {
 Args arguments(int argc,char** argv) {
  Args a;
  for(int i=1;i<argc;++i){std::string s=argv[i];auto val=[&](){if(++i>=argc)throw std::runtime_error("Missing value for "+s);return std::string(argv[i]);};
- if(s=="--help"){std::cout<<"Tyrell Chess 0.1.2 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
- else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.2 (upstream 64419e29c828)\n";std::exit(0);}
+ if(s=="--help"){std::cout<<"Tyrell Chess 0.1.3 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
+ else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.3 (upstream 64419e29c828)\n";std::exit(0);}
  else if(s=="--headless")a.headless=true;else if(s=="--demo")a.demo=true;else if(s=="--quick")a.quick=true;
+ else if(s=="--ui-time"){auto value=val();size_t n; a.uiTime=std::stod(value,&n);if(n!=value.size()||!std::isfinite(a.uiTime)||a.uiTime<0||a.uiTime>86400)throw std::runtime_error("UI time must be 0..86400 seconds");}
  else if(s=="--frames"){auto text=val();size_t n;long count=std::stol(text,&n);if(n!=text.size()||count<1||count>100000)throw std::runtime_error("Frames must be 1..100000");a.frames=int(count);}
  else if(s=="--screenshot")a.screenshot=val();else if(s=="--report")a.report=val();else if(s=="--state-dir"){a.state=val();if(a.state.empty())throw std::runtime_error("--state-dir must not be empty");a.explicitState=true;}else if(s=="--moves")a.moves=val();else if(s=="--script")a.script=val();else throw std::runtime_error("Unknown argument: "+s);
  }
  if(a.headless&&!a.frames)throw std::runtime_error("Use --frames with --headless");
- if((a.headless||a.demo||a.quick||a.frames||!a.moves.empty()||!a.script.empty())&&!a.explicitState)throw std::runtime_error("Automation requires --state-dir to protect your saved game");
+ if(a.uiTime>=0&&!a.headless)throw std::runtime_error("--ui-time is for headless rendering only");
+ if((a.headless||a.demo||a.quick||a.frames||!a.moves.empty()||!a.script.empty()||a.uiTime>=0)&&!a.explicitState)throw std::runtime_error("Automation requires --state-dir to protect your saved game");
  if(a.state.empty())a.state=chess::stateDirectory();
  return a;
 }
@@ -67,6 +78,7 @@ public:
  Square cursor{4,1},selected=NO_SQUARE,hintFrom=NO_SQUARE,hintTo=NO_SQUARE;
  MoveList legal;
  int menu=0,homeMenu=0,setupRow=0,promotion=0;
+ size_t helpPage=0;
  std::string toast,dialog,networkAddress;
  double toastUntil=0,animationStart=-10,puzzleReplyAt=0,networkStartedAt=0;
  Piece animatedPiece;
@@ -88,8 +100,8 @@ public:
  uint32_t lastSave=0,lastSync=0;
  std::vector<std::filesystem::path> archives;
  std::string page="",status;
- double time=0;
- explicit App(std::filesystem::path state):dir(std::move(state)) {
+ double time=0,uiTimeOverride=-1;
+ explicit App(std::filesystem::path state,double uiTime=-1):dir(std::move(state)),uiTimeOverride(uiTime) {
    std::filesystem::create_directories(dir);
    std::ifstream settings(dir/"settings");settings>>contrast>>motion;
    std::ifstream progress(dir/"puzzles");int n;while(progress>>n)if(n>=0&&n<puzzleCount())solved.insert(n);
@@ -102,7 +114,8 @@ public:
    }
  }
  ~App(){if(worker.valid())worker.wait();}
- void notify(const std::string& text){toast=text;toastUntil=time+3;}
+ double uiNow() const {return uiTimeOverride>=0?uiTimeOverride:time;}
+ void notify(const std::string& text){toast=text;toastUntil=uiNow()+3;}
  bool writeState(const char* name,const std::string& value,const char* label){
    try {
      const auto file=dir/name,temporary=dir/(std::string(name)+".tmp");
@@ -160,7 +173,7 @@ public:
    if(online()&&!networkHost&&!remote){if(awaitingMove)return false;std::ostringstream o;o<<"REQ "<<game.history.size()<<' '<<chess::uci(m);if(!lan.send(o.str())){notify("Connection unavailable");return false;}awaitingMove=true;pendingSince=time;clearSelection();return true;}
    if(game.options.mode==Mode::Puzzle&&!remote){if(game.puzzleStep>=game.solutionLength||!(m==game.solution[game.puzzleStep])){notify("Try another move. H for a hint");cursor=m.from;clearSelection();return false;}}
    const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,nowMs())){if(game.over())finished();return false;}
-   clearOffers(true);animatedPiece=piece;animatedMove=m;animationStart=time;const bool keepCursor=(game.options.mode==Mode::Computer&&piece.color!=game.options.human)||(remote&&(online()||game.options.mode==Mode::Puzzle));cursor=keepCursor?oldCursor:m.to;if(keepCursor)focusPlayer();clearSelection();hintFrom=hintTo=NO_SQUARE;
+   clearOffers(true);animatedPiece=piece;animatedMove=m;animationStart=uiNow();const bool keepCursor=(game.options.mode==Mode::Computer&&piece.color!=game.options.human)||(remote&&(online()||game.options.mode==Mode::Puzzle));cursor=keepCursor?oldCursor:m.to;if(keepCursor)focusPlayer();clearSelection();hintFrom=hintTo=NO_SQUARE;
    if(online()&&networkHost)broadcastMove();
    if(game.options.mode==Mode::Puzzle){
       if(game.puzzleStep>=game.solutionLength){game.finish(game.options.human==PieceColor::White?"1-0":"0-1","Puzzle solved",nowMs());solved.insert(game.puzzleIndex);pendingProgress=true;if(saveProgress())notify("Solved! X for next puzzle");}
@@ -192,13 +205,113 @@ public:
    if(flipped){dx=-dx;dy=-dy;}cursor.col=uint8_t(std::clamp(int(cursor.col)+dx,0,7));cursor.row=uint8_t(std::clamp(int(cursor.row)-dy,0,7));
  }
  InputContext inputContext() const {return {screen,page,review,selected.valid(),generation,game.history.size()};}
+ std::vector<Command> commands(Screen context) const {
+   std::vector<Command> result;
+   auto add=[&](Action id,std::initializer_list<int> keys,const std::string& keyLabel,
+                const std::string& label,const std::string& help,Repeat repeat=Repeat::PressOnly,
+                bool enabled=true,const std::string& reason={},Confirmation confirmation=Confirmation::None){
+     result.push_back({id,keys,keyLabel,label,help,enabled,repeat,confirmation,reason});
+   };
+   const bool live=online()&&networkPlaying&&!game.over();
+   add(Action::Exit,{KEY_Q},"Q",live?"Leave":"Exit",live?"Confirm leaving live match":"Save and exit",
+       Repeat::PressOnly,true,{},live?Confirmation::Required:Confirmation::None);
+   if(context==Screen::Help){
+     add(Action::Return,{KEY_ENTER,KEY_KP_ENTER,KEY_ESCAPE,KEY_I},"Enter/Esc/I","Back","Return to previous screen");
+     const auto count=contextHelp().size();
+     add(Action::HelpPrevious,{KEY_LEFT},"Left","Prev","Previous help page",Repeat::PressOnly,helpPage>0,"First help page");
+     add(Action::HelpNext,{KEY_RIGHT},"Right","Next","Next help page",Repeat::PressOnly,(helpPage+1)*8<count,"Last help page");
+     return result;
+   }
+   if(page=="address"){
+     std::vector<int> keys{KEY_PERIOD,KEY_KP_DECIMAL};
+     for(int k=KEY_ZERO;k<=KEY_NINE;++k)keys.push_back(k);
+     for(int k=KEY_KP_0;k<=KEY_KP_9;++k)keys.push_back(k);
+     result.push_back({Action::AddressCharacter,std::move(keys),"0-9 / .","Address","Type host IPv4 address",
+                       networkAddress.size()<15,Repeat::PressOnly,Confirmation::None,"Address is full"});
+     add(Action::Down,{KEY_DOWN,KEY_S},"Down/S","Row","Next address row (hold)",Repeat::Allow);
+     add(Action::Up,{KEY_UP,KEY_W},"Up/W","Row","Previous address row (hold)",Repeat::Allow);
+     add(Action::Back,{KEY_ESCAPE},"Esc","Back","Return to LAN menu");
+     add(Action::AddressErase,{KEY_BACKSPACE},"Backspace","Erase","Erase address digit (hold)",Repeat::Allow,
+         !networkAddress.empty(),"Address is empty");
+     add(Action::AddressDelete,{KEY_DELETE},"Delete","Erase","Erase address digit",Repeat::PressOnly,
+         !networkAddress.empty(),"Address is empty");
+     add(Action::Confirm,{KEY_ENTER,KEY_KP_ENTER},"Enter","Connect","Confirm address row");
+     return result;
+   }
+   if(context!=Screen::Promotion){
+     const bool vertical=context!=Screen::Board||!review;
+     add(Action::Up,{KEY_UP,KEY_W,KEY_SEMICOLON},"Up/W/;","Up",context==Screen::Board?"Move cursor up (hold)":"Previous row (hold)",Repeat::Allow,vertical,"Use Left/Right in replay");
+     add(Action::Down,{KEY_DOWN,KEY_S,KEY_PERIOD},"Down/S/.","Down",context==Screen::Board?"Move cursor down (hold)":"Next row (hold)",Repeat::Allow,vertical,"Use Left/Right in replay");
+   }
+   const bool horizontal=context==Screen::Board||context==Screen::Promotion||page=="setup"||page=="preferences";
+   add(Action::Left,{KEY_LEFT,KEY_A,KEY_COMMA},"Left/A/,",context==Screen::Promotion?"Choose":review?"Step":"Left",
+       context==Screen::Board?(review?"Previous replay move (hold)":"Move cursor left (hold)"):context==Screen::Promotion?"Previous promotion piece (hold)":"Change setting left (hold)",Repeat::Allow,horizontal,"No horizontal action here");
+   add(Action::Right,{KEY_RIGHT,KEY_D,KEY_SLASH},"Right/D//",context==Screen::Promotion?"Choose":review?"Step":"Right",
+       context==Screen::Board?(review?"Next replay move (hold)":"Move cursor right (hold)"):context==Screen::Promotion?"Next promotion piece (hold)":"Change setting right (hold)",Repeat::Allow,horizontal,"No horizontal action here");
+   const bool confirm=context!=Screen::Board||(!archiveMode&&(game.over()||(!thinking()&&canPlay()&&
+       (game.options.mode!=Mode::Computer||game.humanTurn()))));
+   add(Action::Confirm,{KEY_ENTER,KEY_KP_ENTER},"Enter",context==Screen::Promotion||context==Screen::Confirm?"Confirm":context!=Screen::Board?"Select":game.over()?"Menu":selected.valid()?"Move":"Pick",
+       context==Screen::Confirm?"Confirm selected choice":context==Screen::Promotion?"Confirm promotion piece":context!=Screen::Board?"Activate selected row":game.over()?"Open result menu":selected.valid()?"Confirm selected move":"Select a piece",Repeat::PressOnly,confirm,
+       "Move input unavailable",context==Screen::Confirm||context==Screen::Promotion?Confirmation::Required:Confirmation::None);
+   add(Action::Back,{KEY_ESCAPE,KEY_BACKSPACE,KEY_DELETE},"Esc/Backspace",context==Screen::Board?(selected.valid()?"Cancel":review?"Return":"Menu"):"Back",
+       context==Screen::Board?(selected.valid()?"Cancel selected move":review?"Leave replay":"Open game menu"):"Cancel / return");
+   if(context!=Screen::Board)return result;
+   add(Action::Help,{KEY_I},"I","Help","Contextual controls");
+   add(Action::Flip,{KEY_F},"F","Flip","Flip board");
+   add(Action::Contrast,{KEY_T},"T","Contrast","Toggle board contrast");
+   const bool canReview=!archiveMode&&!thinking()&&(!game.clock.enabled()||game.over())&&(!online()||game.over());
+   add(Action::Review,{KEY_V},"V","Replay","Toggle move replay",Repeat::PressOnly,canReview,"Review available after game");
+   add(Action::Export,{KEY_P},"P","Export","Export PGN");
+   const bool hint=!review&&!archiveMode&&!thinking()&&!game.over()&&
+       (game.options.mode==Mode::Puzzle||(!online()&&!game.clock.enabled()));
+   add(Action::Hint,{KEY_H},"H","Hint","Show a hint",Repeat::PressOnly,hint,
+       online()||game.clock.enabled()?"Hints are for untimed offline games":"No hint available now");
+   add(Action::NextPuzzle,{KEY_X},"X","Next","Next puzzle in category",Repeat::PressOnly,game.options.mode==Mode::Puzzle,"Not a puzzle");
+   const bool undo=!review&&!archiveMode&&!thinking()&&!online()&&!game.clock.enabled()&&!game.history.empty();
+   add(Action::Undo,{KEY_U},"U","Undo","Undo previous move",Repeat::PressOnly,undo,"Undo needs an untimed offline game");
+   add(Action::AcceptDraw,{KEY_Y},"Y","Draw","Review opponent's draw offer",Repeat::PressOnly,
+       live&&!review&&incomingDrawOffer,"No pending draw offer",Confirmation::Required);
+   add(Action::CycleTargets,{KEY_SPACE},"Space","Cycle","Cycle legal destinations",Repeat::PressOnly,
+       selected.valid(),"Select a piece first");
+   return result;
+ }
+ std::vector<Command> commands() const {return commands(screen);}
+ std::vector<std::string> contextHelp() const {return tyrell::app::help_lines(commands(previous));}
+ std::string commandHelp(Action id) const {
+   const auto table=commands();
+   const auto found=std::find_if(table.begin(),table.end(),[&](const auto& c){return c.id==id;});
+   return found==table.end()||!found->enabled?std::string{}:tyrell::app::help_line(*found);
+ }
+ std::string commandFooter() const {
+   auto table=commands();
+   // The full aliases live in help. Keep the first key in compact footer hints.
+   if(screen!=Screen::Help)for(auto& command:table){const auto at=command.key_label.find('/');if(at!=std::string::npos)command.key_label.resize(at);}
+   if(screen==Screen::Help){
+     const auto rows=contextHelp().size(),pages=std::max(size_t(1),(rows+7)/8);
+     return tyrell::app::footer(table,{Action::HelpPrevious,Action::HelpNext,Action::Return})+"  "+std::to_string(std::min(helpPage+1,pages))+"/"+std::to_string(pages);
+   }
+   if(screen==Screen::Home)return tyrell::app::footer(table,{Action::Confirm,Action::Exit});
+   if(screen==Screen::Promotion){
+     const auto left=std::find_if(table.begin(),table.end(),[](const auto& c){return c.id==Action::Left;});
+     const auto right=std::find_if(table.begin(),table.end(),[](const auto& c){return c.id==Action::Right;});
+     return left->key_label+"/"+right->key_label+" "+left->label+"   "+tyrell::app::footer(table,{Action::Confirm,Action::Back});
+   }
+   if(screen!=Screen::Board)return tyrell::app::footer(table,{Action::Up,Action::Down,Action::Confirm,Action::Back});
+   if(review){
+     const auto left=std::find_if(table.begin(),table.end(),[](const auto& c){return c.id==Action::Left;});
+     const auto right=std::find_if(table.begin(),table.end(),[](const auto& c){return c.id==Action::Right;});
+     return left->key_label+"/"+right->key_label+" "+left->label;
+   }
+   if(game.options.mode==Mode::Puzzle)return tyrell::app::footer(table,{Action::Hint,Action::NextPuzzle,Action::Help});
+   if(selected.valid())return tyrell::app::footer(table,{Action::Confirm,Action::Back});
+   if(game.over())return tyrell::app::footer(table,{Action::Confirm,Action::Review});
+   const auto confirm=std::find_if(table.begin(),table.end(),[](const auto& c){return c.id==Action::Confirm;});
+   if(confirm==table.end()||!confirm->enabled)return tyrell::app::footer(table,{Action::Help,Action::Back});
+   return tyrell::app::footer(table,{Action::Confirm,Action::Help});
+ }
  bool repeatable(int k) const {
-   if(screen==Screen::Help)return false;
-   if(page=="address")return k==KEY_UP||k==KEY_DOWN||k==KEY_W||k==KEY_S||k==KEY_BACKSPACE;
-   const bool horizontal=k==KEY_LEFT||k==KEY_RIGHT||k==KEY_A||k==KEY_D||k==KEY_COMMA||k==KEY_SLASH;
-   const bool vertical=k==KEY_UP||k==KEY_DOWN||k==KEY_W||k==KEY_S||k==KEY_SEMICOLON||k==KEY_PERIOD;
-   if(screen==Screen::Promotion)return horizontal;
-   return horizontal||vertical;
+   const auto table=commands();const auto* command=tyrell::app::find_command(table,k,true);
+   return command&&command->enabled;
  }
  template<class Input>void input(Input& source,double timestamp){
    if(repeatKey&&repeatContext!=inputContext())repeatKey=0;
@@ -209,7 +322,7 @@ public:
    }
    if(!repeatKey)return;
    if(!source.down(repeatKey)||repeatContext!=inputContext()){repeatKey=0;return;}
-   if(timestamp>=repeatAt){const auto before=inputContext();key(repeatKey);repeatAt=timestamp+.10;if(before!=inputContext())repeatKey=0;}
+   if(timestamp>=repeatAt){const auto before=inputContext();key(repeatKey,true);repeatAt=timestamp+.10;if(before!=inputContext())repeatKey=0;}
  }
 
  void home(){
@@ -271,7 +384,7 @@ public:
      else if(menu==1||menu==2){if(haveGame&&!game.over()){screen=Screen::Confirm;dialog=menu==1?"computer":"local";menu=0;}else setupMenu(menu==1?Mode::Computer:Mode::Local);}
      else if(menu==3){if(!persist())return;screen=Screen::Setup;page="puzzles";menu=0;}
      else if(menu==4){if(!persist())return;screen=Screen::Network;page="lan";menu=0;}
-     else if(menu==5)loadLibrary();else if(menu==6){screen=Screen::Setup;page="preferences";menu=0;}else if(menu==7){previous=screen;screen=Screen::Help;}else {if(persist())quit=true;}return;
+     else if(menu==5)loadLibrary();else if(menu==6){screen=Screen::Setup;page="preferences";menu=0;}else if(menu==7){previous=screen;helpPage=0;screen=Screen::Help;}else {if(persist())quit=true;}return;
    }
    if(screen==Screen::Confirm){
      if(dialog=="leave-menu"||dialog=="leave-exit"){
@@ -308,51 +421,61 @@ public:
      else if(menu==3){std::string error;auto path=dir/"exports/last-game.pgn";notify(game.exportPgn(path,error)?"PGN saved in exports/":"Export failed: "+error);}
      else if(menu==4){if(!game.over()){screen=Screen::Confirm;dialog="resign";menu=0;}else {screen=Screen::Board;page.clear();}}
      else if(menu==5){if(game.over()){screen=Screen::Board;page.clear();return;}if(online()){drawOffered=true;lan.send("DRAW");notify("Draw offered to opponent");screen=Screen::Board;page.clear();}else if(!game.over()){screen=Screen::Confirm;dialog="draw";menu=0;}}
-     else {previous=screen;screen=Screen::Help;}return;
+     else {previous=screen;helpPage=0;screen=Screen::Help;}return;
    }
    if(page=="lan"){if(menu==0)setupMenu(Mode::Host);else if(menu==1){page="address";networkAddress.clear();menu=0;}else home();return;}
    if(page=="address"){if(menu==2){page="lan";menu=0;}else{std::string error;if(lan.join(networkAddress,error)){networkHost=false;networkPlaying=false;helloSent=localReady=remoteReady=networkEndSent=drawOffered=incomingDrawOffer=awaitingMove=false;page="waiting";networkStartedAt=time;menu=0;}else notify(error);}return;}
    if(page=="pair"){if(menu==1){lan.close();home();}else {localReady=true;lan.send("READY");}return;}
    if(page=="waiting"||page=="disconnected"){lan.close();home();}
  }
- void key(int k){
-   if(k==KEY_KP_ENTER)k=KEY_ENTER;if(k==KEY_DELETE)k=KEY_BACKSPACE;
-   if(k==KEY_Q){if(online()&&networkPlaying&&!game.over()){askLeave(true);}else if(persist())quit=true;return;}
-   if(page=="address"){
-     if(((k>=KEY_ZERO&&k<=KEY_NINE)||k==KEY_PERIOD)&&networkAddress.size()<15){menu=0;networkAddress+=char(k);}
-     else if(k>=KEY_KP_0&&k<=KEY_KP_9&&networkAddress.size()<15){menu=0;networkAddress+=char('0'+k-KEY_KP_0);}
-     else if(k==KEY_KP_DECIMAL&&networkAddress.size()<15){menu=0;networkAddress+='.';}
-     else if(k==KEY_DOWN||k==KEY_S)menu=(menu+1)%3;
-     else if(k==KEY_UP||k==KEY_W)menu=(menu+2)%3;
-     else if(k==KEY_ESCAPE){page="lan";menu=0;}
-     else if(k==KEY_BACKSPACE&&!networkAddress.empty()){menu=0;networkAddress.pop_back();}
-     else if(k==KEY_ENTER||k==KEY_KP_ENTER)activate();
+ void key(int k,bool repeated=false){
+   const auto table=commands();const auto* command=tyrell::app::find_command(table,k,repeated);
+   if(!command)return;
+   const auto action=command->id;
+   if(!command->enabled){
+     // Preserve the established feedback for attempted unavailable operations.
+     if(action==Action::Review&&!archiveMode)notify(command->unavailable_reason);
+     else if(action==Action::Hint&&!review&&!archiveMode&&(online()||game.clock.enabled()))notify(command->unavailable_reason);
+     else if(action==Action::Undo&&!review&&!archiveMode&&!thinking())notify(command->unavailable_reason);
      return;
    }
-   if(screen==Screen::Help){if(k==KEY_ENTER||k==KEY_ESCAPE||k==KEY_I)screen=previous;return;}
-   if(screen!=Screen::Board){
-     if(k==KEY_ESCAPE||k==KEY_BACKSPACE){if(screen==Screen::Confirm&&(dialog=="leave-menu"||dialog=="leave-exit")){cancelLeave();return;}if(screen==Screen::Promotion){screen=Screen::Board;clearSelection();}else if(screen==Screen::Confirm&&(dialog=="resign"||dialog=="draw"||dialog=="castle"||dialog=="accept-draw"||dialog=="leave-menu"||dialog=="leave-exit")){screen=Screen::Board;page.clear();}else if(page=="pause"){screen=Screen::Board;page.clear();}else{lan.close();home();}return;}
-     if(screen==Screen::Promotion){if(k==KEY_LEFT||k==KEY_A||k==KEY_COMMA)promotion=(promotion+3)%4;if(k==KEY_RIGHT||k==KEY_D||k==KEY_SLASH)promotion=(promotion+1)%4;if(k==KEY_ENTER)activate();return;}
-     if(k==KEY_DOWN||k==KEY_S||k==KEY_PERIOD)menu=(menu+1)%std::max(1,int(items().size()));
-     if(k==KEY_UP||k==KEY_W||k==KEY_SEMICOLON)menu=(menu+std::max(1,int(items().size()))-1)%std::max(1,int(items().size()));
-     if(k==KEY_LEFT||k==KEY_A||k==KEY_COMMA)change(-1);if(k==KEY_RIGHT||k==KEY_D||k==KEY_SLASH)change(1);
-     if(k==KEY_ENTER)activate();return;
+   if(action==Action::Exit){if(online()&&networkPlaying&&!game.over()){askLeave(true);}else if(persist())quit=true;return;}
+   if(screen==Screen::Help){
+     if(action==Action::Return)screen=previous;
+     else if(action==Action::HelpPrevious&&helpPage)--helpPage;
+     else if(action==Action::HelpNext)++helpPage;
+     return;
    }
-   if(k==KEY_I){previous=screen;screen=Screen::Help;return;}
-   if(k==KEY_ESCAPE||k==KEY_BACKSPACE){if(selected.valid()){cursor=selected;clearSelection();}else if(review){review=false;if(page=="archive")home();}else pauseMenu();return;}
-   if(k==KEY_F){flipped=!flipped;return;}if(k==KEY_T){contrast=!contrast;settings();return;}
-   if(k==KEY_V){if(archiveMode)return;if(!thinking()&&(!game.clock.enabled()||game.over())&&(!online()||game.over())){review=!review;reviewPly=game.history.size();clearSelection();}else notify("Review available after game");return;}
-   if(k==KEY_P){std::string error;notify(game.exportPgn(dir/"exports/last-game.pgn",error)?"PGN saved in exports/":"PGN export failed");return;}
-   if(k==KEY_H&&!review&&!archiveMode){hint();return;}
-   if(k==KEY_X&&game.options.mode==Mode::Puzzle){nextPuzzle();return;}
-   if(k==KEY_U&&!review&&!archiveMode){if(thinking())return;if(game.undo(nowMs())){clearSelection();hintFrom=hintTo=NO_SQUARE;persist();}else notify("Undo needs an untimed offline game");return;}
-   if(k==KEY_Y&&online()&&networkPlaying&&!review&&!game.over()&&incomingDrawOffer){screen=Screen::Confirm;dialog="accept-draw";menu=0;return;}
-   if(k==KEY_LEFT||k==KEY_A||k==KEY_COMMA)moveCursor(-1,0);
-   if(k==KEY_RIGHT||k==KEY_D||k==KEY_SLASH)moveCursor(1,0);
-   if(k==KEY_UP||k==KEY_W||k==KEY_SEMICOLON)moveCursor(0,-1);
-   if(k==KEY_DOWN||k==KEY_S||k==KEY_PERIOD)moveCursor(0,1);
-   if(k==KEY_SPACE&&selected.valid())targetCursor(true);
-   if(k==KEY_ENTER){if(archiveMode)return;if(game.over())pauseMenu();else choose();}
+   if(page=="address"){
+     if(action==Action::AddressCharacter){menu=0;networkAddress+=k>=KEY_KP_0&&k<=KEY_KP_9?char('0'+k-KEY_KP_0):k==KEY_KP_DECIMAL?'.':char(k);}
+     else if(action==Action::Down)menu=(menu+1)%3;
+     else if(action==Action::Up)menu=(menu+2)%3;
+     else if(action==Action::Back){page="lan";menu=0;}
+     else if(action==Action::AddressErase||action==Action::AddressDelete){menu=0;networkAddress.pop_back();}
+     else if(action==Action::Confirm)activate();
+     return;
+   }
+   if(screen!=Screen::Board){
+     if(action==Action::Back){if(screen==Screen::Confirm&&(dialog=="leave-menu"||dialog=="leave-exit")){cancelLeave();return;}if(screen==Screen::Promotion){screen=Screen::Board;clearSelection();}else if(screen==Screen::Confirm&&(dialog=="resign"||dialog=="draw"||dialog=="castle"||dialog=="accept-draw"||dialog=="leave-menu"||dialog=="leave-exit")){screen=Screen::Board;page.clear();}else if(page=="pause"){screen=Screen::Board;page.clear();}else{lan.close();home();}return;}
+     if(screen==Screen::Promotion){if(action==Action::Left)promotion=(promotion+3)%4;if(action==Action::Right)promotion=(promotion+1)%4;if(action==Action::Confirm)activate();return;}
+     if(action==Action::Down)menu=(menu+1)%std::max(1,int(items().size()));
+     if(action==Action::Up)menu=(menu+std::max(1,int(items().size()))-1)%std::max(1,int(items().size()));
+     if(action==Action::Left)change(-1);if(action==Action::Right)change(1);
+     if(action==Action::Confirm)activate();return;
+   }
+   if(action==Action::Help){previous=screen;helpPage=0;screen=Screen::Help;return;}
+   if(action==Action::Back){if(selected.valid()){cursor=selected;clearSelection();}else if(review){review=false;if(page=="archive")home();}else pauseMenu();return;}
+   if(action==Action::Flip){flipped=!flipped;return;}if(action==Action::Contrast){contrast=!contrast;settings();return;}
+   if(action==Action::Review){review=!review;reviewPly=game.history.size();clearSelection();return;}
+   if(action==Action::Export){std::string error;notify(game.exportPgn(dir/"exports/last-game.pgn",error)?"PGN saved in exports/":"PGN export failed");return;}
+   if(action==Action::Hint){hint();return;}
+   if(action==Action::NextPuzzle){nextPuzzle();return;}
+   if(action==Action::Undo){if(game.undo(nowMs())){clearSelection();hintFrom=hintTo=NO_SQUARE;persist();}else notify("Undo needs an untimed offline game");return;}
+   if(action==Action::AcceptDraw){screen=Screen::Confirm;dialog="accept-draw";menu=0;return;}
+   if(action==Action::Left)moveCursor(-1,0);if(action==Action::Right)moveCursor(1,0);
+   if(action==Action::Up)moveCursor(0,-1);if(action==Action::Down)moveCursor(0,1);
+   if(action==Action::CycleTargets)targetCursor(true);
+   if(action==Action::Confirm){if(game.over())pauseMenu();else choose();}
  }
  void disconnect(const std::string& why){status=why;lan.close();networkPlaying=false;awaitingMove=false;incomingDrawOffer=drawOffered=false;if(haveGame&&online())game.clock.pause(nowMs());screen=Screen::Network;page="disconnected";menu=0;}
  void network(){
@@ -392,39 +515,39 @@ public:
    }
    if(((haveGame&&!online()&&!review&&!archiveMode)||pendingProgress||pendingSettings)&&nowMs()-lastSave>=5000)persist();
  }
- void draw(){
-   view=chessui::View{};view.screen=screen;view.board=review?game.atPly(reviewPly):game.board;view.cursor=cursor;view.selected=selected;view.legal=legal;view.hintFrom=hintFrom;view.hintTo=hintTo;view.flipped=flipped;view.monochrome=contrast;view.review=review;view.gameOver=game.over();view.clocksEnabled=game.clock.enabled();view.clocksRunning=game.clock.isRunning();view.thinking=thinking();view.time=time;view.menu=items();view.menuIndex=screen==Screen::Promotion?promotion:menu;
+ void draw(double uiTime=-1,std::vector<chessui::TextBounds>* audit=nullptr){
+   const double displayTime=uiTime>=0?uiTime:uiNow();
+   view=chessui::View{};view.screen=screen;view.board=review?game.atPly(reviewPly):game.board;view.cursor=cursor;view.selected=selected;view.legal=legal;view.hintFrom=hintFrom;view.hintTo=hintTo;view.flipped=flipped;view.monochrome=contrast;view.review=review;view.gameOver=game.over();view.clocksEnabled=game.clock.enabled();view.clocksRunning=game.clock.isRunning();view.thinking=thinking();view.time=displayTime;view.menu=items();view.menuIndex=screen==Screen::Promotion?promotion:menu;
    view.title=game.over()?(game.result=="1-0"?"WHITE WINS":game.result=="0-1"?"BLACK WINS":"DRAW"):modeName(game.options.mode);view.status=game.over()?game.reason:awaitingMove?"Waiting for host...":!status.empty()?status:ChessRules::isInCheck(view.board,view.board.sideToMove())?"Check!":game.board.sideToMove()==PieceColor::White?"White to move":"Black to move";
    view.whiteClock=chess::clockText(game.clock.remainingMsAt(PieceColor::White,nowMs()),game.clock.enabled());view.blackClock=chess::clockText(game.clock.remainingMsAt(PieceColor::Black,nowMs()),game.clock.enabled());view.moveLines=game.lines(review?reviewPly:game.history.size());
-   if(review){view.reviewLabel="REPLAY "+std::to_string(reviewPly)+" / "+std::to_string(game.history.size());view.footer="Left / right step";}
-   else view.footer=game.over()?"ENTER menu  V replay":selected.valid()?"ENTER move ESC cancel":thinking()||awaitingMove?"I help ESC menu":"ENTER pick I help";
+   if(review){view.reviewLabel="REPLAY "+std::to_string(reviewPly)+" / "+std::to_string(game.history.size());}
    view.subtitle=game.options.variant==ChessVariant::Chess960?"Chess960 #"+std::to_string(game.options.position):"Standard chess";
    if(!game.history.empty()){size_t n=review?reviewPly:game.history.size();if(n){view.lastFrom=game.history[n-1].move.from;view.lastTo=game.history[n-1].move.to;}}
-   if(motion&&!review){view.animatedPiece=animatedPiece;view.animationFrom=animatedMove.from;view.animationTo=animatedMove.to;view.animationProgress=float(std::clamp((time-animationStart)/.18,0.,1.));}
-   if(game.options.mode==Mode::Puzzle){view.title="PUZZLE "+std::to_string(game.puzzleIndex+1);view.subtitle=std::to_string(solved.size())+" / "+std::to_string(puzzleCount())+" solved";view.footer="H hint  X next  I help";if(game.over())view.status="Solved! X for next";else view.status=game.puzzleType==PuzzleType::MateIn1?"Mate in one":game.puzzleType==PuzzleType::MateIn2?"Mate in two":"Find the best move";}
-   if(screen==Screen::Home){view.title="YOUR MOVE";view.status=std::to_string(solved.size())+" puzzles solved";view.footer="ENTER select  Q exit";}
-   if(page=="setup"){view.title=setup.mode==Mode::Host?"HOST A MATCH":"NEW GAME";view.subtitle=modeName(setup.mode);view.status="Choose a row, then change with left/right";view.footer="UP/DOWN row  ENTER change / start";}
-   if(page=="pause"){view.title=game.over()?scoreName(game):"GAME MENU";view.subtitle=game.over()?game.reason:"Clock continues while this menu is open";view.status="Q saves and exits";view.footer="ENTER select  ESC return";}
-   if(page=="puzzles"){view.title="PUZZLE ARCADE";view.subtitle=std::to_string(solved.size())+" / "+std::to_string(puzzleCount())+" solved - progress saves automatically";view.status="H reveals a hint. X skips to the next puzzle";view.footer="ENTER select  ESC back";}
-   if(page=="preferences"){view.title="PREFERENCES";view.subtitle="Make the board your own";view.status="";view.footer="ENTER change  ESC back";}
-   if(page=="library"){view.title="GAME LIBRARY";view.subtitle="Completed offline games, full move replay";view.status=archives.empty()?"Finish a game to start your collection":"Choose a game to replay";view.footer="ENTER replay  ESC back";}
+   if(motion&&!review){view.animatedPiece=animatedPiece;view.animationFrom=animatedMove.from;view.animationTo=animatedMove.to;view.animationProgress=float(std::clamp((displayTime-animationStart)/.18,0.,1.));}
+   if(game.options.mode==Mode::Puzzle){view.title="PUZZLE "+std::to_string(game.puzzleIndex+1);view.subtitle=std::to_string(solved.size())+" / "+std::to_string(puzzleCount())+" solved";if(game.over())view.status="Solved! X for next";else view.status=game.puzzleType==PuzzleType::MateIn1?"Mate in one":game.puzzleType==PuzzleType::MateIn2?"Mate in two":"Find the best move";}
+   if(screen==Screen::Home){view.title="YOUR MOVE";view.status=std::to_string(solved.size())+" puzzles solved";}
+   if(page=="setup"){view.title=setup.mode==Mode::Host?"HOST A MATCH":"NEW GAME";view.subtitle=modeName(setup.mode);view.status="Choose a row, then change with left/right";}
+   if(page=="pause"){view.title=game.over()?scoreName(game):"GAME MENU";view.subtitle=game.over()?game.reason:"Clock continues while this menu is open";view.status=commandHelp(Action::Exit);}
+   if(page=="puzzles"){view.title="PUZZLE ARCADE";view.subtitle=std::to_string(solved.size())+" / "+std::to_string(puzzleCount())+" solved - progress saves automatically";view.status=commandHelp(Action::Confirm);}
+   if(page=="preferences"){view.title="PREFERENCES";view.subtitle="Make the board your own";view.status="";}
+   if(page=="library"){view.title="GAME LIBRARY";view.subtitle="Completed offline games, full move replay";view.status=archives.empty()?"Finish a game to start your collection":"Choose a game to replay";}
    if(screen==Screen::Help){
-     view.title="HOW TO PLAY";view.status.clear();view.footer="ENTER / ESC return";
-     if(previous==Screen::Home)view.menu={"UP/DOWN or W/S   Select menu row","LEFT/RIGHT or A/D   Change setting","ENTER / keypad Enter   Confirm","ESC / Backspace   Back or cancel","Hold directions to repeat","I opens controls during play","Q saves and exits"};
-     else if(game.options.mode==Mode::Puzzle)view.menu={"Arrows / WASD / ; , . /   Navigate","ENTER   Select piece / make move","SPACE   Cycle legal destinations","ESC / Backspace   Cancel / menu","H hint   X next puzzle   I help","F flip   T contrast   V replay","Q exit (offline game is preserved)","Progress saves automatically"};
-     else view.menu={"Arrows / WASD / ; , . /   Navigate","ENTER / keypad Enter   Select / move","SPACE   Cycle legal destinations","ESC / Backspace   Cancel / game menu",online()?"Y reviews a draw offer, then confirm":"U undo / H hint (untimed games)","F flip   T contrast   V replay","P export PGN   Hold arrows to repeat",online()?(game.over()?"Q exits the completed match":"Q confirms leaving the live match"):"Q saves and exits"};
+     view.title="HOW TO PLAY";view.status.clear();view.menu=contextHelp();
+     const auto pages=std::max(size_t(1),(view.menu.size()+7)/8);helpPage=std::min(helpPage,pages-1);
+     view.helpOffset=helpPage*8;
    }
-   if(screen==Screen::Confirm){view.footer="UP/DOWN select ENTER confirm ESC back";view.title=dialog=="castle"?"KING MOVE OR CASTLE?":dialog=="resign"?"RESIGN THIS GAME?":dialog=="draw"?"AGREE TO A DRAW?":"REPLACE YOUR SAVED GAME?";view.status=dialog=="castle"?"Same destination, different rook move":dialog=="resign"?"Your opponent will win this match":dialog=="draw"?"The game will end in a draw":"Your current match will be replaced";}
+   if(screen==Screen::Confirm){view.title=dialog=="castle"?"KING MOVE OR CASTLE?":dialog=="resign"?"RESIGN THIS GAME?":dialog=="draw"?"AGREE TO A DRAW?":"REPLACE YOUR SAVED GAME?";view.status=dialog=="castle"?"Same destination, different rook move":dialog=="resign"?"Your opponent will win this match":dialog=="draw"?"The game will end in a draw":"Your current match will be replaced";}
    if(screen==Screen::Confirm&&(dialog=="leave-menu"||dialog=="leave-exit")){view.title="LEAVE THIS LAN MATCH?";view.status="Disconnects the match. It cannot resume.";}
    if(screen==Screen::Confirm&&dialog=="accept-draw"){view.title="ACCEPT OPPONENT'S DRAW?";view.status="Confirm to end this match as a draw.";}
-   if(screen==Screen::Promotion){view.title="PROMOTE YOUR PAWN";view.status="Choose your new piece";view.footer="LEFT/RIGHT choose ENTER confirm ESC back";}
+   if(screen==Screen::Promotion){view.title="PROMOTE YOUR PAWN";view.status="Choose your new piece";}
    if(screen==Screen::Network){
       view.title=page=="pair"?"PAIR CODE "+std::to_string(pairCode):page=="disconnected"?"CONNECTION ENDED":"LOCAL WIRELESS";
       view.subtitle=page=="pair"?"Both players must see the same code":page=="address"?"Type the host's IP, then press ENTER":page=="waiting"?networkHost?"Waiting at "+chess::localAddress():"Connecting to "+networkAddress:"Play another Zero on the same Wi-Fi";
-      view.status=page=="disconnected"?status:page=="pair"?localReady?"You confirmed. Waiting for opponent":"Confirm together to begin":page=="address"?"IPv4 only, e.g. 192.168.1.42":"Port 28773  /  90 second pairing timeout";view.footer="ENTER select  ESC cancel";
+      view.status=page=="disconnected"?status:page=="pair"?localReady?"You confirmed. Waiting for opponent":"Confirm together to begin":page=="address"?"IPv4 only, e.g. 192.168.1.42":"Port 28773  /  90 second pairing timeout";
    }
-   if(time<toastUntil&&!toast.empty()){view.notice=toast;view.noticeError=toast.find("failed")!=std::string::npos||toast.find("not saved")!=std::string::npos||toast.find("damaged")!=std::string::npos;}
-   chessui::draw(view);
+   view.footer=commandFooter();
+   if(displayTime<toastUntil&&!toast.empty()){view.notice=toast;view.noticeError=toast.find("failed")!=std::string::npos||toast.find("not saved")!=std::string::npos||toast.find("damaged")!=std::string::npos;}
+   chessui::draw(view,audit);
  }
 };
 }
@@ -433,7 +556,7 @@ int main(int argc,char** argv){
 #ifdef __unix__
    umask(0077);
 #endif
-   auto args=arguments(argc,argv);App app(args.state);
+   auto args=arguments(argc,argv);App app(args.state,args.uiTime);
    if(args.quick||args.demo||!args.moves.empty()) {app.setup.mode=Mode::Local;app.startGame();if(args.demo&&args.moves.empty())args.moves="e2e4,e7e5,g1f3,b8c6,f1c4,g8f6";for(auto& m:split(args.moves))if(!app.game.moveUci(m,nowMs()))throw std::runtime_error("Illegal --moves entry: "+m);app.persist();}
    tyrell::game::RuntimeOptions options;options.title="Tyrell Chess";if(args.headless){options.backend=tyrell::game::Backend::Headless;options.fps=0;}
    tyrell::game::Runtime runtime(options);auto scripted=split(args.script);size_t scriptIndex=0;int frames=0;
@@ -442,10 +565,10 @@ int main(int argc,char** argv){
      app.input(runtime,runtime.time());
      while(runtime.character()!=0){} // This app accepts numeric IP input from the ordered key stream.
 
-     runtime.begin_frame();app.draw();runtime.end_frame();++frames;if(args.frames&&frames>=args.frames)break;
+     runtime.begin_frame();app.draw(args.uiTime);runtime.end_frame();++frames;if(args.frames&&frames>=args.frames)break;
    }
    app.persist();if(!args.screenshot.empty())runtime.screenshot(args.screenshot);
-   if(!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.2\",\"frames\":"<<frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
+   if(!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.3\",\"frames\":"<<frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
    return 0;
  }catch(const std::exception& e){std::cerr<<"Tyrell Chess: "<<e.what()<<'\n';return 1;}
 }

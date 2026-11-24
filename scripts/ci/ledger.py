@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_LEDGER = 'research/compatibility-ledger.json'
 APP_ROOTS = {
     'status': ['packages/tyrell-status', 'locks/build-inputs.json'],
-    'video': ['packages/tyrell-video', 'locks/build-inputs.json', 'locks/video-build-inputs.json'],
-    'chess': ['packages/tyrell-chess', 'packages/tyrell-game', 'scripts/chess',
+    'video': ['packages/tyrell-video', 'packages/tyrell-app-common', 'locks/build-inputs.json', 'locks/video-build-inputs.json'],
+    'chess': ['packages/tyrell-chess', 'packages/tyrell-app-common', 'packages/tyrell-game', 'scripts/chess',
               'scripts/game', 'locks/game-build-inputs.json'],
     'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'scripts/tanks',
                  'scripts/game', 'locks/game-build-inputs.json'],

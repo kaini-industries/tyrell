@@ -45,6 +45,10 @@ Some tests intentionally skip on macOS or when socket binding is restricted;
 that local result is incomplete evidence, not a reason for CI to waive them.
 Video preflights FFmpeg encoders and GStreamer plugins and checks registered
 media tests so missing prerequisites cannot silently remove playback coverage.
+Video also compiles a separate SDL-enabled UI target and runs only its command
+and shared-model checks with dummy SDL drivers. The native package remains
+SDL-disabled. Chess/Video require their new U1 command/layout groups; generated
+preview images and semantic bounds JSON are retained in the evidence artifact.
 
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg

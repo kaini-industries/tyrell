@@ -36,9 +36,9 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def command(*args, cwd=ROOT, capture=False):
+def command(*args, cwd=ROOT, capture=False, env=None):
     print("+ " + " ".join(map(str, args)), flush=True)
-    return subprocess.run(list(map(str, args)), cwd=cwd, check=True, text=True,
+    return subprocess.run(list(map(str, args)), cwd=cwd, check=True, text=True, env=env,
                           stdout=subprocess.PIPE if capture else None)
 
 
@@ -131,20 +131,24 @@ def dependencies(work, names):
     return out
 
 
-def ctest(build, work, required):
-    inventory = json.loads(command("ctest", "--test-dir", build, "--show-only=json-v1", capture=True).stdout)
+def ctest(build, work, required, pattern=None, env=None):
+    selection = ["--tests-regex", pattern] if pattern else []
+    inventory = json.loads(command("ctest", "--test-dir", build, "--show-only=json-v1",
+                                   *selection, capture=True, env=env).stdout)
     names = {test["name"] for test in inventory["tests"]}
     if not required <= names:
         raise RuntimeError("Required CTest groups omitted: " + ", ".join(sorted(required - names)))
     junit = work / (build.name + "-ctest.xml")
     command("ctest", "--test-dir", build, "--output-on-failure", "--no-tests=error",
-            "--timeout", "120", "--output-junit", junit)
+            *selection, "--timeout", "120", "--output-junit", junit, env=env)
     tree = ET.parse(junit)
     cases = tree.findall(".//testcase")
     if not cases or any(case.find("skipped") is not None for case in cases):
         raise RuntimeError("Required CTest execution was empty or skipped")
     return {"kind": "ctest", "tests": len(cases), "status": "passed",
-            "inventory": sorted(names), "junit": str(junit.relative_to(ROOT))}
+            "inventory": sorted(names), "selection": pattern or "all",
+            "executed_tests": [case.get("name") for case in cases],
+            "junit": str(junit.relative_to(ROOT))}
 
 
 def configure_build(source, build, *flags):
@@ -177,7 +181,8 @@ def run_chess(work):
     configure_build(ROOT / "packages/tyrell-chess", build, "-DCHESS_BACKEND=HEADLESS",
                     "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]))
     return [ctest(build, work, {"chess-lan", "chess-controller", "chess-model", "chess-render",
-                               "chess-lifecycle", "chess-keyboard-navigation", "chess-input-repeat"})]
+                               "chess-lifecycle", "chess-keyboard-navigation", "chess-input-repeat",
+                               "tyrell-app-commands", "chess-command-context", "chess-ui-layout"})]
 
 
 def native_preflight():
@@ -215,7 +220,8 @@ def run_app(work, app, revision):
     required = {"status-model", "cli-version", "cli-help", "headless-render"} if app == "status" else {
         "video-media-fixture", "video-media-controls", "video-caption-clock", "video-lcd-geometry",
         "video-startup", "video-track-switch", "video-playback", "video-hdmi-lease", "video-hdmi-audio",
-        "video-render-browser", "video-render-player", "video-cli-report-write-error"}
+        "video-render-browser", "video-render-player", "video-cli-report-write-error",
+        "tyrell-app-commands", "video-ui-commands"}
     results = [ctest(build, work, required)]
     packages = work / "packages"
     packages.mkdir()
@@ -225,6 +231,19 @@ def run_app(work, app, revision):
         raise RuntimeError("Expected one native app package")
     results.append({"kind": "package-build", "status": "passed", "path": str(debs[0].relative_to(ROOT)),
                     "sha256": digest(debs[0]), "installed": False})
+    if app == "video":
+        # Compile and exercise the raw SDL repeat adapter too. It is absent
+        # from the shipped native build, so do not rerun media tests or package it.
+        sdl = work / "video-sdl"
+        command("cmake", "-S", ROOT / "packages/tyrell-video", "-B", sdl,
+                "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=ON",
+                "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=ON",
+                "-DTYRELL_BUILD_REVISION=" + revision)
+        command("cmake", "--build", sdl, "--parallel", "4", "--target",
+                "video-ui-commands-test", "tyrell-app-commands-test")
+        results.append(ctest(sdl, work, {"video-ui-commands", "tyrell-app-commands"},
+                             pattern="^(video-ui-commands|tyrell-app-commands)$",
+                             env=dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")))
     return results
 
 
@@ -271,6 +290,9 @@ def export_evidence(work, suite):
     destination = ROOT / "build/ci/evidence" / suite / work.name
     destination.mkdir(parents=True, exist_ok=True)
     selected = set(work.glob("*.json")) | set(work.glob("*-ctest.xml"))
+    for previews in work.glob("*/u1-previews"):
+        selected.update(path for path in previews.rglob("*")
+                        if path.suffix in {".png", ".ppm", ".json"})
     selected.update(work.glob("*.tsv"))
     selected.update(work.glob("*/Testing/Temporary/LastTest.log"))
     selected.update(work.glob("packages/*.deb"))

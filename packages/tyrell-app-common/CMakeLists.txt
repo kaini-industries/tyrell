@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.25)
+project(tyrell_app_common VERSION 0.1.0 LANGUAGES CXX)
+
+add_library(tyrell_app_commands INTERFACE)
+add_library(Tyrell::AppCommands ALIAS tyrell_app_commands)
+target_include_directories(tyrell_app_commands INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_features(tyrell_app_commands INTERFACE cxx_std_17)
+
+include(CTest)
+option(TYRELL_APP_COMMON_BUILD_TESTS "Build command contract tests" ${BUILD_TESTING})
+if(TYRELL_APP_COMMON_BUILD_TESTS)
+  add_executable(tyrell-app-commands-test tests/commands_test.cpp)
+  target_link_libraries(tyrell-app-commands-test PRIVATE Tyrell::AppCommands)
+  target_compile_options(tyrell-app-commands-test PRIVATE -Wall -Wextra -Wpedantic)
+  add_test(NAME tyrell-app-commands COMMAND tyrell-app-commands-test)
+endif()

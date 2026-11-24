@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import shutil
 import tarfile
 import tempfile
 import unittest
@@ -82,6 +83,19 @@ class RunnerIdentityTests(unittest.TestCase):
         before = runner.source_identity(self.root)
         (self.root / ".env").write_text("not a source input")
         self.assertEqual(before, runner.source_identity(self.root))
+
+    def test_nested_ui_previews_survive_export_without_build_tree(self):
+        work = self.root / "build/ci/example"
+        image = work / "chess/u1-previews/chess/promotion.png"
+        image.parent.mkdir(parents=True)
+        image.write_bytes(b"representative preview")
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "chess")
+        self.assertEqual(len(bindings), 1)
+        shutil.rmtree(work)
+        exported = self.root / "build/ci" / bindings[0]["artifact_path"]
+        self.assertEqual(exported.read_bytes(), b"representative preview")
+        self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
 
 
 class RequiredCTestTests(unittest.TestCase):
