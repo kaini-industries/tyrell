@@ -5,6 +5,9 @@ It shows uptime, used/total memory, battery status and network link state.
 It makes no network requests, invokes no shell commands, and needs no root
 privileges. Missing or malformed telemetry remains unknown.
 
+Current source is **0.1.1**. The retained 0.1.0 package below keeps its existing
+provenance; it does not contain the experimental shell integration.
+
 The verified [0.1.0 ARM64 package](../../dist/tyrell-status/0.1.0/tyrell-status_0.1.0-1_arm64.deb)
 is committed in the repository, with [checksums and provenance](../../dist/README.md).
 From the repository root on the device, install it with
@@ -30,6 +33,42 @@ input devices. `--proc-root` and `--sys-root` support deterministic offline
 fixtures. The headless screenshot is a real LVGL software-rendered PPM image.
 An optional SDL desktop simulator is available with `TYRELL_ENABLE_SDL=ON` and
 `--simulator`; SDL is disabled in the device package to avoid extra dependencies.
+
+## Experimental Gh0st pilot
+
+`TYRELL_ENABLE_SHELL_LINK=ON` adds the optional `Tyrell::ShellLink` library on
+Linux. It is **off by default** and has no Gh0st runtime dependency. With no
+valid inherited `GH0ST_SHELL_FD`, the normal M5 launch path remains available.
+JSON, help/version, headless previews and SDL never adopt native shell IPC.
+The supported subset and pinned upstream source are described in
+[the shell-link contract](../../docs/shell-link-status.md).
+
+For a valid native link, Status waits for protocol-v1 `hello` before touching
+devices. A queued startup `pause` also defers device initialization. Missing
+hello exits after a nominal 100 ms wait; this is not a hard real-time guarantee.
+The shell's `LV_LINUX_FBDEV_DEVICE` and `LV_LINUX_KEYBOARD_DEVICE` select devices
+only for valid linked launches, with explicit CLI paths taking priority.
+
+Pause stops the single GUI loop's rendering and input processing, closes the
+evdev client and clears key state before queuing `paused`. Resume opens a fresh
+client, discards pending edges, baselines held keys and redraws the full frame.
+Held keys need a release before acting; `SYN_DROPPED` similarly requires a fresh
+kernel key-state snapshot. Input and link processing use finite batches so a
+busy input queue does not indefinitely postpone the next lifecycle check.
+
+Link loss exits in either foreground or hidden state, with input released and
+no further drawing. Hidden redraw is deferred until explicit resume. The
+pinned LVGL framebuffer destructor only unmaps/closes/frees; it does not clear
+or restore framebuffer pixels. Status starts no workers or helper processes.
+Linux device open/ioctl, telemetry reads and scheduling can still delay the
+loop, so passing fake-shell checks does not establish Gh0st's approximately
+100 ms pause deadline on hardware. The shell may stop the app on timeout.
+
+Build the pilot with `-DTYRELL_ENABLE_SHELL_LINK=ON` added to the CMake command
+below. Tests cover the real GUI loop with a memory-backed LVGL display and a
+scripted fake shell, plus key-state and lifecycle contracts. This integration
+remains **experimental** until separate M5 and pinned Gh0st physical acceptance;
+the file-image and package checks do not establish seat or display ownership.
 
 Build with CMake, C/C++ compilers and an explicitly supplied, verified LVGL
 source directory. CMake performs no downloads:

@@ -236,6 +236,8 @@ while retaining Tyrell's apps and M5 compatibility. F1 supplies a
 [compatibility ledger](docs/compatibility-matrix.md) and
 [scoped CI checks](docs/continuous-integration.md); U1 adds
 [shared commands/help and deterministic UI checks](docs/shared-commands-ui.md).
+L1 adds an [experimental optional shell link and Status pilot](docs/shell-link-status.md),
+disabled in normal M5 builds, with fake-shell ownership checks.
 Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package
@@ -243,7 +245,7 @@ snapshots are committed separately under [`dist/`](dist/README.md).
 
 | Output | Purpose |
 | --- | --- |
-| `artifacts/tyrell-status_0.1.0-1_arm64.deb` | Installable package |
+| `artifacts/tyrell-status_0.1.1-1_arm64.deb` | New development package; separate device acceptance pending |
 | `artifacts/manifest.json` | Source revision, environment, checksums, and test status |
 | `artifacts/SHA256SUMS` | Exported-file checksums |
 | `artifacts/status-system.png`, `artifacts/status-network.png` | Software-rendered previews |
@@ -360,8 +362,8 @@ backing disk.
 After building, replace `user@cardputer` below with your device's SSH target:
 
 ```sh
-scp artifacts/tyrell-status_0.1.0-1_arm64.deb user@cardputer:/tmp/
-ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-status_0.1.0-1_arm64.deb'
+scp artifacts/tyrell-status_0.1.1-1_arm64.deb user@cardputer:/tmp/
+ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-status_0.1.1-1_arm64.deb'
 ```
 
 This installs an additional app without replacing the firmware or launcher. Runtime libraries must satisfy the package's declared dependencies; the tested stock Debian 13 installation already supplied them.

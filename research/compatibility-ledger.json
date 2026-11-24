@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "6878e94fa964803683fa626d4780e35be2d1f687",
+  "reviewed_revision": "1d8c13ea91d366b53a5d5ff376f47080c85c6e34",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -82,21 +82,22 @@
       "id": "status-source",
       "component": "status",
       "kind": "current-source",
-      "version": "0.1.0",
-      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "version": "0.1.1",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-status",
+        "packages/tyrell-app-common",
         "locks/build-inputs.json"
       ],
-      "sha256": "3de39167ad44a78c1f7c0d717fc6d40693d4d8a0361f4c97ac5553093a21a891"
+      "sha256": "5233da383efafe2d722fc3d2027eee12734a38db38412e147f668a625ed5cc4e"
     },
     {
       "id": "video-source",
       "component": "video",
       "kind": "current-source",
       "version": "0.1.8",
-      "source_identity": "U1 app/dependency boundary at 6878e94fa964803683fa626d4780e35be2d1f687; digest must match the checkout",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
@@ -104,14 +105,14 @@
         "locks/build-inputs.json",
         "locks/video-build-inputs.json"
       ],
-      "sha256": "8f17bfcea588275a155df743e91d44822f569be5991dbafb6495b2597558ac55"
+      "sha256": "f9a21a2768938ff3ee037f91674c79f6030528f6ba1becbeaa570ad2e6db8c0e"
     },
     {
       "id": "chess-source",
       "component": "chess",
       "kind": "current-source",
       "version": "0.1.3",
-      "source_identity": "U1 app/dependency boundary at 6878e94fa964803683fa626d4780e35be2d1f687; digest must match the checkout",
+      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -121,7 +122,7 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "5578ee96f88c83a76d3474817346d65e68a8a9d8619c0cdd6583db88315fcd0c"
+      "sha256": "3f74b5a67493eefe8bc368e9e95c6d6f4b30f60e9661fc3a0b98d2887dead9d7"
     },
     {
       "id": "sandline-source",
@@ -276,7 +277,7 @@
       "subject": "status-source",
       "target": "gh0st",
       "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
-      "implementation": "planned",
+      "implementation": "implemented",
       "result": "not-tested",
       "evidence_scope": "not-tested",
       "binding": "current-source",
@@ -286,6 +287,7 @@
         "status-device"
       ],
       "limitations": [
+        "Experimental L1 Status pilot exists behind a default-off build option. Fake-shell checks do not qualify a pinned Gh0st image or physical M5 launch.",
         "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]
