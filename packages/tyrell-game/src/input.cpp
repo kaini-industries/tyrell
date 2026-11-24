@@ -6,6 +6,10 @@ namespace {
 bool valid_key(int key) { return key>0 && key<512; }
 }
 
+void NativeInputState::reset() noexcept {
+    down_.fill(false);pressed_.fill(false);released_.fill(false);suppressed_.fill(false);
+    keys_.clear();chars_.clear();caps_=syncing_=false;
+}
 void NativeInputState::begin_frame() {
     pressed_.fill(false); released_.fill(false); keys_.clear(); chars_.clear();
 }
@@ -66,6 +70,10 @@ void NativeInputState::feed(std::uint16_t type,std::uint16_t code,std::int32_t v
     if(syncing_ || type!=1 || value<0 || value>2) return;
     const int key=map_key(code);
     if(!valid_key(key)) return;
+    if(suppressed_[key]) {
+        if(value==0) suppressed_[key]=false;
+        return; // No release edge or autorepeat from another owner's hold.
+    }
     if(value==0) {
         if(down_[key]) released_[key]=true;
         down_[key]=false;
@@ -83,9 +91,17 @@ void NativeInputState::feed(std::uint16_t type,std::uint16_t code,std::int32_t v
         if(c && chars_.size()<128) chars_.push_back(c);
     }
 }
-void NativeInputState::resync(const std::vector<unsigned short>& held_codes,bool caps_lock) {
+void NativeInputState::resync(const std::vector<unsigned short>& held_codes,bool caps_lock,bool suppress_held) {
+    const auto previous_suppression=suppressed_;
     down_.fill(false); pressed_.fill(false); released_.fill(false); keys_.clear(); chars_.clear();
-    for(const auto code:held_codes) { const int key=map_key(code); if(valid_key(key)) down_[key]=true; }
+    suppressed_.fill(false);
+    for(const auto code:held_codes) {
+        const int key=map_key(code);
+        if(valid_key(key)) {
+            suppressed_[key]=suppress_held || previous_suppression[key];
+            down_[key]=!suppressed_[key];
+        }
+    }
     caps_=caps_lock; syncing_=false;
 }
 bool NativeInputState::sync_needed() const { return syncing_; }

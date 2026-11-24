@@ -114,6 +114,22 @@ class RunnerIdentityTests(unittest.TestCase):
         self.assertEqual(exported.read_bytes(), b'{"within_shell_100ms": false}')
         self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
 
+    def test_nested_ai_lifecycle_evidence_survives_without_dependency_cache(self):
+        work = self.root / "build/ci/example"
+        report = work / "chess-native-shell/engine/a3-ai-cancellation.json"
+        report.parent.mkdir(parents=True)
+        report.write_bytes(b'{"scope":"cooperative-cancellation-only"}')
+        dependency = work / "dependencies/raylib/a3-unrelated.json"
+        dependency.parent.mkdir(parents=True)
+        dependency.write_bytes(b'not suite evidence')
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "chess-native")
+        self.assertEqual(len(bindings), 1)
+        shutil.rmtree(work)
+        exported = self.root / "build/ci" / bindings[0]["artifact_path"]
+        self.assertEqual(exported.read_bytes(), b'{"scope":"cooperative-cancellation-only"}')
+        self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
+
 
 class RequiredCTestTests(unittest.TestCase):
     def test_missing_registered_group_fails_before_execution(self):

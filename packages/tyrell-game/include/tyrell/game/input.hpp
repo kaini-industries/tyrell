@@ -14,9 +14,14 @@ namespace tyrell::game {
 // current held-key snapshot; that snapshot never synthesizes press edges.
 class NativeInputState {
 public:
+    void reset() noexcept;
     void begin_frame();
     void feed(std::uint16_t type, std::uint16_t code, std::int32_t value);
-    void resync(const std::vector<unsigned short>& held_codes, bool caps_lock=false);
+    // Resume can suppress held keys until their physical release. Ordinary
+    // kernel resync preserves an existing suppression but keeps its old held
+    // state semantics for keys that were not suppressed.
+    void resync(const std::vector<unsigned short>& held_codes, bool caps_lock=false,
+                bool suppress_held=false);
     bool sync_needed() const;
     bool key_down(int key) const;
     bool key_pressed(int key) const;
@@ -26,7 +31,7 @@ public:
     int next_key();
     int next_char();
 private:
-    std::array<bool,512> down_{}, pressed_{}, released_{};
+    std::array<bool,512> down_{}, pressed_{}, released_{}, suppressed_{};
     std::deque<int> keys_, chars_;
     bool caps_=false, syncing_=false;
     static int map_key(unsigned short code);

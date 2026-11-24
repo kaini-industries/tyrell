@@ -23,12 +23,12 @@ class ScopesTests(unittest.TestCase):
 
     def test_shared_game_covers_chess_and_both_multiplayer_consumers(self):
         selected = scopes.select(["packages/tyrell-game/include/tyrell/game/runtime.hpp"])
-        self.assertEqual(selected, ["docs", "python", "game", "chess"])
+        self.assertEqual(selected, ["docs", "python", "game", "chess", "chess-native"])
         self.assertEqual(scopes.select(["locks/game-build-inputs.json"]), selected)
         self.assertEqual(scopes.select(["scripts/game"]), selected)
 
     def test_app_specific_change_does_not_select_every_native_suite(self):
-        self.assertEqual(scopes.select(["packages/tyrell-chess/src/main.cpp"]), ["docs", "python", "chess"])
+        self.assertEqual(scopes.select(["packages/tyrell-chess/src/main.cpp"]), ["docs", "python", "chess", "chess-native"])
         self.assertEqual(scopes.select(["packages/tyrell-tanks/src/network.cpp"]), ["docs", "python", "game"])
 
     def test_ci_ledger_and_common_capture_inputs_force_full_coverage(self):
@@ -55,7 +55,7 @@ class ScopesTests(unittest.TestCase):
         data = b"D\0packages/tyrell-video/src/removed.cpp\0R100\0packages/tyrell-chess/old.cpp\0docs/new name\n.md\0"
         paths = scopes.parse_name_status(data)
         self.assertEqual(paths, ["packages/tyrell-video/src/removed.cpp", "packages/tyrell-chess/old.cpp", "docs/new name\n.md"])
-        self.assertEqual(scopes.select(paths), ["docs", "python", "chess", "video"])
+        self.assertEqual(scopes.select(paths), ["docs", "python", "chess", "chess-native", "video"])
 
     def test_parser_rejects_incomplete_data_and_unsafe_paths(self):
         for data in (b"M\0not-terminated", b"R100\0old\0", b"?\0new\0"):

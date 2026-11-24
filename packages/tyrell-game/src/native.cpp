@@ -23,7 +23,7 @@ constexpr int width=320,height=170;
 namespace {
 class Framebuffer {
 public:
-    explicit Framebuffer(const std::string& requested) {
+    explicit Framebuffer(const std::string& requested,bool restore_on_close):restore_on_close_(restore_on_close) {
 #ifdef __linux__
         path_=requested.empty() || requested=="auto"?discover():requested;
         fd_=open(path_.c_str(),O_RDWR|O_CLOEXEC);
@@ -48,8 +48,10 @@ public:
                 throw std::runtime_error("LCD framebuffer mapping is too small");
             data_=static_cast<std::uint8_t*>(mmap(nullptr,length_,PROT_READ|PROT_WRITE,MAP_SHARED,fd_,0));
             if(data_==MAP_FAILED) {data_=nullptr;throw std::runtime_error("Cannot map native LCD");}
-            saved_.resize(width*height*2);
-            for(int y=0;y<height;++y) std::memcpy(saved_.data()+y*width*2,data_+offset_+y*stride_,width*2);
+            if(restore_on_close_) {
+                saved_.resize(width*height*2);
+                for(int y=0;y<height;++y) std::memcpy(saved_.data()+y*width*2,data_+offset_+y*stride_,width*2);
+            }
         } catch(...) {close();throw;}
 #else
         (void)requested;
@@ -58,7 +60,7 @@ public:
     }
     ~Framebuffer() {
 #ifdef __linux__
-        if(data_ && !saved_.empty()) {
+        if(restore_on_close_ && foreground_ && data_ && !saved_.empty()) {
             for(int y=0;y<height;++y) std::memcpy(data_+offset_+y*stride_,saved_.data()+y*width*2,width*2);
             try {commit();} catch(const std::exception& e) {std::cerr<<"Tyrell LCD restore: "<<e.what()<<'\n';}
         }
@@ -66,6 +68,7 @@ public:
         close();
     }
     void present(const std::vector<std::uint16_t>& rgb) {
+        if(!foreground_) throw std::logic_error("Cannot present a native frame without foreground ownership");
 #ifdef __linux__
         if(!data_) return;
         for(int y=0;y<height;++y) std::memcpy(data_+offset_+y*stride_,rgb.data()+y*width,width*2);
@@ -74,7 +77,10 @@ public:
         (void)rgb;
 #endif
     }
+    void foreground(bool owned) noexcept { foreground_=owned; }
 private:
+    bool foreground_=true;
+    [[maybe_unused]] const bool restore_on_close_;
 #ifdef __linux__
     int fd_=-1;
     std::uint8_t* data_=nullptr;
@@ -114,29 +120,12 @@ private:
 
 class Keyboard {
 public:
-    Keyboard(const std::string& requested,NativeInputState& state) {
-        if(requested=="none") return;
-#ifdef __linux__
-        if(requested.empty() || requested=="auto") {
-            if(!open_path("/dev/input/cardputer-zero-internal",true)) {
-                std::error_code error;
-                for(std::filesystem::directory_iterator it("/dev/input",error),end;!error && it!=end;it.increment(error)) {
-                    if(it->path().filename().string().rfind("event",0)==0 && open_path(it->path().string(),true)) break;
-                }
-            }
-        } else open_path(requested,false);
-        if(fd_<0) throw std::runtime_error("Cannot open CardputerZero keyboard (TCA8418 evdev)");
-        try {resync(state);} catch(...) {::close(fd_);fd_=-1;throw;}
-#else
-        (void)requested;(void)state;
-        throw std::runtime_error("Native evdev input requires Linux");
-#endif
+    Keyboard(const std::string& requested,NativeInputState& state):requested_(requested) {
+        acquire(state,false);
     }
-    ~Keyboard() {
-#ifdef __linux__
-        if(fd_>=0) ::close(fd_);
-#endif
-    }
+    ~Keyboard() { close(); }
+    void release(NativeInputState& state) noexcept { close();state.reset(); }
+    void reopen(NativeInputState& state) { acquire(state,true); }
     void poll(NativeInputState& state) {
 #ifdef __linux__
         if(fd_<0) return;
@@ -162,6 +151,37 @@ public:
 #endif
     }
 private:
+    std::string requested_,path_;
+    [[maybe_unused]] bool check_name_=false;
+    void acquire(NativeInputState& state,bool resumed) {
+        close();
+        if(requested_=="none") {state.reset();return;}
+#ifdef __linux__
+        if(!path_.empty()) open_path(path_,check_name_);
+        else if(requested_.empty() || requested_=="auto") {
+            if(!open_path("/dev/input/cardputer-zero-internal",true)) {
+                std::error_code error;
+                for(std::filesystem::directory_iterator it("/dev/input",error),end;!error && it!=end;it.increment(error)) {
+                    if(it->path().filename().string().rfind("event",0)==0 && open_path(it->path().string(),true)) break;
+                }
+            }
+        } else open_path(requested_,false);
+        if(fd_<0) throw std::runtime_error("Cannot open CardputerZero keyboard (TCA8418 evdev)");
+        try {
+            if(resumed) discard_pending();
+            resync(state,resumed);
+        } catch(...) {release(state);throw;}
+#else
+        (void)state;(void)resumed;
+        throw std::runtime_error("Native evdev input requires Linux");
+#endif
+    }
+    void close() noexcept {
+#ifdef __linux__
+        if(fd_>=0) ::close(fd_);
+        fd_=-1;
+#endif
+    }
 #ifdef __linux__
     int fd_=-1;
     bool open_path(const std::string& path,bool check_name) {
@@ -171,9 +191,23 @@ private:
         if(fstat(file,&status)<0 || !S_ISCHR(status.st_mode) ||
             ioctl(file,EVIOCGNAME(sizeof(name)),name)<0 ||
             (check_name && std::string(name).find("tca8418")==std::string::npos)) {::close(file);return false;}
-        fd_=file;return true;
+        fd_=file;path_=path;check_name_=check_name;return true;
     }
-    void resync(NativeInputState& state) {
+    void discard_pending() {
+        std::array<input_event,32> events{};
+        for(int batch=0;batch<32;++batch) {
+            const auto count=read(fd_,events.data(),sizeof(events));
+            if(count<0) {
+                if(errno==EINTR) continue;
+                if(errno==EAGAIN || errno==EWOULDBLOCK) return;
+                throw std::runtime_error("Cannot discard stale native keyboard events");
+            }
+            if(count==0 || count%sizeof(input_event)!=0)
+                throw std::runtime_error("Native keyboard disconnected while resuming");
+        }
+        throw std::runtime_error("Native keyboard queue did not settle on resume");
+    }
+    void resync(NativeInputState& state,bool suppress_held=false) {
         constexpr std::size_t word_bits=sizeof(unsigned long)*8;
         std::array<unsigned long,(KEY_MAX+word_bits)/word_bits> bits{};
         if(ioctl(fd_,EVIOCGKEY(sizeof(bits)),bits.data())<0)
@@ -183,7 +217,7 @@ private:
             if(bits[code/word_bits]&(1UL<<(code%word_bits))) held.push_back(code);
         std::array<unsigned long,1> leds{};
         const bool caps=ioctl(fd_,EVIOCGLED(sizeof(leds)),leds.data())>=0 && (leds[0]&(1UL<<LED_CAPSL));
-        state.resync(held,caps);
+        state.resync(held,caps,suppress_held);
     }
 #endif
 };
@@ -192,15 +226,30 @@ private:
 struct NativeDevices::Impl {
     Framebuffer display;
     Keyboard keyboard;
-    Impl(const std::string& framebuffer,const std::string& input,NativeInputState& state)
-        :display(framebuffer),keyboard(input,state) {}
+    bool foreground=true;
+    Impl(const std::string& framebuffer,const std::string& input,NativeInputState& state,bool restore_on_close)
+        :display(framebuffer,restore_on_close),keyboard(input,state) {}
 };
-NativeDevices::NativeDevices(const std::string& framebuffer,const std::string& input,NativeInputState& state)
-    :impl_(std::make_unique<Impl>(framebuffer,input,state)) {}
+NativeDevices::NativeDevices(const std::string& framebuffer,const std::string& input,NativeInputState& state,bool restore_on_close)
+    :impl_(std::make_unique<Impl>(framebuffer,input,state,restore_on_close)) {}
 NativeDevices::~NativeDevices()=default;
-void NativeDevices::poll(NativeInputState& state) { impl_->keyboard.poll(state); }
+void NativeDevices::poll(NativeInputState& state) { if(impl_->foreground) impl_->keyboard.poll(state); }
 void NativeDevices::present(const std::vector<std::uint16_t>& rgb565) {
     if(rgb565.size()!=width*height) throw std::runtime_error("Invalid native frame size");
     impl_->display.present(rgb565);
 }
+void NativeDevices::suspend(NativeInputState& state) noexcept {
+    impl_->foreground=false;
+    impl_->display.foreground(false);
+    impl_->keyboard.release(state);
+}
+bool NativeDevices::resume(NativeInputState& state,std::string* error) {
+    if(impl_->foreground) return true;
+    try {impl_->keyboard.reopen(state);}
+    catch(const std::exception& failure) {if(error)*error=failure.what();return false;}
+    impl_->foreground=true;
+    impl_->display.foreground(true);
+    return true;
+}
+void NativeDevices::abandon(NativeInputState& state) noexcept { suspend(state); }
 } // namespace tyrell::game::detail

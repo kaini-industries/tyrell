@@ -29,8 +29,9 @@ checkout, records it and rejects source changes during execution. CI passes
 | --- | --- |
 | `docs` | Standard-library Python; validates ledger bindings and local documentation links |
 | `python` | Linux CI; Python, CMake/CTest, FFmpeg/ffprobe and dpkg tools; existing builder/image/script/Zero/app-tool tests plus CI regression tests |
-| `game` | C/C++ compiler, CMake/CTest; pinned raylib/ENet; headless framework, Beacon network and Sandline tests |
-| `chess` | C/C++ compiler, CMake/CTest; pinned raylib; headless chess rules/controller/render/input/LAN tests |
+| `game` | C/C++ compiler, CMake/CTest; pinned raylib/ENet; headless framework, native I/O fixtures, Beacon network and Sandline tests; X11/OpenGL development libraries, Xvfb/xauth for desktop lifecycle smoke checks |
+| `chess` | C/C++ compiler, CMake/CTest; pinned raylib; headless chess rules/controller/render/input/LAN tests plus actual desktop app build and Xvfb frame smoke (same desktop prerequisites as `game`) |
+| `chess-native` | Disposable Debian 13 ARM64; pinned raylib; native default Chess CTest and app-only DEB inspection, plus a separate enabled offline shell build and production-loop checks |
 | `status` | Disposable Debian 13 ARM64; pinned LVGL; CTest and app-only DEB construction, no live install |
 | `video` | Disposable Debian 13 ARM64; pinned LVGL, GStreamer >=1.26 development/runtime plugins, libdrm/libpulse and FFmpeg encoders; CTest and app-only DEB construction |
 | `zero-native` | Disposable Debian 13 ARM64 with CMake/Ninja/dpkg tools; foundation builds and install/reinstall/remove/purge in empty temporary roots |
@@ -67,6 +68,15 @@ in both Status configurations. They exercise real pipes/socket polling and the
 production loop with a memory display. Matched PR #8 comparisons remain a
 separate recorded experiment; hosted CI does not fetch an old baseline.
 
+The [A3 offline Chess checks](game-chess-lifecycle.md) cover clock expiry,
+cooperative AI cancellation, stale results, save failures and native framebuffer
+ownership. The `chess-native` suite builds the actual experimental native app
+and exercises its loop with socket peers and wrapped evdev/framebuffer calls.
+It also inspects a separate default package with shell support disabled. Game
+checks preserve real elapsed-time gaps and run desktop lifecycle checks under
+Xvfb. Nested A3 measurement JSON is retained with the evidence. These fixtures
+do not establish physical input/display compatibility or a hard pause deadline.
+
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg
 behavior; they do not prove the installed runtime closure, patched native Wizard,
@@ -80,7 +90,7 @@ flashes a card or contacts the handheld.
 Pull requests and main-branch pushes run checks; feature-branch pushes do not
 duplicate an open PR's jobs. Manual dispatch selects every suite.
 Package READMEs/assets remain package inputs. Shared game code selects games and
-Chess; shared locks, builder/image code, the ledger and CI infrastructure receive
+both Chess configurations; shared locks, builder/image code, the ledger and CI infrastructure receive
 broader checks. Unknown inputs and unavailable comparison history select all
 suites. There is no workflow-level path filter that leaves a required gate pending.
 

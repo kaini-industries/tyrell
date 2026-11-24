@@ -2,6 +2,7 @@
 #include "chess_zobrist.h"
 #include "chess_rules.h"
 #include "chess_platform.h"
+#include "search_random.h"
 #include <cstring>
 
 // =====================================================================
@@ -89,13 +90,18 @@ static const RawMove LINE_RETI[] = {
 };
 
 // Macro to add a line
-#define ADD_LINE(arr) addLine(arr, sizeof(arr) / sizeof(arr[0]))
+#define ADD_LINE(arr) addLine(arr, sizeof(arr) / sizeof(arr[0]), cancel)
 
-static void addLine(const RawMove* moves, int count) {
+static bool canceled(const std::atomic_bool* cancel) {
+    return cancel && cancel->load(std::memory_order_relaxed);
+}
+
+static void addLine(const RawMove* moves, int count, const std::atomic_bool* cancel) {
     ChessBoard board;
     board.reset();
 
     for (int i = 0; i < count; i++) {
+        if (canceled(cancel)) return;
         if (s_bookSize >= MAX_BOOK_ENTRIES) return;
 
         uint32_t h = ChessZobrist::hash(board);
@@ -130,6 +136,7 @@ static void addLine(const RawMove* moves, int count) {
         // Detect castling, en passant, promotion from the board state
         MoveList legal;
         ChessRules::generateLegal(board, legal);
+        if (canceled(cancel)) return;
         bool matched = false;
         for (uint8_t j = 0; j < legal.count; j++) {
             if (legal.moves[j].from == m.from && legal.moves[j].to == m.to) {
@@ -145,12 +152,14 @@ static void addLine(const RawMove* moves, int count) {
 }
 
 // Sort book by hash for binary search
-static void sortBook() {
+static void sortBook(const std::atomic_bool* cancel) {
     // Simple insertion sort (small array)
     for (int i = 1; i < s_bookSize; i++) {
+        if (canceled(cancel)) return;
         BookEntry key = s_book[i];
         int j = i - 1;
         while (j >= 0 && s_book[j].hash > key.hash) {
+            if (canceled(cancel)) return;
             s_book[j + 1] = s_book[j];
             j--;
         }
@@ -160,9 +169,8 @@ static void sortBook() {
 
 namespace ChessOpeningBook {
 
-void init() {
+void init(const std::atomic_bool* cancel) {
     if (s_initialized) return;
-    s_initialized = true;
     s_bookSize = 0;
 
     // Add all opening lines
@@ -181,12 +189,15 @@ void init() {
     ADD_LINE(LINE_ENGLISH);
     ADD_LINE(LINE_RETI);
 
-    sortBook();
+    sortBook(cancel);
+    if (canceled(cancel)) { s_bookSize = 0; return; }
+    s_initialized = true;
 }
 
-bool probe(ChessBoard& board, Move& move) {
-    if (!s_initialized) init();
-    if (s_bookSize == 0) return false;
+bool probe(ChessBoard& board, Move& move, const std::atomic_bool* cancel) {
+    if (canceled(cancel)) return false;
+    if (!s_initialized) init(cancel);
+    if (!s_initialized || s_bookSize == 0 || canceled(cancel)) return false;
 
     uint32_t h = ChessZobrist::hash(board);
 
@@ -194,6 +205,7 @@ bool probe(ChessBoard& board, Move& move) {
     int lo = 0, hi = s_bookSize - 1;
     int found = -1;
     while (lo <= hi) {
+        if (canceled(cancel)) return false;
         int mid = (lo + hi) / 2;
         if (s_book[mid].hash < h) lo = mid + 1;
         else if (s_book[mid].hash > h) hi = mid - 1;
@@ -209,7 +221,7 @@ bool probe(ChessBoard& board, Move& move) {
     }
 
     // Pick one randomly
-    int pick = ChessPlatform::random() % count;
+    int pick = ChessSearchRandom::next() % count;
     const BookEntry& chosen = s_book[found + pick];
 
     move.from = makeSquare(chosen.fromCol, chosen.fromRow);
@@ -221,6 +233,7 @@ bool probe(ChessBoard& board, Move& move) {
     // Validate against legal moves and fill in flags
     MoveList legal;
     ChessRules::generateLegal(board, legal);
+    if (canceled(cancel)) return false;
     for (uint8_t i = 0; i < legal.count; i++) {
         if (legal.moves[i].from == move.from && legal.moves[i].to == move.to) {
             move = legal.moves[i];

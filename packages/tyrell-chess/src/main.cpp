@@ -8,9 +8,13 @@
 #include "tyrell/game/runtime.hpp"
 #include "raylib.h"
 #include "tyrell/app/commands.hpp"
+#include "offline_lifecycle.h"
+#include <atomic>
+#include <functional>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <ctime>
 #include <fstream>
 #include <future>
@@ -21,6 +25,10 @@
 #include <stdexcept>
 #include <thread>
 #include <tuple>
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+#include <cerrno>
+#include <poll.h>
+#endif
 #ifdef __unix__
 #include <sys/stat.h>
 #endif
@@ -28,7 +36,8 @@ using chess::Game;
 using chess::Mode;
 using chessui::Screen;
 namespace {
-uint32_t nowMs() {return uint32_t(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
+uint64_t monotonicMs() {return uint64_t(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());}
+[[maybe_unused]] uint32_t nowMs() {return uint32_t(monotonicMs());}
 std::string scoreName(const Game& g) {return g.result=="1-0"?"White wins":g.result=="0-1"?"Black wins":g.result=="1/2-1/2"?"Draw":"In progress";}
 std::string modeName(Mode mode) {switch(mode){case Mode::Local:return "TWO PLAYERS";case Mode::Computer:return "VS COMPUTER";case Mode::Puzzle:return "PUZZLE";default:return "LAN MATCH";}}
 enum class Action { Exit, Up, Down, Left, Right, Confirm, Back, Help, Flip, Contrast,
@@ -50,8 +59,8 @@ struct Args {
 Args arguments(int argc,char** argv) {
  Args a;
  for(int i=1;i<argc;++i){std::string s=argv[i];auto val=[&](){if(++i>=argc)throw std::runtime_error("Missing value for "+s);return std::string(argv[i]);};
- if(s=="--help"){std::cout<<"Tyrell Chess 0.1.3 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
- else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.3 (upstream 64419e29c828)\n";std::exit(0);}
+ if(s=="--help"){std::cout<<"Tyrell Chess 0.1.4 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
+ else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.4 (upstream 64419e29c828)\n";std::exit(0);}
  else if(s=="--headless")a.headless=true;else if(s=="--demo")a.demo=true;else if(s=="--quick")a.quick=true;
  else if(s=="--ui-time"){auto value=val();size_t n; a.uiTime=std::stod(value,&n);if(n!=value.size()||!std::isfinite(a.uiTime)||a.uiTime<0||a.uiTime>86400)throw std::runtime_error("UI time must be 0..86400 seconds");}
  else if(s=="--frames"){auto text=val();size_t n;long count=std::stol(text,&n);if(n!=text.size()||count<1||count>100000)throw std::runtime_error("Frames must be 1..100000");a.frames=int(count);}
@@ -85,6 +94,10 @@ public:
  Move animatedMove;
  std::vector<Move> promotions;
  std::future<Move> worker;
+ std::shared_ptr<std::atomic_bool> workerCancel;
+ std::function<uint64_t()> monotonicClock;
+ bool linkedSession=false,lifecyclePaused=false,lifecycleSavePending=false,lifecycleSaveAttempted=false;
+ uint64_t suspendedAt=0;uint32_t suspendedStamp=0,suspendedRemaining=0;bool suspendedClockRunning=false;
  uint32_t workerHash=0;
  bool workerHint=false;
  uint64_t generation=0,workerGeneration=0;
@@ -101,19 +114,54 @@ public:
  std::vector<std::filesystem::path> archives;
  std::string page="",status;
  double time=0,uiTimeOverride=-1;
- explicit App(std::filesystem::path state,double uiTime=-1):dir(std::move(state)),uiTimeOverride(uiTime) {
+ explicit App(std::filesystem::path state,double uiTime=-1,bool linked=false,
+              std::function<uint64_t()> clock=monotonicMs)
+   :dir(std::move(state)),monotonicClock(std::move(clock)),linkedSession(linked),uiTimeOverride(uiTime) {
    std::filesystem::create_directories(dir);
    std::ifstream settings(dir/"settings");settings>>contrast>>motion;
    std::ifstream progress(dir/"puzzles");int n;while(progress>>n)if(n>=0&&n<puzzleCount())solved.insert(n);
-   std::string error;haveGame=game.load(dir/"active.save",nowMs(),error);
-   if(haveGame){pendingArchive=game.over();game.clock.pause(nowMs());flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};}
+   std::string error;haveGame=game.load(dir/"active.save",clockNow(),error);
+   if(haveGame){pendingArchive=game.over();game.clock.pause(clockNow());flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};}
    else if(std::filesystem::exists(dir/"active.save")) {
      const auto backup=dir/("damaged-"+std::to_string(std::chrono::system_clock::now().time_since_epoch().count())+".save");
      std::error_code ec;std::filesystem::rename(dir/"active.save",backup,ec);
      notify(ec?"Saved game damaged; could not back it up":"Saved game damaged; backup kept");
    }
  }
- ~App(){if(worker.valid())worker.wait();}
+ ~App(){cancelAI();if(worker.valid())worker.wait();}
+ uint32_t clockNow() const {return uint32_t(monotonicClock());}
+ void cancelAI(){if(workerCancel)workerCancel->store(true,std::memory_order_relaxed);}
+ void launchAI(ChessBoard board,AIDifficulty difficulty,uint32_t budget){
+   workerCancel=std::make_shared<std::atomic_bool>(false);auto cancel=workerCancel;
+   worker=std::async(std::launch::async,[board,difficulty,budget,cancel]()mutable{
+     return ChessAI::findBestMove(board,difficulty,budget,cancel.get());
+   });
+ }
+ void settleLifecycleClock(bool fullWrap=false){
+   if(!haveGame||archiveMode||online()||game.over())return;
+   const bool before=game.over();
+   if(fullWrap&&suspendedClockRunning)game.update(uint32_t(suspendedStamp+suspendedRemaining));
+   else game.update(clockNow());
+   if(!before&&game.over())finished(false);
+ }
+ void suspendSession(){
+   if(lifecyclePaused)return;
+   ++generation;cancelAI();lifecyclePaused=true;lifecycleSavePending=true;lifecycleSaveAttempted=false;
+   repeatKey=0;animatedPiece={};animationStart=-1000;hintFrom=hintTo=NO_SQUARE;
+   settleLifecycleClock();suspendedAt=monotonicClock();suspendedStamp=clockNow();
+   suspendedClockRunning=haveGame&&!archiveMode&&!online()&&!game.over()&&game.clock.isRunning();
+   suspendedRemaining=suspendedClockRunning?game.clock.remainingMs(game.clock.activeSide()):0;
+ }
+ void resumeSession(double timestamp){
+   if(!lifecyclePaused)return;
+   const auto now=monotonicClock();
+   settleLifecycleClock(now<suspendedAt||now-suspendedAt>=(uint64_t(1)<<32));
+   time=timestamp;lifecyclePaused=false;repeatKey=0;animatedPiece={};animationStart=-1000;
+   if(haveGame&&game.options.mode==Mode::Puzzle&&game.board.sideToMove()!=game.options.human)
+     puzzleReplyAt=time+.5;
+ }
+ bool linkedOfflineAllowed() const {return !online()&&setup.mode!=Mode::Host&&setup.mode!=Mode::Join;}
+
  double uiNow() const {return uiTimeOverride>=0?uiTimeOverride:time;}
  void notify(const std::string& text){toast=text;toastUntil=uiNow()+3;}
  bool writeState(const char* name,const std::string& value,const char* label){
@@ -126,12 +174,12 @@ public:
  bool saveProgress(){std::ostringstream out;for(int n:solved)out<<n<<'\n';if(writeState("puzzles",out.str(),"Progress")){pendingProgress=false;return true;}return false;}
  bool settings(){pendingSettings=true;std::ostringstream out;out<<contrast<<' '<<motion<<'\n';if(writeState("settings",out.str(),"Settings")){pendingSettings=false;return true;}return false;}
  bool persist(){
-   lastSave=nowMs();bool sideSaved=true;
+   lastSave=clockNow();bool sideSaved=true;
    if(pendingProgress&&!saveProgress())sideSaved=false;
    if(pendingSettings&&!settings())sideSaved=false;
    if(!haveGame||archiveMode)return sideSaved;
    const bool archived=!pendingArchive||archive();if(archived)pendingArchive=false;
-   std::string error;if(!game.save(dir/"active.save",nowMs(),error)){notify("Save failed. Free space / retry");std::cerr<<"Tyrell Chess save: "<<error<<'\n';return false;}
+   std::string error;if(!game.save(dir/"active.save",clockNow(),error)){notify("Save failed. Free space / retry");std::cerr<<"Tyrell Chess save: "<<error<<'\n';return false;}
    return archived&&sideSaved;
  }
  void clearOffers(bool expired=false){
@@ -153,9 +201,10 @@ public:
  bool thinking() const {return worker.valid();}
  bool activeComputer() const {return haveGame&&!archiveMode&&!review&&game.options.mode==Mode::Computer&&!game.over()&&(screen==Screen::Board||page=="pause"||(screen==Screen::Help&&previous==Screen::Board));}
  void startGame(){
+   if(linkedSession&&(setup.mode==Mode::Host||setup.mode==Mode::Join)){notify("LAN play is unavailable in this shell session");return;}
    if(worker.valid()||((pendingArchive||pendingProgress||pendingSettings)&&!persist()))return;
    setup.position=setup.variant==ChessVariant::Chess960?chess960RandomIndex():518;
-   ++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,nowMs());haveGame=true;review=false;page.clear();flipped=setup.mode==Mode::Computer&&setup.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};resetBoardUI();clearOffers();screen=Screen::Board;persist();
+   ++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());haveGame=true;review=false;page.clear();flipped=setup.mode==Mode::Computer&&setup.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};resetBoardUI();clearOffers();screen=Screen::Board;persist();
  }
  bool archive(){
    if(game.options.mode==Mode::Puzzle||!game.over())return true;
@@ -164,19 +213,19 @@ public:
    for(const auto& record:game.history)identity+=chess::uci(record.move);
    for(unsigned char ch:identity){id^=ch;id*=1099511628211ull;}
    std::string error;auto path=dir/"games"/(std::to_string(id)+".pgn");
-   if(!game.exportPgn(path,error)||(!online()&&!game.save(dir/"games"/(std::to_string(id)+".save"),nowMs(),error))){notify("Archive failed. Free space / retry");std::cerr<<"Tyrell Chess archive: "<<error<<'\n';return false;}return true;
+   if(!game.exportPgn(path,error)||(!online()&&!game.save(dir/"games"/(std::to_string(id)+".save"),clockNow(),error))){notify("Archive failed. Free space / retry");std::cerr<<"Tyrell Chess archive: "<<error<<'\n';return false;}return true;
  }
- void finished(){if(game.over()){clearOffers();screen=Screen::Board;page.clear();review=false;menu=0;resetBoardUI();promotions.clear();pendingArchive=game.options.mode!=Mode::Puzzle;const bool saved=persist();if(saved)notify(scoreName(game)+" - "+game.reason);}}
+ void finished(bool save=true){if(game.over()){clearOffers();screen=Screen::Board;page.clear();review=false;menu=0;resetBoardUI();promotions.clear();pendingArchive=game.options.mode!=Mode::Puzzle;if(save){const bool saved=persist();if(saved)notify(scoreName(game)+" - "+game.reason);}else lifecycleSavePending=true;}}
 
- void broadcastMove(){std::ostringstream o;auto c=game.clock.snapshot(nowMs());o<<"PLY "<<game.history.size()<<' '<<chess::uci(game.history.back().move)<<' '<<ChessZobrist::hash(game.board)<<' '<<c.whiteRemainingMs<<' '<<c.blackRemainingMs;lan.send(o.str());}
+ void broadcastMove(){std::ostringstream o;auto c=game.clock.snapshot(clockNow());o<<"PLY "<<game.history.size()<<' '<<chess::uci(game.history.back().move)<<' '<<ChessZobrist::hash(game.board)<<' '<<c.whiteRemainingMs<<' '<<c.blackRemainingMs;lan.send(o.str());}
  bool apply(const Move& m,bool remote=false){
    if(online()&&!networkHost&&!remote){if(awaitingMove)return false;std::ostringstream o;o<<"REQ "<<game.history.size()<<' '<<chess::uci(m);if(!lan.send(o.str())){notify("Connection unavailable");return false;}awaitingMove=true;pendingSince=time;clearSelection();return true;}
    if(game.options.mode==Mode::Puzzle&&!remote){if(game.puzzleStep>=game.solutionLength||!(m==game.solution[game.puzzleStep])){notify("Try another move. H for a hint");cursor=m.from;clearSelection();return false;}}
-   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,nowMs())){if(game.over())finished();return false;}
+   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,clockNow())){if(game.over())finished();return false;}
    clearOffers(true);animatedPiece=piece;animatedMove=m;animationStart=uiNow();const bool keepCursor=(game.options.mode==Mode::Computer&&piece.color!=game.options.human)||(remote&&(online()||game.options.mode==Mode::Puzzle));cursor=keepCursor?oldCursor:m.to;if(keepCursor)focusPlayer();clearSelection();hintFrom=hintTo=NO_SQUARE;
    if(online()&&networkHost)broadcastMove();
    if(game.options.mode==Mode::Puzzle){
-      if(game.puzzleStep>=game.solutionLength){game.finish(game.options.human==PieceColor::White?"1-0":"0-1","Puzzle solved",nowMs());solved.insert(game.puzzleIndex);pendingProgress=true;if(saveProgress())notify("Solved! X for next puzzle");}
+      if(game.puzzleStep>=game.solutionLength){game.finish(game.options.human==PieceColor::White?"1-0":"0-1","Puzzle solved",clockNow());solved.insert(game.puzzleIndex);pendingProgress=true;if(saveProgress())notify("Solved! X for next puzzle");}
       else if(game.board.sideToMove()!=game.options.human)puzzleReplyAt=time+.5;
    }else {finished();persist();}
    return true;
@@ -314,6 +363,7 @@ public:
    return command&&command->enabled;
  }
  template<class Input>void input(Input& source,double timestamp){
+   if(lifecyclePaused)return;
    if(repeatKey&&repeatContext!=inputContext())repeatKey=0;
    int k;while((k=source.next_key())!=0&&!quit){
      const auto before=inputContext();key(k);
@@ -329,9 +379,9 @@ public:
    const bool temporary=archiveMode||(haveGame&&(game.options.mode==Mode::Puzzle||online()));
    if((!temporary||pendingArchive||pendingProgress||pendingSettings)&&!persist())return;
    clearSelection();review=false;page.clear();status.clear();networkPlaying=false;awaitingMove=false;clearOffers();lan.close();++generation;
-   if(temporary){std::string error;Game active;haveGame=active.load(dir/"active.save",nowMs(),error);if(haveGame)game=std::move(active);else game=Game{};}
+   if(temporary){std::string error;Game active;haveGame=active.load(dir/"active.save",clockNow(),error);if(haveGame&&linkedSession&&(active.options.mode==Mode::Host||active.options.mode==Mode::Join)){haveGame=false;notify("LAN games are unavailable in this shell session");}if(haveGame)game=std::move(active);else game=Game{};}
    archiveMode=false;
-   if(haveGame){game.clock.pause(nowMs());flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};}screen=Screen::Home;menu=homeMenu;persist();
+   if(haveGame){game.clock.pause(clockNow());flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};}screen=Screen::Home;menu=homeMenu;persist();
  }
  void pauseMenu(){clearSelection();screen=Screen::Setup;page="pause";menu=0;}
  void askLeave(bool exiting){
@@ -342,15 +392,15 @@ public:
    screen=leaveOrigin;page=leavePage;dialog=leaveDialog;menu=leaveMenu;
    if(screen==Screen::Confirm&&dialog=="accept-draw"&&!incomingDrawOffer){screen=Screen::Board;page.clear();notify("Draw offer expired");}
  }
- void setupMenu(Mode m){setup=chess::Options{};setup.mode=m;screen=Screen::Setup;page="setup";menu=0;}
- void nextPuzzle(){if((pendingProgress||pendingSettings)&&!persist())return;++generation;archiveMode=false;status.clear();int start=game.puzzleIndex>=0?game.puzzleIndex+1:0;std::vector<int> candidates;for(int i=0;i<puzzleCount();++i){int p=(start+i)%puzzleCount();bool category=puzzleCategory<0;for(int n=0;!category&&n<puzzleCountByType(PuzzleType(puzzleCategory));++n)category=p==puzzleIndexByType(PuzzleType(puzzleCategory),n);if(category)candidates.push_back(p);}if(candidates.empty())return;int n=candidates[0];for(int p:candidates)if(!solved.count(p)){n=p;break;}game.puzzle(n,nowMs());haveGame=true;review=false;flipped=game.options.human==PieceColor::Black;cursor=NO_SQUARE;focusPlayer();resetBoardUI();screen=Screen::Board;page.clear();}
+ void setupMenu(Mode m){if(linkedSession&&(m==Mode::Host||m==Mode::Join)){notify("LAN play is unavailable in this shell session");return;}setup=chess::Options{};setup.mode=m;screen=Screen::Setup;page="setup";menu=0;}
+ void nextPuzzle(){if((pendingProgress||pendingSettings)&&!persist())return;++generation;archiveMode=false;status.clear();int start=game.puzzleIndex>=0?game.puzzleIndex+1:0;std::vector<int> candidates;for(int i=0;i<puzzleCount();++i){int p=(start+i)%puzzleCount();bool category=puzzleCategory<0;for(int n=0;!category&&n<puzzleCountByType(PuzzleType(puzzleCategory));++n)category=p==puzzleIndexByType(PuzzleType(puzzleCategory),n);if(category)candidates.push_back(p);}if(candidates.empty())return;int n=candidates[0];for(int p:candidates)if(!solved.count(p)){n=p;break;}game.puzzle(n,clockNow());haveGame=true;review=false;flipped=game.options.human==PieceColor::Black;cursor=NO_SQUARE;focusPlayer();resetBoardUI();screen=Screen::Board;page.clear();}
  void hint(){
    if(game.options.mode==Mode::Puzzle){int n=game.puzzleStep;if(n<game.solutionLength){hintFrom=game.solution[n].from;hintTo=game.solution[n].to;notify("Look at the marked squares");}return;}
    if(online()||game.clock.enabled()){notify("Hints are for untimed offline games");return;}
    if(thinking()||game.over())return;workerHint=true;workerGeneration=generation;workerHash=ChessZobrist::hash(game.board);auto b=game.board;
-   worker=std::async(std::launch::async,[b]()mutable{return ChessAI::findBestMove(b,AIDifficulty::Hard,500);});
+   launchAI(b,AIDifficulty::Hard,500);
  }
- std::vector<std::string> homeItems() const {return {haveGame?"Resume game":"Start playing","Vs computer","Two players","Puzzles","LAN play","Game library","Preferences","Controls","Exit"};}
+ std::vector<std::string> homeItems() const {return {haveGame?"Resume game":"Start playing","Vs computer","Two players","Puzzles",linkedSession?"LAN unavailable":"LAN play","Game library","Preferences","Controls","Exit"};}
  std::vector<std::string> items() {
    if(screen==Screen::Home)return homeItems();
    if(screen==Screen::Promotion)return {"Queen","Knight","Rook","Bishop"};
@@ -379,8 +429,11 @@ public:
  }else if(page=="preferences"){if(menu==0)contrast=!contrast;if(menu==1)motion=!motion;settings();}}
  void loadLibrary(){archives.clear();std::error_code ec;for(std::filesystem::directory_iterator i(dir/"games",ec),end;!ec&&i!=end;i.increment(ec))if(i->path().extension()==".save")archives.push_back(i->path());std::sort(archives.rbegin(),archives.rend());if(archives.size()>50)archives.resize(50);screen=Screen::Setup;page="library";menu=0;}
  void activate(){
+   if(lifecyclePaused)return;
+   if(linkedSession&&screen==Screen::Home&&menu==4){notify("LAN play is unavailable in this shell session");return;}
+   if(linkedSession&&(page=="lan"||page=="address"||page=="pair"||page=="waiting"||(page=="setup"&&(setup.mode==Mode::Host||setup.mode==Mode::Join)))){lan.close();notify("LAN play is unavailable in this shell session");return;}
    if(screen==Screen::Home){if((pendingArchive||pendingProgress||pendingSettings)&&menu!=0&&!persist())return;homeMenu=menu;
-     if(menu==0){if(haveGame){screen=Screen::Board;review=false;if(!game.over())game.clock.resume(nowMs());}else setupMenu(Mode::Computer);}
+     if(menu==0){if(haveGame){screen=Screen::Board;review=false;if(!game.over())game.clock.resume(clockNow());}else setupMenu(Mode::Computer);}
      else if(menu==1||menu==2){if(haveGame&&!game.over()){screen=Screen::Confirm;dialog=menu==1?"computer":"local";menu=0;}else setupMenu(menu==1?Mode::Computer:Mode::Local);}
      else if(menu==3){if(!persist())return;screen=Screen::Setup;page="puzzles";menu=0;}
      else if(menu==4){if(!persist())return;screen=Screen::Network;page="lan";menu=0;}
@@ -394,7 +447,7 @@ public:
      }
      if(dialog=="accept-draw"){
        if(menu==1&&online()&&networkPlaying&&!review&&!game.over()&&incomingDrawOffer){
-         if(networkHost){game.agreeDraw(nowMs());finished();}
+         if(networkHost){game.agreeDraw(clockNow());finished();}
          else {lan.send("ACCEPTDRAW");incomingDrawOffer=false;status="Draw accepted; waiting";}
        }
        screen=Screen::Board;page.clear();return;
@@ -402,8 +455,8 @@ public:
      if(dialog=="castle"){for(const auto& m:promotions)if(m.isCastle==(menu==1)){screen=Screen::Board;apply(m);break;}return;}
      if(dialog=="resign"||dialog=="draw"){
        if(menu==1&&!game.over()){
-         if(dialog=="draw"){game.agreeDraw(nowMs());finished();}
-         else {auto side=online()?(networkHost?PieceColor::White:PieceColor::Black):game.options.mode==Mode::Computer?game.options.human:game.board.sideToMove();if(online()&&!networkHost)lan.send("RESIGN");else{game.resign(side,nowMs());finished();}}
+         if(dialog=="draw"){game.agreeDraw(clockNow());finished();}
+         else {auto side=online()?(networkHost?PieceColor::White:PieceColor::Black):game.options.mode==Mode::Computer?game.options.human:game.board.sideToMove();if(online()&&!networkHost)lan.send("RESIGN");else{game.resign(side,clockNow());finished();}}
        }
        screen=Screen::Board;page.clear();
      }else if(menu==0)home();else setupMenu(dialog=="computer"?Mode::Computer:Mode::Local);return;
@@ -413,7 +466,7 @@ public:
    if(page=="setup"){if(menu<4)change(1);else if(setup.mode==Mode::Host){setup.position=setup.variant==ChessVariant::Chess960?chess960RandomIndex():518;std::string error;if(lan.host(error)){networkHost=true;networkPlaying=false;helloSent=localReady=remoteReady=networkEndSent=drawOffered=incomingDrawOffer=awaitingMove=false;page="waiting";screen=Screen::Network;networkStartedAt=time;menu=0;}else notify(error);}else startGame();return;}
    if(page=="preferences"){if(menu==2)home();else change(1);return;}
    if(page=="puzzles"){if(menu==4)home();else{puzzleCategory=menu-1;game.puzzleIndex=-1;nextPuzzle();}return;}
-   if(page=="library"){if(menu==int(archives.size())){home();return;}std::string error;Game loaded;if(loaded.load(archives[menu],nowMs(),error)){++generation;archiveMode=true;game=std::move(loaded);flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;haveGame=true;review=true;reviewPly=game.history.size();screen=Screen::Board;page="archive";}else notify("Cannot open: "+error);return;}
+   if(page=="library"){if(menu==int(archives.size())){home();return;}std::string error;Game loaded;if(loaded.load(archives[menu],clockNow(),error)){if(linkedSession&&(loaded.options.mode==Mode::Host||loaded.options.mode==Mode::Join)){notify("LAN games are unavailable in this shell session");return;}++generation;archiveMode=true;game=std::move(loaded);flipped=game.options.mode==Mode::Computer&&game.options.human==PieceColor::Black;haveGame=true;review=true;reviewPly=game.history.size();screen=Screen::Board;page="archive";}else notify("Cannot open: "+error);return;}
    if(page=="pause"){
      if(menu==0){screen=Screen::Board;page.clear();}
      else if(menu==1){if(online()&&!game.over()){askLeave(false);}else home();}
@@ -429,6 +482,7 @@ public:
    if(page=="waiting"||page=="disconnected"){lan.close();home();}
  }
  void key(int k,bool repeated=false){
+   if(lifecyclePaused)return;
    const auto table=commands();const auto* command=tyrell::app::find_command(table,k,repeated);
    if(!command)return;
    const auto action=command->id;
@@ -470,14 +524,14 @@ public:
    if(action==Action::Export){std::string error;notify(game.exportPgn(dir/"exports/last-game.pgn",error)?"PGN saved in exports/":"PGN export failed");return;}
    if(action==Action::Hint){hint();return;}
    if(action==Action::NextPuzzle){nextPuzzle();return;}
-   if(action==Action::Undo){if(game.undo(nowMs())){clearSelection();hintFrom=hintTo=NO_SQUARE;persist();}else notify("Undo needs an untimed offline game");return;}
+   if(action==Action::Undo){if(game.undo(clockNow())){clearSelection();hintFrom=hintTo=NO_SQUARE;persist();}else notify("Undo needs an untimed offline game");return;}
    if(action==Action::AcceptDraw){screen=Screen::Confirm;dialog="accept-draw";menu=0;return;}
    if(action==Action::Left)moveCursor(-1,0);if(action==Action::Right)moveCursor(1,0);
    if(action==Action::Up)moveCursor(0,-1);if(action==Action::Down)moveCursor(0,1);
    if(action==Action::CycleTargets)targetCursor(true);
    if(action==Action::Confirm){if(game.over())pauseMenu();else choose();}
  }
- void disconnect(const std::string& why){status=why;lan.close();networkPlaying=false;awaitingMove=false;incomingDrawOffer=drawOffered=false;if(haveGame&&online())game.clock.pause(nowMs());screen=Screen::Network;page="disconnected";menu=0;}
+ void disconnect(const std::string& why){status=why;lan.close();networkPlaying=false;awaitingMove=false;incomingDrawOffer=drawOffered=false;if(haveGame&&online())game.clock.pause(clockNow());screen=Screen::Network;page="disconnected";menu=0;}
  void network(){
    lan.poll();
    if(awaitingMove&&time-pendingSince>10){disconnect("Host did not acknowledge move");return;}
@@ -487,39 +541,42 @@ public:
      std::istringstream in(line);std::string command;in>>command;
      if(command=="HELLO"&&!networkHost&&!helloSent&&!networkPlaying){int version,variant,pos,tc,code;in>>version>>variant>>pos>>tc>>code;if(!in||version!=1||variant<0||variant>1||pos<0||pos>959||tc<0||tc>4||code<100000||code>999999){disconnect("Incompatible chess peer");break;}setup=chess::Options{};setup.mode=Mode::Join;setup.variant=ChessVariant(variant);setup.position=pos;setup.time=TimeControl(tc);pairCode=code;helloSent=true;page="pair";menu=0;}
      else if(command=="READY"&&helloSent&&!networkPlaying)remoteReady=true;
-     else if(command=="START"&&!networkHost&&localReady&&remoteReady&&!networkPlaying){++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,nowMs());networkPlaying=true;haveGame=true;screen=Screen::Board;page.clear();review=false;flipped=true;cursor={4,6};clearSelection();}
-     else if(command=="REQ"&&networkHost&&networkPlaying){size_t ply;std::string move;in>>ply>>move;bool ended=game.over();game.update(nowMs());if(!ended&&game.over())finished();if(game.over())continue;if(!in||ply!=game.history.size()||game.board.sideToMove()!=PieceColor::Black){disconnect("Invalid peer move sequence");break;}MoveList moves;ChessRules::generateLegal(game.board,moves);bool applied=false;for(int i=0;i<moves.count;++i)if(chess::uci(moves.moves[i])==move){applied=apply(moves.moves[i],true);break;}if(!applied){if(game.over())finished();else {disconnect("Illegal peer move");break;}}}
-     else if(command=="PLY"&&!networkHost&&networkPlaying){size_t ply;std::string move;uint32_t hash,w,b;in>>ply>>move>>hash>>w>>b;if(!in||ply!=game.history.size()+1){disconnect("Position sequence differs");break;}const bool ownMove=game.board.sideToMove()==PieceColor::Black;const auto tc=game.options.time;game.clock.configure(TimeControl::None);bool ok=game.moveUci(move,nowMs());ChessClockSnapshot clock;clock.timeControl=tc;clock.whiteRemainingMs=w;clock.blackRemainingMs=b;clock.activeSide=game.board.sideToMove();clock.started=tc!=TimeControl::None;clock.paused=tc!=TimeControl::None&&game.over();if(!game.clock.loadSnapshot(clock,nowMs()))ok=false;if(!ok||ChessZobrist::hash(game.board)!=hash){disconnect("Position differs from host");break;}awaitingMove=false;clearOffers(true);if(ownMove)cursor=game.history.back().move.to;else focusPlayer();clearSelection();}
-     else if(command=="SYNC"&&!networkHost&&networkPlaying){uint32_t w,b;size_t ply;in>>ply>>w>>b;if(in&&ply==game.history.size())game.clock.synchronizeRemainingMs(w,b,nowMs());}
-     else if(command=="RESIGN"&&networkHost&&networkPlaying){if(!game.over()){game.resign(PieceColor::Black,nowMs());finished();}}
+     else if(command=="START"&&!networkHost&&localReady&&remoteReady&&!networkPlaying){++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());networkPlaying=true;haveGame=true;screen=Screen::Board;page.clear();review=false;flipped=true;cursor={4,6};clearSelection();}
+     else if(command=="REQ"&&networkHost&&networkPlaying){size_t ply;std::string move;in>>ply>>move;bool ended=game.over();game.update(clockNow());if(!ended&&game.over())finished();if(game.over())continue;if(!in||ply!=game.history.size()||game.board.sideToMove()!=PieceColor::Black){disconnect("Invalid peer move sequence");break;}MoveList moves;ChessRules::generateLegal(game.board,moves);bool applied=false;for(int i=0;i<moves.count;++i)if(chess::uci(moves.moves[i])==move){applied=apply(moves.moves[i],true);break;}if(!applied){if(game.over())finished();else {disconnect("Illegal peer move");break;}}}
+     else if(command=="PLY"&&!networkHost&&networkPlaying){size_t ply;std::string move;uint32_t hash,w,b;in>>ply>>move>>hash>>w>>b;if(!in||ply!=game.history.size()+1){disconnect("Position sequence differs");break;}const bool ownMove=game.board.sideToMove()==PieceColor::Black;const auto tc=game.options.time;game.clock.configure(TimeControl::None);bool ok=game.moveUci(move,clockNow());ChessClockSnapshot clock;clock.timeControl=tc;clock.whiteRemainingMs=w;clock.blackRemainingMs=b;clock.activeSide=game.board.sideToMove();clock.started=tc!=TimeControl::None;clock.paused=tc!=TimeControl::None&&game.over();if(!game.clock.loadSnapshot(clock,clockNow()))ok=false;if(!ok||ChessZobrist::hash(game.board)!=hash){disconnect("Position differs from host");break;}awaitingMove=false;clearOffers(true);if(ownMove)cursor=game.history.back().move.to;else focusPlayer();clearSelection();}
+     else if(command=="SYNC"&&!networkHost&&networkPlaying){uint32_t w,b;size_t ply;in>>ply>>w>>b;if(in&&ply==game.history.size())game.clock.synchronizeRemainingMs(w,b,clockNow());}
+     else if(command=="RESIGN"&&networkHost&&networkPlaying){if(!game.over()){game.resign(PieceColor::Black,clockNow());finished();}}
      else if(command=="DRAW"&&networkPlaying){if(!game.over()){incomingDrawOffer=true;status="Draw offered: Y yes";}}
-     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.agreeDraw(nowMs());finished();}}
-     else if(command=="END"&&!networkHost&&networkPlaying){std::string score,reason;in>>score;in.get();std::getline(in,reason);if(score!="1-0"&&score!="0-1"&&score!="1/2-1/2"){disconnect("Invalid result");break;}awaitingMove=false;game.finish(score,reason.substr(0,60),nowMs());finished();}
+     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.agreeDraw(clockNow());finished();}}
+     else if(command=="END"&&!networkHost&&networkPlaying){std::string score,reason;in>>score;in.get();std::getline(in,reason);if(score!="1-0"&&score!="0-1"&&score!="1/2-1/2"){disconnect("Invalid result");break;}awaitingMove=false;game.finish(score,reason.substr(0,60),clockNow());finished();}
      else {disconnect("Unexpected peer message");break;}
    }
    if(!lan.error().empty()&&(networkPlaying||page=="pair"||page=="waiting")){if(networkPlaying&&game.over()){networkPlaying=false;lan.close();status.clear();}else disconnect(lan.error());return;}
-   if(networkHost&&localReady&&remoteReady&&!networkPlaying&&page=="pair"){setup.mode=Mode::Host;++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,nowMs());haveGame=true;networkPlaying=true;screen=Screen::Board;page.clear();flipped=false;review=false;cursor={4,1};lan.send("START");clearSelection();}
-   if(networkHost&&networkPlaying&&nowMs()-lastSync>=500){auto c=game.clock.snapshot(nowMs());lan.send("SYNC "+std::to_string(game.history.size())+" "+std::to_string(c.whiteRemainingMs)+" "+std::to_string(c.blackRemainingMs));lastSync=nowMs();}
+   if(networkHost&&localReady&&remoteReady&&!networkPlaying&&page=="pair"){setup.mode=Mode::Host;++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());haveGame=true;networkPlaying=true;screen=Screen::Board;page.clear();flipped=false;review=false;cursor={4,1};lan.send("START");clearSelection();}
+   if(networkHost&&networkPlaying&&clockNow()-lastSync>=500){auto c=game.clock.snapshot(clockNow());lan.send("SYNC "+std::to_string(game.history.size())+" "+std::to_string(c.whiteRemainingMs)+" "+std::to_string(c.blackRemainingMs));lastSync=clockNow();}
    if(networkHost&&networkPlaying&&game.over()&&!networkEndSent){lan.send("END "+game.result+" "+game.reason);networkEndSent=true;}
  }
  void update(double t){
-   time=t;network();
-   if(haveGame&&screen!=Screen::Home&&page!="library"&&!archiveMode&&(!online()||(networkHost&&networkPlaying))) {bool was=game.over();game.update(nowMs());if(!was&&game.over())finished();}
+   if(lifecyclePaused)return;
+   time=t;if(linkedSession){lan.close();if(online()){quit=true;return;}}else network();
+   if(lifecycleSavePending&&(!lifecycleSaveAttempted||clockNow()-lastSave>=5000)){lifecycleSaveAttempted=true;lifecycleSavePending=!persist();}
+   if(haveGame&&screen!=Screen::Home&&page!="library"&&!archiveMode&&(!online()||(networkHost&&networkPlaying))) {bool was=game.over();game.update(clockNow());if(!was&&game.over())finished();}
    if(worker.valid()&&worker.wait_for(std::chrono::seconds(0))==std::future_status::ready){auto move=worker.get();if(haveGame&&workerGeneration==generation&&((workerHint&&screen==Screen::Board)||(!workerHint&&activeComputer()))&&!review&&!archiveMode&&ChessZobrist::hash(game.board)==workerHash&&!game.over()){if(workerHint){hintFrom=move.from;hintTo=move.to;notify("Try "+chess::uci(move));}else apply(move);}workerHint=false;}
    if(((screen==Screen::Board&&!review&&!archiveMode)||activeComputer())&&!worker.valid()&&!game.over()){
      if(game.options.mode==Mode::Computer&&!game.humanTurn()){
-       workerGeneration=generation;workerHash=ChessZobrist::hash(game.board);workerHint=false;auto b=game.board;auto d=game.options.difficulty;uint32_t budget=game.clock.enabled()?std::max(1u,std::min(3000u,game.clock.remainingMsAt(game.board.sideToMove(),nowMs())/10)):0;
-       worker=std::async(std::launch::async,[b,d,budget]()mutable{return ChessAI::findBestMove(b,d,budget);});
+       workerGeneration=generation;workerHash=ChessZobrist::hash(game.board);workerHint=false;auto b=game.board;auto d=game.options.difficulty;uint32_t budget=game.clock.enabled()?std::max(1u,std::min(3000u,game.clock.remainingMsAt(game.board.sideToMove(),clockNow())/10)):0;
+       launchAI(b,d,budget);
      }
      if(game.options.mode==Mode::Puzzle&&game.board.sideToMove()!=game.options.human&&time>=puzzleReplyAt&&game.puzzleStep<game.solutionLength)apply(game.solution[game.puzzleStep],true);
    }
-   if(((haveGame&&!online()&&!review&&!archiveMode)||pendingProgress||pendingSettings)&&nowMs()-lastSave>=5000)persist();
+   if(((haveGame&&!online()&&!review&&!archiveMode)||pendingProgress||pendingSettings)&&clockNow()-lastSave>=5000)persist();
  }
  void draw(double uiTime=-1,std::vector<chessui::TextBounds>* audit=nullptr){
+   if(lifecyclePaused)return;
    const double displayTime=uiTime>=0?uiTime:uiNow();
    view=chessui::View{};view.screen=screen;view.board=review?game.atPly(reviewPly):game.board;view.cursor=cursor;view.selected=selected;view.legal=legal;view.hintFrom=hintFrom;view.hintTo=hintTo;view.flipped=flipped;view.monochrome=contrast;view.review=review;view.gameOver=game.over();view.clocksEnabled=game.clock.enabled();view.clocksRunning=game.clock.isRunning();view.thinking=thinking();view.time=displayTime;view.menu=items();view.menuIndex=screen==Screen::Promotion?promotion:menu;
    view.title=game.over()?(game.result=="1-0"?"WHITE WINS":game.result=="0-1"?"BLACK WINS":"DRAW"):modeName(game.options.mode);view.status=game.over()?game.reason:awaitingMove?"Waiting for host...":!status.empty()?status:ChessRules::isInCheck(view.board,view.board.sideToMove())?"Check!":game.board.sideToMove()==PieceColor::White?"White to move":"Black to move";
-   view.whiteClock=chess::clockText(game.clock.remainingMsAt(PieceColor::White,nowMs()),game.clock.enabled());view.blackClock=chess::clockText(game.clock.remainingMsAt(PieceColor::Black,nowMs()),game.clock.enabled());view.moveLines=game.lines(review?reviewPly:game.history.size());
+   view.whiteClock=chess::clockText(game.clock.remainingMsAt(PieceColor::White,clockNow()),game.clock.enabled());view.blackClock=chess::clockText(game.clock.remainingMsAt(PieceColor::Black,clockNow()),game.clock.enabled());view.moveLines=game.lines(review?reviewPly:game.history.size());
    if(review){view.reviewLabel="REPLAY "+std::to_string(reviewPly)+" / "+std::to_string(game.history.size());}
    view.subtitle=game.options.variant==ChessVariant::Chess960?"Chess960 #"+std::to_string(game.options.position):"Standard chess";
    if(!game.history.empty()){size_t n=review?reviewPly:game.history.size();if(n){view.lastFrom=game.history[n-1].move.from;view.lastTo=game.history[n-1].move.to;}}
@@ -549,26 +606,160 @@ public:
    if(displayTime<toastUntil&&!toast.empty()){view.notice=toast;view.noticeError=toast.find("failed")!=std::string::npos||toast.find("not saved")!=std::string::npos||toast.find("damaged")!=std::string::npos;}
    chessui::draw(view,audit);
  }
+ };
+
+struct SessionHooks {
+ App* app=nullptr;
+ tyrell::game::Runtime* runtime=nullptr;
+ void pause(){
+   if(app)app->cancelAI();
+   if(runtime)runtime->suspend();
+   if(app)app->suspendSession();
+ }
+ bool resume(){
+   // Resolve clock expiry before reopening input or accepting a move.
+   if(app)app->resumeSession(runtime?runtime->time():0);
+   if(runtime){std::string error;if(!runtime->resume(&error)){
+     std::cerr<<"Tyrell Chess resume: "<<error<<'\n';
+     if(app)app->suspendSession();
+     return false;
+   }runtime->request_redraw();}
+   return true;
+ }
+ void redraw(){if(runtime)runtime->request_redraw();}
+ void abandon(){
+   if(runtime)runtime->abandon_foreground();
+   if(app){app->cancelAI();app->suspendSession();}
+ }
 };
+
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+void waitShell(tyrell::app::ShellLink& link,int maximumMs=50){
+ pollfd descriptor{link.fd(),short(POLLIN|(link.pending_output()?POLLOUT:0)),0};
+ const auto result=::poll(&descriptor,1,maximumMs);
+ if(result<0&&errno!=EINTR)throw std::runtime_error("Shell link poll failed");
+}
+// No App, AI worker, raylib context or device exists during startup handoff.
+int awaitShell(tyrell::app::ShellLink& link,chess::OfflineLifecycle& lifecycle,
+               const std::function<void()>& wait={},SessionHooks* appHooks=nullptr){
+ SessionHooks emptyHooks;auto& hooks=appHooks?*appHooks:emptyHooks;
+ const auto deadline=std::chrono::steady_clock::now()+std::chrono::milliseconds(100);
+ for(;;){
+   const bool drained=chess::pump_lifecycle(link,lifecycle,hooks);
+   if(lifecycle.exiting())return 0;
+   if(lifecycle.hello_seen()&&lifecycle.foreground()&&drained)return 1;
+   if(!lifecycle.hello_seen()&&std::chrono::steady_clock::now()>=deadline){
+     std::cerr<<"Tyrell Chess: shell hello timed out; devices remain untouched\n";return -1;
+   }
+   if(!drained)continue;
+   if(wait)wait();else waitShell(link);
+ }
+}
+#endif
+
+struct SessionResult {int frames=0;bool saveAllowed=true;};
+struct LinkedExitGuard {
+ tyrell::game::Runtime& runtime;bool linked;
+ ~LinkedExitGuard(){if(linked)runtime.abandon_foreground();}
+};
+SessionResult runSession(App& app,const Args& args,tyrell::game::Runtime& runtime,
+                        tyrell::app::ShellLink* link=nullptr,
+                        chess::OfflineLifecycle* initialLifecycle=nullptr,
+                        const std::function<void()>& wait={},
+                        const std::function<void(int)>& afterFrame={}){
+ LinkedExitGuard exitOwnership{runtime,link!=nullptr};
+ SessionResult result;
+ chess::OfflineLifecycle localLifecycle;
+ auto& lifecycle=initialLifecycle?*initialLifecycle:localLifecycle;
+ SessionHooks hooks{&app,&runtime};
+ auto scripted=split(args.script);size_t scriptIndex=0;
+ while(!runtime.closed()&&!app.quit){
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+   if(link){
+     const bool drained=chess::pump_lifecycle(*link,lifecycle,hooks);
+     if(lifecycle.exiting()){result.saveAllowed=false;break;}
+     if(runtime.closed())break;
+     if(!drained)continue;
+     if(!lifecycle.foreground()){
+       if(wait)wait();else waitShell(*link);
+       continue;
+     }
+   }
+#else
+   (void)link;(void)lifecycle;(void)hooks;(void)wait;
+#endif
+   // A signal can arrive during polling or application work. Observe it before
+   // applying another command or beginning a new native frame.
+   runtime.poll();
+   if(runtime.closed())break;
+   app.update(runtime.time());
+   if(runtime.closed())break;
+   if(scriptIndex<scripted.size())app.key(scriptKey(scripted[scriptIndex++]));
+   if(runtime.closed())break;
+   app.input(runtime,runtime.time());
+   while(runtime.character()!=0){} // Numeric IP input uses the ordered key stream.
+   if(runtime.closed())break;
+   runtime.begin_frame();app.draw(args.uiTime);runtime.end_frame();++result.frames;
+   if(afterFrame)afterFrame(result.frames);
+   if(args.frames&&result.frames>=args.frames)break;
+ }
+ app.cancelAI();
+ if(app.lifecyclePaused||runtime.suspended()||!runtime.foreground())result.saveAllowed=false;
+ if(link&&runtime.closed())result.saveAllowed=false;
+ return result;
+}
 }
 int main(int argc,char** argv){
  try{
 #ifdef __unix__
    umask(0077);
 #endif
-   auto args=arguments(argc,argv);App app(args.state,args.uiTime);
-   if(args.quick||args.demo||!args.moves.empty()) {app.setup.mode=Mode::Local;app.startGame();if(args.demo&&args.moves.empty())args.moves="e2e4,e7e5,g1f3,b8c6,f1c4,g8f6";for(auto& m:split(args.moves))if(!app.game.moveUci(m,nowMs()))throw std::runtime_error("Illegal --moves entry: "+m);app.persist();}
-   tyrell::game::RuntimeOptions options;options.title="Tyrell Chess";if(args.headless){options.backend=tyrell::game::Backend::Headless;options.fps=0;}
-   tyrell::game::Runtime runtime(options);auto scripted=split(args.script);size_t scriptIndex=0;int frames=0;
-   while(!runtime.closed()&&!app.quit){runtime.poll();app.update(runtime.time());
-     if(scriptIndex<scripted.size())app.key(scriptKey(scripted[scriptIndex++]));
-     app.input(runtime,runtime.time());
-     while(runtime.character()!=0){} // This app accepts numeric IP input from the ordered key stream.
-
-     runtime.begin_frame();app.draw(args.uiTime);runtime.end_frame();++frames;if(args.frames&&frames>=args.frames)break;
+   auto args=arguments(argc,argv);
+   tyrell::app::ShellLink* activeLink=nullptr;
+   chess::OfflineLifecycle lifecycle;
+#if TYRELL_ENABLE_SHELL_LINK && TYRELL_CHESS_NATIVE && defined(__linux__)
+   auto link=!args.headless?tyrell::app::ShellLink::from_environment():tyrell::app::ShellLink{};
+   if(link.connected()||link.closed()){
+     const auto ready=awaitShell(link,lifecycle);
+     if(ready<=0)return ready<0?1:0;
+     activeLink=&link;
    }
-   app.persist();if(!args.screenshot.empty())runtime.screenshot(args.screenshot);
-   if(!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.3\",\"frames\":"<<frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
+#endif
+   App app(args.state,args.uiTime,activeLink!=nullptr);
+   if(activeLink&&!app.linkedOfflineAllowed()){
+     std::cerr<<"Tyrell Chess: LAN games are unavailable in this shell session\n";return 2;
+   }
+   if(args.quick||args.demo||!args.moves.empty()) {app.setup.mode=Mode::Local;app.startGame();if(args.demo&&args.moves.empty())args.moves="e2e4,e7e5,g1f3,b8c6,f1c4,g8f6";for(auto& m:split(args.moves))if(!app.game.moveUci(m,app.clockNow()))throw std::runtime_error("Illegal --moves entry: "+m);app.persist();}
+#if TYRELL_ENABLE_SHELL_LINK && TYRELL_CHESS_NATIVE && defined(__linux__)
+   if(activeLink){
+     // App loading may have performed filesystem work. Drain handoff messages
+     // again before any device acquisition; a queued pause waits device-free.
+     SessionHooks appHooks{&app,nullptr};
+     const auto ready=awaitShell(*activeLink,lifecycle,{},&appHooks);
+     if(ready<=0)return ready<0?1:0;
+   }
+#endif
+   SessionResult result;
+   {
+     tyrell::game::RuntimeOptions options;options.title="Tyrell Chess";
+     options.restore_framebuffer_on_close=activeLink==nullptr;
+#if TYRELL_ENABLE_SHELL_LINK && TYRELL_CHESS_NATIVE && defined(__linux__)
+     if(activeLink){
+       if(const auto* device=std::getenv("LV_LINUX_FBDEV_DEVICE");device&&*device)options.framebuffer=device;
+       if(const auto* device=std::getenv("LV_LINUX_KEYBOARD_DEVICE");device&&*device)options.input=device;
+     }
+#endif
+     if(args.headless){options.backend=tyrell::game::Backend::Headless;options.fps=0;}
+     tyrell::game::Runtime runtime(options);
+     result=runSession(app,args,runtime,activeLink,&lifecycle);
+     if(result.saveAllowed&&!activeLink&&!args.screenshot.empty())runtime.screenshot(args.screenshot);
+     // Runtime closes first. Hidden/lost ownership cleanup cannot restore the
+     // prelaunch screen; neither save retries nor AI joining can retain devices.
+   }
+   // Hidden EOF/termination preserves the last successful atomic save. It does
+   // not promise persistence of RAM-only moves or perform unbounded hidden I/O.
+   if(result.saveAllowed)app.persist();
+   if(result.saveAllowed&&!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.4\",\"frames\":"<<result.frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
    return 0;
  }catch(const std::exception& e){std::cerr<<"Tyrell Chess: "<<e.what()<<'\n';return 1;}
 }

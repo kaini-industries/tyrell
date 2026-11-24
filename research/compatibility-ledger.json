@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "4042c90e89af5ee0b07496ff793027f7298b3dbc",
+  "reviewed_revision": "e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -75,6 +75,16 @@
       "id": "zero-hardware-contract",
       "path": "image/contracts/tyrell-zero-hardware.json",
       "sha256": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491"
+    },
+    {
+      "id": "a3-lifecycle-source",
+      "path": "docs/game-chess-lifecycle.md",
+      "sha256": "a75fa137b483b9c79f67fefe64805acc18bd2808cd0820e521ef240f5b6aa0cd"
+    },
+    {
+      "id": "a3-lifecycle-validation",
+      "path": "research/game-chess-lifecycle-validation.json",
+      "sha256": "ec0f1c8b5d63753a51ac2c3ecc670b69dbfb29bb5467bbf5c98d6e7978f06227"
     }
   ],
   "subjects": [
@@ -111,8 +121,8 @@
       "id": "chess-source",
       "component": "chess",
       "kind": "current-source",
-      "version": "0.1.3",
-      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
+      "version": "0.1.4",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -122,14 +132,14 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "3f74b5a67493eefe8bc368e9e95c6d6f4b30f60e9661fc3a0b98d2887dead9d7"
+      "sha256": "ca844cd4aeb4ef8589dc6f30a7497905ca0365375251e8a7d965ed9c413eb213"
     },
     {
       "id": "sandline-source",
       "component": "sandline",
       "kind": "current-source",
       "version": "0.1.0",
-      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-tanks",
@@ -138,21 +148,21 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "ce7817ae1a6615d889e91f22beb56149c3948f8fc3790823e2e9a754c7c978a8"
+      "sha256": "90b310a5cfc31518ca35e4fde7c0815fda15eb8e0a910e2320afee937b7023d6"
     },
     {
       "id": "beacon-source",
       "component": "beacon",
       "kind": "current-source",
-      "version": "0.1.0",
-      "source_identity": "Reviewed app/dependency boundary at 45bf9fbc2e3cffd1e30bb3613f67fd321d843b7a; digest must match the checkout",
+      "version": "0.1.1",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-game",
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "78b97fecc393459667a96f89078f73d420aa5be55c3d708e30c737eb1835f821"
+      "sha256": "41aed0727af931d05c3446fe20e6634d8c522e3e91c5a92aed2118b2e4523261"
     },
     {
       "id": "status-retained",
@@ -362,7 +372,9 @@
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "chess-clock-source",
-        "chess-device"
+        "chess-device",
+        "a3-lifecycle-source",
+        "a3-lifecycle-validation"
       ],
       "limitations": [
         "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
@@ -381,7 +393,9 @@
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "chess-clock-source",
-        "chess-device"
+        "chess-device",
+        "a3-lifecycle-source",
+        "a3-lifecycle-validation"
       ],
       "limitations": [
         "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
@@ -393,17 +407,20 @@
       "subject": "chess-source",
       "target": "gh0st",
       "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
-      "implementation": "planned",
+      "implementation": "implemented",
       "result": "not-tested",
       "evidence_scope": "not-tested",
       "binding": "current-source",
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "chess-clock-source",
-        "chess-device"
+        "chess-device",
+        "a3-lifecycle-source",
+        "a3-lifecycle-validation"
       ],
       "limitations": [
-        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
+        "A3 native offline lifecycle is experimental and defaults OFF; linked LAN is gated. No current package has physical M5 or pinned Gh0st acceptance.",
+        "Pause defers filesystem saves; hidden termination preserves the last successful save but can lose RAM-only moves. Cooperative engine cancellation does not guarantee wall-clock handoff or shutdown.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]
     },

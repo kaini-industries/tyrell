@@ -5,6 +5,8 @@
 #include "rlgl.h"
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <csignal>
@@ -20,8 +22,9 @@ using Clock=std::chrono::steady_clock;
 // raylib is process-global. The framework's rendering/input API is main-thread
 // only, so this guard also catches accidental mixed direct/framework ownership.
 bool context_owned=false;
-volatile std::sig_atomic_t interrupted=0;
-void interrupt(int) { interrupted=1; }
+static_assert(std::atomic<bool>::is_always_lock_free,"Runtime signal flag must be lock-free");
+std::atomic<bool> interrupted{false};
+void interrupt(int) { interrupted.store(true,std::memory_order_relaxed); }
 
 class ContextLease {
 public:
@@ -41,7 +44,7 @@ class SignalGuard {
 #endif
 public:
     SignalGuard() {
-        interrupted=0;
+        interrupted.store(false,std::memory_order_relaxed);
         old_int_=std::signal(SIGINT,interrupt);old_term_=std::signal(SIGTERM,interrupt);
 #ifdef SIGHUP
         old_hup_=std::signal(SIGHUP,interrupt);
@@ -103,6 +106,10 @@ struct Runtime::Impl {
     std::vector<std::uint16_t> rgb;
     RenderTexture2D target{};
     bool window_ready=false,drawing=false,has_frame=false,first_poll=true;
+    bool suspended=false,abandoned=false,redraw=true;
+#if !defined(TYRELL_GAME_SOFTWARE)
+    std::array<bool,512> suppressed_keys{},suppressed_releases{};
+#endif
     Clock::time_point started{},last_poll{},next_frame{};
     double delta=0;
 
@@ -123,7 +130,8 @@ struct Runtime::Impl {
             rgba.resize(std::size_t(options.width)*options.height*4);
             if(options.backend==Backend::Native) {
                 rgb.resize(std::size_t(options.width)*options.height);
-                native=std::make_unique<detail::NativeDevices>(options.framebuffer,options.input,input);
+                native=std::make_unique<detail::NativeDevices>(options.framebuffer,options.input,input,
+                                                             options.restore_framebuffer_on_close);
             }
 #else
             SetExitKey(KEY_NULL);SetTargetFPS(0); // Runtime owns steady-clock pacing.
@@ -137,7 +145,7 @@ struct Runtime::Impl {
         } catch(...) { release();throw; }
     }
     ~Impl() { release(); }
-    void release() noexcept {
+    void cancel_drawing() noexcept {
         if(drawing) {
 #if defined(TYRELL_GAME_SOFTWARE)
             EndDrawing();
@@ -145,7 +153,11 @@ struct Runtime::Impl {
             EndTextureMode();
 #endif
             drawing=false;
+            has_frame=false;
         }
+    }
+    void release() noexcept {
+        cancel_drawing();
         native.reset(); // Restore the native screen before closing raylib.
         if(target.id) {UnloadRenderTexture(target);target={};}
         if(window_ready) {CloseWindow();window_ready=false;}
@@ -175,54 +187,121 @@ void Runtime::poll() {
     impl_->last_poll=now;
 #if defined(TYRELL_GAME_SOFTWARE)
     impl_->input.begin_frame();
-    if(impl_->native) impl_->native->poll(impl_->input);
+    if(!impl_->suspended && impl_->native) impl_->native->poll(impl_->input);
+#else
+    if(impl_->suspended) {
+        PollInputEvents(); // Window close still works; hidden input is ignored.
+        while(GetKeyPressed()) {}
+        while(GetCharPressed()) {}
+    } else {
+        impl_->suppressed_releases.fill(false);
+        for(std::size_t key=1;key<impl_->suppressed_keys.size();++key)
+            if(impl_->suppressed_keys[key] && !IsKeyDown(static_cast<int>(key))) {
+                impl_->suppressed_keys[key]=false;
+                impl_->suppressed_releases[key]=true;
+            }
+    }
 #endif
 }
 bool Runtime::closed() const {
 #if defined(TYRELL_GAME_SOFTWARE)
-    return interrupted!=0;
+    return impl_->abandoned || interrupted.load(std::memory_order_relaxed);
 #else
-    return interrupted!=0 || WindowShouldClose();
+    return impl_->abandoned || interrupted.load(std::memory_order_relaxed) || WindowShouldClose();
 #endif
 }
 bool Runtime::pressed(int key) const {
+    if(impl_->suspended) return false;
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.key_pressed(key);
 #else
-    return IsKeyPressed(key);
+    return key>0 && key<static_cast<int>(impl_->suppressed_keys.size()) && !impl_->suppressed_keys[key] && IsKeyPressed(key);
 #endif
 }
 bool Runtime::down(int key) const {
+    if(impl_->suspended) return false;
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.key_down(key);
 #else
-    return IsKeyDown(key);
+    return key>0 && key<static_cast<int>(impl_->suppressed_keys.size()) && !impl_->suppressed_keys[key] && IsKeyDown(key);
 #endif
 }
 bool Runtime::released(int key) const {
+    if(impl_->suspended) return false;
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.key_released(key);
 #else
-    return IsKeyReleased(key);
+    return key>0 && key<static_cast<int>(impl_->suppressed_keys.size()) && !impl_->suppressed_keys[key] && !impl_->suppressed_releases[key] && IsKeyReleased(key);
 #endif
 }
 int Runtime::next_key() {
+    if(impl_->suspended) return 0;
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.next_key();
 #else
-    return GetKeyPressed();
+    while(const int key=GetKeyPressed())
+        if(key>0 && key<static_cast<int>(impl_->suppressed_keys.size()) && !impl_->suppressed_keys[key]) return key;
+    return 0;
 #endif
 }
 int Runtime::character() {
+    if(impl_->suspended) return 0;
 #if defined(TYRELL_GAME_SOFTWARE)
     return impl_->input.next_char();
 #else
+    // Conservatively discard text while a pre-resume hold remains down. The
+    // character queue does not expose which physical key generated a repeat.
+    if(std::any_of(impl_->suppressed_keys.begin(),impl_->suppressed_keys.end(),[](bool held){return held;})) {
+        while(GetCharPressed()) {}
+        return 0;
+    }
     return GetCharPressed();
 #endif
 }
 double Runtime::time() const {return std::chrono::duration<double>(Clock::now()-impl_->started).count();}
 double Runtime::elapsed() const {return impl_->delta;}
+void Runtime::suspend() {
+    if(impl_->suspended) return;
+    impl_->cancel_drawing();
+    impl_->suspended=true;
+    // A suspension before the first poll must still report its real duration.
+    impl_->first_poll=false;
+    impl_->input.reset();
+    if(impl_->native) impl_->native->suspend(impl_->input);
+}
+bool Runtime::resume(std::string* error) {
+    if(error) error->clear();
+    if(impl_->abandoned) {if(error)*error="Runtime foreground ownership was abandoned";return false;}
+    if(!impl_->suspended) return true;
+    if(impl_->native && !impl_->native->resume(impl_->input,error)) return false;
+#if !defined(TYRELL_GAME_SOFTWARE)
+    PollInputEvents();
+    while(GetKeyPressed()) {}
+    while(GetCharPressed()) {}
+    impl_->suppressed_releases.fill(false);
+    for(std::size_t key=1;key<impl_->suppressed_keys.size();++key)
+        impl_->suppressed_keys[key]=IsKeyDown(static_cast<int>(key));
+#endif
+    impl_->suspended=false;
+    impl_->redraw=true;
+    impl_->next_frame=Clock::now(); // Drop pacing debt, never elapsed clock debt.
+    return true;
+}
+void Runtime::abandon_foreground() noexcept {
+    impl_->cancel_drawing();
+    impl_->suspended=impl_->abandoned=true;
+    impl_->input.reset();
+    if(impl_->native) {
+        impl_->native->abandon(impl_->input);
+        impl_->native.reset(); // Suppressed destructor only unmaps/closes.
+    }
+}
+bool Runtime::suspended() const {return impl_->suspended;}
+bool Runtime::foreground() const {return !impl_->suspended;}
+void Runtime::request_redraw() {impl_->redraw=true;}
+bool Runtime::redraw_requested() const {return impl_->redraw;}
 void Runtime::begin_frame() {
+    if(impl_->suspended) throw std::logic_error("Cannot begin a frame without foreground ownership");
     if(impl_->drawing) throw std::logic_error("A Tyrell frame is already in progress");
 #if defined(TYRELL_GAME_SOFTWARE)
     BeginDrawing();
@@ -255,6 +334,7 @@ void Runtime::end_frame() {
     EndDrawing();
 #endif
     impl_->has_frame=true;
+    impl_->redraw=false;
     impl_->pace();
 }
 void Runtime::screenshot(const std::string& path) {

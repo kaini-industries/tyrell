@@ -74,6 +74,7 @@ def configure(backend):
     run('cmake', '-S', ROOT / 'packages/tyrell-chess', '-B', build_directory(backend),
         '-DCMAKE_BUILD_TYPE=RelWithDebInfo', '-DBUILD_TESTING=ON',
         '-DCHESS_BACKEND=' + backend.upper(),
+        '-DTYRELL_ENABLE_SHELL_LINK=OFF',
         '-DRAYLIB_SOURCE_DIR=' + str(DEPS / LOCK['raylib']['directory']))
 
 
@@ -106,7 +107,7 @@ def package():
             script = '''set -euo pipefail
 cd "$1"
 tar -xf input.tar
-cmake -S packages/tyrell-chess -B out -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON -DCHESS_BACKEND=NATIVE -DRAYLIB_SOURCE_DIR="$PWD/build/game-deps/RAYLIB_DIR"
+cmake -S packages/tyrell-chess -B out -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON -DCHESS_BACKEND=NATIVE -DTYRELL_ENABLE_SHELL_LINK=OFF -DRAYLIB_SOURCE_DIR="$PWD/build/game-deps/RAYLIB_DIR"
 cmake --build out --parallel 4
 python3 packages/tyrell-chess/tests/package_tools_test.py 2>&1 | tee package-tools-tests.txt
 ctest --test-dir out --output-on-failure 2>&1 | tee tests.txt
