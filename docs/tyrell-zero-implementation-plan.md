@@ -36,6 +36,11 @@ built and verified, including actual stage2 recovery. See the
 [image validation record](tyrell-zero-image-validation.md). Spare-card hardware,
 settled-memory and battery acceptance remain later gates.
 
+The separate [Gh0st adoption plan](gh0st-adoption-plan.md) covers proposed UI,
+optional application lifecycle and delivery improvements. Its app changes use
+new package identities and separate comparisons; they do not alter this plan's
+application-optimization exclusion or the accepted Z3 baseline/control pair.
+
 ## Decisions
 
 | Area | Selected design |

@@ -223,6 +223,13 @@ file-image exports and measured disk footprints; see the
 [image validation record](docs/tyrell-zero-image-validation.md). Spare-card
 hardware acceptance and runtime/battery measurements remain separate gates.
 
+The [Gh0st adoption plan](docs/gh0st-adoption-plan.md) sequences shared UI/help,
+optional app lifecycle integration, idle-loop improvements and release tooling
+while retaining Tyrell's apps and M5 compatibility. F1 now supplies a
+[compatibility ledger](docs/compatibility-matrix.md) and
+[scoped CI checks](docs/continuous-integration.md); later adoption work and the
+existing Zero base-system hardware qualification remain separate.
+
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
 

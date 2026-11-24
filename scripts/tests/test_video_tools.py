@@ -35,9 +35,10 @@ class VideoToolsTests(unittest.TestCase):
                     fixtures.ffmpeg([str(destination)])
             self.assertFalse(destination.exists())
             destination.symlink_to(Path(directory) / 'missing-target')
-            with patch.object(fixtures.subprocess, 'run', side_effect=KeyboardInterrupt()):
-                with self.assertRaises(KeyboardInterrupt):
+            with patch.object(fixtures.subprocess, 'run') as encode:
+                with self.assertRaises(FileExistsError):
                     fixtures.ffmpeg([str(destination)])
+                encode.assert_not_called()
             self.assertTrue(destination.is_symlink())
 
     def test_invalid_duration_creates_no_fixture_directory(self):
