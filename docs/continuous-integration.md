@@ -90,6 +90,13 @@ including the unchanged original Store guard tests. Native previews and semantic
 bounds under `c1-previews/` are retained. No Catalog package is installed in the
 worker or added to the approved Store catalog/default image.
 
+F2/H1's [observation tooling](baseline-observations.md) has required Python
+fixture tests for read limits, sysfs aliases, cancellation, incomplete evidence
+and comparison boundaries. Scoped observation changes select documentation and
+Python checks. CI infrastructure changes still select all eight suites. Fixtures
+use private mock roots; CI never runs collection against the worker's hardware
+or turns synthetic observations into Z4/Z5/H1 acceptance.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

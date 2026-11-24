@@ -138,5 +138,8 @@ The [Gh0st adoption plan](gh0st-adoption-plan.md) now has F1's
 from current source checks and keeps required skips and physical gates visible.
 Shared UI/help, the Status idle/lifecycle pilot, offline Chess lifecycle and
 [immutable candidate/promotion tooling](immutable-candidates.md) now have source
-implementations and automated checks. Catalog work, app device acceptance and
-Z4/Z5/Z6 remain separate; these increments add no image or hardware acceptance.
+implementations and automated checks. The separate Catalog frontend is also
+implemented. [F2/H1 observation tooling](baseline-observations.md) now prepares
+bounded baseline measurements and the [backlight investigation](backlight-investigation.md).
+App device acceptance, physical H1 reproduction and Z4/Z5/Z6 remain separate;
+these increments add no image or hardware acceptance.

@@ -258,7 +258,10 @@ signed discovery, offline browsing and explicit verified downloads. It lists
 only the existing exact Store approvals and leaves installation authority and
 the original M5 Store unchanged. The bundled seed is offline; live refresh
 requires a separately configured publisher.
-Later adoption work and Zero base-system hardware qualification remain separate.
+F2/H1 adds [bounded baseline observation tools](docs/baseline-observations.md)
+and a [backlight investigation procedure](docs/backlight-investigation.md).
+Collection is explicitly started and read-only; physical baseline acceptance,
+backlight reproduction and any correction remain pending.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
