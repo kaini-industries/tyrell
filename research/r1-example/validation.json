@@ -3,7 +3,7 @@
   "kind": "r1-immutable-candidate-development-validation",
   "reviewed_date": "2026-11-24",
   "status": "passed",
-  "implementation_commit": "pending-follow-up-binding",
+  "implementation_commit": "539a037bc314cf9352b9e4d8856e86d821d3b95a",
   "producer_files_sha256": {
     "scripts/release/candidate.py": "0a7a447f3366217865ed5ea2778a2f665efd629585e288899e6b0d6d79de97da",
     "scripts/release/github.py": "7751cbed06aa344fbcc18bff189df5fbda3dab93cf4d17d4f6999d4d55cf7319",
