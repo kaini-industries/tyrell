@@ -17,6 +17,7 @@ struct View {
     std::string title="CHESS",subtitle,status,footer,reviewLabel,notice;
     bool noticeError=false;
     int menuIndex=0;
+    std::size_t helpOffset=0;
     bool flipped=false,monochrome=false,thinking=false,review=false;
     bool gameOver=false,clocksEnabled=false,clocksRunning=false;
     Piece animatedPiece;
@@ -24,5 +25,11 @@ struct View {
     float animationProgress=1;
     double time=0;
 };
-void draw(const View& view);
+// Optional audit records the actual fitted strings and draw coordinates. It is
+// used by headless semantic layout checks; ordinary rendering allocates none.
+struct TextBounds {
+    std::string original,rendered;
+    int x=0,y=0,width=0,height=0,maximumWidth=0;
+};
+void draw(const View& view,std::vector<TextBounds>* audit=nullptr);
 }

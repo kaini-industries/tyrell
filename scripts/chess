@@ -41,15 +41,22 @@ def build_directory(backend):
 def snapshot_inputs(destination):
     """Hash exactly the bytes copied to the VM, even during concurrent edits."""
     manifest = {}
-    directories = ('packages/tyrell-chess', 'packages/tyrell-game',
+    directories = ('packages/tyrell-chess', 'packages/tyrell-app-common', 'packages/tyrell-game',
                    'build/game-deps/' + LOCK['raylib']['directory'])
+    if not (ROOT / 'packages/tyrell-app-common/CMakeLists.txt').is_file():
+        raise RuntimeError('Missing shared application command source')
     paths = [ROOT / 'scripts/chess', ROOT / 'scripts/game', ROOT / 'locks/game-build-inputs.json']
     for directory in directories:
-        paths.extend(sorted((ROOT / directory).rglob('*')))
+        source = ROOT / directory
+        if source.is_symlink():
+            raise RuntimeError('Input symlinks are unsupported: ' + str(source))
+        paths.extend(sorted(source.rglob('*')))
     with tarfile.open(destination, 'w') as archive:
         for path in paths:
             if path.is_symlink():
                 raise RuntimeError('Input symlinks are unsupported: ' + str(path))
+            if path.name.startswith('.env'):
+                raise RuntimeError('Credential file is not a build input: ' + str(path))
             if not path.is_file() or '__pycache__' in path.parts or path.suffix == '.pyc':
                 continue
             name = str(path.relative_to(ROOT))

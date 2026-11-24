@@ -4,6 +4,12 @@ Keyboard-controlled local video player for the Linux M5Stack CardputerZero.
 Start **Tyrell Video** through APPLaunch so the launcher yields display/input
 ownership and resumes after the player exits.
 
+Current **0.1.8 source** adds context-derived commands, help and footers,
+press-only confirmations/toggles, native/SDL input edge handling and deterministic
+UI checks. It retains the existing media/rendering and APPLaunch integration.
+This source increment has not inherited 0.1.7's hardware or Store qualification;
+new package bytes require their own acceptance.
+
 The verified [0.1.7 ARM64 package](../../dist/tyrell-video/0.1.7/tyrell-video_0.1.7-1_arm64.deb)
 is committed in the repository, with [checksums and provenance](../../dist/README.md).
 From the repository root on the device, install it with
@@ -51,6 +57,14 @@ will play smoothly. The package does not change the kernel CMA allocation.
 | Key guide | H |
 | Return to browser / close menu | Esc |
 | Exit to APPLaunch | Q |
+
+The H guide describes the current browser or player context. Up/Down scrolls
+through its rows; Enter or Esc returns. Repeated directions navigate/select or
+adjust playback, while Enter, browser Right/D activation and toggles require a
+fresh press. Held keys are not reinterpreted after an activation changes context.
+The SDL simulator reads original SDL keydown/repeat/keyup events rather than
+LVGL's synthetic per-character release events; other windows/focus-loss and
+input queue overflow reset its held state.
 
 The browser starts in `~/Videos` if it exists, otherwise Home. Folder listings
 include directories and common video extensions, with no recursive card scan.

@@ -17,11 +17,36 @@ loader.exec_module(builder)
 
 
 class BuilderTests(unittest.TestCase):
+    def test_video_bundle_requires_unredirected_shared_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'packages').mkdir()
+            state = root / 'build'
+            state.mkdir()
+            archive = state / 'lvgl.tar.gz'
+            archive.write_bytes(b'verified-cache-fixture')
+            locked = {'package': 'tyrell-video', 'version': '0.1.8', 'source_date_epoch': 1}
+            with patch.object(builder, 'ROOT', root), patch.object(builder, 'STATE', state), \
+                    patch.object(builder, 'inputs', return_value=locked), \
+                    patch.object(builder, 'fetch', return_value=archive):
+                with self.assertRaisesRegex(RuntimeError, 'shared application command source'):
+                    builder.bundle('video')
+                outside = root / 'not-an-input'
+                outside.mkdir()
+                (outside / 'CMakeLists.txt').write_text('project(unrelated)')
+                (root / 'packages/tyrell-app-common').symlink_to(outside, target_is_directory=True)
+                with self.assertRaisesRegex(RuntimeError, 'shared application command source'):
+                    builder.bundle('video')
+
     def test_video_bundle_includes_only_allowlisted_validation_tools(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'packages/tyrell-video').mkdir(parents=True)
             (root / 'packages/tyrell-video/CMakeLists.txt').write_text('project(test)')
+            common = root / 'packages/tyrell-app-common'
+            (common / 'include/tyrell/app').mkdir(parents=True)
+            (common / 'CMakeLists.txt').write_text('add_library(tyrell_app_commands INTERFACE)')
+            (common / 'include/tyrell/app/commands.hpp').write_text('// shared commands')
             (root / 'builder').mkdir()
             (root / 'locks').mkdir()
             (root / 'scripts').mkdir()
@@ -44,6 +69,9 @@ class BuilderTests(unittest.TestCase):
             for name in ['video-fixtures.py', 'video-matrix.py', 'video-inventory.py']:
                 self.assertIn('scripts/' + name, names)
                 self.assertIn('scripts/' + name, source)
+            for name in ['CMakeLists.txt', 'include/tyrell/app/commands.hpp']:
+                self.assertIn('packages/tyrell-app-common/' + name, names)
+                self.assertIn('packages/tyrell-app-common/' + name, source)
             self.assertNotIn('scripts/unrelated.py', names)
             self.assertNotIn('.env', names)
 

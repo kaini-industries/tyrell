@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1 implemented; later work planned**.
+Plan revision 1, November 24, 2026. Status: **F1 and U1 implemented; later work planned**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -153,6 +153,11 @@ regression. Partial accessory coverage stays partial. No new lighter-RAM or
 battery claim follows from footprint checks alone.
 
 ### U1 — Shared commands and deterministic UI checks
+
+The [shared UI implementation](shared-commands-ui.md) records the command model,
+repeat boundaries, UI-only test clocks, renderer checks and package qualification
+limits. Source is Video 0.1.8 and Chess 0.1.3; original app packages/image captures
+retain their earlier exact-byte evidence.
 
 Pilot a small command descriptor in Video: action ID, keys, label/help,
 availability, repeat policy and confirmation behavior. Derive dispatch, help and
@@ -364,7 +369,8 @@ protected baseline.
 
 **F1: compatibility ledger and scoped CI** supplies the initial records,
 reusable checks and portable CI without rebuilding images or changing device
-behavior. The next increments are **U1** and **L1's Status pilot** as independent small PRs.
+behavior. **U1** adds shared app commands and UI checks. The next app integration
+increment is **L1's Status pilot**; its optional shell protocol remains separate.
 Prepare F2 collectors/fixtures in parallel; leave physical execution explicitly
 pending until a concrete spare target is identified.
 

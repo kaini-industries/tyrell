@@ -15,15 +15,26 @@ constexpr Color gold{249,195,76,255}, cream{255,245,206,255};
 constexpr Color squareLight{156,201,164,255}, squareDark{74,121,151,255};
 constexpr Color moss{37,74,105,255}, checkRed{220,91,103,255};
 constexpr int bx=11,by=9,cell=18,boardSize=144,sx=169;
+thread_local std::vector<TextBounds>* textAudit=nullptr;
 
 std::string fit(std::string value,int width,int size=10) {
+    // These slots are single-line. Do not let untrusted file/network feedback
+    // introduce extra lines that escape their measured layout region.
+    for(auto& c:value)if(static_cast<unsigned char>(c)<32||c==127)c=' ';
+    if(width<=0)return {};
     if(MeasureText(value.c_str(),size)<=width) return value;
-    while(!value.empty() && MeasureText((value+"..").c_str(),size)>width) value.pop_back();
+    if(MeasureText("..",size)>width)return {};
+    while(!value.empty() && MeasureText((value+"..").c_str(),size)>width) {
+        auto at=value.size()-1;
+        while(at>0&&(static_cast<unsigned char>(value[at])&0xc0)==0x80)--at;
+        value.resize(at);
+    }
     return value+"..";
 }
 void text(const std::string& value,int x,int y,Color color=ink,int size=10,int width=1000) {
     const auto clipped=fit(value,width,size);
     DrawText(clipped.c_str(),x,y,size,color);
+    if(textAudit&&!clipped.empty())textAudit->push_back({value,clipped,x,y,MeasureText(clipped.c_str(),size),size,width});
 }
 void right(const std::string& value,int edge,int y,Color color=ink,int size=10) {
     text(value,edge-MeasureText(value.c_str(),size),y,color,size);
@@ -147,7 +158,7 @@ void sidebar(const View& v) {
     line(sx,145,143,Color{170,183,180,255});
     text(v.subtitle,sx,149,muted,10,143);
     if(v.screen==Screen::Board)
-        text(v.footer.empty()?"ENTER move  I help":v.footer,sx,161,muted,10,143);
+        text(v.footer.empty()?"ENTER move  I help":v.footer,sx,160,muted,10,143);
 }
 
 void menu(const View& v,int x,int y,int width,int visible=6,int step=17) {
@@ -195,22 +206,13 @@ void setup(const View& v) {
     line(12,51,296,gold);
     menu(v,17,64,280,5,18);
     text(v.status,13,151,muted,10,294);
-    text(v.footer.empty()?"Left / right change   ENTER play   ESC back":v.footer,13,161,muted,10,294);
+    text(v.footer.empty()?"Left / right change   ENTER play   ESC back":v.footer,13,160,muted,10,294);
 }
 void help(const View& v) {
     text(v.title.empty()?"HOW TO PLAY":v.title,12,10,blue,20,296);
     line(12,36,296,gold);
-    const std::vector<std::string> defaults={
-        "Arrows / WASD / ; , . /   Move cursor",
-        "ENTER   Select piece / make move",
-        "SPACE   Cycle legal destinations",
-        "ESC     Cancel selection / game menu",
-        "U undo   H hint   F flip   T contrast",
-        "V review   P export PGN   I this help",
-        "Review: Left / Right step, ESC return",
-        "Q       Save game and exit"};
-    const auto& rows=v.menu.empty()?defaults:v.menu;
-    for(std::size_t i=0;i<rows.size() && i<9;++i) text(rows[i],13,46+int(i)*12,ink,10,295);
+    const auto count=std::min(std::size_t(8),v.menu.size()-std::min(v.helpOffset,v.menu.size()));
+    for(std::size_t i=0;i<count;++i) text(v.menu[v.helpOffset+i],13,46+int(i)*12,ink,10,295);
     text(v.footer.empty()?"ENTER / ESC return":v.footer,13,158,muted,10,296);
 }
 void overlay(const View& v) {
@@ -233,7 +235,12 @@ void overlay(const View& v) {
     text(footer,33,122,muted,10,259);
 }
 }
-void draw(const View& view) {
+void draw(const View& view,std::vector<TextBounds>* audit) {
+    struct AuditScope {
+        std::vector<TextBounds>* previous;
+        explicit AuditScope(std::vector<TextBounds>* next):previous(textAudit){textAudit=next;}
+        ~AuditScope(){textAudit=previous;}
+    } scope(audit);
     ClearBackground(paper);
     switch(view.screen) {
         case Screen::Home:home(view);break;

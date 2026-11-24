@@ -80,6 +80,11 @@ session lacks one, without changing the system default. See the
 [desktop handoff validation](docs/video-hdmi-handoff-validation.md), and
 [earlier attached-TV validation](docs/video-hdmi-validation.md).
 
+Current Video 0.1.8 source adds shared contextual commands/help, repeat-safe
+activation and deterministic UI/layout checks. Its automated checks are
+separate from the retained 0.1.7 hardware qualification; see the
+[shared UI implementation](docs/shared-commands-ui.md).
+
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
 source provenance and test results. Video 0.1.7 is qualified for the tested
 hardware and source profile:
@@ -149,8 +154,10 @@ matches, puzzle categories, checked saves, full offline replay and PGN export.
 Ordered keyboard input preserves rapid taps across display frames.
 The installed [0.1.1 update](docs/chess-ui-input-validation.md) adds spatial and
 held-key navigation, safe LAN confirmations and clearer game-state feedback.
-Current [0.1.2 source](docs/chess-clock-validation.md) corrects clock-expiry
-handling; ARM64 package and device qualification remain pending for that version.
+The [0.1.2 source increment](docs/chess-clock-validation.md) corrects clock-expiry
+handling. Current 0.1.3 source adds shared contextual commands/help and
+deterministic UI/layout checks; device qualification remains separate from
+the retained 0.1.1 package's evidence.
 
 Build/test locally with `make chess` and `make chess-test`; `make chess-package`
 creates an ARM64 app-only Debian package in the isolated builder. See the
@@ -225,10 +232,11 @@ hardware acceptance and runtime/battery measurements remain separate gates.
 
 The [Gh0st adoption plan](docs/gh0st-adoption-plan.md) sequences shared UI/help,
 optional app lifecycle integration, idle-loop improvements and release tooling
-while retaining Tyrell's apps and M5 compatibility. F1 now supplies a
+while retaining Tyrell's apps and M5 compatibility. F1 supplies a
 [compatibility ledger](docs/compatibility-matrix.md) and
-[scoped CI checks](docs/continuous-integration.md); later adoption work and the
-existing Zero base-system hardware qualification remain separate.
+[scoped CI checks](docs/continuous-integration.md); U1 adds
+[shared commands/help and deterministic UI checks](docs/shared-commands-ui.md).
+Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).

@@ -189,7 +189,13 @@ def bundle(app='status'):
     archive = fetch()
     locked = inputs(app)
     selected = []
-    for base in [ROOT / ('packages/' + locked['package']), ROOT / 'builder', ROOT / 'locks']:
+    bases = [ROOT / ('packages/' + locked['package']), ROOT / 'builder', ROOT / 'locks']
+    if app == 'video':
+        common = ROOT / 'packages/tyrell-app-common'
+        if common.is_symlink() or not (common / 'CMakeLists.txt').is_file():
+            raise RuntimeError('Missing shared application command source')
+        bases.append(common)
+    for base in bases:
         for path in sorted(base.rglob('*')):
             if '__pycache__' in path.parts or path.suffix in {'.pyc', '.pyo'} or path.name == '.DS_Store':
                 continue

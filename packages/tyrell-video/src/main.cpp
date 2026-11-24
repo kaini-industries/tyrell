@@ -1,4 +1,6 @@
 #include "browser.h"
+#include "commands.h"
+#include "input_edges.h"
 #include "frame_image.h"
 #include "json_string.h"
 #include "lcd_commit.h"
@@ -15,6 +17,9 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <functional>
+#include <deque>
+#include <mutex>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -36,7 +41,7 @@
 #endif
 #if TYRELL_ENABLE_SDL
 #include "src/drivers/sdl/lv_sdl_window.h"
-#include "src/drivers/sdl/lv_sdl_keyboard.h"
+#include <SDL.h>
 #endif
 
 namespace {
@@ -73,8 +78,12 @@ void usage() {
         << "  --report PATH            Write JSON playback/resource measurements on exit\n"
         << "  --version                Version and source revision\n"
         << "  --help                   This help\n"
-        << "Keys: arrows/WASD navigate or seek/volume; Enter open; Space pause;\n"
-        << "O display; T tracks; V audio output; M mute; B folders; H help; Esc browser; Q exit.\n";
+        << "Controls (H shows the current context on the device):\n";
+    for(const auto page : {Page::Browser, Page::Player, Page::Menu}) {
+        std::cout << (page == Page::Browser ? "Browser:\n" : page == Page::Player ? "Player:\n" : "Menus:\n");
+        for(const auto& line : tyrell::app::help_lines(commands_for(page, true, true, true)))
+            std::cout << "  " << line << '\n';
+    }
 }
 
 lv_obj_t* box(lv_obj_t* parent, int x, int y, int w, int h, std::uint32_t color, lv_opa_t opacity = LV_OPA_COVER) {
@@ -107,7 +116,22 @@ void set_label(lv_obj_t* obj, const std::string& value) {
     if(value != *original) { *original = value; lv_label_set_text(obj, value.c_str()); }
 }
 
-enum class Page { Browser, Player, Menu, Error };
+std::string wrapped_error(const std::string& value) {
+    auto text = display_text(value);
+    auto fits = [](const std::string& candidate) {
+        lv_point_t measured{};
+        lv_text_get_size(&measured, candidate.c_str(), &lv_font_montserrat_12, 0, 0, 300, LV_TEXT_FLAG_NONE);
+        return measured.y <= 88;
+    };
+    if(fits(text)) return text;
+    while(!text.empty() && !fits(text + "...")) {
+        auto end = text.size() - 1;
+        while(end && (static_cast<unsigned char>(text[end]) & 0xc0) == 0x80) --end;
+        text.resize(end);
+    }
+    return text + "...";
+}
+
 enum class MenuAction { AudioTrack, SubtitleTrack, AudioSink, Folder, None };
 struct MenuItem {
     std::string text;
@@ -119,9 +143,12 @@ struct MenuItem {
 };
 
 struct App {
-    explicit App(const Options& options) : options(options), browser(options.media_root) {}
+    explicit App(const Options& options, std::function<std::uint32_t()> clock = tick_ms)
+        : options(options), browser(options.media_root), ui_clock(std::move(clock)) {}
     Options options;
     Browser browser;
+    std::function<std::uint32_t()> ui_clock;
+    std::uint64_t input_epoch = 1;
     std::unique_ptr<Playback> playback;
     Status status;
     Page page = Page::Browser, previous_page = Page::Browser;
@@ -136,8 +163,8 @@ struct App {
     FrameImage frame_image;
     std::uint64_t lcd_frame_assignments = 0;
 
-    void notice(const std::string& value) { local_notice = value; notice_at = tick_ms(); controls = true; controls_at = tick_ms(); }
-    void change_page(Page next) { page = next; rebuild = true; controls = true; controls_at = tick_ms(); }
+    void notice(const std::string& value) { local_notice = value; notice_at = ui_clock(); controls = true; controls_at = ui_clock(); }
+    void change_page(Page next) { page = next; ++input_epoch; rebuild = true; controls = true; controls_at = ui_clock(); }
     void show_error(const std::string& value) { error = value; seen_error = value; change_page(Page::Error); }
 
     static std::string matching_srt(const fs::path& file) {
@@ -200,11 +227,14 @@ struct App {
         for(const auto& path : Browser::media_roots()) result.push_back({display_text(path.string()), MenuAction::Folder, -1, path.string()});
         show_menu("FOLDERS & MOUNTED MEDIA", std::move(result));
     }
+    std::vector<Command> commands() const {
+        return commands_for(page, bool(playback) || preview, preview || browser.selected(),
+                            selection < items.size(), status.output == Output::Hdmi);
+    }
     void help() {
-        show_menu("KEY GUIDE", {
-            {"Enter: Open / confirm"}, {"Space: Pause / resume"}, {"A/D or Left/Right: Seek 10s"},
-            {"W/S or Up/Down: Volume"}, {"O: LCD / HDMI video"}, {"T: Audio / subtitle tracks"},
-            {"V: Sound output   M: Mute"}, {"B: Folders / mounted media"}, {"Esc: Browser   Q: Exit"}});
+        std::vector<MenuItem> lines;
+        for(const auto& text : tyrell::app::help_lines(commands())) lines.push_back({text});
+        show_menu("KEY GUIDE", std::move(lines));
     }
     void confirm_menu() {
         if(selection >= items.size()) return;
@@ -224,62 +254,66 @@ struct App {
         change_page(previous_page);
         if(!ok) notice(status.error.empty() ? "Selection unavailable" : status.error);
     }
-    void key(std::uint32_t code) {
-        if(code == 'q' || code == 'Q') { running = 0; return; }
-        controls = true; controls_at = tick_ms();
+    void key(std::uint32_t code, bool repeated = false) {
+        const auto available = commands();
+        const auto* command = tyrell::app::find_command(available, static_cast<int>(code), repeated);
+        if(!command || !command->enabled) {
+            if(!repeated) { controls = true; controls_at = ui_clock(); }
+            return;
+        }
+        controls = true; controls_at = ui_clock();
         const bool up = code == LV_KEY_UP || code == 'w' || code == 'W';
-        const bool down = code == LV_KEY_DOWN || code == 's' || code == 'S';
         const bool left = code == LV_KEY_LEFT || code == 'a' || code == 'A';
-        const bool right = code == LV_KEY_RIGHT || code == 'd' || code == 'D';
-        if(page == Page::Menu) {
-            if(up && selection) --selection;
-            if(down && selection + 1 < items.size()) ++selection;
-            if(code == LV_KEY_ENTER) confirm_menu();
-            if(code == LV_KEY_ESC || left) change_page(previous_page);
-            return;
-        }
-        if(page == Page::Error) {
-            if(code == LV_KEY_ESC || code == LV_KEY_ENTER) back_to_browser();
-            return;
-        }
-        if(code == 'h' || code == 'H') { help(); return; }
-        if(code == 'b' || code == 'B') { folders(); return; }
-        if(page == Page::Browser) {
-            if(up) browser.move(-1);
-            if(down) browser.move(1);
-            if(left) {
+        switch(command->id) {
+            case Action::Quit: case Action::ExitBrowser: running = 0; return;
+            case Action::Help: help(); return;
+            case Action::Folders: folders(); return;
+            case Action::Navigate:
+                if(page == Page::Menu) {
+                    if(up && selection) --selection;
+                    if(!up && selection + 1 < items.size()) ++selection;
+                } else browser.move(up ? -1 : 1);
+                return;
+            case Action::Parent:
                 if(!browser.open_directory(browser.directory().parent_path())) notice(browser.error());
-            }
-            if(code == LV_KEY_ENTER || right) {
+                return;
+            case Action::Open: case Action::OpenDirection: {
                 const auto* selected = browser.selected();
                 if(selected) {
-                    if(selected->directory) { if(!browser.enter_selected()) notice(browser.error()); }
-                    else start_file(selected->path);
+                    if(selected->directory) {
+                        if(browser.enter_selected()) ++input_epoch;
+                        else notice(browser.error());
+                    } else start_file(selected->path);
                 }
+                return;
             }
-            if(code == LV_KEY_ESC) running = 0;
-            return;
+            case Action::Confirm: confirm_menu(); return;
+            case Action::Recover: back_to_browser(); return;
+            case Action::Back:
+                if(page == Page::Menu) change_page(previous_page);
+                else back_to_browser();
+                return;
+            default: break;
         }
         if(!playback) return;
-        if(code == LV_KEY_ESC) { back_to_browser(); return; }
-        if(code == ' ' || code == LV_KEY_ENTER) {
-            playback->toggle_pause();
-        }
-        if(left) playback->seek_relative(-10);
-        if(right) playback->seek_relative(10);
-        if(up) playback->set_volume(status.volume + 0.05);
-        if(down) playback->set_volume(status.volume - 0.05);
-        if(code == 'm' || code == 'M') playback->set_muted(!status.muted);
-        if(code == 'o' || code == 'O') {
-            const auto output = status.output == Output::Hdmi || status.output_switching ? Output::Lcd : Output::Hdmi;
-            if(!playback->set_output(output)) {
-                const auto failed = playback->status(); seen_error = failed.error;
-                notice(!failed.error.empty() ? failed.error : !failed.notice.empty() ? failed.notice : "HDMI is unavailable");
+        switch(command->id) {
+            case Action::Pause: playback->toggle_pause(); break;
+            case Action::Seek: playback->seek_relative(left ? -10 : 10); break;
+            case Action::Volume: playback->set_volume(status.volume + (up ? 0.05 : -0.05)); break;
+            case Action::Mute: playback->set_muted(!status.muted); break;
+            case Action::Output: {
+                const auto output = status.output == Output::Hdmi || status.output_switching ? Output::Lcd : Output::Hdmi;
+                if(!playback->set_output(output)) {
+                    const auto failed = playback->status(); seen_error = failed.error;
+                    notice(!failed.error.empty() ? failed.error : !failed.notice.empty() ? failed.notice : "HDMI is unavailable");
+                }
+                rebuild = true;
+                break;
             }
-            rebuild = true;
+            case Action::Tracks: tracks(); break;
+            case Action::Sound: audio_sinks(); break;
+            default: break;
         }
-        if(code == 't' || code == 'T') tracks();
-        if(code == 'v' || code == 'V') audio_sinks();
         status = playback->status();
     }
 
@@ -294,7 +328,7 @@ struct App {
             label(root, "VIDEO", 248, 7, 63, quiet);
             subtitle = label(root, "", 9, 26, 302, quiet);
             for(int i = 0; i < row_count; ++i) rows[i] = label(root, "", 12, 43 + i * 18, 296);
-            footer = label(root, "Enter Play   B Folders   H Help   Q Exit", 9, 151, 304, accent);
+            footer = label(root, tyrell::app::footer(commands(), {Action::Open, Action::Folders, Action::Help, Action::Quit}), 9, 151, 304, accent);
             message = label(root, "", 9, 135, 302, quiet);
         } else if(page == Page::Player) {
             if(status.output == Output::Lcd) {
@@ -303,27 +337,28 @@ struct App {
             } else {
                 label(root, "PLAYING ON HDMI", 12, 43, 296, accent, true);
                 message = label(root, "Video is on the external display", 12, 68, 296, quiet);
-                label(root, "O LCD    T Tracks    V Sound    H Help", 12, 90, 296, quiet);
+                label(root, tyrell::app::footer(commands(), {Action::Output, Action::Tracks, Action::Sound, Action::Help}), 12, 90, 296, quiet);
             }
             top = box(root, 0, 0, width, 26, background, LV_OPA_90);
             heading = label(top, "", 9, 6, 302, white);
             bottom = box(root, 0, 118, width, 52, background, LV_OPA_90);
             bar = box(bottom, 9, 0, 1, 3, accent);
-            timing = label(bottom, "", 9, 9, 210, white);
-            volume = label(bottom, "", 225, 9, 87, accent);
-            subtitle = label(bottom, "", 9, 26, 302, quiet);
-            footer = label(bottom, "Space Pause   T Tracks   Esc Files", 9, 39, 302, accent);
+            timing = label(bottom, "", 9, 6, 210, white);
+            volume = label(bottom, "", 225, 6, 87, accent);
+            subtitle = label(bottom, "", 9, 21, 302, quiet);
+            footer = label(bottom, tyrell::app::footer(commands(), {Action::Pause, Action::Tracks, Action::Back}), 9, 36, 302, accent);
         } else if(page == Page::Menu) {
             heading = label(root, title, 9, 8, 302, accent, true);
             for(int i = 0; i < row_count; ++i) rows[i] = label(root, "", 12, 37 + i * 21, 296);
-            footer = label(root, "Up/Down Select   Enter OK   Esc Back", 9, 151, 302, accent);
+            footer = label(root, tyrell::app::footer(commands(), {Action::Navigate, Action::Confirm, Action::Back}), 9, 151, 302, accent);
         } else {
             label(root, "PLAYBACK UNAVAILABLE", 10, 10, 300, 0xffbc85, true);
-            message = label(root, display_text(error), 10, 39, 300, white);
+            message = label(root, wrapped_error(error), 10, 39, 300, white);
             lv_label_set_long_mode(message, LV_LABEL_LONG_MODE_WRAP);
+            lv_obj_set_style_text_line_space(message, 0, 0);
             lv_obj_set_height(message, 88);
             label(root, "Try another file or video conversion.", 10, 130, 300, quiet);
-            label(root, "Enter / Esc Files              Q Exit", 10, 151, 300, accent);
+            footer = label(root, tyrell::app::footer(commands(), {Action::Recover, Action::Quit}), 10, 151, 300, accent);
         }
         rebuild = false;
     }
@@ -344,6 +379,7 @@ struct App {
     void render() {
         if(rebuild) { build(); if(preview && page == Page::Player && image) draw_preview_video(); }
         if(page == Page::Browser) {
+            set_label(footer, tyrell::app::footer(commands(), {Action::Open, Action::Folders, Action::Help, Action::Quit}));
             set_label(subtitle, preview ? "/home/user/Videos" : display_text(browser.directory().string()));
             const std::vector<std::string> fixtures = {"[DIR] ..", "[DIR] Short films", "Sintel - trailer.mp4", "Big Buck Bunny.mkv", "Travel diary.webm"};
             const auto index = preview ? std::size_t(2) : browser.index();
@@ -363,7 +399,7 @@ struct App {
             const auto state = status.output_switching ? "HDMI setup" : status.buffering ? "Loading" : status.playing ? "Playing" : "Paused";
             set_label(timing, std::string(state) + "  " + format_time(status.position) + " / " + format_time(status.duration));
             set_label(volume, status.muted ? "Muted" : "Vol " + std::to_string(static_cast<int>(status.volume * 100 + 0.5)) + "%");
-            const auto note = !local_notice.empty() ? local_notice : !status.notice.empty() ? status.notice : status.output == Output::Hdmi ? "HDMI video / handheld controls" : "A/D Seek 10s    W/S Volume    O HDMI";
+            const auto note = !local_notice.empty() ? local_notice : !status.notice.empty() ? status.notice : status.output == Output::Hdmi ? "HDMI video / handheld controls" : tyrell::app::footer(commands(), {Action::Seek, Action::Volume, Action::Output});
             set_label(subtitle, display_text(note));
             const auto progress = status.duration > 0 ? std::clamp(status.position / status.duration, 0.0, 1.0) : 0;
             lv_obj_set_width(bar, std::max(1, static_cast<int>(302 * progress)));
@@ -392,13 +428,13 @@ struct App {
             const auto fresh = playback->status();
             if(fresh.output != status.output && page == Page::Player) rebuild = true;
             if(fresh.output != status.output || fresh.playing != status.playing) {
-                controls = true; controls_at = tick_ms();
+                controls = true; controls_at = ui_clock();
             }
             status = fresh;
             if(!status.error.empty() && status.error != seen_error) show_error(status.error);
         }
-        if(!local_notice.empty() && tick_ms() - notice_at > 6000) local_notice.clear();
-        if(tick_ms() - controls_at > 4000) controls = false;
+        if(!local_notice.empty() && ui_clock() - notice_at > 6000) local_notice.clear();
+        if(ui_clock() - controls_at > 4000) controls = false;
     }
 };
 
@@ -416,31 +452,39 @@ public:
     }
     void process(App& app) {
         input_event event{};
-        while(read(fd_, &event, sizeof(event)) == sizeof(event)) {
-            if(event.type != EV_KEY || (event.value != 1 && event.value != 2)) continue;
-            std::uint32_t key = 0;
-            bool repeatable = false;
-            switch(event.code) {
-                case KEY_ESC: key = LV_KEY_ESC; break;
-                case KEY_ENTER: key = LV_KEY_ENTER; break;
-                case KEY_SPACE: key = ' '; break;
-                case KEY_UP: key = LV_KEY_UP; repeatable = true; break;
-                case KEY_DOWN: key = LV_KEY_DOWN; repeatable = true; break;
-                case KEY_LEFT: key = LV_KEY_LEFT; repeatable = true; break;
-                case KEY_RIGHT: key = LV_KEY_RIGHT; repeatable = true; break;
-                case KEY_W: key = 'w'; repeatable = true; break;
-                case KEY_A: key = 'a'; repeatable = true; break;
-                case KEY_S: key = 's'; repeatable = true; break;
-                case KEY_D: key = 'd'; repeatable = true; break;
-                case KEY_Q: key = 'q'; break; case KEY_O: key = 'o'; break;
-                case KEY_T: key = 't'; break; case KEY_V: key = 'v'; break;
-                case KEY_M: key = 'm'; break; case KEY_B: key = 'b'; break;
-                case KEY_H: key = 'h'; break; default: break;
-            }
-            if(key && (event.value == 1 || repeatable)) app.key(key);
+        while(read(fd_, &event, sizeof(event)) == sizeof(event)) process_event(app, event);
+    }
+    void process_event(App& app, const input_event& event) {
+        if(event.type == EV_SYN && event.code == SYN_DROPPED) {
+            edges_.reset(); dropping_ = true; return;
         }
+        if(dropping_) {
+            if(event.type == EV_SYN && event.code == SYN_REPORT) dropping_ = false;
+            return;
+        }
+        if(event.type != EV_KEY) return;
+        int key = 0;
+        switch(event.code) {
+            case KEY_ESC: key = LV_KEY_ESC; break;
+            case KEY_ENTER: case KEY_KPENTER: key = LV_KEY_ENTER; break;
+            case KEY_SPACE: key = ' '; break;
+            case KEY_UP: key = LV_KEY_UP; break;
+            case KEY_DOWN: key = LV_KEY_DOWN; break;
+            case KEY_LEFT: key = LV_KEY_LEFT; break;
+            case KEY_RIGHT: key = LV_KEY_RIGHT; break;
+            case KEY_W: key = 'w'; break; case KEY_A: key = 'a'; break;
+            case KEY_S: key = 's'; break; case KEY_D: key = 'd'; break;
+            case KEY_Q: key = 'q'; break; case KEY_O: key = 'o'; break;
+            case KEY_T: key = 't'; break; case KEY_V: key = 'v'; break;
+            case KEY_M: key = 'm'; break; case KEY_B: key = 'b'; break;
+            case KEY_H: key = 'h'; break; default: break;
+        }
+        edges_.event(event.code, key, event.value, app.input_epoch,
+                     [&](int logical, bool repeated) { app.key(logical, repeated); });
     }
 private:
+    InputEdges edges_;
+    bool dropping_ = false;
     int fd_ = -1;
     bool open_path(const std::string& path, bool check_name) {
         const int fd = open(path.c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
@@ -449,6 +493,63 @@ private:
         if(check_name && (ioctl(fd, EVIOCGNAME(sizeof(name)), name) < 0 || std::string(name).find("tca8418") == std::string::npos)) { close(fd); return false; }
         fd_ = fd; return true;
     }
+};
+#endif
+
+#if TYRELL_ENABLE_SDL
+class SdlKeyboard {
+public:
+    explicit SdlKeyboard(std::uint32_t window) : window_(window) { SDL_AddEventWatch(watch, this); }
+    ~SdlKeyboard() { SDL_DelEventWatch(watch, this); }
+    SdlKeyboard(const SdlKeyboard&) = delete;
+    SdlKeyboard& operator=(const SdlKeyboard&) = delete;
+    // SDL may call an event watch off the UI thread. It only queues bounded
+    // input here; all app state and LVGL work remains on the main thread.
+    static int watch(void* data, SDL_Event* event) {
+        static_cast<SdlKeyboard*>(data)->observe(*event);
+        return 1;
+    }
+    void observe(const SDL_Event& event) {
+        const bool keyboard = event.type == SDL_KEYDOWN || event.type == SDL_KEYUP;
+        const bool focus_lost = event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST;
+        if((!keyboard && !focus_lost) || (keyboard ? event.key.windowID : event.window.windowID) != window_) return;
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(queue_.size() == 128) { queue_.clear(); overflow_ = true; }
+        queue_.push_back(event);
+    }
+    void process(App& app) {
+        std::deque<SDL_Event> events;
+        bool overflow;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            events.swap(queue_); overflow = overflow_; overflow_ = false;
+        }
+        if(overflow) edges_.reset();
+        for(const auto& event : events) {
+            if(event.type == SDL_WINDOWEVENT) { edges_.reset(); continue; }
+            const auto key = event.key.keysym.sym;
+            int logical = 0;
+            switch(key) {
+                case SDLK_UP: logical = LV_KEY_UP; break;
+                case SDLK_DOWN: logical = LV_KEY_DOWN; break;
+                case SDLK_LEFT: case SDLK_KP_MINUS: logical = LV_KEY_LEFT; break;
+                case SDLK_RIGHT: case SDLK_KP_PLUS: logical = LV_KEY_RIGHT; break;
+                case SDLK_ESCAPE: logical = LV_KEY_ESC; break;
+                case SDLK_RETURN: case SDLK_KP_ENTER: logical = LV_KEY_ENTER; break;
+                case SDLK_SPACE: logical = ' '; break;
+                default: if(key >= 32 && key < 127) logical = static_cast<int>(key); break;
+            }
+            const int value = event.type == SDL_KEYUP ? 0 : event.key.repeat ? 2 : 1;
+            edges_.event(static_cast<int>(event.key.keysym.scancode), logical, value, app.input_epoch,
+                         [&](int code, bool repeated) { app.key(code, repeated); });
+        }
+    }
+private:
+    std::uint32_t window_;
+    std::mutex mutex_;
+    std::deque<SDL_Event> queue_;
+    bool overflow_ = false;
+    InputEdges edges_;
 };
 #endif
 
@@ -600,11 +701,8 @@ int gui(const Options& options) {
         if(!app.browser.error().empty()) app.notice(app.browser.error());
     }
 #if TYRELL_ENABLE_SDL
-    if(options.simulator) {
-        auto* input = lv_sdl_keyboard_create(); auto* group = lv_group_create();
-        lv_group_add_obj(group, lv_screen_active()); lv_group_focus_obj(lv_screen_active()); lv_indev_set_group(input, group);
-        lv_obj_add_event_cb(lv_screen_active(), [](lv_event_t* event) { static_cast<App*>(lv_event_get_user_data(event))->key(lv_event_get_key(event)); }, LV_EVENT_KEY, &app);
-    }
+    std::unique_ptr<SdlKeyboard> sdl_keyboard;
+    if(options.simulator) sdl_keyboard = std::make_unique<SdlKeyboard>(SDL_GetWindowID(lv_sdl_window_get_window(display)));
 #endif
     std::signal(SIGINT, stop_signal); std::signal(SIGTERM, stop_signal);
     const auto limit = options.frames ? options.frames : headless ? 2u : 0u;
@@ -614,6 +712,9 @@ int gui(const Options& options) {
         if(options.run_seconds > 0 && std::chrono::duration<double>(std::chrono::steady_clock::now() - start_time).count() >= options.run_seconds) break;
 #if defined(__linux__)
         if(!headless && !options.simulator) keyboard.process(app);
+#endif
+#if TYRELL_ENABLE_SDL
+        if(sdl_keyboard) sdl_keyboard->process(app);
 #endif
         if(!headless) app.poll();
         app.render();
@@ -626,6 +727,9 @@ int gui(const Options& options) {
     write_report(app, elapsed, initial_cpu, iterations, framebuffer_commit.stats());
     if(app.playback) app.playback->stop();
     app.frame_image.clear(app.image);
+#if TYRELL_ENABLE_SDL
+    sdl_keyboard.reset();
+#endif
     lv_display_delete(display); lv_deinit();
     return 0;
 }

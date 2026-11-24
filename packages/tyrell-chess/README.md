@@ -2,9 +2,9 @@
 
 A native Linux port of [Cardputer ADV Chess](https://github.com/kaini-industries/cardputer-chess), with a colorful pixel-art interface designed for the Zero's 320 × 170 LCD and keyboard. The portable engine is retained at upstream commit `64419e29c828b77b420221472e8a314778713a07`; licenses, original-file hashes and adaptations are in [engine/](engine/).
 
-Current source is **0.1.2**, with fixes for draw acceptance and move confirmation
-at clock expiry. The retained [0.1.1 ARM64 package](../../dist/tyrell-chess/0.1.1/README.md)
-remains the latest device-validated build. Version 0.1.2 still needs ARM64 package
+Current source is **0.1.3**, with shared contextual commands/help and deterministic
+UI checks, including the earlier draw/move confirmation fixes at clock expiry. The retained [0.1.1 ARM64 package](../../dist/tyrell-chess/0.1.1/README.md)
+remains the latest device-validated build. Current source still needs its own ARM64 package
 and device qualification; see the [clock-boundary review](../../docs/chess-clock-validation.md).
 
 ![Home](assets/preview-home.png)
@@ -74,8 +74,8 @@ Local headless tests require loopback TCP access. The package command uses the e
 Install the exported package using the device's normal SSH user:
 
 ```sh
-scp artifacts/chess-native/tyrell-chess_0.1.2-1_arm64.deb user@cardputer:/tmp/
-ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.2-1_arm64.deb'
+scp artifacts/chess-native/tyrell-chess_0.1.3-1_arm64.deb user@cardputer:/tmp/
+ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.3-1_arm64.deb'
 ```
 
 The package adds only the app, launcher entries, icon and notices. It installs no services or firmware. Start native graphics from APPLaunch so it can manage display/input ownership. `tyrell-chess --help` and `--version` work over SSH without opening display devices.
@@ -90,3 +90,22 @@ build/chess-headless/tyrell-chess --headless --demo --frames 3 \
 Optional independent chess-oracle tests are documented in [tests/oracle/](tests/oracle/README.md). The [validation report](../../docs/chess-validation.md) separates automated tests, device observations and untested physical controls.
 
 Version 0.1.1 adds spatial keyboard navigation, controlled held-key repeat, safe draw/leave confirmations, checked puzzle/settings saving, contextual Help and clearer focus/clock states. See [the UI/input validation](../../docs/chess-ui-input-validation.md).
+
+## Shared commands and deterministic UI validation
+
+The current screen's action descriptors define aliases, availability, held-key
+repeat, confirmation policy, contextual Help and footer hints. The common model
+is the C++17 `Tyrell::AppCommands` target; rendering stays in raylib and the
+existing game runtime. Help shows the controls of the screen it was opened from.
+Use Left/Right for additional help pages; Enter, Escape and I still return.
+Unavailable actions are omitted from Help while their established feedback (for
+example a timed-game hint request) remains available.
+
+Headless rendering accepts `--ui-time SECONDS` for deterministic animations and
+notice visibility. It affects only the rendered UI snapshot, not game clocks,
+AI, pairing deadlines or network liveness, and requires headless mode with an
+explicit state directory. New CTest groups `chess-command-context` and
+`chess-ui-layout` check controller input/help agreement and actual text draw
+bounds. The layout test retains representative PNGs and a bounds report under
+its build directory's `u1-previews/`; these are software-rendered evidence, not
+physical LCD or M5/Zero/Gh0st acceptance.

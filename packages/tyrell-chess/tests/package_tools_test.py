@@ -22,6 +22,8 @@ class PackageToolsTest(unittest.TestCase):
         for name in ('scripts/chess', 'locks/game-build-inputs.json',
                      'packages/tyrell-chess/src/main.cpp',
                      'packages/tyrell-game/src/runtime.cpp',
+                     'packages/tyrell-app-common/CMakeLists.txt',
+                     'packages/tyrell-app-common/include/tyrell/app/commands.hpp',
                      'build/game-deps/raylib-test/src/rcore.c'):
             path = temporary / name
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -48,6 +50,8 @@ class PackageToolsTest(unittest.TestCase):
                     data = stream.extractfile(name).read()
                     self.assertEqual(hashlib.sha256(data).hexdigest(), expected)
                 self.assertEqual(stream.extractfile('packages/tyrell-chess/src/main.cpp').read(), original)
+                self.assertIn('packages/tyrell-app-common/include/tyrell/app/commands.hpp', manifest)
+                self.assertIn('packages/tyrell-app-common/CMakeLists.txt', manifest)
             self.assertNotEqual(changing.read_bytes(), original)
 
     def test_snapshot_excludes_credentials_and_python_caches(self):
@@ -68,6 +72,25 @@ class PackageToolsTest(unittest.TestCase):
             (root / 'private').write_text('private')
             (root / 'packages/tyrell-chess/leak').symlink_to(root / 'private')
             with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                snapshot(root / 'input.tar')
+
+    def test_common_source_root_cannot_be_redirected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            snapshot = self.snapshot(root)
+            common = root / 'packages/tyrell-app-common'
+            redirected = root / 'replacement-common'
+            common.rename(redirected)
+            common.symlink_to(redirected, target_is_directory=True)
+            with self.assertRaisesRegex(RuntimeError, 'symlink'):
+                snapshot(root / 'input.tar')
+
+    def test_common_source_credentials_are_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            snapshot = self.snapshot(root)
+            (root / 'packages/tyrell-app-common/.env.local').write_text('not an input')
+            with self.assertRaisesRegex(RuntimeError, 'credential|env'):
                 snapshot(root / 'input.tar')
 
     def test_partial_dpkg_failure_still_removes_own_test_package(self):
