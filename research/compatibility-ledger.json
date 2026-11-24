@@ -83,14 +83,14 @@
       "component": "status",
       "kind": "current-source",
       "version": "0.1.2",
-      "source_identity": "A1 Status idle-loop app/dependency boundary at 8f53d06ae4276eb423ef5e2d8a8cd9ea76ae25a9; digest must match the checkout",
+      "source_identity": "A1 Status idle-loop boundary with EOF observation test; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-status",
         "packages/tyrell-app-common",
         "locks/build-inputs.json"
       ],
-      "sha256": "2b66caa66be31fb7388e9ac615757a3c659fbfcf3c2b1dbcbf3bc3d32a2948ac"
+      "sha256": "5f9d013f3ee05738bc017fea9afae834981d8de1b0de21462eab4afab928e43d"
     },
     {
       "id": "video-source",

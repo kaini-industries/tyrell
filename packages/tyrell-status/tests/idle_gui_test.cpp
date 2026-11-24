@@ -40,8 +40,9 @@ struct Devices : GuiDevices {
     Ui* ui = nullptr;
     std::vector<std::uint32_t> pixels;
     std::atomic<unsigned> waits{0}, reads{0}, flushes{0};
+    std::atomic<unsigned> flushes_at_eof{0};
     std::atomic<int> page{-1}, uptime{-1};
-    std::atomic<bool> owned{false};
+    std::atomic<bool> owned{false}, eof_observed{false};
     bool signal_before_wait = false;
     Devices() { require(pipe2(keys, O_NONBLOCK | O_CLOEXEC) == 0, "input pipe"); }
     ~Devices() override { for(auto fd : keys) if(fd >= 0) close(fd); }
@@ -53,7 +54,13 @@ struct Devices : GuiDevices {
         char bytes[64];
         const auto count = read(keys[0], bytes, sizeof(bytes));
         if(count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) return true;
-        if(count == 0) return false;
+        if(count == 0) {
+            // Capture on the GUI thread, after any render already in flight.
+            // A driver-side snapshot can race an otherwise legitimate flush.
+            flushes_at_eof = flushes.load();
+            eof_observed = true;
+            return false;
+        }
         require(count > 0, "input read");
         for(ssize_t i = 0; i < count; ++i) key(state, static_cast<unsigned char>(bytes[i]));
         return true;
@@ -117,13 +124,13 @@ void native_idle_input_refresh_and_deadline() {
         fixtures.uptime(180); start = steady_clock::now();
         eventually([&] { return devices.uptime.load() == 180; }, milliseconds(1300), "telemetry deadline wakes without input");
         require(steady_clock::now() - start >= milliseconds(800), "telemetry is not polled continuously");
-        const auto writes = devices.flushes.load();
         close(devices.keys[1]); devices.keys[1] = -1;
         eventually([&] { return !devices.owned.load(); }, milliseconds(100), "input EOF wakes and relinquishes ownership");
-        require(devices.flushes.load() == writes, "input EOF exits before another flush");
     });
     require(gui(fixtures.options(), &devices) == 0, "native event-driven GUI exit");
     driver.join();
+    require(devices.eof_observed.load() && !devices.owned.load(), "GUI observes input EOF and releases ownership");
+    require(devices.flushes.load() == devices.flushes_at_eof.load(), "input EOF exits before another flush");
 }
 void shutdown_before_and_during_wait() {
     Fixtures fixtures;
