@@ -166,7 +166,7 @@ Generated files are under ignored `artifacts/`:
 
 | File | Purpose |
 | --- | --- |
-| `tyrell-status_0.1.1-1_arm64.deb` | Current development package; normal M5 build with shell integration disabled |
+| `tyrell-status_0.1.2-1_arm64.deb` | Current development package; normal M5 build with shell integration disabled |
 | `manifest.json`, `source-manifest.json`, `build-inputs.json` | Source hashes, revisions, environment and proof status |
 | `SHA256SUMS` | Checksums for the exported files |
 | `tests.txt`, `install-test.txt` | Automated test and VM install/remove results |

@@ -56,6 +56,11 @@ in addition to the model, CLI and headless renderer tests. No device node or
 actual Gh0st process is used; passing does not establish physical compatibility
 or a 100 ms pause guarantee.
 
+The [A1 native event-wait and idle GUI checks](status-idle-loop.md) are required
+in both Status configurations. They exercise real pipes/socket polling and the
+production loop with a memory display. Matched PR #8 comparisons remain a
+separate recorded experiment; hosted CI does not fetch an old baseline.
+
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg
 behavior; they do not prove the installed runtime closure, patched native Wizard,

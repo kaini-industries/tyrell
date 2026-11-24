@@ -55,8 +55,9 @@ struct FakeDevices : GuiDevices {
         });
         return display;
     }
-    void idle() override {
+    void wait(const tyrell::status::WaitRequest& request) override {
         check(idle_count < 50, "bounded test completion");
+        if(!input) check(request.input_fd < 0, "hidden wait omits released input");
         if(script) script(idle_count++);
     }
     void start(bool hello = true) {
@@ -116,9 +117,9 @@ void flood_defers_gui() {
     packet(d.peer, "pause");
     d.script = [&](unsigned step) {
         check(d.creates == 0 && d.acquires == 0, "bounded packet drain defers device work");
-        if(step == 1) { check(received(d.peer, "paused"), "pause behind unknown packet burst"); d.disconnect(); }
+        check(step == 0 && received(d.peer, "paused"), "pause behind unknown packet burst"); d.disconnect();
     };
-    check(gui(Options{}, &d) == 0 && d.idle_count == 2, "drain bursts without opening display");
+    check(gui(Options{}, &d) == 0 && d.idle_count == 1, "drain bursts without sleeping or opening display");
 }
 
 void resume_input_failure() {

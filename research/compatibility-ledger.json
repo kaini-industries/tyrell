@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "1d8c13ea91d366b53a5d5ff376f47080c85c6e34",
+  "reviewed_revision": "1cd5094edc500f5153288b461ecb8c827943bc60",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -82,22 +82,22 @@
       "id": "status-source",
       "component": "status",
       "kind": "current-source",
-      "version": "0.1.1",
-      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
+      "version": "0.1.2",
+      "source_identity": "A1 Status idle-loop app/dependency boundary at 1cd5094edc500f5153288b461ecb8c827943bc60; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-status",
         "packages/tyrell-app-common",
         "locks/build-inputs.json"
       ],
-      "sha256": "5233da383efafe2d722fc3d2027eee12734a38db38412e147f668a625ed5cc4e"
+      "sha256": "5f9d013f3ee05738bc017fea9afae834981d8de1b0de21462eab4afab928e43d"
     },
     {
       "id": "video-source",
       "component": "video",
       "kind": "current-source",
       "version": "0.1.8",
-      "source_identity": "L1 app/dependency boundary at 1d8c13ea91d366b53a5d5ff376f47080c85c6e34; digest must match the checkout",
+      "source_identity": "A1 Status idle-loop app/dependency boundary at 8f53d06ae4276eb423ef5e2d8a8cd9ea76ae25a9; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
@@ -105,7 +105,7 @@
         "locks/build-inputs.json",
         "locks/video-build-inputs.json"
       ],
-      "sha256": "f9a21a2768938ff3ee037f91674c79f6030528f6ba1becbeaa570ad2e6db8c0e"
+      "sha256": "90a60459190a3de45cb2a6888896f156af00f15090e1d42de311ec5474d8a00c"
     },
     {
       "id": "chess-source",
