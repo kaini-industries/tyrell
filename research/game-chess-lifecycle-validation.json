@@ -3,7 +3,7 @@
   "kind": "a3-offline-chess-software-validation",
   "reviewed_date": "2026-11-24",
   "status": "passed",
-  "implementation_commit": "pending-follow-up-binding",
+  "implementation_commit": "e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7",
   "base_commit": "47cc6a6a82f3138e10e2d3f87deb7d1f77ee5213",
   "local_source_dirty": true,
   "source_binding": "Frozen app/dependency boundaries below were recorded after local development checks. Clean hosted CI reports separately bind their checkout and artifacts; this record is not candidate promotion.",

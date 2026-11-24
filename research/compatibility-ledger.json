@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "4042c90e89af5ee0b07496ff793027f7298b3dbc",
+  "reviewed_revision": "e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -84,7 +84,7 @@
     {
       "id": "a3-lifecycle-validation",
       "path": "research/game-chess-lifecycle-validation.json",
-      "sha256": "1964da168afc066a884ae5802298d6811a9a91407f55f7176947455d0b5a48c0"
+      "sha256": "ec0f1c8b5d63753a51ac2c3ecc670b69dbfb29bb5467bbf5c98d6e7978f06227"
     }
   ],
   "subjects": [
@@ -122,7 +122,7 @@
       "component": "chess",
       "kind": "current-source",
       "version": "0.1.4",
-      "source_identity": "A3 offline lifecycle app/dependency boundary; digest must match the checkout; implementation revision bound in follow-up evidence commit",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -139,7 +139,7 @@
       "component": "sandline",
       "kind": "current-source",
       "version": "0.1.0",
-      "source_identity": "A3 offline lifecycle app/dependency boundary; digest must match the checkout; implementation revision bound in follow-up evidence commit",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-tanks",
@@ -155,7 +155,7 @@
       "component": "beacon",
       "kind": "current-source",
       "version": "0.1.1",
-      "source_identity": "A3 offline lifecycle app/dependency boundary; digest must match the checkout; implementation revision bound in follow-up evidence commit",
+      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-game",
