@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7",
+  "reviewed_revision": "4712994ced0afbb5b1d937ed6b1a97e1f175d7d0",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -94,7 +94,7 @@
     {
       "id": "catalog-validation",
       "path": "research/catalog-validation.json",
-      "sha256": "c121ccc1ea49f26ffe70ea97a46bc3d02083d34705db180fbe438e11b5e4d0f2"
+      "sha256": "818520567de115128a1a7ee58d7647f268ba31e7c278e518d0626590c516a82e"
     }
   ],
   "subjects": [
@@ -257,7 +257,7 @@
       "component": "catalog",
       "kind": "current-source",
       "version": "0.1.0",
-      "source_identity": "C1 discovery-only app/dependency boundary; final implementation revision bound after commit",
+      "source_identity": "C1 discovery-only app/dependency boundary at 4712994ced0afbb5b1d937ed6b1a97e1f175d7d0; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-catalog",

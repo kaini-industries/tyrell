@@ -3,7 +3,7 @@
   "kind": "c1-discovery-cache-and-native-frontend-validation",
   "reviewed_date": "2026-11-24",
   "status": "passed",
-  "implementation_commit": "pending-follow-up-binding",
+  "implementation_commit": "4712994ced0afbb5b1d937ed6b1a97e1f175d7d0",
   "catalog_source_sha256": "ceee2d4dd93d2ca628da34ae1f1b499f934e4340673a1c75ce8327bbed5016a6",
   "producer_sha256": {
     "packages/tyrell-catalog/CMakeLists.txt": "e13d2fcff80bf3331ef19d589cfe357d20d4134dd3d41c6b949b85140b51e4ae",
