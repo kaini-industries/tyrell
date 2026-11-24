@@ -4,7 +4,14 @@ Keyboard-controlled local video player for the Linux M5Stack CardputerZero.
 Start **Tyrell Video** through APPLaunch so the launcher yields display/input
 ownership and resumes after the player exits.
 
-Current **0.1.8 source** adds context-derived commands, help and footers,
+Current **0.1.9 source** adds synchronous playback checkpoints, resource
+diagnostics and a lifecycle timing/admission gate. Active Gh0st playback remains
+unsupported: pipeline shutdown can block and HDMI/audio/VT helper completion is
+not confirmed by lease closure. The normal M5 build keeps the qualification
+guard off and retains its existing playback loop. See
+[checkpoint and lifecycle scope](../../docs/video-checkpoint-lifecycle.md).
+
+Version 0.1.8 adds context-derived commands, help and footers,
 press-only confirmations/toggles, native/SDL input edge handling and deterministic
 UI checks. It retains the existing media/rendering and APPLaunch integration.
 This source increment has not inherited 0.1.7's hardware or Store qualification;

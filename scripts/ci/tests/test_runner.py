@@ -97,6 +97,23 @@ class RunnerIdentityTests(unittest.TestCase):
         self.assertEqual(exported.read_bytes(), b"representative preview")
         self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
 
+    def test_lifecycle_report_survives_export_without_dependency_cache(self):
+        work = self.root / "build/ci/example"
+        report = work / "video/a2-lifecycle-blocking.json"
+        report.parent.mkdir(parents=True)
+        report.write_bytes(b'{"within_shell_100ms": false}')
+        dependency = work / "dependencies/a2-unrelated.json"
+        dependency.parent.mkdir()
+        dependency.write_bytes(b'not suite evidence')
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "video")
+        self.assertEqual(len(bindings), 1)
+        self.assertEqual(bindings[0]["original_path"], str(report.relative_to(self.root)))
+        shutil.rmtree(work)
+        exported = self.root / "build/ci" / bindings[0]["artifact_path"]
+        self.assertEqual(exported.read_bytes(), b'{"within_shell_100ms": false}')
+        self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
+
 
 class RequiredCTestTests(unittest.TestCase):
     def test_missing_registered_group_fails_before_execution(self):

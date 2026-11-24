@@ -240,6 +240,9 @@ L1 adds an [experimental optional shell link and Status pilot](docs/shell-link-s
 disabled in normal M5 builds, with fake-shell ownership checks.
 A1 adds [Status's event-driven native idle loop](docs/status-idle-loop.md), with
 separate software measurements and physical acceptance still pending.
+A2 adds [Video checkpoints and lifecycle admission checks](docs/video-checkpoint-lifecycle.md).
+Live media integration remains gated by pipeline teardown and asynchronous
+HDMI/audio/VT ownership completion.
 Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package

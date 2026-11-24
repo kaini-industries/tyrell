@@ -20,6 +20,10 @@
 #include <sstream>
 #include <utility>
 
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/stat.h>
+#endif
+
 #if defined(__linux__)
 #include <unistd.h>
 #endif
@@ -34,6 +38,49 @@ constexpr unsigned text_flag = 1U << 2;
 constexpr unsigned visualization_flag = 1U << 3;
 constexpr int lcd_width = 320;
 constexpr int lcd_height = 170;
+
+std::optional<FileIdentity> file_identity(const std::string& path) {
+#if defined(__unix__) || defined(__APPLE__)
+    struct stat info{};
+    if(::stat(path.c_str(), &info) != 0 || !S_ISREG(info.st_mode) || info.st_size < 0) return {};
+    std::error_code error;
+    const auto canonical = std::filesystem::canonical(path, error);
+    if(error) return {};
+    FileIdentity identity;
+    identity.path = path;
+    identity.canonical_path = canonical.string();
+    identity.device = static_cast<std::uint64_t>(info.st_dev);
+    identity.inode = static_cast<std::uint64_t>(info.st_ino);
+    identity.bytes = static_cast<std::uint64_t>(info.st_size);
+#if defined(__APPLE__)
+    identity.modified_seconds = info.st_mtimespec.tv_sec;
+    identity.modified_nanoseconds = info.st_mtimespec.tv_nsec;
+    identity.changed_seconds = info.st_ctimespec.tv_sec;
+    identity.changed_nanoseconds = info.st_ctimespec.tv_nsec;
+#else
+    identity.modified_seconds = info.st_mtim.tv_sec;
+    identity.modified_nanoseconds = info.st_mtim.tv_nsec;
+    identity.changed_seconds = info.st_ctim.tv_sec;
+    identity.changed_nanoseconds = info.st_ctim.tv_nsec;
+#endif
+    return identity;
+#else
+    (void)path;
+    return {};
+#endif
+}
+
+bool same_identity(const FileIdentity& left, const FileIdentity& right) {
+    return left.path == right.path && left.canonical_path == right.canonical_path &&
+        left.device == right.device && left.inode == right.inode && left.bytes == right.bytes &&
+        left.modified_seconds == right.modified_seconds && left.modified_nanoseconds == right.modified_nanoseconds &&
+        left.changed_seconds == right.changed_seconds && left.changed_nanoseconds == right.changed_nanoseconds;
+}
+
+bool unchanged_file(const FileIdentity& expected) {
+    const auto current = file_identity(expected.path);
+    return current && same_identity(expected, *current);
+}
 
 std::string tag_string(const GstTagList* tags, const char* tag) {
     gchar* value = nullptr;
@@ -154,6 +201,14 @@ struct Playback::Impl {
     std::string initial_handoff_error;
     std::string external_subtitle;
     std::string requested_audio_sink;
+    std::optional<FileIdentity> media_identity;
+    std::optional<FileIdentity> subtitle_identity;
+    std::optional<PlaybackCheckpoint> saved_checkpoint;
+    Output output_preference = Output::Lcd;
+    bool retain_recovery_budgets = false;
+    bool external_cleanup_unconfirmed = false;
+    bool resume_hdmi_fallback_pause = false;
+    bool resume_ended = false;
     std::string subtitle_font;
     OutputInventory inventory;
     mutable std::mutex frame_mutex;
@@ -185,6 +240,13 @@ struct Playback::Impl {
     double restart_position = 0;
     int restart_audio_track = -1;
     int restart_subtitle_track = -1;
+    bool seek_pending = false;
+    double seek_position = 0;
+    unsigned seek_streams = 0;
+    std::atomic<guint32> seek_sequence{GST_SEQNUM_INVALID};
+    std::atomic<guint32> video_seek_segment{GST_SEQNUM_INVALID};
+    std::atomic<guint32> audio_seek_segment{GST_SEQNUM_INVALID};
+    std::chrono::steady_clock::time_point seek_started{};
     std::chrono::steady_clock::time_point last_query{};
     std::chrono::steady_clock::time_point last_hotplug{};
     std::chrono::steady_clock::time_point load_started{};
@@ -215,18 +277,29 @@ struct Playback::Impl {
         int subtitle_track;
     };
 
+    bool pending_seek_target() const {
+        if(!seek_pending || !pipeline) return false;
+        if(std::chrono::steady_clock::now() - seek_started < std::chrono::seconds(1)) return true;
+        GstState current = GST_STATE_NULL, pending = GST_STATE_VOID_PENDING;
+        return gst_element_get_state(pipeline, &current, &pending, 0) != GST_STATE_CHANGE_SUCCESS ||
+               pending != GST_STATE_VOID_PENDING;
+    }
+
     Restart restart_target() const {
         // Preroll queries describe the new pipeline's initial position, before
         // the queued seek and track selections have been applied.
+        if(pending_seek_target())
+            return Restart{seek_position, restart_audio_track >= 0 ? restart_audio_track : state.audio_track,
+                           state.subtitle_track};
         return pending_preroll ? Restart{restart_position, restart_audio_track, restart_subtitle_track}
                                : Restart{state.position, restart_audio_track >= 0 ? restart_audio_track : state.audio_track,
                                          state.subtitle_track};
     }
 
-    void destroy_pipeline() {
+    void destroy_pipeline(bool already_null = false) {
         if(pipeline) {
             // NULL joins the streaming tasks before releasing our callback data.
-            gst_element_set_state(pipeline, GST_STATE_NULL);
+            if(!already_null) gst_element_set_state(pipeline, GST_STATE_NULL);
             if(bus) gst_object_unref(bus);
             bus = nullptr;
             gst_object_unref(pipeline);
@@ -245,7 +318,61 @@ struct Playback::Impl {
         }
         hdmi.release();
         pending_preroll = false;
+        seek_pending = false;
+        seek_sequence = video_seek_segment = audio_seek_segment = GST_SEQNUM_INVALID;
         clear_frame();
+    }
+
+    void observe_segment(GstPadProbeInfo* info, std::atomic<guint32>& observed) {
+        if(!(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM)) return;
+        auto* event = GST_PAD_PROBE_INFO_EVENT(info);
+        if(event && GST_EVENT_TYPE(event) == GST_EVENT_SEGMENT) {
+            const auto sequence = gst_event_get_seqnum(event);
+            // A later selector segment must not erase proof that this seek
+            // reached the sink; stale segments never prove a newer request.
+            if(sequence == seek_sequence.load()) observed = sequence;
+        }
+    }
+
+    static GstPadProbeReturn audio_segment(GstPad*, GstPadProbeInfo* info, gpointer data) {
+        auto& player = *static_cast<Impl*>(data);
+        player.observe_segment(info, player.audio_seek_segment);
+        return GST_PAD_PROBE_OK;
+    }
+
+    void settle_seek() {
+        if(!seek_pending) return;
+        const auto sequence = seek_sequence.load();
+        if(!seek_streams || ((seek_streams & 1U) && video_seek_segment.load() != sequence) ||
+           ((seek_streams & 2U) && audio_seek_segment.load() != sequence)) return;
+        GstState current = GST_STATE_NULL, pending = GST_STATE_VOID_PENDING;
+        if(gst_element_get_state(pipeline, &current, &pending, 0) == GST_STATE_CHANGE_SUCCESS &&
+           pending == GST_STATE_VOID_PENDING) {
+            seek_pending = false;
+            seek_sequence = GST_SEQNUM_INVALID;
+        }
+    }
+
+    bool issue_seek(double position) {
+        if(!pipeline || !std::isfinite(position) || position < 0 ||
+           position > static_cast<double>(G_MAXINT64 / GST_SECOND)) return false;
+        gint video = 0, audio = 0;
+        g_object_get(pipeline, "n-video", &video, "n-audio", &audio, nullptr);
+        seek_streams = (video > 0 ? 1U : 0U) | (audio > 0 ? 2U : 0U);
+        const auto sequence = gst_util_seqnum_next();
+        seek_position = position;
+        seek_started = std::chrono::steady_clock::now();
+        seek_pending = true;
+        video_seek_segment = audio_seek_segment = GST_SEQNUM_INVALID;
+        seek_sequence = sequence;
+        auto* event = gst_event_new_seek(1.0, GST_FORMAT_TIME,
+            static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+            GST_SEEK_TYPE_SET, static_cast<gint64>(position * GST_SECOND), GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE);
+        gst_event_set_seqnum(event, sequence);
+        if(gst_element_send_event(pipeline, event)) return true;
+        seek_pending = false;
+        seek_sequence = GST_SEQNUM_INVALID;
+        return false;
     }
 
     static GstFlowReturn sample_ready(GstAppSink* sink, gpointer data) {
@@ -282,6 +409,7 @@ struct Playback::Impl {
 
     static GstPadProbeReturn video_delivery(GstPad*, GstPadProbeInfo* info, gpointer data) {
         auto& player = *static_cast<Impl*>(data);
+        player.observe_segment(info, player.video_seek_segment);
         if(GST_PAD_PROBE_INFO_TYPE(info) & GST_PAD_PROBE_TYPE_BUFFER_LIST) {
             GstBufferList* buffers = GST_PAD_PROBE_INFO_BUFFER_LIST(info);
             if(buffers) player.video_buffers_delivered.fetch_add(gst_buffer_list_length(buffers));
@@ -472,7 +600,7 @@ struct Playback::Impl {
         // pause/segment/flush resets of GstBaseSink's rendering statistics.
         if(GstPad* sink_pad = gst_element_get_static_pad(sink, "sink")) {
             gst_pad_add_probe(sink_pad,
-                static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
                 video_delivery, this, nullptr);
             gst_object_unref(sink_pad);
         }
@@ -505,8 +633,10 @@ struct Playback::Impl {
         if(requested_audio_sink == hdmi_audio.sink_name()) requested_audio_sink.clear();
         hdmi_audio.release();
         audio_attempted = false;
-        audio_fallback_attempted = false;
-        audio_recovery_attempted = false;
+        if(!retain_recovery_budgets) {
+            audio_fallback_attempted = false;
+            audio_recovery_attempted = false;
+        }
         audio_owned_seen = false;
     }
 
@@ -549,6 +679,10 @@ struct Playback::Impl {
         const bool prefer_hdmi = state.output == Output::Hdmi || initial_hdmi_pending;
         const auto before = hdmi_audio.state();
         if(before == HdmiAudioSession::State::Idle && prefer_hdmi && !audio_attempted) {
+            if(retain_recovery_budgets && audio_fallback_attempted) {
+                audio_attempted = true;
+                return;
+            }
             inventory = audio_outputs();
             const bool explicit_available = !requested_audio_sink.empty() &&
                 std::any_of(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& sink) {
@@ -562,6 +696,7 @@ struct Playback::Impl {
                 move_audio(choose_audio_route(inventory.audio, true, requested_audio_sink));
                 return;
             }
+            external_cleanup_unconfirmed = true;
             if(!hdmi_audio.begin()) {
                 state.notice = hdmi_audio.error();
                 return;
@@ -591,7 +726,8 @@ struct Playback::Impl {
         const auto position = restart_position;
         const auto audio_track = restart_audio_track;
         const auto subtitle_track = restart_subtitle_track;
-        const bool autoplay = desired_playing;
+        const bool autoplay = desired_playing && !(resume_hdmi_fallback_pause && output == Output::Lcd);
+        const bool fallback_autoplay = desired_playing && !resume_hdmi_fallback_pause;
         const auto handoff_error = std::exchange(initial_handoff_error, {});
         initial_hdmi_pending = false;
         state.output_switching = false;
@@ -602,7 +738,10 @@ struct Playback::Impl {
             release_hdmi_audio();
             desktop_lease.release();
         }
-        if(create_pipeline(position, autoplay, audio_track, subtitle_track)) return true;
+        if(create_pipeline(position, autoplay, audio_track, subtitle_track)) {
+            resume_hdmi_fallback_pause = false;
+            return true;
+        }
         if(output == Output::Hdmi) {
             const auto failure = handoff_error.empty() ? state.error : handoff_error + "; " + state.error;
             state.output = Output::Lcd;
@@ -610,7 +749,10 @@ struct Playback::Impl {
             state.notice = failure + "; using LCD";
             release_hdmi_audio(true);
             desktop_lease.release();
-            if(create_pipeline(position, autoplay, audio_track, subtitle_track)) return true;
+            if(create_pipeline(position, fallback_autoplay, audio_track, subtitle_track)) {
+                resume_hdmi_fallback_pause = false;
+                return true;
+            }
         }
         state.loaded = state.playing = state.buffering = false;
         state.paused = true;
@@ -634,16 +776,18 @@ struct Playback::Impl {
         finish_initial_hdmi(Output::Hdmi, notice);
     }
 
-    bool begin_initial_hdmi() {
+    bool begin_initial_hdmi(double position = 0, bool autoplay = true, int audio_track = -1, int subtitle_track = -1) {
         initial_hdmi_pending = true;
         state.output = Output::Lcd;
         state.output_switching = true;
         state.buffering = true;
-        state.playing = state.paused = false;
+        state.playing = false;
+        state.paused = !autoplay;
         state.notice = "Preparing HDMI and TV audio; O cancels";
-        desired_playing = true;
-        restart_position = 0;
-        restart_audio_track = restart_subtitle_track = -1;
+        desired_playing = autoplay;
+        restart_position = position;
+        restart_audio_track = audio_track;
+        restart_subtitle_track = subtitle_track;
         initial_handoff_error.clear();
         // Older installations can still use a free DRM display even when the
         // handoff service is absent. A waiting lease is reused across a new
@@ -651,6 +795,7 @@ struct Playback::Impl {
         initial_hdmi_direct = !options.desktop_handoff;
         if(options.desktop_handoff && desktop_lease.state() != HdmiDesktopLease::State::Ready &&
            desktop_lease.state() != HdmiDesktopLease::State::Waiting) {
+            external_cleanup_unconfirmed = true;
             initial_hdmi_direct = !desktop_lease.begin();
             if(initial_hdmi_direct) initial_handoff_error = desktop_lease.error();
         }
@@ -742,6 +887,10 @@ struct Playback::Impl {
                      "uri", uri.c_str(), "volume", state.volume, "mute", state.muted,
                      "subtitle-font-desc", subtitle_font.c_str(), nullptr);
         audio_sink = audio;
+        if(GstPad* pad = gst_element_get_static_pad(audio, "sink")) {
+            gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, audio_segment, this, nullptr);
+            gst_object_unref(pad);
+        }
         gst_object_unref(video);
         gst_object_unref(audio);
         if(!external_subtitle.empty()) {
@@ -760,7 +909,8 @@ struct Playback::Impl {
         restart_subtitle_track = subtitle_track;
         pending_preroll = true;
         desired_playing = autoplay;
-        ended = false;
+        ended = resume_ended;
+        resume_ended = false;
         load_started = std::chrono::steady_clock::now();
         state.playing = false;
         state.paused = !autoplay;
@@ -823,6 +973,7 @@ struct Playback::Impl {
 
     void query() {
         if(!pipeline) return;
+        settle_seek();
         gint64 value = 0;
         if(!pending_preroll && gst_element_query_position(pipeline, GST_FORMAT_TIME, &value) && value >= 0)
             state.position = static_cast<double>(value) / GST_SECOND;
@@ -1008,13 +1159,14 @@ struct Playback::Impl {
         if(!pending_preroll || !pipeline) return;
         pending_preroll = false;
         refresh_tracks();
+        apply_subtitle_selection(restart_subtitle_track);
+        if(restart_position > 0 && !issue_seek(restart_position))
+            state.notice = "This file cannot seek; playback starts at the beginning";
+        // On playbin 1.26, switching a paused audio selector and then issuing a
+        // caption/seek flush can deadlock. Prepare text/seek first and select
+        // audio last, without transiently playing a user-paused checkpoint.
         if(restart_audio_track >= 0 && restart_audio_track < static_cast<int>(state.audio_tracks.size()))
             g_object_set(pipeline, "current-audio", restart_audio_track, nullptr);
-        apply_subtitle_selection(restart_subtitle_track);
-        if(restart_position > 0 && !gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
-                static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
-                static_cast<gint64>(restart_position * GST_SECOND)))
-            state.notice = "This file cannot seek; playback starts at the beginning";
         gst_element_set_state(pipeline, desired_playing ? GST_STATE_PLAYING : GST_STATE_PAUSED);
         GST_DEBUG_BIN_TO_DOT_FILE_WITH_TS(GST_BIN(pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "tyrell-video-prerolled");
         state.buffering = false;
@@ -1035,10 +1187,17 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
         return false;
     }
     const auto accepted_at = std::chrono::steady_clock::now();
+    const auto identity = file_identity(absolute.string());
     const Output output = p.pending_hdmi || p.initial_hdmi_pending ? Output::Hdmi : p.state.output;
     p.pending_hdmi = false;
     p.initial_hdmi_pending = false;
     p.destroy_pipeline();
+    p.saved_checkpoint.reset();
+    p.media_identity = identity;
+    p.subtitle_identity.reset();
+    p.output_preference = output;
+    p.retain_recovery_budgets = false;
+    p.resume_hdmi_fallback_pause = p.resume_ended = false;
     if(output == Output::Lcd) { p.release_hdmi_audio(); p.desktop_lease.release(); }
     const double volume = p.state.volume;
     const bool muted = p.state.muted;
@@ -1061,7 +1220,10 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     p.external_subtitle.clear();
     if(!external_subtitle.empty()) {
         const auto subtitle = std::filesystem::absolute(external_subtitle, error);
-        if(!error && std::filesystem::is_regular_file(subtitle, error)) p.external_subtitle = subtitle.string();
+        if(!error && std::filesystem::is_regular_file(subtitle, error)) {
+            p.external_subtitle = subtitle.string();
+            p.subtitle_identity = file_identity(p.external_subtitle);
+        }
         else p.state.notice = "External subtitle file is unavailable";
     }
     // The handheld controller is already usable without a video pipeline.
@@ -1077,6 +1239,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
 
 void Playback::poll() {
     auto& p = *impl_;
+    if(p.state.suspended) return;
     if(p.initial_hdmi_pending) {
         p.poll_initial_hdmi();
         if(p.initial_hdmi_pending) return;
@@ -1214,7 +1377,11 @@ std::shared_ptr<const Frame> Playback::latest_frame() const {
 
 bool Playback::play() {
     auto& p = *impl_;
-    if(p.initial_hdmi_pending) { p.desired_playing = true; p.state.paused = false; return true; }
+    if(p.state.suspended) return false;
+    if(p.initial_hdmi_pending) {
+        if(p.ended || p.resume_ended) { p.restart_position = 0; p.state.position = 0; p.ended = p.resume_ended = false; }
+        p.desired_playing = true; p.state.paused = false; return true;
+    }
     if(!p.pipeline) return false;
     if(p.ended) { p.ended = false; seek(0); }
     p.desired_playing = true;
@@ -1223,10 +1390,12 @@ bool Playback::play() {
 }
 bool Playback::pause() {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
     if(p.initial_hdmi_pending) { p.desired_playing = false; p.state.paused = true; return true; }
     if(!p.pipeline) return false;
+    p.settle_seek();
     GstState before = GST_STATE_NULL, pending = GST_STATE_VOID_PENDING;
-    const bool capture_position = !p.pending_preroll &&
+    const bool capture_position = !p.pending_preroll && !p.pending_seek_target() &&
         gst_element_get_state(p.pipeline, &before, &pending, 0) == GST_STATE_CHANGE_SUCCESS &&
         before == GST_STATE_PLAYING && pending == GST_STATE_VOID_PENDING;
     p.desired_playing = false;
@@ -1247,15 +1416,17 @@ bool Playback::pause() {
 bool Playback::toggle_pause() { return impl_->desired_playing ? pause() : play(); }
 bool Playback::seek(double seconds) {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
     if((!p.pipeline && !p.initial_hdmi_pending) || !std::isfinite(seconds)) return false;
     seconds = std::max(0.0, seconds);
     if(p.state.duration > 0) seconds = std::min(seconds, std::max(0.0, p.state.duration - 0.01));
-    if(p.pending_preroll || p.initial_hdmi_pending) { p.restart_position = seconds; p.state.position = seconds; p.ended = false; return true; }
-    const bool result = gst_element_seek_simple(p.pipeline, GST_FORMAT_TIME,
-        static_cast<GstSeekFlags>(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE), static_cast<gint64>(seconds * GST_SECOND));
+    if(p.pending_preroll || p.initial_hdmi_pending) {
+        p.restart_position = seconds; p.state.position = seconds; p.ended = p.resume_ended = false; return true;
+    }
+    const bool result = p.issue_seek(seconds);
     // Keep the previous immutable snapshot until the streaming thread replaces
     // it. A fast paused preroll can already be published before seek returns.
-    if(result) { p.state.position = seconds; p.ended = false; }
+    if(result) { p.state.position = seconds; p.ended = p.resume_ended = false; }
     else p.state.notice = "This file does not support seeking";
     return result;
 }
@@ -1263,6 +1434,8 @@ bool Playback::seek_relative(double seconds) { return seek(impl_->state.position
 
 bool Playback::set_output(Output output) {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
+    p.output_preference = output;
     if(p.initial_hdmi_pending) {
         if(output == Output::Hdmi) return true;
         return p.finish_initial_hdmi(Output::Lcd, "HDMI setup cancelled; using LCD");
@@ -1287,6 +1460,7 @@ bool Playback::set_output(Output output) {
             p.state.notice = "No connected HDMI display; using LCD";
             return false;
         }
+        p.external_cleanup_unconfirmed = true;
         if(p.desktop_lease.begin()) {
             p.pending_hdmi = true;
             p.state.output_switching = true;
@@ -1305,6 +1479,7 @@ bool Playback::set_output(Output output) {
 
 bool Playback::set_audio_track(int index) {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
     if(!p.pipeline || index < 0 || index >= static_cast<int>(p.state.audio_tracks.size())) return false;
     p.state.audio_track = index;
     p.restart_audio_track = index;
@@ -1313,6 +1488,7 @@ bool Playback::set_audio_track(int index) {
 }
 bool Playback::set_subtitle_track(int index) {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
     if(p.initial_hdmi_pending && index == -1) { p.restart_subtitle_track = -1; return true; }
     if(!p.pipeline || index < -1 || index >= static_cast<int>(p.state.subtitle_tracks.size())) return false;
     if(index >= 0 && (p.text_track_is_bitmap(index) || bitmap_subtitle_codec(p.state.subtitle_tracks[index].codec))) {
@@ -1329,6 +1505,7 @@ bool Playback::set_subtitle_track(int index) {
 }
 bool Playback::set_audio_sink(const std::string& sink_name) {
     auto& p = *impl_;
+    if(p.state.suspended) return false;
     if(!sink_name.empty()) {
         const auto inventory = p.audio_outputs();
         if(std::none_of(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& item) { return item.name == sink_name && item.available; })) {
@@ -1355,16 +1532,182 @@ bool Playback::set_audio_sink(const std::string& sink_name) {
 }
 void Playback::set_volume(double volume) {
     auto& p = *impl_;
+    if(p.state.suspended) return;
     if(!std::isfinite(volume)) return;
     p.state.volume = std::clamp(volume, 0.0, 1.0);
     if(p.pipeline) g_object_set(p.pipeline, "volume", p.state.volume, nullptr);
 }
 void Playback::set_muted(bool muted) {
+    if(impl_->state.suspended) return;
     impl_->state.muted = muted;
     if(impl_->pipeline) g_object_set(impl_->pipeline, "mute", muted, nullptr);
 }
+
+std::optional<PlaybackCheckpoint> Playback::capture_checkpoint() {
+    auto& p = *impl_;
+    if(p.state.suspended) return p.saved_checkpoint;
+    if(!p.state.loaded) return {};
+    if(!p.media_identity || !unchanged_file(*p.media_identity)) {
+        p.state.error = "Media identity changed or cannot be verified; checkpoint refused";
+        return {};
+    }
+    if(!p.external_subtitle.empty() && (!p.subtitle_identity || !unchanged_file(*p.subtitle_identity))) {
+        p.state.error = "External subtitle identity changed or cannot be verified; checkpoint refused";
+        return {};
+    }
+    PlaybackCheckpoint saved;
+    saved.media = *p.media_identity;
+    saved.external_subtitle = p.subtitle_identity;
+    saved.duration = p.state.duration;
+    saved.playing = p.desired_playing;
+    saved.ended = p.ended || p.resume_ended;
+    saved.volume = p.state.volume;
+    saved.muted = p.state.muted;
+    saved.preferred_output = p.output_preference;
+    saved.actual_output = p.state.output;
+    saved.requested_audio_sink = p.requested_audio_sink;
+    saved.requested_owned_audio = p.explicit_owned_audio();
+    saved.software_video_preferred = p.software_video_preferred;
+    saved.video_decode_retry_attempted = p.video_decode_retry_attempted;
+    saved.video_decode_fallbacks = p.state.video_decode_fallbacks;
+    saved.video_decode_fallback_reason = p.state.video_decode_fallback_reason;
+    saved.audio_fallback_attempted = p.audio_fallback_attempted;
+    saved.audio_recovery_attempted = p.audio_recovery_attempted;
+    p.settle_seek();
+    auto target = p.restart_target();
+    if(p.initial_hdmi_pending || p.pending_preroll) {
+        target = {p.restart_position, p.restart_audio_track, p.restart_subtitle_track};
+        saved.position_source = CheckpointPosition::PendingTarget;
+    } else if(saved.ended) {
+        target.position = p.state.duration;
+        saved.position_source = CheckpointPosition::EndOfFile;
+    } else if(p.seek_pending) {
+        GstState current = GST_STATE_NULL, pending = GST_STATE_VOID_PENDING;
+        const bool stable = gst_element_get_state(p.pipeline, &current, &pending, 0) == GST_STATE_CHANGE_SUCCESS &&
+                            pending == GST_STATE_VOID_PENDING;
+        // Some plugins do not propagate seek sequence numbers. Never carry an
+        // old target indefinitely once such a graph may have resumed playing.
+        if(stable && std::chrono::steady_clock::now() - p.seek_started >= std::chrono::seconds(1)) {
+            p.state.error = "Seek completion is unconfirmed; checkpoint refused";
+            return {};
+        }
+        target.position = p.seek_position;
+        saved.position_source = CheckpointPosition::PendingTarget;
+    } else {
+        gint64 position = 0;
+        if(!p.pipeline || !gst_element_query_position(p.pipeline, GST_FORMAT_TIME, &position) || position < 0) {
+            p.state.error = "Cannot query a fresh playback position; checkpoint refused";
+            return {};
+        }
+        target.position = static_cast<double>(position) / GST_SECOND;
+        p.state.position = target.position;
+        saved.position_source = CheckpointPosition::FreshQuery;
+    }
+    saved.position = target.position;
+    saved.audio_track = target.audio_track;
+    saved.subtitle_track = target.subtitle_track;
+    return saved;
+}
+
+bool Playback::suspend() {
+    auto& p = *impl_;
+    if(p.state.suspended) return true;
+    const auto saved = capture_checkpoint();
+    if(p.state.loaded && !saved) return false;
+    if(p.pipeline) {
+        const auto result = gst_element_set_state(p.pipeline, GST_STATE_NULL);
+        GstState current = GST_STATE_VOID_PENDING, pending = GST_STATE_VOID_PENDING;
+        if(result != GST_STATE_CHANGE_SUCCESS ||
+           gst_element_get_state(p.pipeline, &current, &pending, 0) != GST_STATE_CHANGE_SUCCESS ||
+           current != GST_STATE_NULL || pending != GST_STATE_VOID_PENDING) {
+            p.state.error = "Playback stop is unconfirmed; suspension refused";
+            return false;
+        }
+    }
+    p.retain_recovery_budgets = true;
+    // The state transition above can block while GStreamer joins its tasks.
+    p.destroy_pipeline(true);
+    p.initial_hdmi_pending = p.pending_hdmi = false;
+    p.release_hdmi_audio(true);
+    p.desktop_lease.release();
+    p.saved_checkpoint = saved;
+    p.state.suspended = true;
+    p.state.playing = p.state.buffering = p.state.output_switching = false;
+    p.state.paused = p.state.loaded;
+    return resources().local_handles_released();
+}
+
+bool Playback::resume() {
+    auto& p = *impl_;
+    if(!p.state.suspended) return true;
+    if(!p.saved_checkpoint) { p.state.suspended = false; return true; }
+    const auto saved = *p.saved_checkpoint;
+    if(!unchanged_file(saved.media) || (saved.external_subtitle && !unchanged_file(*saved.external_subtitle))) {
+        p.state.error = "Media or subtitle identity changed; resume refused";
+        return false;
+    }
+    p.state.path = saved.media.path;
+    p.state.duration = saved.duration;
+    p.external_subtitle = saved.external_subtitle ? saved.external_subtitle->path : std::string{};
+    p.media_identity = saved.media;
+    p.subtitle_identity = saved.external_subtitle;
+    p.state.volume = saved.volume;
+    p.state.muted = saved.muted;
+    p.state.error.clear();
+    p.state.notice.clear();
+    p.output_preference = saved.preferred_output;
+    p.requested_audio_sink = saved.requested_owned_audio ? std::string{} : saved.requested_audio_sink;
+    p.software_video_preferred = saved.software_video_preferred;
+    p.video_decode_retry_attempted = saved.video_decode_retry_attempted;
+    p.state.video_decode_fallbacks = saved.video_decode_fallbacks;
+    p.state.video_decode_fallback_reason = saved.video_decode_fallback_reason;
+    p.audio_fallback_attempted = saved.audio_fallback_attempted;
+    p.audio_recovery_attempted = saved.audio_recovery_attempted;
+    p.state.position = p.restart_position = saved.position;
+    p.state.audio_track = p.restart_audio_track = saved.audio_track;
+    p.state.subtitle_track = p.restart_subtitle_track = saved.subtitle_track;
+    p.desired_playing = saved.playing;
+    p.resume_ended = saved.ended;
+    p.state.suspended = false;
+    bool accepted;
+    if(saved.preferred_output == Output::Hdmi) {
+        p.resume_hdmi_fallback_pause = true;
+        accepted = p.begin_initial_hdmi(saved.position, saved.playing, saved.audio_track, saved.subtitle_track);
+    } else {
+        p.state.output = Output::Lcd;
+        accepted = p.create_pipeline(saved.position, saved.playing, saved.audio_track, saved.subtitle_track);
+    }
+    if(accepted) { p.saved_checkpoint.reset(); return true; }
+    p.destroy_pipeline();
+    p.initial_hdmi_pending = p.pending_hdmi = false;
+    p.release_hdmi_audio(true);
+    p.desktop_lease.release();
+    p.state.suspended = true;
+    p.state.playing = p.state.buffering = p.state.output_switching = false;
+    p.state.paused = p.state.loaded;
+    return false;
+}
+
+bool Playback::suspended() const { return impl_->state.suspended; }
+std::optional<PlaybackCheckpoint> Playback::checkpoint() const { return impl_->saved_checkpoint; }
+PlaybackResources Playback::resources() const {
+    const auto& p = *impl_;
+    const auto desktop = p.desktop_lease.state();
+    const auto audio = p.hdmi_audio.state();
+    return {p.pipeline != nullptr, p.hdmi.fd() >= 0,
+            desktop == HdmiDesktopLease::State::Waiting || desktop == HdmiDesktopLease::State::Ready,
+            audio == HdmiAudioSession::State::Waiting || audio == HdmiAudioSession::State::Ready,
+            p.external_cleanup_unconfirmed};
+}
+
 void Playback::stop() {
     auto& p = *impl_;
+    p.saved_checkpoint.reset();
+    p.media_identity.reset();
+    p.subtitle_identity.reset();
+    p.retain_recovery_budgets = false;
+    p.resume_hdmi_fallback_pause = p.resume_ended = false;
+    p.state.suspended = false;
     p.initial_hdmi_pending = false;
     p.destroy_pipeline();
     p.software_video_preferred = false;
@@ -1397,6 +1740,13 @@ std::string Playback::diagnostics_json() const {
     std::ostringstream out;
     out << "{\"gstreamer\":" << json_string(std::to_string(major) + "." + std::to_string(minor) + "." + std::to_string(micro))
         << ",\"loaded\":" << (p.state.loaded ? "true" : "false") << ",\"playing\":" << (p.state.playing ? "true" : "false")
+        << ",\"suspended\":" << (p.state.suspended ? "true" : "false")
+        << ",\"checkpoint_available\":" << (p.saved_checkpoint ? "true" : "false")
+        << ",\"resources\":{\"pipeline_present\":" << (resources().pipeline_present ? "true" : "false")
+        << ",\"drm_fd_open\":" << (resources().drm_fd_open ? "true" : "false")
+        << ",\"desktop_lease_open\":" << (resources().desktop_lease_open ? "true" : "false")
+        << ",\"audio_lease_open\":" << (resources().audio_lease_open ? "true" : "false")
+        << ",\"external_cleanup_unconfirmed\":" << (resources().external_cleanup_unconfirmed ? "true" : "false") << '}'
         << ",\"output\":" << json_string(p.state.output == Output::Lcd ? "lcd" : "hdmi")
         << ",\"output_switching\":" << (p.state.output_switching ? "true" : "false")
         << ",\"path\":" << json_string(p.state.path) << ",\"position_seconds\":" << p.state.position

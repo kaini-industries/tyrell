@@ -7,6 +7,9 @@
 #include "outputs.h"
 #include "playback.h"
 #include "lvgl.h"
+#if TYRELL_EXPERIMENTAL_SHELL_GUARD && defined(__linux__)
+#include <tyrell/app/shell_link.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -635,7 +638,26 @@ void write_report(const App& app, double elapsed, const std::pair<double, double
     if(!out) throw std::runtime_error("Failed writing report: " + app.options.report);
 }
 
+// This guard is an integration boundary, not a media lifecycle implementation.
+// Reject before constructing App/GStreamer or opening input/display/helpers:
+// the reviewed shell cannot extend its pause deadline or confirm VT cleanup.
+int shell_admission(const Options& options) {
+#if TYRELL_EXPERIMENTAL_SHELL_GUARD && defined(__linux__)
+    if(options.screenshot.empty() && !options.simulator) {
+        auto link = tyrell::app::ShellLink::from_environment();
+        if(link.connected() || link.closed()) {
+            std::cerr << "tyrell-video: Video playback is unavailable under this shell. Use the M5 launcher.\n";
+            return 2;
+        }
+    }
+#else
+    (void)options;
+#endif
+    return 0;
+}
+
 int gui(const Options& options) {
+    if(const int admission = shell_admission(options)) return admission;
     const auto measurement_start = std::chrono::steady_clock::now();
     const auto initial_cpu = cpu_times();
     const bool headless = !options.screenshot.empty();

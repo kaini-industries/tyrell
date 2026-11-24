@@ -217,13 +217,13 @@ def run_app(work, app, revision):
     configure_build(ROOT / ("packages/tyrell-" + app), build,
                     "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=OFF",
                     "-DTYRELL_BUILD_REVISION=" + revision,
-                    *(("-DTYRELL_ENABLE_SHELL_LINK=OFF",) if app == "status" else ()))
+                    *(("-DTYRELL_ENABLE_SHELL_LINK=OFF",) if app == "status" else ("-DTYRELL_EXPERIMENTAL_SHELL_GUARD=OFF",)))
     required = {"status-model", "status-input-edges", "status-event-wait", "status-idle-gui",
                 "cli-version", "cli-help", "headless-render"} if app == "status" else {
         "video-media-fixture", "video-media-controls", "video-caption-clock", "video-lcd-geometry",
         "video-startup", "video-track-switch", "video-playback", "video-hdmi-lease", "video-hdmi-audio",
         "video-render-browser", "video-render-player", "video-cli-report-write-error",
-        "tyrell-app-commands", "video-ui-commands"}
+        "tyrell-app-commands", "video-ui-commands", "video-checkpoint", "video-lifecycle-blocking-spike"}
     results = [ctest(build, work, required)]
     packages = work / "packages"
     packages.mkdir()
@@ -244,6 +244,16 @@ def run_app(work, app, revision):
         results.append(ctest(pilot, work, required | {
             "status-shell-lifecycle", "status-shell-gui", "tyrell-shell-link", "tyrell-app-commands"}))
     if app == "video":
+        # Compile the fail-closed native integration boundary separately. It
+        # refuses linked launches; this is not live media lifecycle support.
+        guard = work / "video-shell-guard"
+        command("cmake", "-S", ROOT / "packages/tyrell-video", "-B", guard,
+                "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=ON",
+                "-DLVGL_SOURCE_DIR=" + str(deps["lvgl"]), "-DTYRELL_ENABLE_SDL=OFF",
+                "-DTYRELL_EXPERIMENTAL_SHELL_GUARD=ON",
+                "-DTYRELL_BUILD_REVISION=" + revision)
+        command("cmake", "--build", guard, "--parallel", "4", "--target", "video-shell-admission-test")
+        results.append(ctest(guard, work, {"video-shell-admission"}, pattern="^video-shell-admission$"))
         # Compile and exercise the raw SDL repeat adapter too. It is absent
         # from the shipped native build, so do not rerun media tests or package it.
         sdl = work / "video-sdl"
@@ -302,6 +312,7 @@ def export_evidence(work, suite):
     destination = ROOT / "build/ci/evidence" / suite / work.name
     destination.mkdir(parents=True, exist_ok=True)
     selected = set(work.glob("*.json")) | set(work.glob("*-ctest.xml"))
+    selected.update(work.glob("video*/a2-*.json"))
     for previews in work.glob("*/u1-previews"):
         selected.update(path for path in previews.rglob("*")
                         if path.suffix in {".png", ".ppm", ".json"})

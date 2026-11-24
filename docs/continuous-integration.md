@@ -56,6 +56,12 @@ in addition to the model, CLI and headless renderer tests. No device node or
 actual Gh0st process is used; passing does not establish physical compatibility
 or a 100 ms pause guarantee.
 
+Video requires [checkpoint and blocking-teardown checks](video-checkpoint-lifecycle.md).
+A separate native guard build verifies refusal of linked launches before any
+resources are acquired; it does not enable live shell playback. A2 timing JSON
+is retained with the suite evidence. The normal package disables this guard,
+and the existing SDL command checks remain separate.
+
 The [A1 native event-wait and idle GUI checks](status-idle-loop.md) are required
 in both Status configurations. They exercise real pipes/socket polling and the
 production loop with a memory display. Matched PR #8 comparisons remain a
