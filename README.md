@@ -155,8 +155,10 @@ Ordered keyboard input preserves rapid taps across display frames.
 The installed [0.1.1 update](docs/chess-ui-input-validation.md) adds spatial and
 held-key navigation, safe LAN confirmations and clearer game-state feedback.
 The [0.1.2 source increment](docs/chess-clock-validation.md) corrects clock-expiry
-handling. Current 0.1.3 source adds shared contextual commands/help and
-deterministic UI/layout checks; device qualification remains separate from
+handling. Current 0.1.4 source adds an optional native offline shell lifecycle,
+authoritative clocks across suspension and cooperative AI cancellation, alongside
+shared contextual commands/help and deterministic UI/layout checks. Shell support
+defaults off and linked LAN sessions are gated; device qualification remains separate from
 the retained 0.1.1 package's evidence.
 
 Build/test locally with `make chess` and `make chess-test`; `make chess-package`
@@ -243,6 +245,10 @@ separate software measurements and physical acceptance still pending.
 A2 adds [Video checkpoints and lifecycle admission checks](docs/video-checkpoint-lifecycle.md).
 Live media integration remains gated by pipeline teardown and asynchronous
 HDMI/audio/VT ownership completion.
+A3 adds [GameRuntime hooks and an offline Chess lifecycle policy](docs/game-chess-lifecycle.md),
+with native ownership, clock, AI and save-failure checks. Its experimental shell
+build is separate from normal M5 packages; physical acceptance and lifecycle
+policies for LAN, Sandline and Beacon remain pending.
 Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package

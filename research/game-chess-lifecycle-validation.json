@@ -1,0 +1,436 @@
+{
+  "schema": 1,
+  "kind": "a3-offline-chess-software-validation",
+  "reviewed_date": "2026-11-24",
+  "status": "passed",
+  "implementation_commit": "pending-follow-up-binding",
+  "base_commit": "47cc6a6a82f3138e10e2d3f87deb7d1f77ee5213",
+  "local_source_dirty": true,
+  "source_binding": "Frozen app/dependency boundaries below were recorded after local development checks. Clean hosted CI reports separately bind their checkout and artifacts; this record is not candidate promotion.",
+  "app_source_sha256": {
+    "chess": "ca844cd4aeb4ef8589dc6f30a7497905ca0365375251e8a7d965ed9c413eb213",
+    "sandline": "90b310a5cfc31518ca35e4fde7c0815fda15eb8e0a910e2320afee937b7023d6",
+    "beacon": "41aed0727af931d05c3446fe20e6634d8c522e3e91c5a92aed2118b2e4523261"
+  },
+  "protocol_commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+  "environment": {
+    "system": "disposable Debian 13 ARM64 Docker worker",
+    "base_image": "debian@sha256:3cda3ca472ce45507a5109c6a3907093e24d9ae67d55954c9a07a45665dafba2",
+    "repository_mount": "read-only, build/ci output writable",
+    "host_devices_exposed": false,
+    "tool_packages_tsv": "cmake\t3.31.6-2\tarm64\ng++\t4:14.2.0-1\tarm64\ngcc\t4:14.2.0-1\tarm64\nlibc6:arm64\t2.41-12+deb13u5\tarm64\nlibgl1-mesa-dev:arm64\t25.0.7-2+deb13u1\tarm64\nlibstdc++6:arm64\t14.2.0-19\tarm64\npython3\t3.13.5-1\tarm64\nxvfb\t2:21.1.16-1.3+deb13u4\tarm64\n",
+    "dependencies": "SHA-256 checked raylib 6.2 and ENet 1.3.18 from locks/game-build-inputs.json; fresh extraction"
+  },
+  "predeclared_plan": {
+    "schema": 1,
+    "kind": "offline-chess-lifecycle-validation-plan",
+    "protocol_commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+    "scope": "offline Chess native integration, no LAN/game-family enablement",
+    "pause_invariants": [
+      "release input and prevent framebuffer writes before paused",
+      "invalidate stale AI results and request cooperative cancellation without join",
+      "no filesystem persistence on pause acknowledgment"
+    ],
+    "resume_invariants": [
+      "reacquire input with stale/held edges suppressed",
+      "resolve authoritative monotonic clock expiry before any move",
+      "redraw full frame and avoid animation/puzzle catch-up bursts"
+    ],
+    "loss_policy": "terminal ownership abandonment; hidden cleanup cannot restore prelaunch pixels",
+    "clock_policy": "OS switching does not pause a clocked game; explicit in-game pause remains separate",
+    "nominal_fixture_tolerances": {
+      "pause_ack_ms": 100,
+      "engine_cancel_return_ms": 200,
+      "shutdown_after_cancel_ms": 500
+    },
+    "claims_excluded": [
+      "hard realtime scheduler/allocator/syscall guarantees",
+      "physical M5/Gh0st acceptance",
+      "fresh persistence on hidden exit",
+      "LAN support",
+      "other games lifecycle support"
+    ]
+  },
+  "validation_results": {
+    "game": [
+      {
+        "kind": "ctest",
+        "tests": 8,
+        "status": "passed",
+        "inventory": [
+          "tyrell-game-core",
+          "tyrell-game-independent-example",
+          "tyrell-game-input",
+          "tyrell-game-native-lifecycle",
+          "tyrell-game-network",
+          "tyrell-game-render",
+          "tyrell-game-runtime",
+          "tyrell-game-runtime-lifecycle"
+        ],
+        "selection": "all",
+        "executed_tests": [
+          "tyrell-game-core",
+          "tyrell-game-network",
+          "tyrell-game-input",
+          "tyrell-game-runtime",
+          "tyrell-game-runtime-lifecycle",
+          "tyrell-game-native-lifecycle",
+          "tyrell-game-render",
+          "tyrell-game-independent-example"
+        ],
+        "launcher": [],
+        "junit": "build/ci/a3-game-final/game-ctest.xml"
+      },
+      {
+        "kind": "ctest",
+        "tests": 14,
+        "status": "passed",
+        "inventory": [
+          "tanks-cli-help",
+          "tanks-cli-session",
+          "tanks-framework-render",
+          "tanks-network",
+          "tanks-world",
+          "tanks_display_benchmark_invalid_cli",
+          "tanks_display_benchmark_smoke",
+          "tyrell-game-core",
+          "tyrell-game-input",
+          "tyrell-game-native-lifecycle",
+          "tyrell-game-network",
+          "tyrell-game-render",
+          "tyrell-game-runtime",
+          "tyrell-game-runtime-lifecycle"
+        ],
+        "selection": "all",
+        "executed_tests": [
+          "tanks-world",
+          "tanks-network",
+          "tanks-cli-help",
+          "tanks-framework-render",
+          "tanks-cli-session",
+          "tyrell-game-core",
+          "tyrell-game-network",
+          "tyrell-game-input",
+          "tyrell-game-runtime",
+          "tyrell-game-runtime-lifecycle",
+          "tyrell-game-native-lifecycle",
+          "tyrell-game-render",
+          "tanks_display_benchmark_smoke",
+          "tanks_display_benchmark_invalid_cli"
+        ],
+        "launcher": [],
+        "junit": "build/ci/a3-game-final/tanks-ctest.xml"
+      },
+      {
+        "kind": "ctest",
+        "tests": 1,
+        "status": "passed",
+        "inventory": [
+          "tyrell-game-desktop-lifecycle"
+        ],
+        "selection": "^tyrell-game-desktop-lifecycle$",
+        "executed_tests": [
+          "tyrell-game-desktop-lifecycle"
+        ],
+        "launcher": [
+          "xvfb-run",
+          "-a"
+        ],
+        "junit": "build/ci/a3-game-final/game-desktop-ctest.xml"
+      }
+    ],
+    "chess": [
+      {
+        "kind": "ctest",
+        "tests": 22,
+        "status": "passed",
+        "inventory": [
+          "chess-ai-cancellation",
+          "chess-cli-help",
+          "chess-command-context",
+          "chess-completion-overlay",
+          "chess-controller",
+          "chess-device-input-tools",
+          "chess-engine",
+          "chess-faults",
+          "chess-flow-round2",
+          "chess-input-repeat",
+          "chess-keyboard-fault",
+          "chess-keyboard-navigation",
+          "chess-lan",
+          "chess-lifecycle",
+          "chess-model",
+          "chess-offline-lifecycle",
+          "chess-protocol-adversarial",
+          "chess-render",
+          "chess-render-state",
+          "chess-runtime-fault",
+          "chess-ui-layout",
+          "tyrell-app-commands"
+        ],
+        "selection": "all",
+        "executed_tests": [
+          "chess-offline-lifecycle",
+          "chess-lan",
+          "chess-controller",
+          "chess-model",
+          "chess-cli-help",
+          "chess-render",
+          "chess-lifecycle",
+          "chess-protocol-adversarial",
+          "chess-faults",
+          "chess-runtime-fault",
+          "chess-keyboard-fault",
+          "chess-keyboard-navigation",
+          "chess-flow-round2",
+          "chess-input-repeat",
+          "chess-render-state",
+          "chess-completion-overlay",
+          "chess-device-input-tools",
+          "chess-command-context",
+          "chess-ui-layout",
+          "chess-ai-cancellation",
+          "chess-engine",
+          "tyrell-app-commands"
+        ],
+        "launcher": [],
+        "junit": "build/ci/a3-chess-final/chess-ctest.xml"
+      },
+      {
+        "kind": "desktop-app-smoke",
+        "status": "passed",
+        "frames": 2,
+        "shell_link_enabled": false,
+        "report": "build/ci/a3-chess-final/a3-chess-desktop.json"
+      }
+    ],
+    "chess-native": [
+      {
+        "kind": "ctest",
+        "tests": 22,
+        "status": "passed",
+        "inventory": [
+          "chess-ai-cancellation",
+          "chess-cli-help",
+          "chess-command-context",
+          "chess-completion-overlay",
+          "chess-controller",
+          "chess-device-input-tools",
+          "chess-engine",
+          "chess-faults",
+          "chess-flow-round2",
+          "chess-input-repeat",
+          "chess-keyboard-fault",
+          "chess-keyboard-navigation",
+          "chess-lan",
+          "chess-lifecycle",
+          "chess-model",
+          "chess-offline-lifecycle",
+          "chess-protocol-adversarial",
+          "chess-render",
+          "chess-render-state",
+          "chess-runtime-fault",
+          "chess-ui-layout",
+          "tyrell-app-commands"
+        ],
+        "selection": "all",
+        "executed_tests": [
+          "chess-offline-lifecycle",
+          "chess-lan",
+          "chess-controller",
+          "chess-model",
+          "chess-cli-help",
+          "chess-render",
+          "chess-lifecycle",
+          "chess-protocol-adversarial",
+          "chess-faults",
+          "chess-runtime-fault",
+          "chess-keyboard-fault",
+          "chess-keyboard-navigation",
+          "chess-flow-round2",
+          "chess-input-repeat",
+          "chess-render-state",
+          "chess-completion-overlay",
+          "chess-device-input-tools",
+          "chess-command-context",
+          "chess-ui-layout",
+          "chess-ai-cancellation",
+          "chess-engine",
+          "tyrell-app-commands"
+        ],
+        "launcher": [],
+        "junit": "build/ci/a3-chess-native-final/chess-native-ctest.xml"
+      },
+      {
+        "kind": "package-build",
+        "status": "passed",
+        "path": "build/ci/a3-chess-native-final/packages/tyrell-chess_0.1.4-1_arm64.deb",
+        "sha256": "6c5be68447c972c55dcb96a81e5b565d1620118efc6390f2c17cd0b14970efd2",
+        "inspection": "PASS: exact app payload, ARM64 ELF, dependencies, launcher/icon, licenses, and absence of system modifications",
+        "installed": false,
+        "shell_link_enabled": false
+      },
+      {
+        "kind": "ctest",
+        "tests": 2,
+        "status": "passed",
+        "inventory": [
+          "chess-ai-cancellation",
+          "chess-shell-lifecycle"
+        ],
+        "selection": "^(chess-shell-lifecycle|chess-ai-cancellation)$",
+        "executed_tests": [
+          "chess-shell-lifecycle",
+          "chess-ai-cancellation"
+        ],
+        "launcher": [],
+        "junit": "build/ci/a3-chess-native-final/chess-native-shell-ctest.xml"
+      }
+    ]
+  },
+  "python": {
+    "tests": 507,
+    "skipped": 0,
+    "status": "passed",
+    "groups": [
+      {
+        "tests": 57,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "builder/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 270,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "image/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "scripts/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 53,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "scripts/ci/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 36,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "packages/tyrell-zero-session/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 17,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "packages/tyrell-zero-session/wizard/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "packages/tyrell-zero-store/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "packages/tyrell-zero-power-policy/tests",
+        "pattern": "test*.py"
+      },
+      {
+        "tests": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": [],
+        "expected_failures": 0,
+        "unexpected_successes": 0,
+        "status": "passed",
+        "directory": "packages/tyrell-chess/tests",
+        "pattern": "*_test.py"
+      }
+    ]
+  },
+  "ai_cancellation": {
+    "schema": 1,
+    "scope": "cooperative-ai-cancellation-software-test",
+    "status": "passed",
+    "hardware_qualified": false,
+    "hard_deadline_guaranteed": false,
+    "sample_count": 12,
+    "cancel_to_join_ms": [
+      0.059041,
+      0.04575,
+      0.058583,
+      0.050625,
+      0.100292,
+      0.029541,
+      0.085333,
+      0.037792,
+      0.03975,
+      0.021791,
+      0.037917,
+      0.02825
+    ],
+    "test_scheduling_allowance_ms": 500,
+    "longest_unchecked_work": "one finite legal-move generation/evaluation followed by at most twelve move undos; scheduler and runtime initialization are not hard-bounded"
+  },
+  "nominal_tolerance_assessment": {
+    "engine_cancel_return_200ms": "observed samples below tolerance",
+    "shutdown_after_cancel_500ms": "engine cancel-to-join covered with 500ms scheduling allowance; whole-process filesystem/driver/cleanup deadline not established",
+    "pause_ack_100ms": "ordering and socket backpressure tested; no whole-process 100ms guarantee or measured physical handoff"
+  },
+  "hardware_qualified": false,
+  "grants_release_approval": false,
+  "limitations": [
+    "No actual Gh0st shell or physical M5/Zero devices used; native evdev/framebuffer syscalls wrapped by test fixture.",
+    "Default native package inspected without installing; not added to retained distribution, Store approval or Zero payload.",
+    "Shell integration remains default OFF and linked LAN is gated. Sandline and Beacon retain separate pending app policies.",
+    "Pause does not persist. Hidden termination can lose RAM-only moves; last successful atomic save remains authoritative.",
+    "Cooperative cancellation has finite unchecked engine work; scheduling, filesystem and driver calls prevent hard handoff or shutdown guarantees.",
+    "Local ignored package/build bytes are not required or revalidated by ledger validation."
+  ]
+}

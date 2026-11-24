@@ -261,6 +261,14 @@ regression. Preserve active frame pacing and avoid new periodic daemons.
 
 ### A3 — GameRuntime and per-game lifecycle
 
+**Implemented source increment:** GameRuntime 0.1.1 adds ownership/input/redraw
+hooks and Chess 0.1.4 adds the optional native offline policy. See the
+[implementation and validation boundary](game-chess-lifecycle.md). The normal
+package disables shell support. Native fake-I/O/socket checks cover pause,
+resume, clock expiry, stale AI, failed saves and hidden exit; physical M5/Gh0st
+acceptance remains pending. Linked LAN is gated, and Sandline/Beacon need their
+own policies before integration. The full A3 device gate below remains open.
+
 First add native input suspend/reopen/reset and full-redraw hooks to
 `packages/tyrell-game/`; keep shell transport and match policy outside simulation
 and networking modules. Integrate offline Chess before LAN games. Settle pending

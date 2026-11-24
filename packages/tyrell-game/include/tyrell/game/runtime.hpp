@@ -15,6 +15,10 @@ struct RuntimeOptions {
     int window_scale=3;
     bool integer_scale=true;
     std::string framebuffer="auto", input="auto";
+    // Normal M5 close restores its prelaunch frame. A launcher that owns its
+    // own restoration must disable this before any native device acquisition,
+    // including so failed construction cannot repaint a different owner.
+    bool restore_framebuffer_on_close=true;
 };
 
 // Owns raylib's process-global graphics context. Construct one Runtime at a
@@ -43,6 +47,19 @@ public:
     int character();
     double time() const;
     double elapsed() const;
+    // Relinquish input/display ownership without changing the monotonic clock.
+    // An open frame is cancelled, never presented. Calls are main-thread only.
+    void suspend();
+    // Reopen/reset native input and request a complete frame. Failure leaves
+    // ownership suspended. Syscalls can block; this is not a realtime promise.
+    bool resume(std::string* error=nullptr);
+    // Terminal ownership loss: close native descriptors without restoring the
+    // saved prelaunch screen. resume() can never reclaim an abandoned runtime.
+    void abandon_foreground() noexcept;
+    bool suspended() const;
+    bool foreground() const;
+    void request_redraw();
+    bool redraw_requested() const;
     void begin_frame();
     void end_frame();
     // Exports the logical rendered frame, not desktop letterboxing/window chrome.

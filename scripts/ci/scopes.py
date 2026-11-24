@@ -13,9 +13,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SUITES = ("docs", "python", "game", "chess", "status", "video", "zero-native")
+SUITES = ("docs", "python", "game", "chess", "chess-native", "status", "video", "zero-native")
 PORTABLE = ("docs", "python", "game", "chess")
-NATIVE = ("status", "video", "zero-native")
+NATIVE = ("chess-native", "status", "video", "zero-native")
 SHA = re.compile(r"[0-9a-fA-F]{40}(?:[0-9a-fA-F]{24})?\Z")
 
 
@@ -37,11 +37,11 @@ def select(paths):
         # Package READMEs, icons, licenses and CMake files enter the package,
         # so they are intentionally not included in the docs-only rule below.
         elif path.startswith("packages/tyrell-game/"):
-            selected.update(("python", "game", "chess"))
+            selected.update(("python", "game", "chess", "chess-native"))
         elif path.startswith("packages/tyrell-tanks/"):
             selected.update(("python", "game"))
         elif path.startswith("packages/tyrell-chess/"):
-            selected.update(("python", "chess"))
+            selected.update(("python", "chess", "chess-native"))
         elif path.startswith("packages/tyrell-status/"):
             selected.update(("python", "status"))
         elif path.startswith("packages/tyrell-video/"):
@@ -49,9 +49,9 @@ def select(paths):
         elif path.startswith("packages/tyrell-zero-"):
             selected.update(("python", "zero-native"))
         elif path in ("scripts/game", "scripts/tanks", "locks/game-build-inputs.json"):
-            selected.update(("python", "game", "chess"))
+            selected.update(("python", "game", "chess", "chess-native"))
         elif path == "scripts/chess":
-            selected.update(("python", "chess"))
+            selected.update(("python", "chess", "chess-native"))
         elif path.startswith("scripts/video-") or path == "scripts/prepare-video-store.py":
             selected.update(("python", "video"))
         elif path == "locks/build-inputs.json":

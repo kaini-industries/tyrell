@@ -70,6 +70,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             python3 cmake ninja-build g++ make curl ca-certificates ffmpeg dpkg-dev file binutils xz-utils
+      - name: Install isolated desktop runtime prerequisites
+        if: matrix.suite == 'game' || matrix.suite == 'chess'
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev \
+            libglu1-mesa-dev libxcursor-dev libxinerama-dev xvfb xauth
       - name: Run selected portable suite
         env:
           SOURCE_SHA: ${{ needs.plan.outputs.source_sha }}

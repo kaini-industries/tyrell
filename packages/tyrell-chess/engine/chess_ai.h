@@ -4,6 +4,7 @@
 #include "chess_board.h"
 #include "chess_rules.h"
 #include <cstdint>
+#include <atomic>
 
 // =====================================================================
 // Chess AI: minimax with alpha-beta pruning, iterative deepening,
@@ -23,7 +24,13 @@ namespace ChessAI {
     // Returns a legal move. Difficulty chooses the depth and the time budget
     // (Easy 200ms, Medium 1000ms, Hard 3000ms). maxTimeMs == 0 keeps that budget;
     // otherwise the budget is the minimum of the two.
-    Move findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t maxTimeMs = 0);
+    // The optional token is owned by the caller and must outlive this call.
+    // Observed cancellation returns Move{}; callers must also discard a result
+    // completed before their cancellation/generation change. Cancellation
+    // restores the supplied board before returning. It is
+    // checked between finite search work units, not a wall-clock guarantee.
+    Move findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t maxTimeMs = 0,
+                      const std::atomic_bool* cancel = nullptr);
 
     // Static evaluation of the position from the perspective of the side to move.
     // Positive = good for side to move, negative = bad.

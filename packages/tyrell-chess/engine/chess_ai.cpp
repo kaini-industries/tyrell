@@ -1,6 +1,7 @@
 #include "chess_ai.h"
 #include "chess_opening_book.h"
 #include "chess_platform.h"
+#include "search_random.h"
 
 // =====================================================================
 // Piece-square tables (from White's perspective, row 0 = rank 1).
@@ -153,17 +154,22 @@ static int16_t scoreMoveForOrdering(const Move& move, const ChessBoard& board) {
     return score;
 }
 
+static bool cancelRequested();
+
 static void sortMoves(MoveList& moves, const ChessBoard& board) {
     // Pre-compute scores then insertion sort (move list is typically <40 moves)
     int16_t scores[MoveList::MAX_MOVES];
     for (uint16_t i = 0; i < moves.count; i++) {
+        if (cancelRequested()) return;
         scores[i] = scoreMoveForOrdering(moves.moves[i], board);
     }
     for (uint16_t i = 1; i < moves.count; i++) {
+        if (cancelRequested()) return;
         Move key = moves.moves[i];
         int16_t keyScore = scores[i];
         int j = static_cast<int>(i) - 1;
         while (j >= 0 && scores[j] < keyScore) {
+            if (cancelRequested()) return;
             moves.moves[j + 1] = moves.moves[j];
             scores[j + 1] = scores[j];
             j--;
@@ -177,6 +183,25 @@ static void sortMoves(MoveList& moves, const ChessBoard& board) {
 
 static uint32_t s_searchDeadline = 0;
 static bool     s_searchAborted  = false;
+static bool     s_searchCanceled = false;
+static const std::atomic_bool* s_cancel = nullptr;
+
+static bool externalCancelRequested() {
+    if (s_cancel && s_cancel->load(std::memory_order_relaxed))
+        s_searchCanceled = s_searchAborted = true;
+    return s_searchCanceled;
+}
+static bool cancelRequested() {
+    externalCancelRequested();
+    return s_searchAborted;
+}
+
+// Search state stays confined to the one search thread. Only the caller-owned
+// atomic token is shared; a later search cannot inherit a canceled token.
+struct SearchScope {
+    explicit SearchScope(const std::atomic_bool* token) { s_cancel = token; s_searchCanceled = false; }
+    ~SearchScope() { s_cancel = nullptr; s_searchDeadline = 0; s_searchAborted = s_searchCanceled = false; }
+};
 
 static constexpr int MAX_QUIESCE_DEPTH = 8;
 // Bound checking extensions as well as captures on the ESP32 task stack.
@@ -193,7 +218,7 @@ static MoveList s_pseudoScratch;
 // Quiescence search: only consider captures to avoid horizon effect
 static int16_t quiesce(ChessBoard& board, int16_t alpha, int16_t beta,
                        int qdepth, int ply = 0) {
-    if (s_searchAborted) return 0;
+    if (cancelRequested()) return 0;
 
     bool inCheck = ChessRules::isInCheck(board, board.sideToMove());
 
@@ -201,9 +226,11 @@ static int16_t quiesce(ChessBoard& board, int16_t alpha, int16_t beta,
         s_searchAborted = true;
         return 0;
     }
+    if (cancelRequested()) return 0;
 
     MoveList& moves = s_plyMoves[ply];
     ChessRules::generateLegalInto(board, moves, s_pseudoScratch);
+    if (cancelRequested()) return 0;
     if (moves.count == 0) return inCheck ? -MATE_SCORE + ply : 0;
     if (ChessRules::isDraw50Move(board) ||
         ChessRules::isInsufficientMaterial(board)) return 0;
@@ -219,6 +246,7 @@ static int16_t quiesce(ChessBoard& board, int16_t alpha, int16_t beta,
     if (qdepth >= MAX_QUIESCE_DEPTH && !inCheck) return alpha;
 
     for (uint16_t i = 0; i < moves.count; i++) {
+        if (cancelRequested()) return 0;
         const Move& m = moves.moves[i];
 
         // Only consider captures and promotions (but search all moves when in check)
@@ -232,7 +260,7 @@ static int16_t quiesce(ChessBoard& board, int16_t alpha, int16_t beta,
         board.unmakeMove(rec);
 
         // 0 is both "aborted" and "draw". Do not let the sentinel move the window.
-        if (s_searchAborted) return 0;
+        if (cancelRequested()) return 0;
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -242,7 +270,7 @@ static int16_t quiesce(ChessBoard& board, int16_t alpha, int16_t beta,
 
 static int16_t alphaBeta(ChessBoard& board, int depth, int16_t alpha,
                          int16_t beta, int ply) {
-    if (s_searchAborted) return 0;
+    if (cancelRequested()) return 0;
 
     // Check time limit periodically
     if ((depth <= 0 || depth % 2 == 0) &&
@@ -257,6 +285,7 @@ static int16_t alphaBeta(ChessBoard& board, int depth, int16_t alpha,
 
     MoveList& moves = s_plyMoves[ply];
     ChessRules::generateLegalInto(board, moves, s_pseudoScratch);
+    if (cancelRequested()) return 0;
 
     // No legal moves: checkmate or stalemate
     if (moves.count == 0) {
@@ -271,16 +300,17 @@ static int16_t alphaBeta(ChessBoard& board, int depth, int16_t alpha,
         ChessRules::isInsufficientMaterial(board)) return 0;
 
     sortMoves(moves, board);
+    if (cancelRequested()) return 0;
 
     for (uint16_t i = 0; i < moves.count; i++) {
-        if (s_searchAborted) return 0;
+        if (cancelRequested()) return 0;
 
         MoveRecord rec = board.makeMove(moves.moves[i]);
         int16_t score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1);
         board.unmakeMove(rec);
 
         // 0 is both "aborted" and "draw". Do not let the sentinel move the window.
-        if (s_searchAborted) return 0;
+        if (cancelRequested()) return 0;
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
     }
@@ -290,15 +320,20 @@ static int16_t alphaBeta(ChessBoard& board, int depth, int16_t alpha,
 
 // ── Public API ───────────────────────────────────────────────────────
 
-Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t maxTimeMs) {
+Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t maxTimeMs,
+                         const std::atomic_bool* cancel) {
+    SearchScope scope(cancel);
+    if (cancelRequested()) return Move{};
     // Try opening book first (standard position only)
     if (board.variant() != ChessVariant::Chess960) {
         Move bookMove;
-        if (ChessOpeningBook::probe(board, bookMove)) {
+        if (ChessOpeningBook::probe(board, bookMove, cancel)) {
+            if (cancelRequested()) return Move{};
             s_searchDeadline = 0;
             s_searchAborted = false;
             return bookMove;
         }
+        if (cancelRequested()) return Move{};
     }
 
     int maxDepth;
@@ -329,6 +364,7 @@ Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t 
     // ply 0 stays the root list; alphaBeta/quiesce start at ply 1.
     MoveList& moves = s_plyMoves[0];
     ChessRules::generateLegalInto(board, moves, s_pseudoScratch);
+    if (cancelRequested()) return Move{};
 
     Move bestMove{};
     if (moves.count == 0) {
@@ -338,24 +374,25 @@ Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t 
         bestMove = moves.moves[0];
     } else {
         sortMoves(moves, board);
+        if (cancelRequested()) return Move{};
         bestMove = moves.moves[0];
         int16_t bestScore = -SEARCH_INFINITY;
 
         // Iterative deepening. An aborted iteration, including depth 1, is discarded.
         for (int depth = 1; depth <= maxDepth; depth++) {
-            if (s_searchAborted) break;
+            if (cancelRequested()) break;
 
             Move iterBest = moves.moves[0];
             int16_t iterBestScore = -SEARCH_INFINITY;
 
             for (uint16_t i = 0; i < moves.count; i++) {
-                if (s_searchAborted) break;
+                if (cancelRequested()) break;
 
                 MoveRecord rec = board.makeMove(moves.moves[i]);
                 int16_t score = -alphaBeta(board, depth - 1, -SEARCH_INFINITY, -iterBestScore, 1);
                 board.unmakeMove(rec);
 
-                if (s_searchAborted) break;
+                if (cancelRequested()) break;
                 if (score > iterBestScore) {
                     iterBestScore = score;
                     iterBest = moves.moves[i];
@@ -369,9 +406,9 @@ Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t 
         }
 
         // Easy mode: 30% chance to pick a random legal move instead of the best
-        if (difficulty == AIDifficulty::Easy && moves.count > 1) {
-            if ((ChessPlatform::random() % 100) < 30) {
-                uint8_t idx = ChessPlatform::random() % moves.count;
+        if (!cancelRequested() && difficulty == AIDifficulty::Easy && moves.count > 1) {
+            if ((ChessSearchRandom::next() % 100) < 30) {
+                uint8_t idx = ChessSearchRandom::next() % moves.count;
                 bestMove = moves.moves[idx];
             }
         }
@@ -379,6 +416,7 @@ Move ChessAI::findBestMove(ChessBoard& board, AIDifficulty difficulty, uint32_t 
         (void)bestScore;
     }
 
+    if (externalCancelRequested()) return Move{};
     s_searchDeadline = 0;
     s_searchAborted = false;
     return bestMove;

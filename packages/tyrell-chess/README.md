@@ -2,7 +2,8 @@
 
 A native Linux port of [Cardputer ADV Chess](https://github.com/kaini-industries/cardputer-chess), with a colorful pixel-art interface designed for the Zero's 320 × 170 LCD and keyboard. The portable engine is retained at upstream commit `64419e29c828b77b420221472e8a314778713a07`; licenses, original-file hashes and adaptations are in [engine/](engine/).
 
-Current source is **0.1.3**, with shared contextual commands/help and deterministic
+Current source is **0.1.4**, with optional offline shell lifecycle handling,
+cooperative AI cancellation, shared contextual commands/help and deterministic
 UI checks, including the earlier draw/move confirmation fixes at clock expiry. The retained [0.1.1 ARM64 package](../../dist/tyrell-chess/0.1.1/README.md)
 remains the latest device-validated build. Current source still needs its own ARM64 package
 and device qualification; see the [clock-boundary review](../../docs/chess-clock-validation.md).
@@ -11,6 +12,29 @@ and device qualification; see the [clock-boundary review](../../docs/chess-clock
 ![Board](assets/preview-board.png)
 
 ## Play
+
+Native builds may opt into experimental shell integration with
+`-DTYRELL_ENABLE_SHELL_LINK=ON`; it is off in the normal M5 build. The supported
+session is offline only: local games, computer opponents, puzzles and archives.
+LAN hosting/joining is unavailable while linked. Desktop and headless launches
+do not adopt the native shell descriptor.
+
+Shell pause releases/reset input and stops drawing before acknowledgment,
+invalidates AI results and requests cooperative search cancellation. It does
+not call the chess clock's in-game pause: running match time continues while
+hidden, and resume resolves flag fall before accepting input. Explicit existing
+clock pauses are retained. Native resume baselines held keys and redraws fully.
+Saved prelaunch pixels are never restored by linked cleanup, including quit,
+signals, construction failures and exceptions; normal M5 restoration remains.
+
+Pause acknowledgments perform no disk writes. Save failure after resume remains
+visible and retries without changing ownership or clock policy. Link loss or
+linked signal termination skips exit persistence, preserving the last successful
+atomic save. RAM-only moves and newer clock/progress state can be lost; recovery
+from that file is not uninterrupted match continuation. Cooperative AI joins
+have bounded search work, not a hard OS scheduling deadline; filesystem and
+device operations likewise have no universal wall-clock guarantee. Physical
+M5/Gh0st acceptance remains pending for the new binaries.
 
 Launch **Tyrell Chess** in the stock APPLaunch carousel. Choose **Vs computer**, **Two players**, or a puzzle category. Setup offers Standard/Chess960, five time controls, three computer levels, and either player color. The selected row changes with Left/Right or Enter; select **Start game** to play.
 
@@ -74,8 +98,8 @@ Local headless tests require loopback TCP access. The package command uses the e
 Install the exported package using the device's normal SSH user:
 
 ```sh
-scp artifacts/chess-native/tyrell-chess_0.1.3-1_arm64.deb user@cardputer:/tmp/
-ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.3-1_arm64.deb'
+scp artifacts/chess-native/tyrell-chess_0.1.4-1_arm64.deb user@cardputer:/tmp/
+ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.4-1_arm64.deb'
 ```
 
 The package adds only the app, launcher entries, icon and notices. It installs no services or firmware. Start native graphics from APPLaunch so it can manage display/input ownership. `tyrell-chess --help` and `--version` work over SSH without opening display devices.

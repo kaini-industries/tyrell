@@ -76,6 +76,36 @@ For a socket-only server build, use `--backend network`; for timing-only code,
 use `--backend core`. Native builds require Linux and the appropriate device
 permissions; the headless backend works on macOS and Linux.
 
+## Foreground lifecycle hooks
+
+Version 0.1.1 adds main-thread ownership hooks without a shell dependency:
+
+| API | Contract |
+| --- | --- |
+| `suspend()` | Cancel an open frame without presentation, release/reset native input, suppress saved-screen restoration while hidden |
+| `resume(&error)` | Reopen input, discard queued edges, suppress currently held keys until release, then request a full redraw; failure retains suspended ownership |
+| `abandon_foreground()` | Terminal ownership loss: close native descriptors without replaying the saved prelaunch frame; future resume fails |
+| `request_redraw()` / `redraw_requested()` | Request a complete app-owned frame; the request clears after a successful `end_frame()` |
+
+Construct with `RuntimeOptions::restore_framebuffer_on_close=false` when another
+launcher owns screen restoration. This permission is fixed before native device
+acquisition, covers failed construction, and stays disabled after resume. Normal
+M5 callers retain the default foreground restoration behavior. Hidden or
+abandoned cleanup never restores the saved frame, regardless of that default.
+
+Suspension does not reset or clamp `time()` or `elapsed()`. The first poll after
+a hidden gap reports the real elapsed interval; only pacing debt is discarded.
+Games decide how to avoid simulation catch-up while retaining real elapsed time
+for clocks and network expiry. Suspended input queries return no actions, and
+drawing is rejected until an explicit successful resume.
+
+These hooks contain no match, clock, save or network policy. Apps must establish
+foreground ownership before resuming and finish a complete redraw themselves.
+Filesystem/device open, ioctl and framebuffer commit calls can block; tests with
+fake native syscalls establish ordering and cleanup, not a physical handoff
+deadline. Desktop lifecycle smoke tests run on an isolated display, while native
+fixtures exercise production Runtime/native code without opening device nodes.
+
 Direct CMake configuration is useful for embedding or a Linux builder:
 
 ```sh

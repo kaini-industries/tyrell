@@ -114,7 +114,9 @@
     "Initialize Zobrist tables with std::call_once to support one AI worker alongside UI-thread rules.",
     "Correct inherited two-knight insufficient-material detection: two knights can legally mate even though they cannot force mate. FIDE Laws articles 5.2.2 and 6.9 govern possible legal mating sequences.",
     "The Zero application coordinate codec appends c for castling so adjacent-king Chess960 castles stay distinct from ordinary king moves in replay saves and LAN messages; PGN remains standard SAN.",
-    "Restore upstream display-coordinate directional navigation and independent Space cycling so legal-target arrows follow the shown board orientation."
+    "Restore upstream display-coordinate directional navigation and independent Space cycling so legal-target arrows follow the shown board orientation.",
+    "Add source-compatible caller-owned atomic cancellation tokens to AI search and opening-book replay; canceled work unwinds board moves, discards partial book initialization, and does not consume a fresh search budget.",
+    "Use an internal monotonic-seeded PRNG for AI/book move-choice variety to avoid random_device initialization on the cooperative worker cancellation path; Chess960 and other platform randomness remain unchanged."
   ],
   "rules_reference": "https://handbook.fide.com/chapter/E012023"
 }

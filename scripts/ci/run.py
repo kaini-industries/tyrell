@@ -17,7 +17,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-SUITES = ("docs", "python", "game", "chess", "status", "video", "zero-native")
+SUITES = ("docs", "python", "game", "chess", "chess-native", "status", "video", "zero-native")
 SOURCE_ROOTS = {"packages", "scripts", "builder", "image", "locks", "research",
                 "docs", "dist", "store", ".github"}
 PYTHON_GROUPS = (
@@ -131,7 +131,7 @@ def dependencies(work, names):
     return out
 
 
-def ctest(build, work, required, pattern=None, env=None):
+def ctest(build, work, required, pattern=None, env=None, launcher=()):
     selection = ["--tests-regex", pattern] if pattern else []
     inventory = json.loads(command("ctest", "--test-dir", build, "--show-only=json-v1",
                                    *selection, capture=True, env=env).stdout)
@@ -139,7 +139,7 @@ def ctest(build, work, required, pattern=None, env=None):
     if not required <= names:
         raise RuntimeError("Required CTest groups omitted: " + ", ".join(sorted(required - names)))
     junit = work / (build.name + "-ctest.xml")
-    command("ctest", "--test-dir", build, "--output-on-failure", "--no-tests=error",
+    command(*launcher, "ctest", "--test-dir", build, "--output-on-failure", "--no-tests=error",
             *selection, "--timeout", "120", "--output-junit", junit, env=env)
     tree = ET.parse(junit)
     cases = tree.findall(".//testcase")
@@ -148,6 +148,7 @@ def ctest(build, work, required, pattern=None, env=None):
     return {"kind": "ctest", "tests": len(cases), "status": "passed",
             "inventory": sorted(names), "selection": pattern or "all",
             "executed_tests": [case.get("name") for case in cases],
+            "launcher": list(launcher),
             "junit": str(junit.relative_to(ROOT))}
 
 
@@ -165,12 +166,23 @@ def run_game(work):
     configure_build(ROOT / "packages/tyrell-game", build, *flags, "-DTYRELL_GAME_BACKEND=HEADLESS",
                     "-DTYRELL_GAME_BUILD_TESTS=ON", "-DTYRELL_GAME_BUILD_EXAMPLES=ON")
     results = [ctest(build, work, {"tyrell-game-core", "tyrell-game-network", "tyrell-game-input",
-                                  "tyrell-game-runtime", "tyrell-game-render", "tyrell-game-independent-example"})]
+                                  "tyrell-game-runtime", "tyrell-game-render", "tyrell-game-independent-example",
+                                  "tyrell-game-runtime-lifecycle", "tyrell-game-native-lifecycle"})]
     build = work / "tanks"
     configure_build(ROOT / "packages/tyrell-tanks", build, *flags, "-DTANKS_BUILD_DESKTOP=OFF",
                     "-DTANKS_BUILD_HEADLESS=ON", "-DTANKS_BUILD_BENCHMARK=ON", "-DTYRELL_GAME_BUILD_TESTS=ON")
     results.append(ctest(build, work, {"tanks-world", "tanks-network", "tanks-cli-help",
                                       "tanks-framework-render", "tanks-cli-session"}))
+    require_tools("xvfb-run")
+    desktop = work / "game-desktop"
+    command("cmake", "-S", ROOT / "packages/tyrell-game", "-B", desktop,
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=ON", *flags,
+            "-DTYRELL_GAME_BACKEND=DESKTOP", "-DTYRELL_GAME_BUILD_TESTS=ON",
+            "-DTYRELL_GAME_BUILD_NETWORK=OFF", "-DTYRELL_GAME_BUILD_EXAMPLES=OFF")
+    command("cmake", "--build", desktop, "--parallel", "4", "--target", "tyrell-game-desktop-lifecycle-test")
+    results.append(ctest(desktop, work, {"tyrell-game-desktop-lifecycle"},
+                         pattern="^tyrell-game-desktop-lifecycle$", launcher=("xvfb-run", "-a"),
+                         env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1")))
     return results
 
 
@@ -179,10 +191,27 @@ def run_chess(work):
     deps = dependencies(work, ("raylib",))
     build = work / "chess"
     configure_build(ROOT / "packages/tyrell-chess", build, "-DCHESS_BACKEND=HEADLESS",
-                    "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]))
-    return [ctest(build, work, {"chess-lan", "chess-controller", "chess-model", "chess-render",
+                    "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    results = [ctest(build, work, {"chess-lan", "chess-controller", "chess-model", "chess-render",
                                "chess-lifecycle", "chess-keyboard-navigation", "chess-input-repeat",
-                               "tyrell-app-commands", "chess-command-context", "chess-ui-layout"})]
+                               "tyrell-app-commands", "chess-command-context", "chess-ui-layout",
+                               "chess-offline-lifecycle", "chess-ai-cancellation"})]
+    require_tools("xvfb-run")
+    desktop = work / "chess-desktop"
+    command("cmake", "-S", ROOT / "packages/tyrell-chess", "-B", desktop,
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=OFF", "-DCHESS_BACKEND=DESKTOP",
+            "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    command("cmake", "--build", desktop, "--parallel", "4", "--target", "tyrell-chess")
+    report = work / "a3-chess-desktop.json"
+    command("xvfb-run", "-a", desktop / "tyrell-chess", "--frames", "2", "--demo",
+            "--state-dir", work / "desktop-state", "--report", report,
+            env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1"))
+    smoke = json.loads(report.read_text())
+    if smoke.get("frames") != 2:
+        raise RuntimeError("Desktop Chess smoke did not render the required frames")
+    results.append({"kind": "desktop-app-smoke", "status": "passed", "frames": smoke["frames"],
+                    "shell_link_enabled": False, "report": str(report.relative_to(ROOT))})
+    return results
 
 
 def native_preflight():
@@ -194,6 +223,39 @@ def native_preflight():
     release = dict(line.split("=", 1) for line in Path("/etc/os-release").read_text().splitlines() if "=" in line)
     if release.get("ID", "").strip('"') != "debian" or release.get("VERSION_ID", "").strip('"') != "13":
         raise RuntimeError("Native suites require Debian 13; Ubuntu is not a substitute")
+
+
+def run_chess_native(work, revision):
+    native_preflight()
+    with (work / "worker-packages.tsv").open("w") as output:
+        subprocess.run(["dpkg-query", "-W", "-f=${binary:Package}\t${Version}\t${Architecture}\n"],
+                       stdout=output, check=True)
+    deps = dependencies(work, ("raylib",))
+    source = ROOT / "packages/tyrell-chess"
+    flags = ("-DCHESS_BACKEND=NATIVE", "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]))
+    build = work / "chess-native"
+    configure_build(source, build, *flags, "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    results = [ctest(build, work, {"chess-engine", "chess-lan", "chess-controller", "chess-model",
+                                  "chess-render", "chess-lifecycle", "chess-offline-lifecycle",
+                                  "chess-ai-cancellation", "chess-input-repeat", "chess-ui-layout"})]
+    packages = work / "packages"
+    packages.mkdir()
+    command("cpack", "--config", build / "CPackConfig.cmake", "-G", "DEB", "-B", packages)
+    debs = list(packages.glob("*.deb"))
+    if len(debs) != 1:
+        raise RuntimeError("Expected one default native Chess package")
+    inspection = command(sys.executable, source / "assets/check_package.py", debs[0], capture=True).stdout.strip()
+    results.append({"kind": "package-build", "status": "passed", "path": str(debs[0].relative_to(ROOT)),
+                    "sha256": digest(debs[0]), "inspection": inspection, "installed": False,
+                    "shell_link_enabled": False})
+    experimental = work / "chess-native-shell"
+    command("cmake", "-S", source, "-B", experimental, "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_TESTING=ON", *flags, "-DTYRELL_ENABLE_SHELL_LINK=ON")
+    command("cmake", "--build", experimental, "--parallel", "4", "--target",
+            "tyrell-chess", "chess-shell-lifecycle-test", "chess-ai-cancellation-test")
+    results.append(ctest(experimental, work, {"chess-shell-lifecycle", "chess-ai-cancellation"},
+                         pattern="^(chess-shell-lifecycle|chess-ai-cancellation)$"))
+    return results
 
 
 def run_app(work, app, revision):
@@ -313,6 +375,8 @@ def export_evidence(work, suite):
     destination.mkdir(parents=True, exist_ok=True)
     selected = set(work.glob("*.json")) | set(work.glob("*-ctest.xml"))
     selected.update(work.glob("video*/a2-*.json"))
+    for directory in ("game", "game-desktop", "tanks", "chess", "chess-native", "chess-native-shell"):
+        selected.update((work / directory).rglob("a3-*.json"))
     for previews in work.glob("*/u1-previews"):
         selected.update(path for path in previews.rglob("*")
                         if path.suffix in {".png", ".ppm", ".json"})
@@ -372,6 +436,8 @@ def main(argv=None):
             data["results"] = run_game(work)
         elif args.suite == "chess":
             data["results"] = run_chess(work)
+        elif args.suite == "chess-native":
+            data["results"] = run_chess_native(work, before["commit"])
         elif args.suite in {"status", "video"}:
             data["results"] = run_app(work, args.suite, before["commit"])
         else:
