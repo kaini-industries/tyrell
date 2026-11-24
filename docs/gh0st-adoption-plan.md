@@ -302,6 +302,16 @@ simulation steps, and hidden-exit tests must leave the foreground pixels intact.
 
 ### R1 — Immutable candidates and explicit promotion
 
+**Implemented source increment:** deterministic candidate assembly and
+independent archive verification, authenticated source/candidate checks and a
+separate reviewed promotion request are described in
+[immutable candidates](immutable-candidates.md). Publication is a manual,
+serialized default-branch workflow with immutable release protection, new tags
+and verified draft assets. Development artifacts retain missing device gates;
+hardware alpha requires exact-artifact Z4/app acceptance and optimized power
+additionally requires Z6. No release or hardware promotion follows from merging
+this implementation.
+
 Add a release-manifest generator and candidate workflow using existing export
 verification. Bundle the image/app DEBs as applicable, SHA-256, inventories,
 source/input manifests, qualification matrix, known issues, license notices and

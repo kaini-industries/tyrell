@@ -1,0 +1,255 @@
+{
+  "schema": 1,
+  "kind": "r1-immutable-candidate-development-validation",
+  "reviewed_date": "2026-11-24",
+  "status": "passed",
+  "implementation_commit": "pending-follow-up-binding",
+  "producer_files_sha256": {
+    "scripts/release/candidate.py": "0a7a447f3366217865ed5ea2778a2f665efd629585e288899e6b0d6d79de97da",
+    "scripts/release/github.py": "7751cbed06aa344fbcc18bff189df5fbda3dab93cf4d17d4f6999d4d55cf7319",
+    "scripts/release/promotion.py": "22138c2ade169592840c77fb9b1e7cf1081f3c051c03bd545062f1dda1b0d354",
+    "scripts/release/publish.py": "65642b188fec0c735c724eb9249172af7a72b18ab5ee94752dd138a5faf65f00",
+    "scripts/release/stage.py": "d3bd19feb3293ef1221ac792b9e1859172295e4b56bfc4911479e9874aecf9a7",
+    "scripts/release/tests/test_candidate.py": "4a1163adc4e2ec5d59d480b0b7c434c061f972a721281ce1773bfb121f19b71b",
+    "scripts/release/tests/test_github.py": "ffe8e1b947dc45f268d4ea9f0d85f3cc65cbc1a8cad841c110ebd3429351077b",
+    "scripts/release/tests/test_promotion.py": "36cb080dfe20abc80b8405d7d7cccd076f3c824413ce43ff8ff0246a01341f3b",
+    "scripts/release/tests/test_publish.py": "489a848662c36c2d6bb69fbab6dd020cd489c79423f830b0a2d641657b170de1",
+    "scripts/release/tests/test_stage.py": "93028c31024484ea2f4a396c85914a83ba0cc3b1c2a2ca32c889db4931bb7318",
+    ".github/workflows/image-candidate.yml": "00555f6ca420574f5bde9468f2df4d49451ad85754de291e9ee109dfa51dc641",
+    ".github/workflows/promote-candidate.yml": "81824aca625a33e92df5a6d064df42ad6dcef0c6759634ec243314ef4ed29cf2"
+  },
+  "candidate_source_commit": "6be169bcfccf9b6760533c52cc210ff37da7556e",
+  "candidate_sha256": "159bcc1d83ca6336d3fae3e71ee514b9a1281855b67eaad05b869b884761b5f5",
+  "archive_sha256": "2e2139a96b618e4cc9d5bf2cb37c6684c8c84bb270b119ea822ede2b794dc790",
+  "archive_bytes": 5724160,
+  "selected_package_sha256": "e0f68ab1fd5ca7fdb3a4101261143e0240fced6648f05d2e8a375e8534d209e3",
+  "selection_sha256": "87132dd47ff75e85fcff6d0f6b8bc78511b1839169763854a1d016a2a8111c62",
+  "classification": "development",
+  "hardware_qualified": false,
+  "promotable": false,
+  "checks": {
+    "linux_python": {
+      "status": "passed",
+      "tests": 595,
+      "skips": 0,
+      "release_tests": 88,
+      "groups": [
+        {
+          "tests": 57,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "builder/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 270,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "image/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 22,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "scripts/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 53,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "scripts/ci/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 36,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "packages/tyrell-zero-session/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 17,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "packages/tyrell-zero-session/wizard/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 28,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "packages/tyrell-zero-store/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "packages/tyrell-zero-power-policy/tests",
+          "pattern": "test*.py"
+        },
+        {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "packages/tyrell-chess/tests",
+          "pattern": "*_test.py"
+        },
+        {
+          "tests": 88,
+          "failures": 0,
+          "errors": 0,
+          "skipped": [],
+          "expected_failures": 0,
+          "unexpected_successes": 0,
+          "status": "passed",
+          "directory": "scripts/release/tests",
+          "pattern": "test*.py"
+        }
+      ]
+    },
+    "live_source_authentication": {
+      "source_run": {
+        "id": 45491899469,
+        "repository": "kaini-industries/tyrell",
+        "path": ".github/workflows/checks.yml",
+        "head_sha": "6be169bcfccf9b6760533c52cc210ff37da7556e",
+        "status": "completed",
+        "conclusion": "success",
+        "event": "pull_request",
+        "jobs": [
+          {
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "native (zero-native)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "portable (python)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "native (status)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "portable (game)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "portable (docs)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "native (chess-native)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "native (video)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "portable (chess)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "compatibility gate",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "report_sha256": {
+        "docs": "dac3b78483a5d052e63438328a25ef80c08e90541aeda2fa5c0e3fb23cbe8805",
+        "python": "5f2056c6af6131426098a76e8e90b73cb370c0e61525f1c4789b3d4c6fe0bc8e",
+        "game": "53db94f3aaf91600df14bfa6e7bf112f3c95606f1fec51190b6ee634c21c1a38",
+        "chess": "5963085c84ce90fca020afabb2778e7fe41b6fbe9601c79ba4519d211ac03f20",
+        "chess-native": "52c0a7f61f621405ac71ef927ad8778b87abbbb09b102c081a980aa9b3b4fb7c",
+        "status": "1323814e5deee023da1ecfa1787d1f2e211b19388059ec029b84fd4a2573d4c4",
+        "video": "7a50dae958921e71bcb125b2c6b5f21cb5cec71910bf1e7a08001cf141b99e98",
+        "zero-native": "d965982cfd7308533ff0d02f205f694b523ee1aa4f95028a543120778e1c621a"
+      },
+      "selection_sha256": "87132dd47ff75e85fcff6d0f6b8bc78511b1839169763854a1d016a2a8111c62"
+    },
+    "live_staging": {
+      "status": "passed",
+      "downloaded_suites": [
+        "docs",
+        "python",
+        "game",
+        "chess",
+        "chess-native",
+        "status",
+        "video",
+        "zero-native"
+      ],
+      "source_commit": "6be169bcfccf9b6760533c52cc210ff37da7556e"
+    },
+    "archive_roundtrip": "passed",
+    "independent_staging_reproduced_same_manifest_and_archive": "passed",
+    "workflow_yaml_syntax": "passed Ruby YAML parser; GitHub execution remains separately retained"
+  },
+  "repository_immutability_readonly_preflight": {
+    "enabled": false,
+    "setting_changed": false
+  },
+  "publication_performed": false,
+  "image_built": false,
+  "device_accessed": false,
+  "limitations": [
+    "The example binds the exact retained PR #11 CI package and source, not current-source rebuilt binaries.",
+    "The native package has no physical M5/Zero/Gh0st qualification. Its required hardware row remains not-tested.",
+    "Image export/capture tamper handling is exercised with synthetic fixtures through the trusted existing verifiers; no new image capture or raw image construction occurred.",
+    "Promotion and upload/publish mutation paths use mocked GitHub responses in regression tests. No release, tag or repository setting was changed.",
+    "Hosted candidate workflow execution and its artifacts are separately identified in the pull request. Artifact expiry must fail restoration; no replacement download/rebuild is inferred."
+  ]
+}

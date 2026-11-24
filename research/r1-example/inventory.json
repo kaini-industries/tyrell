@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "scope": "one advertised app payload; full hosted inventories remain in bound check evidence",
+  "source_commit": "6be169bcfccf9b6760533c52cc210ff37da7556e",
+  "source_checks_run_id": 45491899469,
+  "package": {
+    "package": "tyrell-chess",
+    "version": "0.1.4-1",
+    "architecture": "arm64",
+    "path": "checks-chess-native-6be169bcfccf9b6760533c52cc210ff37da7556e/evidence/chess-native/chess-native-1fi1t3d_/packages/tyrell-chess_0.1.4-1_arm64.deb",
+    "sha256": "e0f68ab1fd5ca7fdb3a4101261143e0240fced6648f05d2e8a375e8534d209e3"
+  },
+  "native_build_report": "checks-chess-native-6be169bcfccf9b6760533c52cc210ff37da7556e/chess-native.json"
+}

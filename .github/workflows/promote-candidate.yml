@@ -1,0 +1,107 @@
+name: explicit immutable candidate promotion
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run_id:
+        description: Successful immutable candidate assembly run
+        required: true
+        type: string
+      candidate_id:
+        description: Exact canonical release-manifest.json SHA-256
+        required: true
+        type: string
+      archive_sha256:
+        description: Exact sealed candidate archive SHA-256
+        required: true
+        type: string
+      request_path:
+        description: Reviewed promotion request JSON in default-branch checkout
+        required: true
+        type: string
+      request_sha256:
+        description: Exact SHA-256 of that reviewed promotion request
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+# Serialize all versions: accepted package identities form one shared registry.
+concurrency:
+  group: immutable-candidate-promotion
+  cancel-in-progress: false
+jobs:
+  review:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify reviewed request, exact candidate and required checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_RELEASE_READ_TOKEN: ${{ secrets.RELEASE_READ_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ID: ${{ inputs.candidate_id }}
+          ARCHIVE_SHA: ${{ inputs.archive_sha256 }}
+          REQUEST_PATH: ${{ inputs.request_path }}
+          REQUEST_SHA: ${{ inputs.request_sha256 }}
+        run: |
+          python3 scripts/release/github.py prepare-promotion \
+            --repository "$REPOSITORY" --run-id "$RUN_ID" --candidate-id "$CANDIDATE_ID" \
+            --archive-sha256 "$ARCHIVE_SHA" --request "$REQUEST_PATH" --request-sha256 "$REQUEST_SHA" \
+            --output build/release-review --report build/ci/promotion-readiness.json
+      - name: Retain review result
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: promotion-review-${{ github.run_id }}
+          path: build/ci/promotion-readiness.json
+          if-no-files-found: warn
+          retention-days: 30
+  publish:
+    needs: review
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && needs.review.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Recheck policy, verify draft assets and publish immutably
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_RELEASE_READ_TOKEN: ${{ secrets.RELEASE_READ_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ID: ${{ inputs.candidate_id }}
+          ARCHIVE_SHA: ${{ inputs.archive_sha256 }}
+          REQUEST_PATH: ${{ inputs.request_path }}
+          REQUEST_SHA: ${{ inputs.request_sha256 }}
+        run: |
+          python3 scripts/release/github.py publish-reviewed \
+            --repository "$REPOSITORY" --run-id "$RUN_ID" --candidate-id "$CANDIDATE_ID" \
+            --archive-sha256 "$ARCHIVE_SHA" --request "$REQUEST_PATH" --request-sha256 "$REQUEST_SHA" \
+            --output build/release-publication --publication-output build/release-assets \
+            --report build/ci/publication.json
+      - name: Retain publication receipt
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publication-receipt-${{ github.run_id }}
+          path: |
+            build/ci/publication.json
+            build/release-publication/promotion.json
+            build/release-assets/release-index.json
+            build/release-assets/SHA256SUMS
+          if-no-files-found: warn
+          retention-days: 30

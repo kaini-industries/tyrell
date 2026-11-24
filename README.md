@@ -249,6 +249,10 @@ A3 adds [GameRuntime hooks and an offline Chess lifecycle policy](docs/game-ches
 with native ownership, clock, AI and save-failure checks. Its experimental shell
 build is separate from normal M5 packages; physical acceptance and lifecycle
 policies for LAN, Sandline and Beacon remain pending.
+R1 adds [immutable candidate packaging and explicit promotion](docs/immutable-candidates.md).
+It seals exact binaries, inputs and evidence; publication requires a separate
+reviewed request and passing checks for those bytes. Missing device acceptance
+remains visible in development artifacts and blocks hardware-alpha promotion.
 Later adoption work and Zero base-system hardware qualification remain separate.
 
 Generated working exports under `artifacts/` remain local. Verified package

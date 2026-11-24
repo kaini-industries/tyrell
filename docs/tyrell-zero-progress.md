@@ -136,5 +136,7 @@ The [Gh0st adoption plan](gh0st-adoption-plan.md) now has F1's
 [compatibility ledger](compatibility-matrix.md) and
 [scoped CI](continuous-integration.md). It separates historical exact artifacts
 from current source checks and keeps required skips and physical gates visible.
-UI/help, shell lifecycle, idle-loop and release/catalog work remain planned;
-F1 adds no image, optimized power or hardware acceptance.
+Shared UI/help, the Status idle/lifecycle pilot, offline Chess lifecycle and
+[immutable candidate/promotion tooling](immutable-candidates.md) now have source
+implementations and automated checks. Catalog work, app device acceptance and
+Z4/Z5/Z6 remain separate; these increments add no image or hardware acceptance.

@@ -32,7 +32,7 @@ class ScopesTests(unittest.TestCase):
         self.assertEqual(scopes.select(["packages/tyrell-tanks/src/network.cpp"]), ["docs", "python", "game"])
 
     def test_ci_ledger_and_common_capture_inputs_force_full_coverage(self):
-        for path in (".github/workflows/checks.yml", "scripts/ci/scopes.py", "research/compatibility-ledger.json",
+        for path in (".github/workflows/checks.yml", "scripts/ci/scopes.py", "scripts/release/candidate.py", "research/compatibility-ledger.json",
                      "builder/write-manifest.py", "image/overlay.py", "locks/tyrell-zero-apt.json",
                      "packages/tyrell-app-common/include/new.hpp", "Makefile"):
             with self.subTest(path=path):

@@ -29,7 +29,7 @@ def select(paths):
                 or "\\" in path):
             raise ValueError("Expected a repository-relative POSIX path")
         # These files are consumed by every check, not just documentation.
-        if (path.startswith(("scripts/ci/", ".github/"))
+        if (path.startswith(("scripts/ci/", "scripts/release/", ".github/"))
                 or path in ("Makefile", ".gitignore", "research/compatibility-ledger.json")):
             selected.update(SUITES)
         elif path.startswith("packages/tyrell-app-common/"):
