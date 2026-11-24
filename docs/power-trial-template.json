@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "kind": "tyrell-power-trial-planning-template",
+  "status": "planned",
+  "result": "not-tested",
+  "execution_ready": false,
+  "grants_release_approval": false,
+  "hardware_qualified": false,
+  "battery_qualified": false,
+  "scope": "Future physical Z6 trial declaration; no observations or executable actions",
+  "contract": {
+    "path": "image/contracts/tyrell-zero-power.json",
+    "sha256": "99803052bb1f7e03c5ccdeab8b14c831d019bee290248e199dd3bf0e4885465a",
+    "activation_implemented": false
+  },
+  "identities": {
+    "experiment_id": "UNRECORDED",
+    "reviewed_protocol_revision": "UNRECORDED",
+    "baseline_image_raw_sha256": "UNRECORDED",
+    "candidate_image_raw_sha256": "UNRECORDED",
+    "baseline_and_candidate_export_manifests_sha256": "UNRECORDED",
+    "power_package_and_selection_sha256": "UNRECORDED",
+    "source_input_and_common_package_manifest_sha256": "UNRECORDED",
+    "kernel_bsp_controller_and_native_app_identities": "UNRECORDED",
+    "z4_z5_exact_artifact_acceptance_references": "UNRECORDED",
+    "device_spare_card_and_recovery_record": "UNRECORDED"
+  },
+  "presets": {
+    "baseline": {"ethernet_control": "on", "ethernet_autosuspend_delay_ms": 2000, "ondemand_sampling_down_factor": 50},
+    "ethernet": {"ethernet_control": "auto", "ethernet_autosuspend_delay_ms": 2000, "ondemand_sampling_down_factor": 50},
+    "cpu": {"ethernet_control": "on", "ethernet_autosuspend_delay_ms": 2000, "ondemand_sampling_down_factor": 1},
+    "combined": {"ethernet_control": "auto", "ethernet_autosuspend_delay_ms": 2000, "ondemand_sampling_down_factor": 1}
+  },
+  "preserved_controls": {
+    "governor": "ondemand",
+    "cpu_min_khz": 600000,
+    "cpu_max_khz": 1000000,
+    "up_threshold": 50,
+    "sampling_rate_us": 100000,
+    "ignore_nice_load": 0,
+    "powersave_bias": 0,
+    "io_is_busy": 0,
+    "ethernet_parent_policy": "auto",
+    "gpu_mem_mib": 128,
+    "cma_mib": 64,
+    "swap_wifi_eee_and_native_clients": "UNRECORDED"
+  },
+  "matched_conditions": {
+    "battery_identity_health_cycles_and_start_charge_procedure": "UNRECORDED",
+    "starting_soc_voltage_and_temperature_windows": "UNRECORDED",
+    "supply_and_all_accessory_power_paths": "UNRECORDED",
+    "display_brightness_verified_dark_state_and_audio": "UNRECORDED",
+    "network_ap_ethernet_usb_topology_and_effective_policy": "UNRECORDED",
+    "applications_settings_and_completed_work_validation": "UNRECORDED",
+    "observer_logging_cadence_storage_and_remote_activity": "UNRECORDED",
+    "maintenance_timer_activation_and_swap_writeback_exposure": "UNRECORDED"
+  },
+  "measurement": {
+    "route": "UNRECORDED: validated unplugged battery energy or controlled usable runtime",
+    "instruments_calibration_validated_units_and_uncertainty": "UNRECORDED",
+    "instrument_burden_and_unintended_back_power_exclusion": "UNRECORDED",
+    "sample_cadence_monotonic_time_and_buffering": "UNRECORDED",
+    "idle_equal_elapsed_and_burst_equal_work_common_cycle_windows": "UNRECORDED",
+    "unchanged_useful_start_end_and_shutdown_thresholds": "UNRECORDED",
+    "analysis_uncertainty_method_usage_mix_and_material_regression_limits": "UNRECORDED",
+    "power_avg_units_validated": false,
+    "usb_only_battery_promotion_allowed": false
+  },
+  "required_conditions": [
+    "connected-awake-idle-screen-on",
+    "connected-awake-idle-screen-off",
+    "intermittent-ssh-and-equal-work-bursts-with-idle-return",
+    "ethernet-cable-insertion-after-idle-and-sustained-traffic",
+    "usb-peripheral-hotplug-and-all-supported-modes",
+    "camera-media-hdmi-use-release-and-restoration",
+    "cold-boot-to-usable-and-normal-shutdown",
+    "longer-representative-maintenance-and-pressure-session",
+    "software-halt-and-physical-off-recorded-separately"
+  ],
+  "predeclared_budgets": {
+    "input_and_network_latency": "UNRECORDED",
+    "audio_underruns_video_drops_camera_and_hdmi_restoration": "UNRECORDED",
+    "equal_work_throughput_and_validated_outputs": "UNRECORDED",
+    "cable_wake_hotplug_reconnect_and_usb_mode_recovery": "UNRECORDED",
+    "physical_idle_return_deadlines_and_margin": "UNRECORDED",
+    "memory_pressure_swap_io_and_thermal_limits": "UNRECORDED",
+    "boot_apply_reapply_shutdown_and_maintenance_cost": "UNRECORDED",
+    "minimum_battery_benefit_beyond_uncertainty": "UNRECORDED"
+  },
+  "functional_gates": {
+    "ethernet_individual": "not-tested",
+    "cpu_individual": "not-tested",
+    "combined_after_individual_function_performance_passes": "not-tested",
+    "boot_reapply_reenumeration_supported_maintenance_and_rollback": "not-tested",
+    "final_fifteen_category_hardware_matrix": "not-tested"
+  },
+  "paired_trial_schedule": {
+    "independent_pairs_per_comparison": 4,
+    "minimum_initial_pairs": 3,
+    "repeat_for_each_declared_condition": true,
+    "ethernet_vs_baseline": {
+      "orders": [["baseline", "ethernet"], ["ethernet", "baseline"], ["ethernet", "baseline"], ["baseline", "ethernet"]],
+      "result": "not-tested"
+    },
+    "cpu_vs_baseline": {
+      "orders": [["cpu", "baseline"], ["baseline", "cpu"], ["baseline", "cpu"], ["cpu", "baseline"]],
+      "result": "not-tested"
+    },
+    "combined_vs_baseline": {
+      "orders": [["baseline", "combined"], ["combined", "baseline"], ["combined", "baseline"], ["baseline", "combined"]],
+      "requires_individual_function_performance_gates": true,
+      "standalone_energy_inconclusive_does_not_replace_combined_evidence": true,
+      "result": "not-tested"
+    },
+    "final_selected_image_vs_matched_full_source_control": {
+      "orders": "UNRECORDED: declare independent counterbalanced pairs after selection and fresh image qualification",
+      "result": "not-tested"
+    }
+  },
+  "each_attempt_requires": [
+    "unique trial/pair/condition/operator identifiers and exact artifact hashes",
+    "start/settle/duration timestamps and matched starting state",
+    "raw sample and instrument metadata paths, sizes and SHA-256 hashes",
+    "completed work validation, per-condition function/performance outcomes and effective readbacks",
+    "maintenance events actually encountered and unobserved exposure limits",
+    "all deviations, failed attempts and predeclared exclusion reasons",
+    "paired result and uncertainty analysis without treating within-run samples as independent trials"
+  ],
+  "rejection_rules": {
+    "identity_or_condition_mismatch": "UNRECORDED",
+    "missing_corrupt_or_interrupted_samples": "UNRECORDED",
+    "unintended_charging_back_power_or_changed_instrument_burden": "UNRECORDED",
+    "incomplete_work_or_changed_useful_endpoints": "UNRECORDED",
+    "functional_performance_or_recovery_regression": "UNRECORDED",
+    "maintenance_or_environmental_deviation": "UNRECORDED",
+    "retain_all_excluded_attempts_and_raw_data": true
+  },
+  "selection": {
+    "selected_preset": "UNRECORDED",
+    "baseline_is_valid_fallback": true,
+    "battery_benefit_demonstrated": false,
+    "release_requires_fresh_frozen_inputs_and_repeat_acceptance": true,
+    "result": "not-tested"
+  }
+}

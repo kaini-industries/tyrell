@@ -262,6 +262,10 @@ F2/H1 adds [bounded baseline observation tools](docs/baseline-observations.md)
 and a [backlight investigation procedure](docs/backlight-investigation.md).
 Collection is explicitly started and read-only; physical baseline acceptance,
 backlight reproduction and any correction remain pending.
+H2 adds an [offline guarded-power rehearsal](docs/guarded-power-rehearsal.md)
+for fixed preset intents, identity/topology checks and generation-bound recovery.
+It simulates synthetic snapshots in memory; live power activation and battery
+qualification remain pending.
 
 Generated working exports under `artifacts/` remain local. Verified package
 snapshots are committed separately under [`dist/`](dist/README.md).
