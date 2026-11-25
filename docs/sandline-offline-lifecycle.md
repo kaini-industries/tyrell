@@ -14,7 +14,8 @@ refused before a UDP host/connect operation or Runtime acquisition. LAN menu
 rows identify their unavailable state; numeric shortcuts, address entry and
 activation cannot enter a network match. Unlinked LAN continues to use its
 existing simulation, transport and timeout paths. No network continuity across
-a shell pause is promised. Beacon's independent lifecycle policy remains pending.
+a shell pause is promised. Beacon has a separate
+[offline lifecycle policy](beacon-offline-lifecycle.md).
 
 ## Startup and ownership
 

@@ -95,6 +95,7 @@ class LedgerTests(unittest.TestCase):
         self.assertTrue(any('status' in error and 'current source changed' in error for error in errors))
         self.assertTrue(any('catalog' in error and 'current source changed' in error for error in errors))
         self.assertTrue(any('sandline' in error and 'current source changed' in error for error in errors))
+        self.assertTrue(any('beacon' in error and 'current source changed' in error for error in errors))
 
     def test_retained_package_tamper_fails_even_with_unchanged_reports(self):
         self.package.write_bytes(b'changed package')

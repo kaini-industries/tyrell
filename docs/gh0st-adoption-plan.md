@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline source increments implemented with physical gates pending, Beacon policy pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline/Beacon source increments implemented with physical gates pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -294,11 +294,14 @@ hooks and Chess 0.1.4 adds the optional native offline policy. See the
 [Chess implementation boundary](game-chess-lifecycle.md). Sandline 0.1.1 now adds
 its own [offline Driving Range/menu policy](sandline-offline-lifecycle.md), with
 state preservation, first-interval simulation-debt discard and native input/render
-ownership checks. Both normal packages disable shell support. Controlled checks
-cover pause/resume and failure paths; physical M5/Gh0st acceptance remains
-pending. Linked LAN is gated. **Beacon's independent offline lifecycle policy
-is the next remaining A3 source increment**; live-LAN policy remains separate.
-The full A3 device gate below remains open. Video D5 and idle gates are unchanged.
+ownership checks. Framework/example 0.1.2 adds Beacon's independent
+[offline session policy](beacon-offline-lifecycle.md), preserving actors and the
+fixed-step remainder across suspension without resetting its Session. Normal
+builds disable shell support. Controlled checks cover pause/resume and failure
+paths; physical M5/Gh0st acceptance remains pending. Linked LAN is gated in all
+three app pilots; live-LAN policy remains separate. The A3 offline source
+increments are implemented, with the full device gate below still open.
+Video D5 and idle gates are unchanged.
 
 First add native input suspend/reopen/reset and full-redraw hooks to
 `packages/tyrell-game/`; keep shell transport and match policy outside simulation

@@ -64,10 +64,11 @@ rollover, panel tearing, thermals, and battery life require device validation.
 App policy remains outside Runtime: the
 [offline Chess policy](game-chess-lifecycle.md) and
 [offline Sandline policy](sandline-offline-lifecycle.md) independently use its
-suspend/resume/abandon hooks. Sandline discards one post-resume practice
-simulation interval while Runtime elapsed time and unlinked LAN expiry remain
-truthful. Both native pilots default off; Beacon's policy and physical
-qualification remain pending.
+suspend/resume/abandon hooks. Framework/example 0.1.2 adds the independent
+[offline Beacon policy](beacon-offline-lifecycle.md) without changing those
+shared hooks. Sandline and Beacon discard one post-resume offline simulation
+interval while Runtime elapsed time and unlinked LAN expiry remain truthful.
+All three native pilots default off; physical qualification remains pending.
 
 `FixedStepClock::advance(elapsed)` returns a bounded number of whole simulation
 steps and retains a fractional remainder exposed by `alpha()`. It drops excess

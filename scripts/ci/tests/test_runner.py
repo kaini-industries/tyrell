@@ -169,6 +169,23 @@ class RunnerIdentityTests(unittest.TestCase):
             path = self.root / "build/ci" / binding["artifact_path"]
             self.assertEqual(runner.digest(path), binding["sha256"])
 
+    def test_beacon_reports_and_default_executable_survive_build_tree_removal(self):
+        work = self.root / "build/ci/example"
+        for name in ("beacon-shell", "beacon-native-shell"):
+            path = work / name / "a3-beacon-lifecycle.json"
+            path.parent.mkdir(parents=True)
+            path.write_text('{"status":"passed","physical_testing":"pending"}')
+        executable = work / "native-artifacts/tyrell-beacon-arena-0.1.2-arm64"
+        executable.parent.mkdir()
+        executable.write_bytes(b"exact default executable bytes")
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "game-native")
+        self.assertEqual(len(bindings), 3)
+        shutil.rmtree(work)
+        for binding in bindings:
+            path = self.root / "build/ci" / binding["artifact_path"]
+            self.assertEqual(runner.digest(path), binding["sha256"])
+
 
 class RequiredCTestTests(unittest.TestCase):
     def test_missing_registered_group_fails_before_execution(self):

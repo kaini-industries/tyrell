@@ -80,12 +80,26 @@ class GameToolsTests(unittest.TestCase):
                 self.assertIn('-DTYRELL_ENABLE_SHELL_LINK=ON',enabled)
                 self.assertNotEqual(args[args.index('-B')+1],enabled[enabled.index('-B')+1])
 
-    def test_shell_pilot_flag_cannot_enable_framework_or_desktop(self):
+    def test_shell_pilot_flag_rejects_non_native_backends(self):
         main=self.api['main']
         for args in (['build','--shell-link'],['build','--project','tanks','--backend','headless','--shell-link']):
             with self.subTest(args=args),mock.patch('sys.argv',['scripts/game',*args]),mock.patch.dict(main.__globals__,configure=mock.Mock()) as globals_:
                 with self.assertRaises(SystemExit):main()
                 globals_['configure'].assert_not_called()
+
+    def test_beacon_default_and_enabled_builds_are_isolated(self):
+        configure=self.api['configure']
+        with tempfile.TemporaryDirectory() as directory:
+            configure.__globals__['DEPS']=Path(directory)
+            for item in self.api['LOCK'].values(): (Path(directory)/item['directory']).mkdir()
+            with mock.patch.dict(configure.__globals__,run=mock.Mock(),verify_source=mock.Mock()) as globals_:
+                configure('framework','native')
+                default=globals_['run'].call_args.args
+                self.assertIn('-DTYRELL_ENABLE_SHELL_LINK=OFF',default)
+                configure('framework','native',True)
+                enabled=globals_['run'].call_args.args
+                self.assertIn('-DTYRELL_ENABLE_SHELL_LINK=ON',enabled)
+                self.assertNotEqual(default[default.index('-B')+1],enabled[enabled.index('-B')+1])
 
     def test_legacy_tanks_entry_preserves_separator_and_game_arguments(self):
         result=mock.Mock(returncode=0)

@@ -23,7 +23,7 @@ APP_ROOTS = {
               'scripts/game', 'locks/game-build-inputs.json'],
     'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'packages/tyrell-app-common', 'scripts/tanks',
                  'scripts/game', 'locks/game-build-inputs.json'],
-    'beacon': ['packages/tyrell-game', 'scripts/game', 'locks/game-build-inputs.json'],
+    'beacon': ['packages/tyrell-game', 'packages/tyrell-app-common', 'scripts/game', 'locks/game-build-inputs.json'],
     'catalog': ['packages/tyrell-catalog', 'packages/tyrell-app-common',
                 'packages/tyrell-zero-store/config', 'locks/build-inputs.json'],
 }
