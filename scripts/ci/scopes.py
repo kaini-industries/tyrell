@@ -46,6 +46,9 @@ def select(paths):
             selected.update(("python", "status"))
         elif path.startswith("packages/tyrell-video/"):
             selected.update(("python", "video"))
+        elif path.startswith("packages/tyrell-video-handoff/"):
+            # Standalone D1 foundation; not installed or consumed by Video yet.
+            selected.add("python")
         elif path.startswith("packages/tyrell-catalog/"):
             selected.update(("python", "zero-native"))
         elif path.startswith("packages/tyrell-zero-"):

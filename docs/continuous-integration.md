@@ -110,6 +110,16 @@ or experiment-template JSON changes select those checks too. F2 fixtures cover
 parent snapshot timing envelopes; no collector runs against CI hardware. The
 tests do not load modules, probe PRESENT or change current app display paths.
 
+A2-D1's [handoff foundation](video-handoff-foundation.md) adds 65 required Python
+checks for the actual packet parser, Linux channel, authority, SQLite ledger and
+trusted-launcher session. Linux tests use real child processes, per-message
+credentials, pidfds, descriptor passing and subprocess death; no device adapter
+is active. A local macOS run skips Linux-only cases and is incomplete evidence.
+Standalone handoff package changes select docs and Python. Its modules are not
+installed or linked into Video, so native package suites remain separate; CI
+infrastructure changes still select all eight suites. Device/helper completion,
+power-cut durability and physical acceptance remain pending.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

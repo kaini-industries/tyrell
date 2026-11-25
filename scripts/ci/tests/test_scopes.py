@@ -55,6 +55,15 @@ class ScopesTests(unittest.TestCase):
         self.assertEqual(scopes.select(["packages/tyrell-catalog/catalog_cache.py"]),
                          ["docs", "python", "zero-native"])
 
+    def test_standalone_handoff_requires_linux_checks_without_native_activation(self):
+        for path in ("packages/tyrell-video-handoff/handoff_channel.py",
+                     "packages/tyrell-video-handoff/tests/test_session.py",
+                     "packages/tyrell-video-handoff/README.md"):
+            with self.subTest(path=path):
+                self.assertEqual(scopes.select([path]), ["docs", "python"])
+        self.assertEqual(scopes.select(["packages/tyrell-video-handoff-new/actor.py"]),
+                         list(scopes.SUITES))
+
     def test_observation_tools_require_portable_checks_without_device_jobs(self):
         self.assertEqual(scopes.select(["scripts/observe/collect.py"]), ["docs", "python"])
         self.assertEqual(scopes.select(["scripts/power/transaction.py"]), ["docs", "python"])

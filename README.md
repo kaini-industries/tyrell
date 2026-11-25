@@ -88,7 +88,10 @@ separate from the retained 0.1.7 hardware qualification; see the
 Current Video 0.1.9 adds checkpoints and a lifecycle admission guard. Its
 [asynchronous handoff design](docs/video-async-handoff-design.md) sets out
 the protocol and helper ownership work needed after that checkpoint phase.
-It adds no live shell playback; the existing admission guard remains closed.
+The separate [A2-D1 foundation](docs/video-handoff-foundation.md) implements its
+channel, authority and durable ledger with inert resource adapters. It is not
+installed into Video; the existing admission guard remains closed and physical
+testing remains pending.
 
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
 source provenance and test results. Video 0.1.7 is qualified for the tested
