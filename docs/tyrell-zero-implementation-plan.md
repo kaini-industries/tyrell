@@ -39,8 +39,9 @@ settled-memory and battery acceptance remain later gates.
 The separate [November 19 refresh](tyrell-zero-nov19-refresh.md) adopts the
 official updated BSP, APPLaunch 0.6.111 and camera stack for the selected Zero
 profile. It preserves this original baseline/control pair and its historical
-records. Fresh source, native and detached-runtime qualification passed;
-exported-image and physical acceptance are tracked separately.
+records. Fresh source, native, detached-runtime and exported-file qualification
+passed. Physical acceptance remains pending; a new matched control is required
+before comparing resource or battery benefits for the updated BSP.
 
 The separate [Gh0st adoption plan](gh0st-adoption-plan.md) covers proposed UI,
 optional application lifecycle and delivery improvements. Its app changes use

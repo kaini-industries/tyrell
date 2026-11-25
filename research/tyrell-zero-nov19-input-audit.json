@@ -1363,8 +1363,8 @@
     },
     {
       "path": "locks/tyrell-zero-session-source.json",
-      "sha256": "27fb2c7898a5284b7b732ac8eb6371b6ec6bd67d2709caf2170497b8c8c2edb4",
-      "bytes": 21039
+      "sha256": "f2dfa6b919e011c7d330ad87b76d269ac927f637b007cae727a1153a454ab9c1",
+      "bytes": 22554
     },
     {
       "path": "locks/tyrell-zero-seed-apt.json",
@@ -1373,8 +1373,18 @@
     }
   ],
   "remaining_acceptance": [
-    "native/runtime and independent file-image qualification for the assembled candidate",
     "identified-spare-card physical boot/setup/input/display/network/audio/camera/Store/expansion testing",
-    "new matched-baseline battery/power measurements"
-  ]
+    "new matched-baseline battery/power measurements before any benefit claim"
+  ],
+  "native_runtime_metadata_binding": {
+    "scope": "Source-selection snapshot retained below; current selected source lock now binds actual native/runtime qualification. Archive, patch and configuration selection is unchanged.",
+    "source_selection_snapshot": [
+      {
+        "path": "locks/tyrell-zero-session-source.json",
+        "sha256": "27fb2c7898a5284b7b732ac8eb6371b6ec6bd67d2709caf2170497b8c8c2edb4",
+        "bytes": 21039
+      }
+    ],
+    "qualified_source_commit": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda"
+  }
 }

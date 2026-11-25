@@ -260,9 +260,9 @@ file-image exports and measured disk footprints; see the
 [image validation record](docs/tyrell-zero-image-validation.md). Spare-card
 hardware acceptance and runtime/battery measurements remain separate gates.
 The separate [November 19 M5 refresh](docs/tyrell-zero-nov19-refresh.md) selects
-APPLaunch 0.6.111, the official updated BSP and camera stack for Zero, with fresh
-native/runtime qualification. Its image and physical acceptance remain separate
-from the retained baseline/control pair.
+APPLaunch 0.6.111, the official updated BSP and camera stack for Zero. Its fresh
+file-image export passed 24,402 checks and independent raw/XZ validation.
+Physical acceptance remains pending; the earlier baseline/control pair is retained.
 
 The [Gh0st adoption plan](docs/gh0st-adoption-plan.md) sequences shared UI/help,
 optional app lifecycle integration, idle-loop improvements and release tooling
