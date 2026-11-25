@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline/Beacon source increments implemented with physical gates pending; A3 LAN policy selected with integration pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
+Plan revision 1, updated November 25, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline/Beacon source increments implemented with physical gates pending; A3-LAN-1 Chess controller primitives implemented with linked admission closed and A3-LAN-2 native/loop integration pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -305,10 +305,14 @@ builds disable shell support. Controlled checks cover pause/resume and failure
 paths; physical M5/Gh0st acceptance remains pending. Linked LAN is gated in all
 three app pilots. The [LAN policy design](game-lan-lifecycle-design.md) now selects
 local session termination on observed shell suspension, with separate host/client
-authority and future acceptance cases. It implements no runtime LAN integration
-and keeps physical qualification pending. The next source increment is
-**A3-LAN-1: Chess terminal/controller primitives and stale-authority policy**, with
-linked admission still closed. The A3 offline source
+authority and future acceptance cases. The subsequent
+[A3-LAN-1 controller increment](chess-lan-terminal.md) adds irreversible local
+sealing, host elapsed-time settlement, confirmed joiner snapshots, pending
+request evidence and separate transport cleanup. Its Chess-only 10-second gap
+and stale-authority policy requires explicit controller opt-in. Linked admission
+stays closed, and physical qualification remains pending. The next source
+increment is **A3-LAN-2: Chess production loop and optional native adapter**.
+The A3 offline source
 increments are implemented, with the full device gate below still open.
 Video D5 and idle gates are unchanged.
 

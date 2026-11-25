@@ -237,7 +237,7 @@ def run_chess(work):
     build = work / "chess"
     configure_build(ROOT / "packages/tyrell-chess", build, "-DCHESS_BACKEND=HEADLESS",
                     "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DTYRELL_ENABLE_SHELL_LINK=OFF")
-    results = [ctest(build, work, {"chess-lan", "chess-controller", "chess-model", "chess-render",
+    results = [ctest(build, work, {"chess-lan", "chess-controller", "chess-lan-terminal", "chess-model", "chess-render",
                                "chess-lifecycle", "chess-keyboard-navigation", "chess-input-repeat",
                                "tyrell-app-commands", "chess-command-context", "chess-ui-layout",
                                "chess-offline-lifecycle", "chess-ai-cancellation"})]
@@ -280,7 +280,7 @@ def run_chess_native(work, revision):
     flags = ("-DCHESS_BACKEND=NATIVE", "-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]))
     build = work / "chess-native"
     configure_build(source, build, *flags, "-DTYRELL_ENABLE_SHELL_LINK=OFF")
-    results = [ctest(build, work, {"chess-engine", "chess-lan", "chess-controller", "chess-model",
+    results = [ctest(build, work, {"chess-engine", "chess-lan", "chess-controller", "chess-lan-terminal", "chess-model",
                                   "chess-render", "chess-lifecycle", "chess-offline-lifecycle",
                                   "chess-ai-cancellation", "chess-input-repeat", "chess-ui-layout"})]
     packages = work / "packages"

@@ -9,6 +9,7 @@
 #include "raylib.h"
 #include "tyrell/app/commands.hpp"
 #include "offline_lifecycle.h"
+#include "lan_terminal.h"
 #include <atomic>
 #include <functional>
 #include <algorithm>
@@ -59,8 +60,8 @@ struct Args {
 Args arguments(int argc,char** argv) {
  Args a;
  for(int i=1;i<argc;++i){std::string s=argv[i];auto val=[&](){if(++i>=argc)throw std::runtime_error("Missing value for "+s);return std::string(argv[i]);};
- if(s=="--help"){std::cout<<"Tyrell Chess 0.1.4 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
- else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.4 (upstream 64419e29c828)\n";std::exit(0);}
+ if(s=="--help"){std::cout<<"Tyrell Chess 0.1.5 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
+ else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.5 (upstream 64419e29c828)\n";std::exit(0);}
  else if(s=="--headless")a.headless=true;else if(s=="--demo")a.demo=true;else if(s=="--quick")a.quick=true;
  else if(s=="--ui-time"){auto value=val();size_t n; a.uiTime=std::stod(value,&n);if(n!=value.size()||!std::isfinite(a.uiTime)||a.uiTime<0||a.uiTime>86400)throw std::runtime_error("UI time must be 0..86400 seconds");}
  else if(s=="--frames"){auto text=val();size_t n;long count=std::stol(text,&n);if(n!=text.size()||count<1||count>100000)throw std::runtime_error("Frames must be 1..100000");a.frames=int(count);}
@@ -108,6 +109,14 @@ public:
  double pendingSince=0;
  std::set<int> solved;
  chess::Lan lan;
+ chess::LanTerminal lanTerminal;
+ Game lastHostConfirmedGame;
+ ChessClockSnapshot lastHostConfirmedClock,hostClockCheckpoint;
+ bool haveHostConfirmation=false,haveHostClockCheckpoint=false;
+ uint64_t lastLanServiceAt=0,lastLanAuthorityAt=0,hostClockCheckpointAt=0;
+ std::string pendingLanMove;
+ size_t pendingLanPly=0;
+ uint64_t pendingLanQueuedAt=0;
  bool networkHost=false,helloSent=false,localReady=false,remoteReady=false,networkPlaying=false,networkEndSent=false;
  int pairCode=0,puzzleCategory=-1;
  uint32_t lastSave=0,lastSync=0;
@@ -130,6 +139,109 @@ public:
  }
  ~App(){cancelAI();if(worker.valid())worker.wait();}
  uint32_t clockNow() const {return uint32_t(monotonicClock());}
+ uint32_t actionClockNow() const {return lanTerminal.active()?uint32_t(lastLanServiceAt):clockNow();}
+ // Explicit opt-in only. Call before opening the transport; a sealed session
+ // cannot be recycled until its actual socket/buffer cleanup has completed.
+ bool beginLanSession(chess::LanRole role){
+   if(linkedSession||lanTerminal.active()||lanTerminal.teardown_pending()||
+      lanTerminal.session_id()==UINT64_MAX||(role!=chess::LanRole::Host&&role!=chess::LanRole::Joiner))return false;
+   if(!lan.begin_session()||!lanTerminal.begin(role))return false;
+   const auto now=monotonicClock();lastLanServiceAt=lastLanAuthorityAt=now;
+   networkHost=role==chess::LanRole::Host;networkPlaying=false;
+   helloSent=localReady=remoteReady=networkEndSent=false;pairCode=0;
+   awaitingMove=drawOffered=incomingDrawOffer=false;
+   pendingLanMove.clear();pendingLanPly=0;pendingLanQueuedAt=0;pendingSince=0;
+   haveHostConfirmation=haveHostClockCheckpoint=false;
+   lastHostConfirmedGame=Game{};lastHostConfirmedClock=ChessClockSnapshot{};
+   hostClockCheckpoint=ChessClockSnapshot{};hostClockCheckpointAt=now;
+   networkStartedAt=time;lastSync=uint32_t(now);resetBoardUI();promotions.clear();
+   return true;
+ }
+ void checkpointLanHost(uint64_t now){
+   if(!lanTerminal.active()||!networkHost||!networkPlaying||!online())return;
+   if(now<lastLanServiceAt||now-lastLanServiceAt>=chess::LanTerminal::service_gap_limit_ms){sealLanSession(chess::LanEndReason::ServiceGap,now);return;}
+   lastLanServiceAt=now;
+   hostClockCheckpoint=game.clock.snapshot(uint32_t(now));
+   hostClockCheckpointAt=now;haveHostClockCheckpoint=true;
+ }
+ static void freezeClock(Game& target,const ChessClockSnapshot& snapshot,uint32_t now){
+   auto frozen=snapshot;
+   if(frozen.started&&!frozen.hasFlaggedSide)frozen.paused=true;
+   target.clock.loadSnapshot(frozen,now);
+ }
+ void confirmLanHostState(uint64_t now,bool clockConfirmed=true){
+   if(!lanTerminal.active()||networkHost||!networkPlaying||!online())return;
+   if(clockConfirmed)lastHostConfirmedClock=game.clock.snapshot(uint32_t(now));
+   lastHostConfirmedGame=game;
+   freezeClock(lastHostConfirmedGame,lastHostConfirmedClock,uint32_t(now));
+   haveHostConfirmation=true;lastLanAuthorityAt=now;
+ }
+ bool sealLanSession(chess::LanEndReason reason,uint64_t observedAtMs){
+   if(!lanTerminal.active())return false;
+   chess::LanInterruption interrupted;interrupted.reason=reason;interrupted.observedAtMs=observedAtMs;
+   interrupted.hadMatch=networkPlaying&&online();interrupted.pendingMoveRequest=awaitingMove||!pendingLanMove.empty();
+   interrupted.pendingMove=pendingLanMove;interrupted.pendingPly=pendingLanPly;
+   interrupted.pendingQueuedAtMs=pendingLanQueuedAt;
+   // Latch admission before clock settlement, UI changes, socket I/O or writes.
+   lanTerminal.latch(std::move(interrupted));lan.seal();
+   const auto boundary=observedAtMs<lastLanServiceAt?lastLanServiceAt:observedAtMs;
+   if(lanTerminal.interruption().hadMatch){
+     if(networkHost){
+       if(!game.over()){
+         const auto side=hostClockCheckpoint.activeSide;
+         const auto remaining=side==PieceColor::White?hostClockCheckpoint.whiteRemainingMs:hostClockCheckpoint.blackRemainingMs;
+         // A uint64 service observation spans even a full uint32 clock cycle.
+         // The checkpoint values are projected at this exact checkpoint stamp.
+         if(haveHostClockCheckpoint&&hostClockCheckpoint.hasFlaggedSide)
+           game.update(uint32_t(hostClockCheckpointAt));
+         else if(haveHostClockCheckpoint&&hostClockCheckpoint.started&&!hostClockCheckpoint.paused&&
+            !hostClockCheckpoint.hasFlaggedSide&&boundary>=hostClockCheckpointAt&&
+            boundary-hostClockCheckpointAt>=remaining)
+           game.update(uint32_t(hostClockCheckpointAt+remaining));
+         else game.update(uint32_t(boundary));
+       }
+       const auto clock=game.clock.snapshot(uint32_t(boundary));
+       freezeClock(game,clock,uint32_t(boundary));
+       lanTerminal.retain(clock,game.result,game.reason);
+     }else if(haveHostConfirmation){
+       // Detach the retained view without replaying moves or projecting clocks.
+       game=std::move(lastHostConfirmedGame);
+       lanTerminal.retain(lastHostConfirmedClock,game.result,game.reason);
+     }
+   }
+   ++generation;cancelAI();resetBoardUI();promotions.clear();
+   toast.clear();toastUntil=0;
+   networkPlaying=false;awaitingMove=drawOffered=incomingDrawOffer=false;
+   helloSent=localReady=remoteReady=networkEndSent=false;
+   // An interruption is never an ordinary completed-game archive or save.
+   if(lanTerminal.interruption().hadMatch)pendingArchive=false;
+   screen=lanTerminal.interruption().hadMatch?Screen::Board:Screen::Network;
+   page=lanTerminal.interruption().hadMatch?"":"disconnected";review=false;
+   status=reason==chess::LanEndReason::ShellPause?"Connection ended on shell suspension":
+          reason==chess::LanEndReason::ServiceGap?"Connection ended after a service gap":
+          reason==chess::LanEndReason::StaleAuthority?"Host state is no longer current":"Local connection ended";
+   return true;
+ }
+ void completeLanTeardown(){
+   if(!lanTerminal.teardown_pending())return;
+   // Lan::close closes local descriptors and discards buffers; it does not
+   // flush, wait for a peer, or promise remote notification.
+   lan.close();lanTerminal.teardown_complete();
+ }
+ bool admitLanWork(){
+   if(!lanTerminal.begun())return true;
+   if(lanTerminal.sealed())return false;
+   const auto now=monotonicClock();
+   if(now<lastLanServiceAt||now-lastLanServiceAt>=chess::LanTerminal::service_gap_limit_ms){
+     sealLanSession(chess::LanEndReason::ServiceGap,now);return false;
+   }
+   if(!networkHost&&networkPlaying&&haveHostConfirmation&&
+      (now<lastLanAuthorityAt||now-lastLanAuthorityAt>=chess::LanTerminal::stale_authority_limit_ms)){
+     sealLanSession(chess::LanEndReason::StaleAuthority,now);return false;
+   }
+   lastLanServiceAt=now;checkpointLanHost(now);return true;
+ }
+ bool sendLan(const std::string& line){return admitLanWork()&&lan.send(line);}
  void cancelAI(){if(workerCancel)workerCancel->store(true,std::memory_order_relaxed);}
  void launchAI(ChessBoard board,AIDifficulty difficulty,uint32_t budget){
    workerCancel=std::make_shared<std::atomic_bool>(false);auto cancel=workerCancel;
@@ -138,7 +250,7 @@ public:
    });
  }
  void settleLifecycleClock(bool fullWrap=false){
-   if(!haveGame||archiveMode||online()||game.over())return;
+   if(lanTerminal.sealed()||!haveGame||archiveMode||online()||game.over())return;
    const bool before=game.over();
    if(fullWrap&&suspendedClockRunning)game.update(uint32_t(suspendedStamp+suspendedRemaining));
    else game.update(clockNow());
@@ -174,6 +286,7 @@ public:
  bool saveProgress(){std::ostringstream out;for(int n:solved)out<<n<<'\n';if(writeState("puzzles",out.str(),"Progress")){pendingProgress=false;return true;}return false;}
  bool settings(){pendingSettings=true;std::ostringstream out;out<<contrast<<' '<<motion<<'\n';if(writeState("settings",out.str(),"Settings")){pendingSettings=false;return true;}return false;}
  bool persist(){
+   if(lanTerminal.sealed())return true;
    lastSave=clockNow();bool sideSaved=true;
    if(pendingProgress&&!saveProgress())sideSaved=false;
    if(pendingSettings&&!settings())sideSaved=false;
@@ -197,16 +310,18 @@ public:
    MoveList moves;ChessRules::generateLegal(game.board,moves);if(moves.count)cursor=moves.moves[0].from;
  }
  bool online() const {return haveGame&&(game.options.mode==Mode::Host||game.options.mode==Mode::Join);}
- bool canPlay() const {return haveGame&&!game.over()&&!review&&!awaitingMove&&(!online()||networkPlaying)&&(!online()||game.board.sideToMove()==(networkHost?PieceColor::White:PieceColor::Black))&&(game.options.mode!=Mode::Puzzle||game.board.sideToMove()==game.options.human);}
+ bool canPlay() const {return !lanTerminal.sealed()&&haveGame&&!game.over()&&!review&&!awaitingMove&&(!online()||networkPlaying)&&(!online()||game.board.sideToMove()==(networkHost?PieceColor::White:PieceColor::Black))&&(game.options.mode!=Mode::Puzzle||game.board.sideToMove()==game.options.human);}
  bool thinking() const {return worker.valid();}
  bool activeComputer() const {return haveGame&&!archiveMode&&!review&&game.options.mode==Mode::Computer&&!game.over()&&(screen==Screen::Board||page=="pause"||(screen==Screen::Help&&previous==Screen::Board));}
  void startGame(){
+   if(lanTerminal.begun())return;
    if(linkedSession&&(setup.mode==Mode::Host||setup.mode==Mode::Join)){notify("LAN play is unavailable in this shell session");return;}
    if(worker.valid()||((pendingArchive||pendingProgress||pendingSettings)&&!persist()))return;
    setup.position=setup.variant==ChessVariant::Chess960?chess960RandomIndex():518;
    ++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());haveGame=true;review=false;page.clear();flipped=setup.mode==Mode::Computer&&setup.human==PieceColor::Black;cursor={4,uint8_t(flipped?6:1)};resetBoardUI();clearOffers();screen=Screen::Board;persist();
  }
  bool archive(){
+   if(lanTerminal.sealed())return true;
    if(game.options.mode==Mode::Puzzle||!game.over())return true;
    // Stable content ID makes a retry after restart idempotent.
    uint64_t id=14695981039346656037ull;std::string identity=chess::fen(game.initial)+game.result+std::to_string(int(game.options.mode))+std::to_string(int(game.options.human))+std::to_string(int(game.options.time))+std::to_string(int(game.options.difficulty));
@@ -215,13 +330,18 @@ public:
    std::string error;auto path=dir/"games"/(std::to_string(id)+".pgn");
    if(!game.exportPgn(path,error)||(!online()&&!game.save(dir/"games"/(std::to_string(id)+".save"),clockNow(),error))){notify("Archive failed. Free space / retry");std::cerr<<"Tyrell Chess archive: "<<error<<'\n';return false;}return true;
  }
- void finished(bool save=true){if(game.over()){clearOffers();screen=Screen::Board;page.clear();review=false;menu=0;resetBoardUI();promotions.clear();pendingArchive=game.options.mode!=Mode::Puzzle;if(save){const bool saved=persist();if(saved)notify(scoreName(game)+" - "+game.reason);}else lifecycleSavePending=true;}}
+ void finished(bool save=true){if(lanTerminal.sealed())return;if(game.over()){clearOffers();screen=Screen::Board;page.clear();review=false;menu=0;resetBoardUI();promotions.clear();pendingArchive=game.options.mode!=Mode::Puzzle;if(save){const bool saved=persist();if(saved)notify(scoreName(game)+" - "+game.reason);}else lifecycleSavePending=true;}}
 
- void broadcastMove(){std::ostringstream o;auto c=game.clock.snapshot(clockNow());o<<"PLY "<<game.history.size()<<' '<<chess::uci(game.history.back().move)<<' '<<ChessZobrist::hash(game.board)<<' '<<c.whiteRemainingMs<<' '<<c.blackRemainingMs;lan.send(o.str());}
+ void broadcastMove(){if(!admitLanWork())return;std::ostringstream o;auto c=game.clock.snapshot(clockNow());o<<"PLY "<<game.history.size()<<' '<<chess::uci(game.history.back().move)<<' '<<ChessZobrist::hash(game.board)<<' '<<c.whiteRemainingMs<<' '<<c.blackRemainingMs;sendLan(o.str());}
  bool apply(const Move& m,bool remote=false){
-   if(online()&&!networkHost&&!remote){if(awaitingMove)return false;std::ostringstream o;o<<"REQ "<<game.history.size()<<' '<<chess::uci(m);if(!lan.send(o.str())){notify("Connection unavailable");return false;}awaitingMove=true;pendingSince=time;clearSelection();return true;}
+   if(!admitLanWork())return false;
+   const auto admittedAt=lastLanServiceAt;
+   if(online()&&!networkHost&&!remote){if(awaitingMove)return false;std::ostringstream o;o<<"REQ "<<game.history.size()<<' '<<chess::uci(m);if(!sendLan(o.str())){if(!lanTerminal.sealed())notify("Connection unavailable");return false;}awaitingMove=true;pendingSince=time;if(lanTerminal.active()){pendingLanMove=chess::uci(m);pendingLanPly=game.history.size();pendingLanQueuedAt=lastLanServiceAt;}clearSelection();return true;}
    if(game.options.mode==Mode::Puzzle&&!remote){if(game.puzzleStep>=game.solutionLength||!(m==game.solution[game.puzzleStep])){notify("Try another move. H for a hint");cursor=m.from;clearSelection();return false;}}
-   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,clockNow())){if(game.over())finished();return false;}
+   const auto oldCursor=cursor;const auto piece=game.board.at(m.from.col,m.from.row);if(!game.move(m,actionClockNow())){if(game.over())finished();return false;}
+   // A move changes the active clock. Preserve that transition at the same
+   // admitted observation before a later read can detect a stop/service gap.
+   checkpointLanHost(admittedAt);
    clearOffers(true);animatedPiece=piece;animatedMove=m;animationStart=uiNow();const bool keepCursor=(game.options.mode==Mode::Computer&&piece.color!=game.options.human)||(remote&&(online()||game.options.mode==Mode::Puzzle));cursor=keepCursor?oldCursor:m.to;if(keepCursor)focusPlayer();clearSelection();hintFrom=hintTo=NO_SQUARE;
    if(online()&&networkHost)broadcastMove();
    if(game.options.mode==Mode::Puzzle){
@@ -255,6 +375,7 @@ public:
  }
  InputContext inputContext() const {return {screen,page,review,selected.valid(),generation,game.history.size()};}
  std::vector<Command> commands(Screen context) const {
+   if(lanTerminal.sealed())return {};
    std::vector<Command> result;
    auto add=[&](Action id,std::initializer_list<int> keys,const std::string& keyLabel,
                 const std::string& label,const std::string& help,Repeat repeat=Repeat::PressOnly,
@@ -332,6 +453,7 @@ public:
    return found==table.end()||!found->enabled?std::string{}:tyrell::app::help_line(*found);
  }
  std::string commandFooter() const {
+   if(lanTerminal.sealed())return "Read-only ended session";
    auto table=commands();
    // The full aliases live in help. Keep the first key in compact footer hints.
    if(screen!=Screen::Help)for(auto& command:table){const auto at=command.key_label.find('/');if(at!=std::string::npos)command.key_label.resize(at);}
@@ -376,6 +498,7 @@ public:
  }
 
  void home(){
+   if(lanTerminal.sealed())return;
    const bool temporary=archiveMode||(haveGame&&(game.options.mode==Mode::Puzzle||online()));
    if((!temporary||pendingArchive||pendingProgress||pendingSettings)&&!persist())return;
    clearSelection();review=false;page.clear();status.clear();networkPlaying=false;awaitingMove=false;clearOffers();lan.close();++generation;
@@ -402,6 +525,7 @@ public:
  }
  std::vector<std::string> homeItems() const {return {haveGame?"Resume game":"Start playing","Vs computer","Two players","Puzzles",linkedSession?"LAN unavailable":"LAN play","Game library","Preferences","Controls","Exit"};}
  std::vector<std::string> items() {
+   if(lanTerminal.sealed())return {};
    if(screen==Screen::Home)return homeItems();
    if(screen==Screen::Promotion)return {"Queen","Knight","Rook","Bishop"};
    if(screen==Screen::Confirm){if(dialog=="leave-menu"||dialog=="leave-exit")return {"Stay in match","Leave match"};if(dialog=="accept-draw")return {"Keep playing","Accept draw"};}
@@ -429,6 +553,7 @@ public:
  }else if(page=="preferences"){if(menu==0)contrast=!contrast;if(menu==1)motion=!motion;settings();}}
  void loadLibrary(){archives.clear();std::error_code ec;for(std::filesystem::directory_iterator i(dir/"games",ec),end;!ec&&i!=end;i.increment(ec))if(i->path().extension()==".save")archives.push_back(i->path());std::sort(archives.rbegin(),archives.rend());if(archives.size()>50)archives.resize(50);screen=Screen::Setup;page="library";menu=0;}
  void activate(){
+   if(!admitLanWork())return;
    if(lifecyclePaused)return;
    if(linkedSession&&screen==Screen::Home&&menu==4){notify("LAN play is unavailable in this shell session");return;}
    if(linkedSession&&(page=="lan"||page=="address"||page=="pair"||page=="waiting"||(page=="setup"&&(setup.mode==Mode::Host||setup.mode==Mode::Join)))){lan.close();notify("LAN play is unavailable in this shell session");return;}
@@ -447,16 +572,16 @@ public:
      }
      if(dialog=="accept-draw"){
        if(menu==1&&online()&&networkPlaying&&!review&&!game.over()&&incomingDrawOffer){
-         if(networkHost){game.agreeDraw(clockNow());finished();}
-         else {lan.send("ACCEPTDRAW");incomingDrawOffer=false;status="Draw accepted; waiting";}
+         if(networkHost){game.agreeDraw(actionClockNow());finished();}
+         else {if(!sendLan("ACCEPTDRAW")&&lanTerminal.sealed())return;incomingDrawOffer=false;status="Draw accepted; waiting";}
        }
        screen=Screen::Board;page.clear();return;
      }
      if(dialog=="castle"){for(const auto& m:promotions)if(m.isCastle==(menu==1)){screen=Screen::Board;apply(m);break;}return;}
      if(dialog=="resign"||dialog=="draw"){
        if(menu==1&&!game.over()){
-         if(dialog=="draw"){game.agreeDraw(clockNow());finished();}
-         else {auto side=online()?(networkHost?PieceColor::White:PieceColor::Black):game.options.mode==Mode::Computer?game.options.human:game.board.sideToMove();if(online()&&!networkHost)lan.send("RESIGN");else{game.resign(side,clockNow());finished();}}
+         if(dialog=="draw"){game.agreeDraw(actionClockNow());finished();}
+         else {auto side=online()?(networkHost?PieceColor::White:PieceColor::Black):game.options.mode==Mode::Computer?game.options.human:game.board.sideToMove();if(online()&&!networkHost){if(!sendLan("RESIGN")&&lanTerminal.sealed())return;}else{game.resign(side,actionClockNow());finished();}}
        }
        screen=Screen::Board;page.clear();
      }else if(menu==0)home();else setupMenu(dialog=="computer"?Mode::Computer:Mode::Local);return;
@@ -473,16 +598,16 @@ public:
      else if(menu==2){if((game.clock.enabled()||online())&&!game.over())notify("Review available after game");else{review=true;reviewPly=game.history.size();screen=Screen::Board;page.clear();}}
      else if(menu==3){std::string error;auto path=dir/"exports/last-game.pgn";notify(game.exportPgn(path,error)?"PGN saved in exports/":"Export failed: "+error);}
      else if(menu==4){if(!game.over()){screen=Screen::Confirm;dialog="resign";menu=0;}else {screen=Screen::Board;page.clear();}}
-     else if(menu==5){if(game.over()){screen=Screen::Board;page.clear();return;}if(online()){drawOffered=true;lan.send("DRAW");notify("Draw offered to opponent");screen=Screen::Board;page.clear();}else if(!game.over()){screen=Screen::Confirm;dialog="draw";menu=0;}}
+     else if(menu==5){if(game.over()){screen=Screen::Board;page.clear();return;}if(online()){drawOffered=true;if(!sendLan("DRAW")&&lanTerminal.sealed())return;notify("Draw offered to opponent");screen=Screen::Board;page.clear();}else if(!game.over()){screen=Screen::Confirm;dialog="draw";menu=0;}}
      else {previous=screen;helpPage=0;screen=Screen::Help;}return;
    }
    if(page=="lan"){if(menu==0)setupMenu(Mode::Host);else if(menu==1){page="address";networkAddress.clear();menu=0;}else home();return;}
    if(page=="address"){if(menu==2){page="lan";menu=0;}else{std::string error;if(lan.join(networkAddress,error)){networkHost=false;networkPlaying=false;helloSent=localReady=remoteReady=networkEndSent=drawOffered=incomingDrawOffer=awaitingMove=false;page="waiting";networkStartedAt=time;menu=0;}else notify(error);}return;}
-   if(page=="pair"){if(menu==1){lan.close();home();}else {localReady=true;lan.send("READY");}return;}
+   if(page=="pair"){if(menu==1){lan.close();home();}else {localReady=true;if(!sendLan("READY")&&lanTerminal.sealed())return;}return;}
    if(page=="waiting"||page=="disconnected"){lan.close();home();}
  }
  void key(int k,bool repeated=false){
-   if(lifecyclePaused)return;
+   if(lifecyclePaused||!admitLanWork())return;
    const auto table=commands();const auto* command=tyrell::app::find_command(table,k,repeated);
    if(!command)return;
    const auto action=command->id;
@@ -531,36 +656,78 @@ public:
    if(action==Action::CycleTargets)targetCursor(true);
    if(action==Action::Confirm){if(game.over())pauseMenu();else choose();}
  }
- void disconnect(const std::string& why){status=why;lan.close();networkPlaying=false;awaitingMove=false;incomingDrawOffer=drawOffered=false;if(haveGame&&online())game.clock.pause(clockNow());screen=Screen::Network;page="disconnected";menu=0;}
+ void disconnect(const std::string& why){
+   if(lanTerminal.begun()){
+     sealLanSession(chess::LanEndReason::TransportError,monotonicClock());
+     completeLanTeardown();status=why;return;
+   }
+   status=why;lan.close();networkPlaying=false;awaitingMove=false;incomingDrawOffer=drawOffered=false;if(haveGame&&online())game.clock.pause(clockNow());screen=Screen::Network;page="disconnected";menu=0;
+ }
  void network(){
+   if(!admitLanWork())return;
    lan.poll();
+   if(!admitLanWork())return;
    if(awaitingMove&&time-pendingSince>10){disconnect("Host did not acknowledge move");return;}
    if(!networkPlaying&&(page=="waiting"||page=="pair")&&time-networkStartedAt>90){disconnect("Pairing timed out");return;}
-   if(networkHost&&lan.connected()&&!helloSent){std::random_device r;pairCode=int(r()%900000)+100000;std::ostringstream o;o<<"HELLO 1 "<<int(setup.variant)<<' '<<setup.position<<' '<<int(setup.time)<<' '<<pairCode;lan.send(o.str());helloSent=true;page="pair";menu=0;}
+   if(networkHost&&lan.connected()&&!helloSent){std::random_device r;pairCode=int(r()%900000)+100000;std::ostringstream o;o<<"HELLO 1 "<<int(setup.variant)<<' '<<setup.position<<' '<<int(setup.time)<<' '<<pairCode;if(!sendLan(o.str())&&lanTerminal.sealed())return;helloSent=true;page="pair";menu=0;}
    for(const auto& line:lan.receive()){
+     if(!admitLanWork())return;
+     const auto receivedAt=lastLanServiceAt;
+     const auto packetNow=[&]{return lanTerminal.active()?uint32_t(receivedAt):clockNow();};
      std::istringstream in(line);std::string command;in>>command;
      if(command=="HELLO"&&!networkHost&&!helloSent&&!networkPlaying){int version,variant,pos,tc,code;in>>version>>variant>>pos>>tc>>code;if(!in||version!=1||variant<0||variant>1||pos<0||pos>959||tc<0||tc>4||code<100000||code>999999){disconnect("Incompatible chess peer");break;}setup=chess::Options{};setup.mode=Mode::Join;setup.variant=ChessVariant(variant);setup.position=pos;setup.time=TimeControl(tc);pairCode=code;helloSent=true;page="pair";menu=0;}
      else if(command=="READY"&&helloSent&&!networkPlaying)remoteReady=true;
-     else if(command=="START"&&!networkHost&&localReady&&remoteReady&&!networkPlaying){++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());networkPlaying=true;haveGame=true;screen=Screen::Board;page.clear();review=false;flipped=true;cursor={4,6};clearSelection();}
-     else if(command=="REQ"&&networkHost&&networkPlaying){size_t ply;std::string move;in>>ply>>move;bool ended=game.over();game.update(clockNow());if(!ended&&game.over())finished();if(game.over())continue;if(!in||ply!=game.history.size()||game.board.sideToMove()!=PieceColor::Black){disconnect("Invalid peer move sequence");break;}MoveList moves;ChessRules::generateLegal(game.board,moves);bool applied=false;for(int i=0;i<moves.count;++i)if(chess::uci(moves.moves[i])==move){applied=apply(moves.moves[i],true);break;}if(!applied){if(game.over())finished();else {disconnect("Illegal peer move");break;}}}
-     else if(command=="PLY"&&!networkHost&&networkPlaying){size_t ply;std::string move;uint32_t hash,w,b;in>>ply>>move>>hash>>w>>b;if(!in||ply!=game.history.size()+1){disconnect("Position sequence differs");break;}const bool ownMove=game.board.sideToMove()==PieceColor::Black;const auto tc=game.options.time;game.clock.configure(TimeControl::None);bool ok=game.moveUci(move,clockNow());ChessClockSnapshot clock;clock.timeControl=tc;clock.whiteRemainingMs=w;clock.blackRemainingMs=b;clock.activeSide=game.board.sideToMove();clock.started=tc!=TimeControl::None;clock.paused=tc!=TimeControl::None&&game.over();if(!game.clock.loadSnapshot(clock,clockNow()))ok=false;if(!ok||ChessZobrist::hash(game.board)!=hash){disconnect("Position differs from host");break;}awaitingMove=false;clearOffers(true);if(ownMove)cursor=game.history.back().move.to;else focusPlayer();clearSelection();}
-     else if(command=="SYNC"&&!networkHost&&networkPlaying){uint32_t w,b;size_t ply;in>>ply>>w>>b;if(in&&ply==game.history.size())game.clock.synchronizeRemainingMs(w,b,clockNow());}
-     else if(command=="RESIGN"&&networkHost&&networkPlaying){if(!game.over()){game.resign(PieceColor::Black,clockNow());finished();}}
+     else if(command=="START"&&!networkHost&&localReady&&remoteReady&&!networkPlaying){++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,packetNow());networkPlaying=true;haveGame=true;screen=Screen::Board;page.clear();review=false;flipped=true;cursor={4,6};clearSelection();confirmLanHostState(receivedAt);}
+     else if(command=="REQ"&&networkHost&&networkPlaying){size_t ply;std::string move;in>>ply>>move;bool ended=game.over();game.update(packetNow());if(!ended&&game.over())finished();if(game.over())continue;if(!in||ply!=game.history.size()||game.board.sideToMove()!=PieceColor::Black){disconnect("Invalid peer move sequence");break;}MoveList moves;ChessRules::generateLegal(game.board,moves);bool applied=false;for(int i=0;i<moves.count;++i)if(chess::uci(moves.moves[i])==move){applied=apply(moves.moves[i],true);break;}if(!applied){if(lanTerminal.sealed())return;if(game.over())finished();else {disconnect("Illegal peer move");break;}}}
+     else if(command=="PLY"&&!networkHost&&networkPlaying){
+       size_t ply;std::string move;uint32_t hash,w,b;in>>ply>>move>>hash>>w>>b;
+       if(!in||ply!=game.history.size()+1){disconnect("Position sequence differs");break;}
+       const bool ownMove=game.board.sideToMove()==PieceColor::Black;const auto tc=game.options.time;
+       game.clock.configure(TimeControl::None);bool ok=game.moveUci(move,packetNow());
+       if(lanTerminal.active()){
+         // PLY confirms a position and clock, while END confirms the result.
+         game.result=lastHostConfirmedGame.result;game.reason=lastHostConfirmedGame.reason;
+       }
+       ChessClockSnapshot clock;clock.timeControl=tc;clock.whiteRemainingMs=w;clock.blackRemainingMs=b;
+       clock.activeSide=game.board.sideToMove();clock.started=tc!=TimeControl::None;
+       clock.paused=tc!=TimeControl::None&&game.over();
+       if(!game.clock.loadSnapshot(clock,packetNow()))ok=false;
+       if(!ok||ChessZobrist::hash(game.board)!=hash){disconnect("Position differs from host");break;}
+       confirmLanHostState(receivedAt);awaitingMove=false;
+       if(ownMove&&move==pendingLanMove&&ply-1==pendingLanPly){pendingLanMove.clear();pendingLanPly=0;pendingLanQueuedAt=0;}
+       clearOffers(true);if(ownMove)cursor=game.history.back().move.to;else focusPlayer();clearSelection();
+     }
+     else if(command=="SYNC"&&!networkHost&&networkPlaying){
+       uint32_t w,b;size_t ply;in>>ply>>w>>b;
+       if(in&&ply==game.history.size()){
+         game.clock.synchronizeRemainingMs(w,b,packetNow());confirmLanHostState(receivedAt);
+       }
+     }
+     else if(command=="RESIGN"&&networkHost&&networkPlaying){if(!game.over()){game.resign(PieceColor::Black,packetNow());finished();}}
      else if(command=="DRAW"&&networkPlaying){if(!game.over()){incomingDrawOffer=true;status="Draw offered: Y yes";}}
-     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.agreeDraw(clockNow());finished();}}
-     else if(command=="END"&&!networkHost&&networkPlaying){std::string score,reason;in>>score;in.get();std::getline(in,reason);if(score!="1-0"&&score!="0-1"&&score!="1/2-1/2"){disconnect("Invalid result");break;}awaitingMove=false;game.finish(score,reason.substr(0,60),clockNow());finished();}
+     else if(command=="ACCEPTDRAW"&&networkHost&&networkPlaying){if(!game.over()&&drawOffered){drawOffered=false;game.agreeDraw(packetNow());finished();}}
+     else if(command=="END"&&!networkHost&&networkPlaying){
+       std::string score,reason;in>>score;in.get();std::getline(in,reason);
+       if(score!="1-0"&&score!="0-1"&&score!="1/2-1/2"){disconnect("Invalid result");break;}
+       if(lanTerminal.active()&&haveHostConfirmation)freezeClock(game,lastHostConfirmedClock,packetNow());
+       awaitingMove=false;game.finish(score,reason.substr(0,60),packetNow());
+       confirmLanHostState(receivedAt,false);finished();
+     }
      else {disconnect("Unexpected peer message");break;}
    }
-   if(!lan.error().empty()&&(networkPlaying||page=="pair"||page=="waiting")){if(networkPlaying&&game.over()){networkPlaying=false;lan.close();status.clear();}else disconnect(lan.error());return;}
-   if(networkHost&&localReady&&remoteReady&&!networkPlaying&&page=="pair"){setup.mode=Mode::Host;++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,clockNow());haveGame=true;networkPlaying=true;screen=Screen::Board;page.clear();flipped=false;review=false;cursor={4,1};lan.send("START");clearSelection();}
-   if(networkHost&&networkPlaying&&clockNow()-lastSync>=500){auto c=game.clock.snapshot(clockNow());lan.send("SYNC "+std::to_string(game.history.size())+" "+std::to_string(c.whiteRemainingMs)+" "+std::to_string(c.blackRemainingMs));lastSync=clockNow();}
-   if(networkHost&&networkPlaying&&game.over()&&!networkEndSent){lan.send("END "+game.result+" "+game.reason);networkEndSent=true;}
+   if(lanTerminal.sealed())return;
+   if(!lan.error().empty()&&(networkPlaying||page=="pair"||page=="waiting")){if(networkPlaying&&game.over()&&!lanTerminal.active()){networkPlaying=false;lan.close();status.clear();}else disconnect(lan.error());return;}
+   if(networkHost&&localReady&&remoteReady&&!networkPlaying&&page=="pair"){setup.mode=Mode::Host;++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,actionClockNow());haveGame=true;networkPlaying=true;checkpointLanHost(lastLanServiceAt);screen=Screen::Board;page.clear();flipped=false;review=false;cursor={4,1};if(!sendLan("START")&&lanTerminal.sealed())return;clearSelection();}
+   if(networkHost&&networkPlaying&&clockNow()-lastSync>=500){auto c=game.clock.snapshot(clockNow());if(!sendLan("SYNC "+std::to_string(game.history.size())+" "+std::to_string(c.whiteRemainingMs)+" "+std::to_string(c.blackRemainingMs))&&lanTerminal.sealed())return;lastSync=clockNow();}
+   if(networkHost&&networkPlaying&&game.over()&&!networkEndSent){if(!sendLan("END "+game.result+" "+game.reason)&&lanTerminal.sealed())return;networkEndSent=true;}
  }
  void update(double t){
-   if(lifecyclePaused)return;
+   if(lifecyclePaused||!admitLanWork())return;
    time=t;if(linkedSession){lan.close();if(online()){quit=true;return;}}else network();
+   if(lanTerminal.sealed())return;
    if(lifecycleSavePending&&(!lifecycleSaveAttempted||clockNow()-lastSave>=5000)){lifecycleSaveAttempted=true;lifecycleSavePending=!persist();}
-   if(haveGame&&screen!=Screen::Home&&page!="library"&&!archiveMode&&(!online()||(networkHost&&networkPlaying))) {bool was=game.over();game.update(clockNow());if(!was&&game.over())finished();}
+   if(!admitLanWork())return;
+   if(haveGame&&screen!=Screen::Home&&page!="library"&&!archiveMode&&(!online()||(networkHost&&networkPlaying))) {bool was=game.over();game.update(actionClockNow());if(!was&&game.over())finished();}
    if(worker.valid()&&worker.wait_for(std::chrono::seconds(0))==std::future_status::ready){auto move=worker.get();if(haveGame&&workerGeneration==generation&&((workerHint&&screen==Screen::Board)||(!workerHint&&activeComputer()))&&!review&&!archiveMode&&ChessZobrist::hash(game.board)==workerHash&&!game.over()){if(workerHint){hintFrom=move.from;hintTo=move.to;notify("Try "+chess::uci(move));}else apply(move);}workerHint=false;}
    if(((screen==Screen::Board&&!review&&!archiveMode)||activeComputer())&&!worker.valid()&&!game.over()){
      if(game.options.mode==Mode::Computer&&!game.humanTurn()){
@@ -570,6 +737,7 @@ public:
      if(game.options.mode==Mode::Puzzle&&game.board.sideToMove()!=game.options.human&&time>=puzzleReplyAt&&game.puzzleStep<game.solutionLength)apply(game.solution[game.puzzleStep],true);
    }
    if(((haveGame&&!online()&&!review&&!archiveMode)||pendingProgress||pendingSettings)&&clockNow()-lastSave>=5000)persist();
+   if(lanTerminal.active())checkpointLanHost(monotonicClock());
  }
  void draw(double uiTime=-1,std::vector<chessui::TextBounds>* audit=nullptr){
    if(lifecyclePaused)return;
@@ -601,6 +769,18 @@ public:
       view.title=page=="pair"?"PAIR CODE "+std::to_string(pairCode):page=="disconnected"?"CONNECTION ENDED":"LOCAL WIRELESS";
       view.subtitle=page=="pair"?"Both players must see the same code":page=="address"?"Type the host's IP, then press ENTER":page=="waiting"?networkHost?"Waiting at "+chess::localAddress():"Connecting to "+networkAddress:"Play another Zero on the same Wi-Fi";
       view.status=page=="disconnected"?status:page=="pair"?localReady?"You confirmed. Waiting for opponent":"Confirm together to begin":page=="address"?"IPv4 only, e.g. 192.168.1.42":"Port 28773  /  90 second pairing timeout";
+   }
+   if(lanTerminal.sealed()){
+     view.sessionEnded=true;view.title="CONNECTION ENDED";view.authorityNotice="Remote unconfirmed";
+     view.subtitle=!lanTerminal.interruption().hadMatch?"No match established":lanTerminal.role()==chess::LanRole::Joiner?"Host-confirmed view":"Last local view";
+     switch(lanTerminal.interruption().reason){
+       case chess::LanEndReason::ShellPause:view.status="Shell suspended";break;
+       case chess::LanEndReason::ShellLost:view.status="Shell link lost";break;
+       case chess::LanEndReason::ServiceGap:view.status="Service gap";break;
+       case chess::LanEndReason::StaleAuthority:view.status="Host state stale";break;
+       default:view.status="Session ended";break;
+     }
+     view.clocksRunning=view.thinking=false;
    }
    view.footer=commandFooter();
    if(displayTime<toastUntil&&!toast.empty()){view.notice=toast;view.noticeError=toast.find("failed")!=std::string::npos||toast.find("not saved")!=std::string::npos||toast.find("damaged")!=std::string::npos;}
@@ -759,7 +939,7 @@ int main(int argc,char** argv){
    // Hidden EOF/termination preserves the last successful atomic save. It does
    // not promise persistence of RAM-only moves or perform unbounded hidden I/O.
    if(result.saveAllowed)app.persist();
-   if(result.saveAllowed&&!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.4\",\"frames\":"<<result.frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
+   if(result.saveAllowed&&!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.5\",\"frames\":"<<result.frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
    return 0;
  }catch(const std::exception& e){std::cerr<<"Tyrell Chess: "<<e.what()<<'\n';return 1;}
 }

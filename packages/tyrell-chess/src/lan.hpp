@@ -12,17 +12,22 @@ public:
     Lan& operator=(const Lan&)=delete;
     bool host(std::string& error);
     bool join(const std::string& address,std::string& error);
+    // Sealing closes admission immediately without socket I/O. Only an
+    // explicitly begun, fully closed session can reopen admission.
+    void seal() { sealed_=true; }
+    bool begin_session();
     void close();
     void poll();
     bool send(const std::string& line);
     std::vector<std::string> receive();
-    bool connected() const { return connected_; }
-    bool listening() const { return listener_>=0; }
+    bool connected() const { return !sealed_&&connected_; }
+    bool listening() const { return !sealed_&&listener_>=0; }
+    size_t pending_messages() const { return messages_.size(); }
     const std::string& error() const { return error_; }
     static constexpr int port=28773;
 private:
     int listener_=-1,peer_=-1;
-    bool connected_=false,connecting_=false;
+    bool connected_=false,connecting_=false,sealed_=false;
     std::string incoming_,outgoing_,error_;
     std::vector<std::string> messages_;
 };

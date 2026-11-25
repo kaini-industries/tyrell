@@ -2,11 +2,20 @@
 
 A native Linux port of [Cardputer ADV Chess](https://github.com/kaini-industries/cardputer-chess), with a colorful pixel-art interface designed for the Zero's 320 × 170 LCD and keyboard. The portable engine is retained at upstream commit `64419e29c828b77b420221472e8a314778713a07`; licenses, original-file hashes and adaptations are in [engine/](engine/).
 
-Current source is **0.1.4**, with optional offline shell lifecycle handling,
+Current source is **0.1.5**, with explicit LAN terminal/controller primitives,
+optional offline shell lifecycle handling,
 cooperative AI cancellation, shared contextual commands/help and deterministic
 UI checks, including the earlier draw/move confirmation fixes at clock expiry. The retained [0.1.1 ARM64 package](../../dist/tyrell-chess/0.1.1/README.md)
-remains the latest device-validated build. Current source still needs its own ARM64 package
-and device qualification; see the [clock-boundary review](../../docs/chess-clock-validation.md).
+remains the latest device-validated build. Current source has separate automated
+build checks and still needs exact-artifact device qualification; see the
+[clock-boundary review](../../docs/chess-clock-validation.md).
+
+The [LAN terminal controller](../../docs/chess-lan-terminal.md) adds explicitly
+opted-in session sealing, host clock settlement, last-confirmed joiner state,
+pending-request evidence and separate transport cleanup. Its reviewed 10-second
+service-gap/stale-authority policy is inactive in ordinary M5 LAN play. These
+controller primitives have no native shell adapter or new user-facing enable
+option; linked LAN stays closed while A3-LAN-2 remains pending.
 
 ![Home](assets/preview-home.png)
 ![Board](assets/preview-board.png)
@@ -98,8 +107,8 @@ Local headless tests require loopback TCP access. The package command uses the e
 Install the exported package using the device's normal SSH user:
 
 ```sh
-scp artifacts/chess-native/tyrell-chess_0.1.4-1_arm64.deb user@cardputer:/tmp/
-ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.4-1_arm64.deb'
+scp artifacts/chess-native/tyrell-chess_0.1.5-1_arm64.deb user@cardputer:/tmp/
+ssh -t user@cardputer 'sudo dpkg --install /tmp/tyrell-chess_0.1.5-1_arm64.deb'
 ```
 
 The package adds only the app, launcher entries, icon and notices. It installs no services or firmware. Start native graphics from APPLaunch so it can manage display/input ownership. `tyrell-chess --help` and `--version` work over SSH without opening display devices.

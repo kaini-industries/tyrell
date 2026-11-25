@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-25",
-  "reviewed_revision": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda",
+  "reviewed_revision": "2954c7686ee6170a4abdf3c08a485b0444104fb1",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -110,6 +110,16 @@
       "id": "zero-nov19-image-report",
       "path": "research/tyrell-zero-nov19-image-validation.json",
       "sha256": "7a8fd974347969ed78c1c92a1c9c9161932283b525c96b87cc93f075bc13cd72"
+    },
+    {
+      "id": "chess-lan-terminal-source",
+      "path": "docs/chess-lan-terminal.md",
+      "sha256": "1aa4ba83ecaf5a668510dd092df2d9dc18b197b054f73992c60d9c4fd2ca86f6"
+    },
+    {
+      "id": "chess-lan-terminal-validation",
+      "path": "research/chess-lan-terminal-validation.json",
+      "sha256": "555804571c6a2d25f904097c1e742425b31999d4f30d7d0ce175c23f385fb7ad"
     }
   ],
   "subjects": [
@@ -148,8 +158,8 @@
       "id": "chess-source",
       "component": "chess",
       "kind": "current-source",
-      "version": "0.1.4",
-      "source_identity": "A3 app/dependency boundary including framework/example 0.1.2 and the isolated Beacon build helper; existing app policy unchanged; digest must match the checkout",
+      "version": "0.1.5",
+      "source_identity": "A3-LAN-1 explicit Chess terminal/controller primitives and reviewed gap/authority policy; production linked LAN and physical acceptance remain pending; digest must match checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -159,7 +169,7 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "3b2cd51daa4ce0df640826c97dab61b9184ce2e8ee152ecc27014c1752d468c7"
+      "sha256": "93ff8a278a4ab1badf80c9ae1e3e8524ac19f387f93b013d8b1c579260b02dc1"
     },
     {
       "id": "sandline-source",
@@ -427,11 +437,14 @@
         "chess-clock-source",
         "chess-device",
         "a3-lifecycle-source",
-        "a3-lifecycle-validation"
+        "a3-lifecycle-validation",
+        "chess-lan-terminal-source",
+        "chess-lan-terminal-validation"
       ],
       "limitations": [
         "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
-        "Host/ARM64 CI results are separate run reports, not device acceptance."
+        "Host/ARM64 CI results are separate run reports, not device acceptance.",
+        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
       ]
     },
     {
@@ -448,11 +461,14 @@
         "chess-clock-source",
         "chess-device",
         "a3-lifecycle-source",
-        "a3-lifecycle-validation"
+        "a3-lifecycle-validation",
+        "chess-lan-terminal-source",
+        "chess-lan-terminal-validation"
       ],
       "limitations": [
         "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
-        "Host/ARM64 CI results are separate run reports, not device acceptance."
+        "Host/ARM64 CI results are separate run reports, not device acceptance.",
+        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
       ]
     },
     {
@@ -469,12 +485,15 @@
         "chess-clock-source",
         "chess-device",
         "a3-lifecycle-source",
-        "a3-lifecycle-validation"
+        "a3-lifecycle-validation",
+        "chess-lan-terminal-source",
+        "chess-lan-terminal-validation"
       ],
       "limitations": [
         "A3 native offline lifecycle is experimental and defaults OFF; linked LAN is gated. No current package has physical M5 or pinned Gh0st acceptance.",
         "Pause defers filesystem saves; hidden termination preserves the last successful save but can lose RAM-only moves. Cooperative engine cancellation does not guarantee wall-clock handoff or shutdown.",
-        "Host/ARM64 CI results are separate run reports, not device acceptance."
+        "Host/ARM64 CI results are separate run reports, not device acceptance.",
+        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
       ]
     },
     {
