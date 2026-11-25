@@ -117,7 +117,7 @@
       "component": "video",
       "kind": "current-source",
       "version": "0.1.9",
-      "source_identity": "A2-D3 managed display app/dependency boundary, including the authority consumed by native checks; digest must match the checkout",
+      "source_identity": "A2-D4 media actor/control app/dependency boundary, including durable native media and display authority checks; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
@@ -126,7 +126,7 @@
         "locks/build-inputs.json",
         "locks/video-build-inputs.json"
       ],
-      "sha256": "720d28ffffe284d45cf2c38933dc6d8737c52b10d42d670843aafe6ca9b238e6"
+      "sha256": "5134e9c21fd3b604596ea3d71091c180daab860b36ce31e8e3cd47d923c52d60"
     },
     {
       "id": "chess-source",
@@ -381,7 +381,7 @@
         "video-device"
       ],
       "limitations": [
-        "A2 checkpoints and a fail-closed guard remain. Separate D1-D3 channel, helper and managed display APIs pass controlled software checks; live media is unsupported until graph, qualified driver and shell integration is complete.",
+        "A2 checkpoints and a fail-closed guard remain. D1-D4 channel, helper, managed display and media actor/control APIs have controlled software fixtures; live media is unsupported until qualified driver and shell/package integration is complete.",
         "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]

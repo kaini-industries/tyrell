@@ -37,8 +37,11 @@ before sealing. Each borrowed DRM descriptor is an owned close-on-exec duplicate
 associated with a specific borrower and use operation. Closing that descriptor,
 returning from a graph destructor, or app `local-done` does not retire the
 borrower. A separately bound completion proof must confirm that its graph and
-backend work have drained. D4 must connect this obligation to the actual
-single-owner GStreamer graph; D3 uses controlled graph fixtures.
+backend work have drained. D3 uses controlled graph fixtures. The
+[D4 media actor](video-media-actor.md) now connects actual GStreamer callback,
+object and finality facts to an independent graph borrower for LCD/fake-audio
+fixtures. A real KMS sink borrowing the managed DRM handle remains D5 work;
+D4 refuses managed HDMI before legacy helper acquisition.
 
 After the registry is sealed and borrowers have completed, cleanup performs a
 test-only atomic neutral transaction, then an asynchronous atomic commit. It
@@ -138,7 +141,8 @@ obligations. It journals their exact receipts with the VT cleanup permit.
 The earlier standalone D2 VT fixture profile remains a separate test boundary;
 it is not an alternative live route around these display requirements.
 
-Authority snapshots are schema 3. Earlier schema-1 and schema-2 ledgers are
+Authority snapshots now use schema 4, including D4 media-producer evidence.
+Earlier schema-1 through schema-3 ledgers are
 refused without rewriting or automatic migration. Do not delete a ledger to
 clear an ownership barrier. D3 adds no reset, pruning or quarantine-clear API;
 uncertain backend work still requires separately qualified reconciliation.
@@ -164,13 +168,15 @@ Hosted outcomes are recorded in source-bound reports. A portable state-model-onl
 not establish this production-path coverage.
 
 These checks do not globally complete the original 19 cases in the
-[design decision record](../research/video-async-handoff-design.json). Real
-GStreamer borrowing/drain and control integration are D4. Qualified driver
+[design decision record](../research/video-async-handoff-design.json). D4 adds
+[actual GStreamer drain and control integration](video-media-actor.md) under an
+explicit LCD/fake-audio policy. App key/render gates do not complete an accepted
+LCD flush; the independent D3 display barrier still applies. Qualified driver
 finality, service/manager identities, legacy-writer exclusion, asynchronous
 shell behavior and exact package/device scenarios remain later gates. KMS
 fences and controlled memory callbacks do not qualify physical scanout, HDMI
 blanking, LCD transfer completion, sound or privacy locking.
 
-D4's single-owner media actor is next. Video's live guard stays closed and
-physical LCD/HDMI, launch/return, audio/VT restoration and responsiveness testing
-remain pending.
+D5 qualified shell/package/device integration is next. Video's live guard stays
+closed and physical LCD/HDMI, launch/return, audio/VT restoration and
+responsiveness testing remain pending.

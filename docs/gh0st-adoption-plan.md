@@ -247,12 +247,13 @@ implemented and tested with inert device adapters. The separate
 [A2-D2 VT/audio participants](video-handoff-participants.md) add actual backends,
 disposable worker validation and durable stop-post fencing. The separate
 [A2-D3 managed display APIs](video-managed-display.md) supply explicit KMS/LCD
-policies, independent producer barriers and exact VT dependencies. Live
-admission stays closed. Continue its implementation in order:
-**A2-D4** media actor/control integration,
-then **A2-D5** qualified shell/package/device integration and idle work.
-The remaining increments are future runtime support; physical acceptance stays
-pending. D1/D2/D3 software checks do not complete the design's integrated acceptance
+policies, independent producer barriers and exact VT dependencies.
+[A2-D4 media actor/control integration](video-media-actor.md) now owns the actual
+graph lifecycle, connects native graph/fence evidence to durable media permits
+and exercises a borrowed UI adapter with LCD/fake-audio fixtures. Live admission
+stays closed. Next is **A2-D5** qualified shell/package/device integration and
+idle work. Physical acceptance stays pending. D1–D4 software checks do not
+complete the design's integrated acceptance
 cases, which must exercise the eventual production resource paths.
 
 Split this into a Status idle-loop PR, a Video checkpoint/timing PR and a Video

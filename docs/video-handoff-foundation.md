@@ -11,6 +11,8 @@ standalone VT/libpulse backends and a disposable worker harness. Its required
 profile, schema and recovery boundaries are separate from D1's inert grants.
 The [D3 display implementation](video-managed-display.md) adds separate native
 managed APIs and independent graph/flush barriers while preserving the live guard.
+The [D4 media increment](video-media-actor.md) adds the actual graph owner,
+borrowed control pilot and durable media-producer accounting.
 
 ## Deployment and trust boundary
 
@@ -99,8 +101,9 @@ capabilities, quarantines outstanding leases and changes pending operations to
 poison the running authority, including cached receipt queries; an uncertain
 commit cannot return a new permit or successful release.
 
-Current authority snapshots use schema 3 for display borrowers and VT dependencies.
-Earlier schema-1/schema-2 snapshots are refused without rewriting or automatic upgrade. The D1
+Current authority snapshots use schema 4, including display borrowers, VT
+dependencies and media-producer evidence. Earlier schema-1 through schema-3
+snapshots are refused without rewriting or automatic upgrade. The D1
 test results below are historical evidence for that source increment, not a
 live migration or approval to discard an old ledger.
 
@@ -162,8 +165,10 @@ legacy coexistence, shell integration or target storage power loss.
 D2 now supplies separately versioned VT and normal-user audio backends,
 disposable completion/cancellation checks and durable worker/stop-post fencing;
 see its [implementation boundary](video-handoff-participants.md). D3 now adds
-[managed display policies](video-managed-display.md); the single-owner media
-actor and shell integration follow before admission. Default M5 behavior,
+[managed display policies](video-managed-display.md). D4 supplies the
+[single-owner media actor and control pilot](video-media-actor.md), with actual
+LCD/fake-audio graph-drain accounting. Qualified D5 shell/package/device
+integration follows before admission. Default M5 behavior,
 legacy helper privileges/endpoints, image inputs and package approvals remain
 independent of these managed APIs. Physical
 playing/paused, LCD/HDMI, audio/VT restoration and launch/return testing remain

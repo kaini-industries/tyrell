@@ -96,7 +96,7 @@ def validate_display_record(state, name, record):
                 type(display["borrowers"]) is dict and len(display["borrowers"]) <= 8, "invalid display metadata")
         for actor, borrower in display["borrowers"].items():
             require(identifier(actor) and actor in lease["actors"] and actor not in (name,record["post_actor"],lease["app"]) and
-                    type(borrower) is dict and set(borrower) == {"kind","operation","state","proof"} and
+                    type(borrower) is dict and set(borrower) == {"kind","operation","state","proof","media"} and
                     borrower["kind"] in ("graph","flush") and borrower["state"] in ("PENDING","UNKNOWN","DONE"), "invalid display borrower")
             operation = lease["operations"].get(borrower["operation"])
             require(operation is not None and operation["actor"] == actor and operation["kind"] == "use" and operation["state"] == borrower["state"],
@@ -106,6 +106,8 @@ def validate_display_record(state, name, record):
                 validate_borrower_proof(record, actor, borrower, borrower["proof"])
             else:
                 require(not lease["actors"][actor]["released"] and borrower["proof"] is None, "unverified borrower retired")
+            from handoff_media_state import validate_media
+            validate_media(state,record,actor,borrower)
     if record["cleanup"] is not None:
         require(record["display_proofs"] == cleanup_dependencies(state,record), "missing durable display-to-VT dependency")
     else:
@@ -154,7 +156,7 @@ class Displays:
             target["actors"][actor.identifier] = {"kind":"inert","released":False}
             target["operations"][operation] = {"actor":actor.identifier,"kind":"use","state":"PENDING"}
             state["participants"][capability.actor.identifier]["display"]["borrowers"][actor.identifier] = {
-                "kind":kind,"operation":operation,"state":"PENDING","proof":None}
+                "kind":kind,"operation":operation,"state":"PENDING","proof":None,"media":None}
             owner._commit(state,"display-borrower-before-submission",participant=capability.actor.identifier,actor=actor.identifier)
             owner._actors[actor._token] = actor
             return DisplayBorrower(capability.actor.identifier,capability.generation,actor,operation)
@@ -170,6 +172,7 @@ class Displays:
             owner._actor(borrower.actor)
             target = record["display"]["borrowers"].get(borrower.actor.identifier)
             require(target is not None and target["operation"] == borrower.operation, "unknown borrower operation")
+            require(target["media"] is None,"Media borrower needs graph proof and worker fence")
             validate_borrower_proof(record,borrower.actor.identifier,target,proof)
             if target["state"] == "DONE":
                 require(target["proof"] == proof,"conflicting borrower completion")
@@ -197,6 +200,12 @@ class Displays:
                 return
             state = copy.deepcopy(owner._state)
             state["participants"][capability.actor.identifier]["display"]["borrowers"][borrower.actor.identifier]["state"] = "UNKNOWN"
+            media=state["participants"][capability.actor.identifier]["display"]["borrowers"][borrower.actor.identifier]["media"]
+            if media is not None:
+                media["phase"]="unknown"
+                for operation in media["commands"]:
+                    if state["leases"][record["lease"]]["operations"][operation]["state"]=="PENDING":
+                        state["leases"][record["lease"]]["operations"][operation]["state"]="UNKNOWN"
             lease = state["leases"][record["lease"]]
             lease["operations"][borrower.operation]["state"] = "UNKNOWN"
             owner._quarantine(lease,"unknown")

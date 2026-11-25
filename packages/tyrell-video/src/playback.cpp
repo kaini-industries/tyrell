@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <cctype>
 #include <cmath>
 #include <cstring>
@@ -17,6 +18,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <mutex>
+#include <unordered_set>
 #include <sstream>
 #include <utility>
 
@@ -38,6 +40,50 @@ constexpr unsigned text_flag = 1U << 2;
 constexpr unsigned visualization_flag = 1U << 3;
 constexpr int lcd_width = 320;
 constexpr int lcd_height = 170;
+
+bool graph_id(const std::string& value) {
+    return value.size() == 32 && value.find_first_not_of("0123456789abcdef") == std::string::npos;
+}
+bool graph_binding(const ManagedGraphBinding& binding) {
+    return binding.epoch && graph_id(binding.resource) && graph_id(binding.generation);
+}
+
+struct GraphLifetime {
+    std::atomic<std::uint64_t> started{0}, completed{0}, active{0}, contexts{0};
+    std::atomic<std::uint64_t> created_graphs{0}, finalized_graphs{0};
+    std::atomic<bool> closing{false}, failed{false};
+    std::mutex mutex;
+    std::condition_variable condition;
+    std::unordered_set<GstObject*> objects;
+};
+
+struct GraphObject {
+    std::shared_ptr<GraphLifetime> lifetime;
+    GstObject* object;
+    bool pipeline;
+};
+void graph_object_finalized(gpointer data, GObject*) {
+    std::unique_ptr<GraphObject> context(static_cast<GraphObject*>(data));
+    auto& lifetime = *context->lifetime;
+    {
+        std::lock_guard<std::mutex> guard(lifetime.mutex);
+        lifetime.objects.erase(context->object);
+    }
+    if(context->pipeline) ++lifetime.finalized_graphs;
+    lifetime.condition.notify_all();
+}
+
+struct GraphCallback {
+    std::shared_ptr<GraphLifetime> lifetime;
+    explicit GraphCallback(std::shared_ptr<GraphLifetime> value) : lifetime(std::move(value)) {
+        ++lifetime->started; ++lifetime->active;
+    }
+    ~GraphCallback() {
+        ++lifetime->completed; --lifetime->active;
+        lifetime->condition.notify_all();
+    }
+    bool accepting() const { return !lifetime->closing.load(); }
+};
 
 std::optional<FileIdentity> file_identity(const std::string& path) {
 #if defined(__unix__) || defined(__APPLE__)
@@ -187,6 +233,7 @@ struct Playback::Impl {
     GstBus* bus = nullptr;
     GstElement* audio_sink = nullptr; // borrowed from the pipeline
     GstElement* video_sink = nullptr; // borrowed; valid while pipeline exists
+    GstAppSink* managed_appsink = nullptr; // Strong until callback replacement, including pre-bind failures.
     HdmiSession hdmi;
     HdmiDesktopLease desktop_lease;
     HdmiAudioSession hdmi_audio;
@@ -251,6 +298,141 @@ struct Playback::Impl {
     std::chrono::steady_clock::time_point last_hotplug{};
     std::chrono::steady_clock::time_point load_started{};
     std::chrono::steady_clock::time_point file_load_started{};
+    std::shared_ptr<GraphLifetime> graph_lifetime;
+    std::optional<GraphDrainEvidence> graph_receipt;
+    bool managed_epoch_sealed = false;
+    struct CallbackContext {
+        Impl* player;
+        std::shared_ptr<GraphLifetime> lifetime;
+        GstPadProbeCallback probe = nullptr;
+    };
+    struct ProbeRegistration { GstPad* pad; gulong id; };
+    struct SignalRegistration { GObject* object; gulong id; };
+    std::mutex registration_mutex;
+    std::vector<ProbeRegistration> graph_probes;
+    std::vector<SignalRegistration> graph_signals;
+
+    bool managed() const { return options.managed_graph.has_value(); }
+
+    void track_object(GstObject* object, bool root = false) {
+        auto lifetime = std::atomic_load(&graph_lifetime);
+        if(!lifetime || !object) return;
+        {
+            std::lock_guard<std::mutex> guard(lifetime->mutex);
+            if(lifetime->objects.count(object)) return;
+            if(lifetime->objects.size() >= 4096) { lifetime->failed = true; return; }
+            lifetime->objects.insert(object);
+        }
+        if(root) ++lifetime->created_graphs;
+        g_object_weak_ref(G_OBJECT(object), graph_object_finalized, new GraphObject{lifetime,object,root});
+    }
+
+    CallbackContext* callback_context(GstPadProbeCallback probe = nullptr) {
+        auto lifetime = std::atomic_load(&graph_lifetime);
+        auto* context = new CallbackContext{this,lifetime,probe};
+        ++lifetime->contexts;
+        return context;
+    }
+    static void destroy_context(gpointer data) {
+        std::unique_ptr<CallbackContext> context(static_cast<CallbackContext*>(data));
+        --context->lifetime->contexts;
+        context->lifetime->condition.notify_all();
+    }
+    static void destroy_closure(gpointer data, GClosure*) { destroy_context(data); }
+
+    static GstPadProbeReturn managed_probe(GstPad* pad, GstPadProbeInfo* info, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        if(!callback.accepting()) return GST_PAD_PROBE_OK;
+        try { return context.probe(pad,info,context.player); }
+        catch(...) { context.lifetime->failed=true; return GST_PAD_PROBE_DROP; }
+    }
+    void add_probe(GstPad* pad, GstPadProbeType type, GstPadProbeCallback callback) {
+        if(!managed()) { gst_pad_add_probe(pad,type,callback,this,nullptr); return; }
+        std::lock_guard<std::mutex> guard(registration_mutex);
+        if(graph_lifetime->closing || graph_lifetime->failed) return;
+        auto* context = callback_context(callback);
+        const auto id = gst_pad_add_probe(pad,type,managed_probe,context,destroy_context);
+        if(id) graph_probes.push_back({GST_PAD(gst_object_ref(pad)),id});
+        else graph_lifetime->failed = true;
+    }
+    void add_signal(GObject* object, const char* name, GCallback callback) {
+        if(!managed()) { g_signal_connect(object,name,callback,this); return; }
+        std::lock_guard<std::mutex> guard(registration_mutex);
+        if(graph_lifetime->closing || graph_lifetime->failed) return;
+        const auto id = g_signal_connect_data(object,name,callback,callback_context(),destroy_closure,G_CONNECT_DEFAULT);
+        if(id) graph_signals.push_back({G_OBJECT(g_object_ref(object)),id});
+        else graph_lifetime->failed = true;
+    }
+    static void managed_element_setup(GstElement* parent, GstElement* element, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        if(callback.accepting()) {
+            try { context.player->element_setup(parent,element,context.player); }
+            catch(...) { context.lifetime->failed=true; }
+        }
+    }
+    static void managed_silent_changed(GObject* element, GParamSpec* property, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        if(callback.accepting()) {
+            try { context.player->subtitle_silent_changed(element,property,context.player); }
+            catch(...) { context.lifetime->failed=true; }
+        }
+    }
+    static GstFlowReturn managed_sample(GstAppSink* sink, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        if(!callback.accepting()) return GST_FLOW_FLUSHING;
+        try { return context.player->accept_sample(gst_app_sink_pull_sample(sink)); }
+        catch(...) { context.lifetime->failed=true; return GST_FLOW_ERROR; }
+    }
+    static GstFlowReturn managed_preroll(GstAppSink* sink, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        if(!callback.accepting()) return GST_FLOW_FLUSHING;
+        try { return context.player->accept_sample(gst_app_sink_pull_preroll(sink)); }
+        catch(...) { context.lifetime->failed=true; return GST_FLOW_ERROR; }
+    }
+    static gboolean managed_allocation(GstAppSink* sink, GstQuery* query, gpointer data) {
+        auto& context = *static_cast<CallbackContext*>(data);
+        GraphCallback callback(context.lifetime);
+        try { return callback.accepting() ? lcd_allocation(sink,query,context.player) : FALSE; }
+        catch(...) { context.lifetime->failed=true; return FALSE; }
+    }
+    void close_callbacks() {
+        if(!managed() || !graph_lifetime) return;
+        graph_lifetime->closing = true;
+        std::vector<ProbeRegistration> probes;
+        std::vector<SignalRegistration> signals;
+        {
+            std::lock_guard<std::mutex> guard(registration_mutex);
+            probes.swap(graph_probes); signals.swap(graph_signals);
+        }
+        for(const auto& registration : probes) {
+            gst_pad_remove_probe(registration.pad,registration.id);
+            gst_object_unref(registration.pad);
+        }
+        for(const auto& registration : signals) {
+            g_signal_handler_disconnect(registration.object,registration.id);
+            g_object_unref(registration.object);
+        }
+        if(managed_appsink) {
+            // GStreamer 1.26 requires a zeroed callback struct, not nullptr.
+            GstAppSinkCallbacks callbacks{};
+            gst_app_sink_set_callbacks(managed_appsink,&callbacks,nullptr,nullptr);
+            gst_object_unref(managed_appsink);
+            managed_appsink = nullptr;
+        }
+    }
+    void wait_callbacks() {
+        if(!managed() || !graph_lifetime) return;
+        std::unique_lock<std::mutex> guard(graph_lifetime->mutex);
+        graph_lifetime->condition.wait(guard,[&] {
+            return graph_lifetime->contexts.load()==0 && graph_lifetime->active.load()==0;
+        });
+    }
+    void release_desktop() { if(!managed()) desktop_lease.release(); }
 
     double load_elapsed() const {
         return std::chrono::duration<double>(std::chrono::steady_clock::now() - file_load_started).count();
@@ -258,13 +440,20 @@ struct Playback::Impl {
 
     explicit Impl(PlaybackOptions requested_options) : options(std::move(requested_options)),
         desktop_lease(options.desktop_handoff_socket) {
+        if(managed()) {
+            if(!graph_binding(*options.managed_graph) || !options.fake_audio || options.desktop_handoff || options.automatic_hdmi_audio) {
+                state.error = "Managed graph requires an explicit disposable LCD/fake-audio profile";
+                return;
+            }
+            graph_lifetime = std::make_shared<GraphLifetime>();
+        }
         GError* error = nullptr;
         initialized = gst_init_check(nullptr, nullptr, &error);
         if(!initialized) state.error = error ? error->message : "Cannot initialize GStreamer";
         if(error) g_error_free(error);
     }
 
-    ~Impl() { destroy_pipeline(); hdmi_audio.release(); desktop_lease.release(); }
+    ~Impl() { destroy_pipeline(); if(!managed()) hdmi_audio.release(); release_desktop(); }
 
     void clear_frame() {
         std::lock_guard<std::mutex> lock(frame_mutex);
@@ -297,9 +486,13 @@ struct Playback::Impl {
     }
 
     void destroy_pipeline(bool already_null = false) {
+        close_callbacks();
         if(pipeline) {
             // NULL joins the streaming tasks before releasing our callback data.
-            if(!already_null) gst_element_set_state(pipeline, GST_STATE_NULL);
+            if(!already_null) {
+                const auto result = gst_element_set_state(pipeline, GST_STATE_NULL);
+                if(managed() && result != GST_STATE_CHANGE_SUCCESS) graph_lifetime->failed = true;
+            }
             if(bus) gst_object_unref(bus);
             bus = nullptr;
             gst_object_unref(pipeline);
@@ -316,11 +509,12 @@ struct Playback::Impl {
             for(auto* overlay : subtitle_overlays) gst_object_unref(overlay);
             subtitle_overlays.clear();
         }
-        hdmi.release();
+        if(!managed()) hdmi.release();
         pending_preroll = false;
         seek_pending = false;
         seek_sequence = video_seek_segment = audio_seek_segment = GST_SEQNUM_INVALID;
         clear_frame();
+        wait_callbacks();
     }
 
     void observe_segment(GstPadProbeInfo* info, std::atomic<guint32>& observed) {
@@ -456,22 +650,22 @@ struct Playback::Impl {
 
     static void element_setup(GstElement*, GstElement* element, gpointer data) {
         auto& player = *static_cast<Impl*>(data);
+        player.track_object(GST_OBJECT(element));
+        if(player.managed() && player.graph_lifetime->failed) return;
         GstElementFactory* factory = gst_element_get_factory(element);
         if(!factory) return;
         const char* factory_name = gst_plugin_feature_get_name(GST_PLUGIN_FEATURE(factory));
         const char* klass = gst_element_factory_get_metadata(factory, GST_ELEMENT_METADATA_KLASS);
         if(klass && std::strstr(klass, "Decoder") && std::strstr(klass, "Video")) {
             if(GstPad* pad = gst_element_get_static_pad(element, "src")) {
-                gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
-                                  decoder_is_hardware_video(factory_name, klass) ? hardware_decoded_delivery : decoded_delivery,
-                                  data, nullptr);
+                player.add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
+                                  decoder_is_hardware_video(factory_name, klass) ? hardware_decoded_delivery : decoded_delivery);
                 gst_object_unref(pad);
             }
         }
         if(std::strcmp(factory_name, "subtitleoverlay") == 0) {
             if(GstPad* pad = gst_element_get_static_pad(element, "subtitle_sink")) {
-                gst_pad_add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST),
-                                  subtitle_payload_guard, data, nullptr);
+                player.add_probe(pad, static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST), subtitle_payload_guard);
                 gst_object_unref(pad);
             }
         }
@@ -483,7 +677,7 @@ struct Playback::Impl {
         // Silence the final Pango renderer, rather than subtitleoverlay itself:
         // the latter bypasses its parser when initially silent, which can turn
         // external subtitle segments into byte segments and break later seeks.
-        g_signal_connect(element, "notify::silent", G_CALLBACK(subtitle_silent_changed), data);
+        player.add_signal(G_OBJECT(element), "notify::silent", G_CALLBACK(player.managed() ? managed_silent_changed : subtitle_silent_changed));
         std::lock_guard<std::mutex> lock(player.subtitle_mutex);
         g_object_set(element, "silent", !player.subtitles_enabled.load(), nullptr);
         player.subtitle_overlays.push_back(GST_ELEMENT(gst_object_ref(element)));
@@ -493,6 +687,7 @@ struct Playback::Impl {
         if(!sample) return GST_FLOW_OK;
         std::unique_ptr<GstSample, void(*)(GstSample*)> source(sample, gst_sample_unref);
         try {
+            if(managed() && options.managed_sample_hook) options.managed_sample_hook();
             auto next = std::make_shared<Frame>();
             bool composed = false;
             std::string error;
@@ -514,12 +709,14 @@ struct Playback::Impl {
     }
 
     GstElement* make_video_sink(Output output, std::string& error) {
+        if(managed() && output != Output::Lcd) { error = "Managed HDMI graph admission is not qualified"; return nullptr; }
         GstElement* bin = gst_bin_new("tyrell-video-output");
         GstElement* convert = gst_element_factory_make("videoconvert", nullptr);
         GstElement* scale = gst_element_factory_make("videoscale", nullptr);
         GstElement* fitted = output == Output::Lcd ? gst_element_factory_make("capsfilter", nullptr) : nullptr;
         GstElement* filter = gst_element_factory_make("capsfilter", nullptr);
         GstElement* sink = gst_element_factory_make(output == Output::Lcd ? "appsink" : "kmssink", "tyrell-video-sink");
+        for(auto* element : {bin,convert,scale,fitted,filter,sink}) if(element) track_object(GST_OBJECT(element));
         if(!bin || !convert || !scale || (output == Output::Lcd && !fitted) || !filter || !sink) {
             if(convert) gst_object_unref(convert);
             if(scale) gst_object_unref(scale);
@@ -553,10 +750,12 @@ struct Playback::Impl {
             g_object_set(sink, "sync", TRUE, "max-buffers", 1U, "drop", TRUE,
                          "enable-last-sample", FALSE, "wait-on-eos", FALSE, "qos", TRUE, nullptr);
             GstAppSinkCallbacks callbacks{};
-            callbacks.new_sample = sample_ready;
-            callbacks.new_preroll = preroll_ready;
-            callbacks.propose_allocation = lcd_allocation;
-            gst_app_sink_set_callbacks(GST_APP_SINK(sink), &callbacks, this, nullptr);
+            callbacks.new_sample = managed() ? managed_sample : sample_ready;
+            callbacks.new_preroll = managed() ? managed_preroll : preroll_ready;
+            callbacks.propose_allocation = managed() ? managed_allocation : lcd_allocation;
+            if(managed()) managed_appsink = GST_APP_SINK(gst_object_ref(sink));
+            gst_app_sink_set_callbacks(GST_APP_SINK(sink), &callbacks, managed() ? static_cast<gpointer>(callback_context()) : this,
+                                      managed() ? destroy_context : nullptr);
         }
         g_object_set(scale, "add-borders", output == Output::Hdmi, nullptr);
         // Keep HDMI video at its native size when possible. The owned KMS
@@ -599,9 +798,9 @@ struct Playback::Impl {
         // Count actual video payloads at either final sink. This survives
         // pause/segment/flush resets of GstBaseSink's rendering statistics.
         if(GstPad* sink_pad = gst_element_get_static_pad(sink, "sink")) {
-            gst_pad_add_probe(sink_pad,
+            add_probe(sink_pad,
                 static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER | GST_PAD_PROBE_TYPE_BUFFER_LIST | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
-                video_delivery, this, nullptr);
+                video_delivery);
             gst_object_unref(sink_pad);
         }
         video_sink = sink;
@@ -613,6 +812,7 @@ struct Playback::Impl {
     }
 
     OutputInventory audio_outputs() const {
+        if(managed()) return {};
         auto result = inspect_outputs(true);
         // A previous player's temporary sink may still be unloading. Only the
         // lease owned by this instance has a useful, predictable lifetime.
@@ -629,6 +829,7 @@ struct Playback::Impl {
     }
 
     void release_hdmi_audio(bool force = false) {
+        if(managed()) return;
         if(!force && explicit_owned_audio()) return;
         if(requested_audio_sink == hdmi_audio.sink_name()) requested_audio_sink.clear();
         hdmi_audio.release();
@@ -736,7 +937,7 @@ struct Playback::Impl {
         state.notice = std::move(notice);
         if(output == Output::Lcd) {
             release_hdmi_audio();
-            desktop_lease.release();
+            release_desktop();
         }
         if(create_pipeline(position, autoplay, audio_track, subtitle_track)) {
             resume_hdmi_fallback_pause = false;
@@ -748,7 +949,7 @@ struct Playback::Impl {
             state.error.clear();
             state.notice = failure + "; using LCD";
             release_hdmi_audio(true);
-            desktop_lease.release();
+            release_desktop();
             if(create_pipeline(position, fallback_autoplay, audio_track, subtitle_track)) {
                 resume_hdmi_fallback_pause = false;
                 return true;
@@ -757,7 +958,7 @@ struct Playback::Impl {
         state.loaded = state.playing = state.buffering = false;
         state.paused = true;
         release_hdmi_audio(true);
-        desktop_lease.release();
+        release_desktop();
         return false;
     }
 
@@ -777,6 +978,7 @@ struct Playback::Impl {
     }
 
     bool begin_initial_hdmi(double position = 0, bool autoplay = true, int audio_track = -1, int subtitle_track = -1) {
+        if(managed()) { state.error = "Managed HDMI graph admission is not qualified"; return false; }
         initial_hdmi_pending = true;
         state.output = Output::Lcd;
         state.output_switching = true;
@@ -806,6 +1008,7 @@ struct Playback::Impl {
     GstElement* make_audio_sink(Output output, std::string& error) {
         if(options.fake_audio) {
             GstElement* sink = gst_element_factory_make("fakesink", "tyrell-test-audio-output");
+            if(sink) track_object(GST_OBJECT(sink));
             if(sink) g_object_set(sink, "sync", TRUE, nullptr);
             else error = "Missing test fakesink plugin";
             state.audio_output = "fakesink (explicit test option)";
@@ -824,6 +1027,7 @@ struct Playback::Impl {
         // A silent video can therefore play even when no sound server exists;
         // audio-bearing files still report the real PulseAudio connection error.
         GstElement* sink = gst_element_factory_make("pulsesink", "tyrell-audio-output");
+        if(sink) track_object(GST_OBJECT(sink));
         if(sink && !destination.empty()) g_object_set(sink, "device", destination.c_str(), nullptr);
         if(!sink) error = "Missing GStreamer PulseAudio output plugin";
         if(sink) state.audio_output = destination.empty() ? "System default" : destination;
@@ -853,6 +1057,13 @@ struct Playback::Impl {
 
     bool create_pipeline(double position, bool autoplay, int audio_track, int subtitle_track) {
         std::string error;
+        if(managed()) {
+            if(managed_epoch_sealed || graph_lifetime->failed || graph_lifetime->created_graphs >= 128 || state.output != Output::Lcd) {
+                state.error = "Managed graph is sealed, uncertain or outside its disposable scope";
+                return false;
+            }
+            graph_lifetime->closing = false;
+        }
         // These identify the current graph, unlike the cumulative per-load
         // delivery/readiness counters. A replacement must not report its old
         // hardware decoder or allocator while the software graph prepares.
@@ -868,8 +1079,9 @@ struct Playback::Impl {
         ++state.pipeline_builds;
         pipeline = gst_element_factory_make("playbin", "tyrell-player");
         if(!pipeline) { state.error = "Missing GStreamer playbin plugin"; return false; }
+        track_object(GST_OBJECT(pipeline),true);
         subtitles_enabled = subtitle_track >= 0;
-        g_signal_connect(pipeline, "element-setup", G_CALLBACK(element_setup), this);
+        add_signal(G_OBJECT(pipeline), "element-setup", G_CALLBACK(managed() ? managed_element_setup : element_setup));
         GstElement* video = make_video_sink(state.output, error);
         if(!video) { state.error = error; destroy_pipeline(); return false; }
         GstElement* audio = make_audio_sink(state.output, error);
@@ -888,7 +1100,7 @@ struct Playback::Impl {
                      "subtitle-font-desc", subtitle_font.c_str(), nullptr);
         audio_sink = audio;
         if(GstPad* pad = gst_element_get_static_pad(audio, "sink")) {
-            gst_pad_add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, audio_segment, this, nullptr);
+            add_probe(pad, GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM, audio_segment);
             gst_object_unref(pad);
         }
         gst_object_unref(video);
@@ -904,6 +1116,7 @@ struct Playback::Impl {
         if(state.software_video_fallback) flags |= force_software_decoders_flag;
         g_object_set(pipeline, "flags", flags, nullptr);
         bus = gst_element_get_bus(pipeline);
+        track_object(GST_OBJECT(bus));
         restart_position = position;
         restart_audio_track = audio_track;
         restart_subtitle_track = subtitle_track;
@@ -1114,7 +1327,7 @@ struct Playback::Impl {
         const auto target = restart_target();
         destroy_pipeline();
         release_hdmi_audio(true);
-        desktop_lease.release();
+        release_desktop();
         pending_hdmi = false;
         state.output_switching = false;
         state.output = Output::Lcd;
@@ -1138,7 +1351,7 @@ struct Playback::Impl {
         if(create_pipeline(target.position, autoplay, target.audio_track, target.subtitle_track)) {
             if(output == Output::Lcd) {
                 release_hdmi_audio();
-                desktop_lease.release();
+                release_desktop();
             }
             return true;
         }
@@ -1150,7 +1363,7 @@ struct Playback::Impl {
             state.error = failure + "; previous output also failed: " + state.error;
         if(state.output == Output::Lcd || !pipeline) {
             release_hdmi_audio(!pipeline);
-            desktop_lease.release();
+            release_desktop();
         }
         return false;
     }
@@ -1179,6 +1392,7 @@ Playback::~Playback() = default;
 
 bool Playback::load(const std::string& path, const std::string& external_subtitle) {
     auto& p = *impl_;
+    if(p.managed() && p.managed_epoch_sealed) { p.state.error = "A fresh managed grant is required before load"; return false; }
     if(!p.initialized) return false;
     std::error_code error;
     const auto absolute = std::filesystem::absolute(path, error);
@@ -1198,7 +1412,7 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     p.output_preference = output;
     p.retain_recovery_budgets = false;
     p.resume_hdmi_fallback_pause = p.resume_ended = false;
-    if(output == Output::Lcd) { p.release_hdmi_audio(); p.desktop_lease.release(); }
+    if(output == Output::Lcd) { p.release_hdmi_audio(); p.release_desktop(); }
     const double volume = p.state.volume;
     const bool muted = p.state.muted;
     p.state = {};
@@ -1233,13 +1447,14 @@ bool Playback::load(const std::string& path, const std::string& external_subtitl
     if(p.create_pipeline(0, true, -1, -1)) return true;
     p.state.loaded = false;
     p.release_hdmi_audio(true);
-    p.desktop_lease.release();
+    p.release_desktop();
     return false;
 }
 
 void Playback::poll() {
     auto& p = *impl_;
-    if(p.state.suspended) return;
+    if(p.managed() && p.managed_epoch_sealed) return;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return;
     if(p.initial_hdmi_pending) {
         p.poll_initial_hdmi();
         if(p.initial_hdmi_pending) return;
@@ -1255,14 +1470,14 @@ void Playback::poll() {
             p.pending_hdmi = false;
             p.state.output_switching = false;
             p.state.notice = p.desktop_lease.error() + "; using LCD";
-            p.desktop_lease.release();
+            p.release_desktop();
         }
     } else if(p.state.output == Output::Hdmi && p.desktop_lease.state() == HdmiDesktopLease::State::Ready &&
               p.desktop_lease.poll() == HdmiDesktopLease::State::Failed) {
         const auto error = p.desktop_lease.error();
         p.fallback_to_lcd(error + "; paused on LCD");
     }
-    if(!p.pipeline) { p.hdmi_audio.poll(); return; }
+    if(!p.pipeline) { if(!p.managed()) p.hdmi_audio.poll(); return; }
     while(GstMessage* message = gst_bus_pop(p.bus)) {
         bool fatal = false, failed_audio = false, retry_video_memory = false;
         switch(GST_MESSAGE_TYPE(message)) {
@@ -1337,7 +1552,7 @@ void Playback::poll() {
                 p.release_hdmi_audio(true);
                 p.pending_hdmi = false;
                 p.state.output_switching = false;
-                p.desktop_lease.release();
+                p.release_desktop();
             }
             return;
         }
@@ -1355,7 +1570,7 @@ void Playback::poll() {
         p.release_hdmi_audio(true);
         p.pending_hdmi = false;
         p.state.output_switching = false;
-        p.desktop_lease.release();
+        p.release_desktop();
         return;
     }
     p.poll_hdmi_audio();
@@ -1377,7 +1592,7 @@ std::shared_ptr<const Frame> Playback::latest_frame() const {
 
 bool Playback::play() {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if(p.initial_hdmi_pending) {
         if(p.ended || p.resume_ended) { p.restart_position = 0; p.state.position = 0; p.ended = p.resume_ended = false; }
         p.desired_playing = true; p.state.paused = false; return true;
@@ -1390,7 +1605,7 @@ bool Playback::play() {
 }
 bool Playback::pause() {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if(p.initial_hdmi_pending) { p.desired_playing = false; p.state.paused = true; return true; }
     if(!p.pipeline) return false;
     p.settle_seek();
@@ -1416,7 +1631,7 @@ bool Playback::pause() {
 bool Playback::toggle_pause() { return impl_->desired_playing ? pause() : play(); }
 bool Playback::seek(double seconds) {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if((!p.pipeline && !p.initial_hdmi_pending) || !std::isfinite(seconds)) return false;
     seconds = std::max(0.0, seconds);
     if(p.state.duration > 0) seconds = std::min(seconds, std::max(0.0, p.state.duration - 0.01));
@@ -1434,7 +1649,11 @@ bool Playback::seek_relative(double seconds) { return seek(impl_->state.position
 
 bool Playback::set_output(Output output) {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.managed() && (p.managed_epoch_sealed || output != Output::Lcd)) {
+        p.state.error = "Managed HDMI graph admission is not qualified";
+        return false;
+    }
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     p.output_preference = output;
     if(p.initial_hdmi_pending) {
         if(output == Output::Hdmi) return true;
@@ -1445,7 +1664,7 @@ bool Playback::set_output(Output output) {
         p.pending_hdmi = false;
         p.state.output_switching = false;
         const bool result = p.change_output(output);
-        if(p.state.output == Output::Lcd) { p.release_hdmi_audio(); p.desktop_lease.release(); }
+        if(p.state.output == Output::Lcd) { p.release_hdmi_audio(); p.release_desktop(); }
         if(cancelled) p.state.notice = "HDMI setup cancelled; using LCD";
         return result;
     }
@@ -1479,7 +1698,7 @@ bool Playback::set_output(Output output) {
 
 bool Playback::set_audio_track(int index) {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if(!p.pipeline || index < 0 || index >= static_cast<int>(p.state.audio_tracks.size())) return false;
     p.state.audio_track = index;
     p.restart_audio_track = index;
@@ -1488,7 +1707,7 @@ bool Playback::set_audio_track(int index) {
 }
 bool Playback::set_subtitle_track(int index) {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if(p.initial_hdmi_pending && index == -1) { p.restart_subtitle_track = -1; return true; }
     if(!p.pipeline || index < -1 || index >= static_cast<int>(p.state.subtitle_tracks.size())) return false;
     if(index >= 0 && (p.text_track_is_bitmap(index) || bitmap_subtitle_codec(p.state.subtitle_tracks[index].codec))) {
@@ -1505,7 +1724,11 @@ bool Playback::set_subtitle_track(int index) {
 }
 bool Playback::set_audio_sink(const std::string& sink_name) {
     auto& p = *impl_;
-    if(p.state.suspended) return false;
+    if(p.managed()) {
+        if(p.managed_epoch_sealed || !sink_name.empty()) { p.state.error = "Managed audio session access is not qualified"; return false; }
+        return true;
+    }
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return false;
     if(!sink_name.empty()) {
         const auto inventory = p.audio_outputs();
         if(std::none_of(inventory.audio.begin(), inventory.audio.end(), [&](const AudioSink& item) { return item.name == sink_name && item.available; })) {
@@ -1532,13 +1755,13 @@ bool Playback::set_audio_sink(const std::string& sink_name) {
 }
 void Playback::set_volume(double volume) {
     auto& p = *impl_;
-    if(p.state.suspended) return;
+    if(p.state.suspended || (p.managed() && p.managed_epoch_sealed)) return;
     if(!std::isfinite(volume)) return;
     p.state.volume = std::clamp(volume, 0.0, 1.0);
     if(p.pipeline) g_object_set(p.pipeline, "volume", p.state.volume, nullptr);
 }
 void Playback::set_muted(bool muted) {
-    if(impl_->state.suspended) return;
+    if(impl_->state.suspended || (impl_->managed() && impl_->managed_epoch_sealed)) return;
     impl_->state.muted = muted;
     if(impl_->pipeline) g_object_set(impl_->pipeline, "mute", muted, nullptr);
 }
@@ -1614,6 +1837,7 @@ bool Playback::suspend() {
     if(p.state.suspended) return true;
     const auto saved = capture_checkpoint();
     if(p.state.loaded && !saved) return false;
+    p.close_callbacks();
     if(p.pipeline) {
         const auto result = gst_element_set_state(p.pipeline, GST_STATE_NULL);
         GstState current = GST_STATE_VOID_PENDING, pending = GST_STATE_VOID_PENDING;
@@ -1629,7 +1853,7 @@ bool Playback::suspend() {
     p.destroy_pipeline(true);
     p.initial_hdmi_pending = p.pending_hdmi = false;
     p.release_hdmi_audio(true);
-    p.desktop_lease.release();
+    p.release_desktop();
     p.saved_checkpoint = saved;
     p.state.suspended = true;
     p.state.playing = p.state.buffering = p.state.output_switching = false;
@@ -1639,6 +1863,7 @@ bool Playback::suspend() {
 
 bool Playback::resume() {
     auto& p = *impl_;
+    if(p.managed() && p.managed_epoch_sealed) { p.state.error = "A fresh managed grant is required before resume"; return false; }
     if(!p.state.suspended) return true;
     if(!p.saved_checkpoint) { p.state.suspended = false; return true; }
     const auto saved = *p.saved_checkpoint;
@@ -1681,7 +1906,7 @@ bool Playback::resume() {
     p.destroy_pipeline();
     p.initial_hdmi_pending = p.pending_hdmi = false;
     p.release_hdmi_audio(true);
-    p.desktop_lease.release();
+    p.release_desktop();
     p.state.suspended = true;
     p.state.playing = p.state.buffering = p.state.output_switching = false;
     p.state.paused = p.state.loaded;
@@ -1700,6 +1925,88 @@ PlaybackResources Playback::resources() const {
             p.external_cleanup_unconfirmed};
 }
 
+std::string GraphDrainEvidence::json() const {
+    std::ostringstream out;
+    out << "{\"kind\":\"graph-drain-v4\",\"epoch\":" << binding.epoch
+        << ",\"resource\":" << json_string(binding.resource) << ",\"generation\":" << json_string(binding.generation)
+        << ",\"operation\":" << json_string(operation) << ",\"graph_serial\":" << graph_serial
+        << ",\"callbacks_started\":" << callbacks_started << ",\"callbacks_completed\":" << callbacks_completed
+        << ",\"active_callbacks\":" << active_callbacks << ",\"callback_contexts\":" << callback_contexts
+        << ",\"live_objects\":" << live_objects << ",\"pipeline_finalized\":" << (pipeline_finalized ? "true" : "false")
+        << ",\"local_handles_released\":" << (local_handles_released ? "true" : "false")
+        << ",\"legacy_helpers_unused\":" << (legacy_helpers_unused ? "true" : "false")
+        << ",\"finality_receipt\":" << json_string(finality_receipt) << '}';
+    return out.str();
+}
+
+std::optional<GraphDrainEvidence> Playback::drain_graph(const std::string& operation) {
+    auto& p = *impl_;
+    if(!p.managed() || !p.initialized || !graph_id(operation)) {
+        p.state.error = "Managed graph drain requires a bound coordinator operation";
+        return {};
+    }
+    if(p.graph_receipt) {
+        if(p.graph_receipt->operation == operation) return p.graph_receipt;
+        p.state.error = "Conflicting managed graph drain operation";
+        return {};
+    }
+    p.managed_epoch_sealed = true;
+    if(!suspend()) return {};
+    GraphDrainEvidence evidence;
+    evidence.binding = *p.options.managed_graph;
+    evidence.operation = operation;
+    const auto lifetime = std::atomic_load(&p.graph_lifetime);
+    evidence.graph_serial = lifetime->created_graphs;
+    evidence.callbacks_started = lifetime->started;
+    evidence.callbacks_completed = lifetime->completed;
+    evidence.active_callbacks = lifetime->active;
+    evidence.callback_contexts = lifetime->contexts;
+    {
+        std::lock_guard<std::mutex> guard(lifetime->mutex);
+        evidence.live_objects = lifetime->objects.size();
+    }
+    evidence.pipeline_finalized = lifetime->created_graphs.load() == lifetime->finalized_graphs.load();
+    const auto handles = resources();
+    evidence.local_handles_released = handles.local_handles_released();
+    evidence.legacy_helpers_unused = !handles.external_cleanup_unconfirmed && !p.options.desktop_handoff &&
+        !p.options.automatic_hdmi_audio && p.options.fake_audio && p.state.output == Output::Lcd;
+    if(lifetime->failed || !evidence.pipeline_finalized || evidence.live_objects || evidence.active_callbacks ||
+       evidence.callback_contexts || evidence.callbacks_started != evidence.callbacks_completed ||
+       !evidence.local_handles_released || !evidence.legacy_helpers_unused) {
+        p.state.error = "Managed graph completion remains unknown";
+        return {};
+    }
+    if(!p.options.graph_finality) { p.state.error = "Managed graph backend finality is not qualified"; return {}; }
+    try { evidence.finality_receipt = p.options.graph_finality(evidence); }
+    catch(...) { p.state.error = "Managed graph backend finality failed"; lifetime->failed = true; return {}; }
+    if(!graph_id(evidence.finality_receipt)) {
+        p.state.error = "Managed graph backend finality remains unknown";
+        lifetime->failed = true;
+        return {};
+    }
+    p.graph_receipt = evidence;
+    return evidence;
+}
+
+std::optional<GraphDrainEvidence> Playback::graph_drain_evidence() const { return impl_->graph_receipt; }
+
+bool Playback::rebind_managed_graph(const ManagedGraphBinding& binding) {
+    auto& p = *impl_;
+    if(!p.managed() || !p.graph_receipt || !p.state.suspended || p.pipeline ||
+       !graph_binding(binding) || binding.epoch <= p.options.managed_graph->epoch ||
+       binding.generation == p.options.managed_graph->generation || binding.resource == p.options.managed_graph->resource ||
+       (p.state.loaded && !p.saved_checkpoint)) {
+        p.state.error = "Fresh graph grant requires a verified drained checkpoint";
+        return false;
+    }
+    p.options.managed_graph = binding;
+    std::atomic_store(&p.graph_lifetime,std::make_shared<GraphLifetime>());
+    p.graph_receipt.reset();
+    p.managed_epoch_sealed = false;
+    p.state.error.clear();
+    return true;
+}
+
 void Playback::stop() {
     auto& p = *impl_;
     p.saved_checkpoint.reset();
@@ -1714,7 +2021,7 @@ void Playback::stop() {
     p.video_decode_retry_attempted = false;
     p.state.software_video_fallback = false;
     p.release_hdmi_audio(true);
-    p.desktop_lease.release();
+    p.release_desktop();
     p.pending_hdmi = false;
     p.state.output_switching = false;
     p.state.loaded = p.state.playing = p.state.paused = p.state.buffering = false;
@@ -1731,7 +2038,7 @@ std::string Playback::diagnostics_json() const {
     const auto& p = *impl_;
     guint major = 0, minor = 0, micro = 0, nano = 0;
     gst_version(&major, &minor, &micro, &nano);
-    const auto inventory = inspect_outputs(true);
+    const auto inventory = p.managed() ? OutputInventory{} : inspect_outputs(true);
     std::size_t subtitle_renderer_count = 0;
     {
         std::lock_guard<std::mutex> lock(p.subtitle_mutex);

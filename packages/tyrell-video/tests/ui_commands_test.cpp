@@ -167,7 +167,11 @@ void time_and_render(const fs::path& directory) {
 void dispatch_and_edges(const fs::path& directory) {
     Options options; options.media_root = directory;
     App app(options, fake_tick);
-    app.playback = std::make_unique<Playback>(PlaybackOptions{true, false, false});
+    PlaybackOptions playback_options;
+    playback_options.fake_audio = true;
+    playback_options.desktop_handoff = false;
+    playback_options.automatic_hdmi_audio = false;
+    app.playback = std::make_unique<DirectPlayerControl>(std::move(playback_options));
     app.page = Page::Player; app.status = app.playback->status();
     app.key('m'); require(app.status.muted, "Mute descriptor did not dispatch to playback");
     app.key('m', true); require(app.status.muted, "Mute autorepeated");
