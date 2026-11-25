@@ -59,7 +59,7 @@ def stage(repository, run_id, source_sha, selection_path, selection_sha, inputs_
         raise ValueError("Reviewed selection does not bind the selected source")
     checks = selection.get("checks")
     if not isinstance(checks, list) or len(checks) != len(github.SUITES):
-        raise ValueError("Reviewed selection must name all eight check artifacts")
+        raise ValueError("Reviewed selection must name all required check artifacts")
     selected = {}; parents = []
     for item in checks:
         if not isinstance(item, dict):
@@ -74,7 +74,7 @@ def stage(repository, run_id, source_sha, selection_path, selection_sha, inputs_
             raise ValueError("Check artifact directories must be distinct and nonoverlapping")
         parents.append(parent); selected[suite] = item
     if set(selected) != set(github.SUITES):
-        raise ValueError("Reviewed selection must name all eight suites exactly once")
+        raise ValueError("Reviewed selection must name all required source suites exactly once")
     inputs_root = Path(inputs_root).absolute()
     if inputs_root.is_symlink() or inputs_root.resolve() != inputs_root:
         raise ValueError("Canonical unredirected staging root required")

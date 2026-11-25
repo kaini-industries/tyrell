@@ -20,7 +20,7 @@ VERSION = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,95}\Z")
 TARGETS = {"original-m5", "tyrell-zero", "gh0st", "stock-derived", "full-source"}
 REQUIRED_SOURCE_JOBS = {
     "plan", "compatibility gate", "portable (docs)", "portable (python)",
-    "portable (game)", "portable (chess)", "native (chess-native)",
+    "portable (game)", "portable (chess)", "native (game-native)", "native (chess-native)",
     "native (status)", "native (video)", "native (zero-native)",
 }
 REQUEST_KEYS = {
@@ -102,7 +102,7 @@ def _checks(checks: dict, source: str, identity: str, archive: str, repository: 
     _require(isinstance(jobs, list), "source checks require authenticated job metadata")
     names = [job.get("name") for job in jobs if isinstance(job, dict)]
     _require(len(names) == len(jobs) == len(set(names)), "ambiguous source check job inventory")
-    _require(REQUIRED_SOURCE_JOBS <= set(names), "all eight source suites and the compatibility gate are required")
+    _require(REQUIRED_SOURCE_JOBS <= set(names), "all required source suites and the compatibility gate are required")
     for job in jobs:
         _require(job.get("status") == "completed" and job.get("conclusion") == "success",
                  "source check job failed, skipped or is incomplete")

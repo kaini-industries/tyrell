@@ -30,6 +30,7 @@ checkout, records it and rejects source changes during execution. CI passes
 | `docs` | Standard-library Python; validates ledger bindings and local documentation links |
 | `python` | Linux CI; Python, OpenSSL 3, CMake/CTest, FFmpeg/ffprobe and dpkg tools; existing builder/image/script/Zero/app-tool tests plus CI, release and Catalog signature/cache regressions |
 | `game` | C/C++ compiler, CMake/CTest; pinned raylib/ENet; headless framework, native I/O fixtures, Beacon network and Sandline tests; X11/OpenGL development libraries, Xvfb/xauth for desktop lifecycle smoke checks |
+| `game-native` | Disposable Debian 13 ARM64; pinned raylib/ENet; native Sandline regression tests, a separate default shell-disabled package inspection and the enabled offline practice pilot using wrapped native I/O |
 | `chess` | C/C++ compiler, CMake/CTest; pinned raylib; headless chess rules/controller/render/input/LAN tests plus actual desktop app build and Xvfb frame smoke (same desktop prerequisites as `game`) |
 | `chess-native` | Disposable Debian 13 ARM64; pinned raylib; native default Chess CTest and app-only DEB inspection, plus a separate enabled offline shell build and production-loop checks |
 | `status` | Disposable Debian 13 ARM64; pinned LVGL; CTest and app-only DEB construction, no live install |
@@ -77,6 +78,18 @@ checks preserve real elapsed-time gaps and run desktop lifecycle checks under
 Xvfb. Nested A3 measurement JSON is retained with the evidence. These fixtures
 do not establish physical input/display compatibility or a hard pause deadline.
 
+The [Sandline offline pilot](sandline-offline-lifecycle.md) adds required
+`tanks-shell-lifecycle` checks in separate headless and native enabled builds.
+The actual session loop keeps a moving/firing practice world frozen while
+hidden and discards its first resumed simulation interval without altering
+Runtime elapsed time. The `game-native` suite builds and inspects the default
+`0.1.1-1` ARM64 archive with shell support disabled, then builds the native
+pilot. Native device calls are wrapped; no handheld is accessed. Both lifecycle
+JSON reports and the exact default package are retained. Source changes to
+Sandline or the shared framework select this native suite. Full source
+qualification and release provenance now require all nine suites, including
+`game-native`; older eight-suite runs cannot satisfy the new requirement.
+
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg
 behavior; they do not prove the installed runtime closure, patched native Wizard,
@@ -84,7 +97,7 @@ offline activation, PAM/VT, boot or hardware. No suite starts Lima, tunes power,
 flashes a card or contacts the handheld.
 
 C1's [separate Catalog checks](qualified-catalog.md) run in the existing Python
-and `zero-native` suites, keeping the eight-suite release contract. Catalog
+and `zero-native` suites, using the source-suite release contract. Catalog
 changes select both signature/cache regressions and native UI/package checks,
 including the unchanged original Store guard tests. Native previews and semantic
 bounds under `c1-previews/` are retained. No Catalog package is installed in the
@@ -93,7 +106,7 @@ worker or added to the approved Store catalog/default image.
 F2/H1's [observation tooling](baseline-observations.md) has required Python
 fixture tests for read limits, sysfs aliases, cancellation, incomplete evidence
 and comparison boundaries. Scoped observation changes select documentation and
-Python checks. CI infrastructure changes still select all eight suites. Fixtures
+Python checks. CI infrastructure changes still select all nine suites. Fixtures
 use private mock roots; CI never runs collection against the worker's hardware
 or turns synthetic observations into Z4/Z5/H1 acceptance.
 
@@ -117,7 +130,7 @@ credentials, pidfds, descriptor passing and subprocess death; no device adapter
 is active. A local macOS run skips Linux-only cases and is incomplete evidence.
 At D1, standalone handoff changes selected docs and Python; D3 now also selects
 Video because its native display checks consume the authority. The modules
-remain uninstalled. CI infrastructure changes still select all eight suites. Device/helper completion,
+remain uninstalled. CI infrastructure changes still select all nine suites. Device/helper completion,
 power-cut durability and physical acceptance remain pending.
 
 A2-D2 adds required [participant checks](video-handoff-participants.md) to the
@@ -223,7 +236,7 @@ Construction/activation/image verification still use the
 
 R1 upgrades `.github/workflows/image-candidate.yml` to manually restored,
 hash-selected [immutable candidate assembly](immutable-candidates.md). It
-authenticates all eight source suites and compares selected reports with their
+authenticates all nine source suites and compares selected reports with their
 retained hosted artifacts. A separate default-branch manual promotion workflow
 rechecks that exact candidate and reviewed qualification request before a
 serialized immutable prerelease publication. Release tooling regression tests

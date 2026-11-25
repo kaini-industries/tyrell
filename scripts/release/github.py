@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SUITES = ('docs', 'python', 'game', 'chess', 'chess-native', 'status', 'video', 'zero-native')
+SUITES = ('docs', 'python', 'game', 'chess', 'game-native', 'chess-native', 'status', 'video', 'zero-native')
 JOBS = {'plan', 'compatibility gate', *('portable (' + x + ')' for x in SUITES[:4]),
         *('native (' + x + ')' for x in SUITES[4:])}
 
@@ -104,7 +104,7 @@ def run(repository, run_id, path, source=None):
             j.get('status') != 'completed' or j.get('conclusion') != 'success' for j in jobs):
         raise ValueError('Workflow contains duplicate, missing or unsuccessful jobs')
     if path == '.github/workflows/checks.yml' and set(names) != JOBS:
-        raise ValueError('Promotion requires all eight suites and the compatibility gate')
+        raise ValueError('Promotion requires all required source suites and the compatibility gate')
     return {'id': data['id'], 'repository': repository, 'path': path,
             'head_sha': data['head_sha'], 'status': data['status'], 'conclusion': data['conclusion'],
             'event': data['event'], 'jobs': [{'name': j['name'], 'status': j['status'],

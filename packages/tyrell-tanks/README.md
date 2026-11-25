@@ -7,6 +7,10 @@ It consumes the shared [Tyrell Game Framework](../tyrell-game/README.md) for
 runtime, rendering helpers, input, and network transport; its simulation and
 packet schema remain game-specific.
 
+Current source is 0.1.1. Its optional native offline shell policy defaults off;
+the new package has not received physical M5/Gh0st acceptance. Earlier device
+records apply only to their exact tested bytes.
+
 ## Build on macOS or Linux
 
 From the repository root, with CMake 3.25+, a C/C++ toolchain, Python 3.12+, and
@@ -89,6 +93,7 @@ On Debian ARM64, after fetching the pinned dependencies:
 cmake -S packages/tyrell-tanks -B build/tanks-native \
   -DCMAKE_BUILD_TYPE=Release -DTANKS_BUILD_DESKTOP=OFF \
   -DTANKS_BUILD_NATIVE=ON -DTANKS_BUILD_BENCHMARK=OFF \
+  -DTYRELL_ENABLE_SHELL_LINK=OFF \
   -DRAYLIB_SOURCE_DIR="$PWD/build/game-deps/raylib-6.2" \
   -DENET_SOURCE_DIR="$PWD/build/game-deps/enet-1.3.18"
 cmake --build build/tanks-native --parallel 4
@@ -96,11 +101,46 @@ ctest --test-dir build/tanks-native --output-on-failure
 (cd build/tanks-native && cpack -G DEB)
 ```
 
-Install `tyrell-tanks_0.1.0-1_arm64.deb` with `sudo dpkg --install`, then select
-**Sandline Tanks** in APPLaunch. The desktop controls also work on the Zero;
+This builds `tyrell-tanks_0.1.1-1_arm64.deb` with shell support disabled and the
+existing **Sandline Tanks** APPLaunch entry. Physical acceptance of those new
+bytes remains pending. The native controls keep the existing mapping:
 W/S navigates the menu without modifier keys, and Enter selects. Escape returns
 to the game menu, then exits to APPLaunch. `--headless` renders without opening device nodes for automated
 tests; `--framebuffer` and `--input` override automatic native device discovery.
+
+## Experimental offline shell pilot
+
+The [offline lifecycle guide](../../docs/sandline-offline-lifecycle.md) describes
+the policy, tests and qualification boundary. The pilot supports Driving Range,
+the offline menu and demo. A linked launch refuses `--host`, `--join` and
+`--server` before networking or native device acquisition, and LAN menu choices
+are unavailable. Unlinked LAN remains unchanged.
+
+On Debian ARM64, use the explicit helper flag and its separate build directory:
+
+```sh
+python3 scripts/game deps --project tanks --backend native
+python3 scripts/game build --project tanks --backend native --shell-link
+python3 scripts/game test --project tanks --backend native --shell-link
+```
+
+The pilot uses `build/tanks-native-shell`; normal native builds use
+`build/tanks-native`. Direct CMake builds may add
+`-DTYRELL_ENABLE_SHELL_LINK=ON` to the native flags above with a separate output
+directory. The helper accepts `--shell-link` only for native Sandline. Desktop
+and headless entry points do not adopt shell endpoints.
+
+Pause releases input/render ownership while keeping practice state in RAM.
+Resume clears stale input, suppresses held keys and drops only the first practice
+simulation interval. Shared Runtime elapsed time and unlinked network expiry stay truthful.
+Link loss or failed resume exits without restoring saved pixels. Explicit CLI
+device paths, including `auto`, override linked shell device environment paths.
+Linked screenshots are disabled; reports require a permitted foreground exit.
+
+Six headless and twelve native controlled lifecycle cases passed on Linux.
+These checks do not establish a physical pause deadline or device compatibility;
+physical testing remains pending. No Store approval or default Zero inclusion
+is added by this pilot.
 
 ## CardputerZero benchmark
 

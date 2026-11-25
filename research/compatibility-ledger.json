@@ -79,7 +79,7 @@
     {
       "id": "a3-lifecycle-source",
       "path": "docs/game-chess-lifecycle.md",
-      "sha256": "a75fa137b483b9c79f67fefe64805acc18bd2808cd0820e521ef240f5b6aa0cd"
+      "sha256": "b4e59bbf5d838ae8d9898e4142f1f2bca33c89e02903a77b528d2ec5d495a270"
     },
     {
       "id": "a3-lifecycle-validation",
@@ -95,6 +95,11 @@
       "id": "catalog-validation",
       "path": "research/catalog-validation.json",
       "sha256": "818520567de115128a1a7ee58d7647f268ba31e7c278e518d0626590c516a82e"
+    },
+    {
+      "id": "a3-sandline-source",
+      "path": "docs/sandline-offline-lifecycle.md",
+      "sha256": "1e5b2165b62e91e09a1c1e4965aa425a73a524420624e6de077303614d68f187"
     }
   ],
   "subjects": [
@@ -134,7 +139,7 @@
       "component": "chess",
       "kind": "current-source",
       "version": "0.1.4",
-      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
+      "source_identity": "A3 app/dependency boundary including the shared build helper with isolated Sandline pilot builds; existing app policy unchanged; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -144,37 +149,38 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "ca844cd4aeb4ef8589dc6f30a7497905ca0365375251e8a7d965ed9c413eb213"
+      "sha256": "b51f2b62c75530bcb8bc45139578a183469c2a92c35114f5ad36262f683c4fd0"
     },
     {
       "id": "sandline-source",
       "component": "sandline",
       "kind": "current-source",
-      "version": "0.1.0",
-      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
+      "version": "0.1.1",
+      "source_identity": "A3 Sandline offline shell lifecycle and app/dependency boundary; default package disables the pilot; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-tanks",
         "packages/tyrell-game",
+        "packages/tyrell-app-common",
         "scripts/tanks",
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "90b310a5cfc31518ca35e4fde7c0815fda15eb8e0a910e2320afee937b7023d6"
+      "sha256": "9fe5318c7e0f2a8aa6532e5b5d7ba4a71cd7c6d2cb71a359b6cb3501061b2fb7"
     },
     {
       "id": "beacon-source",
       "component": "beacon",
       "kind": "current-source",
       "version": "0.1.1",
-      "source_identity": "A3 offline lifecycle app/dependency boundary at e0c481d226d9b81b5ea37e1f7499a70e8ed0a9a7; digest must match the checkout",
+      "source_identity": "A3 app/dependency boundary including the shared build helper with isolated Sandline pilot builds; existing app policy unchanged; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-game",
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "41aed0727af931d05c3446fe20e6634d8c522e3e91c5a92aed2118b2e4523261"
+      "sha256": "c3e6cd94144126cbcc9e21c641cc45813fe03c2b1884b16e5ca236598df72841"
     },
     {
       "id": "status-retained",
@@ -463,7 +469,8 @@
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "game-framework",
-        "tanks-device"
+        "tanks-device",
+        "a3-sandline-source"
       ],
       "limitations": [
         "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
@@ -482,7 +489,8 @@
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "game-framework",
-        "tanks-device"
+        "tanks-device",
+        "a3-sandline-source"
       ],
       "limitations": [
         "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
@@ -494,16 +502,18 @@
       "subject": "sandline-source",
       "target": "gh0st",
       "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
-      "implementation": "planned",
+      "implementation": "implemented",
       "result": "not-tested",
       "evidence_scope": "not-tested",
       "binding": "current-source",
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
         "game-framework",
-        "tanks-device"
+        "tanks-device",
+        "a3-sandline-source"
       ],
       "limitations": [
+        "A3 native offline Sandline lifecycle is experimental and defaults OFF; linked LAN is gated. Controlled loop checks do not qualify physical M5 or pinned Gh0st operation for the new 0.1.1 package.",
         "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]

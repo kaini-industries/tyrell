@@ -145,7 +145,7 @@ visible.
 
 The source checks must come from a successful authenticated `checks` workflow
 run in this repository for the candidate's exact source SHA. R1 requires the
-full eight suites and compatibility gate, rather than treating a partial scoped
+full nine suites and compatibility gate, rather than treating a partial scoped
 run or an arbitrary green report as release evidence. The promotion path also
 requires the successful assembly/verification run for the exact candidate
 identity. The source run, assembly run, candidate bytes and later reviewed
@@ -167,7 +167,7 @@ Assembly dispatch always takes `source_sha`, `checks_run_id` and
 `selection_sha256`. It supports two input modes:
 
 - **Reviewed selection file:** set `selection_path` to an exact file in the
-  trusted tooling checkout. Staging restores the eight canonical hosted source
+  trusted tooling checkout. Staging restores the nine canonical hosted source
   check artifact trees directly and copies declared documentation from reviewed
   repository files after checking every expected hash. An app-only candidate
   therefore needs no separately uploaded input artifact.

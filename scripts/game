@@ -75,10 +75,11 @@ def deps(backend='desktop'):
         verify_source(name, item)
         print(f'{name} {item["version"]}: verified archive and source')
 
-def build_directory(project, backend):
-    return ROOT / 'build' / (f'game-{backend}' if project == 'framework' else f'tanks-{backend}')
+def build_directory(project, backend, shell_link=False):
+    name = f'game-{backend}' if project == 'framework' else f'tanks-{backend}'
+    return ROOT / 'build' / (name + ('-shell' if shell_link else ''))
 
-def configure(project, backend):
+def configure(project, backend, shell_link=False):
     for name, item in selected_dependencies(backend).items():
         if not (DEPS / item['directory']).is_dir():
             raise RuntimeError('Dependencies missing; run python3 scripts/game deps first')
@@ -99,30 +100,34 @@ def configure(project, backend):
         flags += [f'-DTANKS_BUILD_DESKTOP={"ON" if backend == "desktop" else "OFF"}',
                   f'-DTANKS_BUILD_NATIVE={"ON" if backend == "native" else "OFF"}',
                   f'-DTANKS_BUILD_HEADLESS={"ON" if backend == "headless" else "OFF"}',
-                  '-DTANKS_BUILD_BENCHMARK=ON', '-DTYRELL_GAME_BUILD_TESTS=ON']
-    run('cmake', '-S', source, '-B', build_directory(project, backend), *flags)
+                  '-DTANKS_BUILD_BENCHMARK=ON', '-DTYRELL_GAME_BUILD_TESTS=ON',
+                  f'-DTYRELL_ENABLE_SHELL_LINK={"ON" if shell_link else "OFF"}']
+    run('cmake', '-S', source, '-B', build_directory(project, backend, shell_link), *flags)
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['deps', 'build', 'test', 'run'])
     parser.add_argument('--backend', choices=['desktop', 'native', 'headless', 'network', 'core'], default='desktop')
     parser.add_argument('--project', choices=['framework', 'tanks'], default='framework')
+    parser.add_argument('--shell-link', action='store_true', help='Experimental native offline Sandline pilot in a separate build directory')
     args, extra = parser.parse_known_args()
     if extra and extra[0] == '--':
         extra = extra[1:]
     if extra and args.action != 'run':
         parser.error('extra arguments are only supported for run')
+    if args.shell_link and (args.project != 'tanks' or args.backend != 'native'):
+        parser.error('--shell-link is only supported for native Sandline')
     if args.project == 'tanks' and args.backend in ('network', 'core'):
         parser.error('Sandline requires desktop, native, or headless backend')
     if args.action == 'run' and args.backend in ('network', 'core'):
         parser.error('core and network builds have tests, but no graphical example to run')
     if args.backend == 'native' and sys.platform != 'linux' and args.action in ('build', 'run'):
         parser.error('native LCD builds require Linux; use headless on this host')
-    build = build_directory(args.project, args.backend)
+    build = build_directory(args.project, args.backend, args.shell_link)
     if args.action == 'deps':
         deps(args.backend)
     elif args.action == 'build':
-        configure(args.project, args.backend)
+        configure(args.project, args.backend, args.shell_link)
         run('cmake', '--build', build, '--parallel', min(os.cpu_count() or 2, 8))
     elif args.action == 'test':
         run('ctest', '--test-dir', build, '--output-on-failure')

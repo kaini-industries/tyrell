@@ -237,6 +237,14 @@ class PromotionTests(unittest.TestCase):
             if mutation == "duplicate": jobs.append(copy.deepcopy(jobs[0]))
             with self.subTest(mutation=mutation), self.assertRaises(ValueError): promotion.evaluate(**data)
 
+    def test_sandline_native_gate_cannot_be_omitted_or_skipped(self):
+        for skipped in (False, True):
+            data = fixture(); jobs = data["checks"]["source_run"]["jobs"]
+            job = next(job for job in jobs if job["name"] == "native (game-native)")
+            if skipped: job["conclusion"] = "skipped"
+            else: jobs.remove(job)
+            with self.subTest(skipped=skipped), self.assertRaises(ValueError): promotion.evaluate(**data)
+
     def test_source_green_alone_or_input_preflight_is_not_candidate_verification(self):
         for mutation in (None, {"schema": 1, "status": "passed", "promotable": False,
                                 "kind": "captured-input-preflight-only"}):
