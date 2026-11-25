@@ -130,7 +130,7 @@ def _worker(fd, gate, parent_pidfd, inherited, factory, binding, domain, parent_
         backend = factory()
         require(getattr(backend, "disposable", False) is True and
                 ((domain == "audio" and backend.profile == "null") or
-                 (domain == "vt" and backend.profile == "vt-fixture")), "live backend refused by disposable worker")
+                 (domain in ("vt", "vt-display") and backend.profile == "vt-fixture")), "live backend refused by disposable worker")
         prepared = backend.prepared(binding[3]) if domain == "audio" else {**backend.identity, "token": binding[3], "state": "NEW"}
         require(channel.send(Packet("hello", binding, "none", prepared)), "worker hello unavailable")
         phase, owned, cached = "new", None, {}
@@ -155,7 +155,7 @@ def _worker(fd, gate, parent_pidfd, inherited, factory, binding, domain, parent_
             elif packet.verb == "release" and phase == "owned" and identifier(packet.operation):
                 # Live VT cleanup is excluded; D3 must supply real display
                 # completion evidence before any managed console integration.
-                result = backend.release(owned, display_drained=True) if domain == "vt" else backend.release(owned)
+                result = backend.release(owned, display_drained=True) if domain in ("vt", "vt-display") else backend.release(owned)
                 evidence = result if isinstance(result, dict) else backend.evidence(owned)
                 response = Packet("cleaned", binding, packet.operation, evidence)
                 phase = "cleaned"

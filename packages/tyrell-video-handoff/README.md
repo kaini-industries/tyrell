@@ -6,6 +6,8 @@ standard-library modules. The [implementation notes](../../docs/video-handoff-fo
 describe their trust boundary and validation. A2-D2 adds separately versioned
 [participants](../../docs/video-handoff-participants.md), actual VT/libpulse
 backends and an explicitly disposable worker harness.
+The [D3 display increment](../../docs/video-managed-display.md) adds native
+managed KMS/LCD APIs and independent durable display borrowers and VT dependencies.
 
 The modules are not installed or connected to Video, a launcher or any helper.
 `Authority.live_hardware_admission` remains `False`. An inert `grant` exercises
@@ -13,7 +15,7 @@ only the control contract; it cannot authorize
 LCD, input, DRM, VT, GStreamer or audio access. Video's existing playback guard,
 legacy helper endpoints and normal M5 launch path retain their behavior.
 The separate `disposable-v2` profile admits only private null audio and
-controlled VT fixtures. Production HDMI/manager-console admission stays gated.
+controlled VT/display fixtures. Production HDMI/manager-console admission stays gated.
 
 | Module | Responsibility |
 | --- | --- |
@@ -27,6 +29,7 @@ controlled VT fixtures. Production HDMI/manager-console admission stays gated.
 | `handoff_participant_worker.py` | Fixed isolated fresh-process entry for the null-audio configuration. |
 | `handoff_vt.py` | Fixed manager-console scope, effective VT completion and conservative refusal. |
 | `handoff_audio.py` | Original-context libpulse load completion, exact owned unload and absence readback. |
+| `handoff_display_state.py` | Independent graph/flush borrowers and exact display-to-VT completion dependencies. |
 
 The trusted coordinator supplies the registered app instance, UID, PID and
 exclusively owned inherited descriptor. A wire packet or environment variable
@@ -35,8 +38,8 @@ capabilities, not peer credentials. Helper registration and completion APIs must
 not be exposed as app commands.
 
 Use `Authority.create(new_directory)` only for explicit first initialization;
-use `Authority.open(existing_directory)` to reopen it. Schema 2 refuses earlier
-D1 schema-1 snapshots without rewriting or automatic upgrade. Reopening creates a new
+use `Authority.open(existing_directory)` to reopen it. Schema 3 refuses earlier
+schema-1 and schema-2 snapshots without rewriting or automatic upgrade. Reopening creates a new
 incarnation and retains unresolved ownership as quarantined, with pending
 operations marked unknown. No API clears quarantine, discards history or
 recreates missing/corrupt state. Do not delete a ledger to resolve a blocked
@@ -58,9 +61,9 @@ blocked worker completion, process death, packet forgery, restart and storage
 failure. The run used a disposable, nonroot, network-disabled container with a
 read-only repository mount.
 
-The current Linux group passed 119 tests with zero skips; required-suite results
-are retained in CI evidence.
+D2's Linux group passed 119 tests with zero skips. Current required-suite and
+native display results are retained separately in CI evidence.
 This evidence does not qualify physical resource cleanup, a maximum device teardown
 time or power-cut durability. The 19 full integration cases in the original
-design record remain pending. D3 supplies managed display policies; physical
-testing remains pending.
+design record remain pending. D3 supplies separate managed display policies;
+D4 media integration and physical testing remain pending.

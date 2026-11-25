@@ -6,6 +6,8 @@ records and a disposable worker harness to the
 Linux ioctl and asynchronous libpulse implementations. They are standalone,
 uninstalled and disconnected from Video, its existing helpers and every image
 recipe. Physical testing remains pending.
+The later [D3 display increment](video-managed-display.md) adds separate native
+KMS/LCD ownership APIs and durable dependencies; it does not open live admission.
 
 ## Admission and trusted bootstrap
 
@@ -98,8 +100,8 @@ The trusted configuration fixes separate managed and neutral VTs. Acquisition
 requires the neutral VT to be effective. Release requires the managed VT and
 an explicit trusted display-drain prerequisite, then switches only to the
 configured neutral target. It never restores an app-supplied or captured old
-foreground VT. D3 must bind display drain to completed KMS/LCD barriers; a peer
-boolean cannot supply that proof.
+foreground VT. D3's separate dependent VT profile binds display drain to both
+completed KMS/LCD barriers; a peer boolean cannot supply that proof.
 
 Each transition uses `VT_ACTIVATE`, `VT_WAITACTIVE` and effective `VT_GETSTATE`
 readback. Activation can queue a switch, and waiting may block; the permit stays
@@ -154,8 +156,9 @@ needs qualified backend finality or a separately controlled baseline recovery.
 
 ## Schema, restart and validation
 
-The authority snapshot is now schema 2, with participant generations, operation
-bindings, evidence and stop-post state. Existing D1 schema-1 ledgers are refused
+The D2 snapshot was schema 2, with participant generations, operation
+bindings, evidence and stop-post state. D3 now uses schema 3 for display borrowers
+and exact VT dependencies. Existing schema-1/schema-2 ledgers are refused
 without rewriting or automatic upgrade. They must not be deleted or recreated
 to bypass an outstanding barrier. New disposable tests initialize their own
 private ledger; there is no live migration or quarantine-clear API.
@@ -173,7 +176,7 @@ It includes pending-load cancellation, exact module identity, cleanup failures,
 blocked VT work through expiry, worker/server loss, stop-post ordering and
 restart. Host runs that skip Linux or libpulse coverage are incomplete.
 The original D1 run of 65 tests remains historical evidence for that increment;
-the current Linux group passed 119 tests with zero skips, including 20 audio
+D2's Linux group passed 119 tests with zero skips, including 20 audio
 backend cases, 12 VT cases, real worker lifecycle and coordinator-death tests.
 Per-group results are retained in CI evidence. The local run used a disposable
 container, a read-only repository mount and normal-user test execution;
@@ -184,6 +187,7 @@ The 19 full cases in the original
 [design record](../research/video-async-handoff-design.json) remain pending for
 complete integration. Disposable audio finality and wrapped VT calls do not
 qualify HDMI sound, KMS/fbdev completion, graph teardown, privacy cutoff or
-physical launch/return. D3 managed display ownership is next, followed by D4
-media control and D5 shell/package/device integration. Video's guard remains
+physical launch/return. D3's [managed display policies](video-managed-display.md)
+now have separate native/authority coverage; D4 media control and D5
+shell/package/device integration remain next. Video's guard remains
 closed and physical testing remains pending.

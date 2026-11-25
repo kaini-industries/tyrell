@@ -10,10 +10,12 @@ import copy
 from dataclasses import dataclass
 import json
 
-PROFILES = {"audio": "null-v2", "vt": "vt-fixture-v2"}
+PROFILES = {"audio": "null-v2", "vt": "vt-fixture-v2", "kms": "kms-fixture-v3",
+            "lcd": "lcd-fixture-v3", "vt-display": "vt-display-fixture-v3"}
 PHASES = {"registered", "bound", "acquired", "cleaned", "fence-acked", "fenced", "unknown"}
 FIELDS = {"lease", "generation", "domain", "profile", "uid", "pid", "phase", "launch", "prepared",
-          "acquire", "cleanup", "post_actor", "stop_post_done", "drain", "evidence"}
+          "acquire", "cleanup", "post_actor", "stop_post_done", "drain", "evidence",
+          "display", "requires", "display_proofs"}
 
 
 def validate_evidence(record, phase, evidence):
@@ -39,7 +41,7 @@ def validate_evidence(record, phase, evidence):
         if phase == "cleanup":
             require("acquire" in record["evidence"] and evidence["unload_confirmed"] is True and evidence["absence_confirmed"] is True and
                     {key:evidence[key] for key in fields} == record["evidence"]["acquire"], "audio cleanup identity mismatch")
-    else:
+    elif record["domain"] in ("vt", "vt-display"):
         require(set(evidence) == {"kind", "version", "backend", "managed_vt", "neutral_vt", "token", "state"} and
                 evidence["kind"] == "vt-v2" and type(evidence["version"]) is int and evidence["version"] == 2 and
                 identifier(evidence["backend"]) and evidence["managed_vt"] == 2 and type(evidence["managed_vt"]) is int and
@@ -51,6 +53,9 @@ def validate_evidence(record, phase, evidence):
             require(evidence == {**record["prepared"], "state": "OWNED"}, "accepted VT binding changed")
         if phase == "cleanup":
             require("acquire" in record["evidence"] and evidence == {**record["evidence"]["acquire"], "state": "RELEASED"}, "VT cleanup identity mismatch")
+    else:
+        from handoff_display_state import validate_display_evidence
+        validate_display_evidence(record, phase, evidence)
 
 
 def validate_participants(state):
@@ -89,6 +94,8 @@ def validate_participants(state):
             require(record["phase"] == "fenced" and record["stop_post_done"] and
                     lease["actors"][name]["released"] and lease["actors"][record["post_actor"]]["released"],
                     "unfenced participant retirement")
+        from handoff_display_state import validate_display_record
+        validate_display_record(state, name, record)
 
 
 @dataclass(frozen=True)
@@ -114,7 +121,7 @@ class Participants:
                 record["post_actor"] == capability.post_actor.identifier, "stale participant generation")
         return lease, record
 
-    def register(self, app, lease_id, *, domain, profile, uid):
+    def register(self, app, lease_id, *, domain, profile, uid, required_displays=()):
         from handoff_authority import Actor, require, fresh_id, integer, MAX_ACTORS, MAX_OPERATIONS
         owner = self.owner
         with owner._lock:
@@ -131,6 +138,9 @@ class Participants:
             actor = Actor(lease_id, actor_id, app.incarnation, fresh_id(owner._actors))
             post = Actor(lease_id, post_id, app.incarnation, fresh_id({*owner._actors, actor._token}))
             generation = fresh_id({r["generation"] for r in owner._state["participants"].values()})
+            from handoff_display_state import registration_display_metadata, required_display_ids
+            display = registration_display_metadata(owner._state, lease_id, domain)
+            dependencies = required_display_ids(owner._state, lease_id, domain, required_displays)
             operation = fresh_id(lease["operations"])
             state = copy.deepcopy(owner._state)
             target = state["leases"][lease_id]
@@ -140,7 +150,8 @@ class Participants:
             state["participants"][actor_id] = {"lease": lease_id, "generation": generation,
                 "domain": domain, "profile": profile, "uid": uid, "pid": None, "phase": "registered",
                 "launch": operation, "acquire": None, "cleanup": None, "post_actor": post_id,
-                "stop_post_done": False, "drain": False, "prepared": None, "evidence": {}}
+                "stop_post_done": False, "drain": False, "prepared": None, "evidence": {},
+                "display": display, "requires": dependencies, "display_proofs": {}}
             owner._commit(state, "v2-participant-before-launch", participant=actor_id)
             owner._actors[actor._token], owner._actors[post._token] = actor, post
             return Participant(actor, post, generation)
@@ -205,6 +216,8 @@ class Participants:
             target["drain"] = True
             operation = record["cleanup"]
             if record["phase"] == "acquired" and operation is None:
+                from handoff_display_state import cleanup_dependencies
+                target["display_proofs"] = cleanup_dependencies(owner._state, record)
                 require(len(lease["operations"]) < MAX_OPERATIONS, "operation registry full")
                 operation = fresh_id(lease["operations"])
                 target["cleanup"] = operation
@@ -269,6 +282,11 @@ class Participants:
             lease = state["leases"][record["lease"]]
             owner._quarantine(lease, "unknown")
             for operation in lease["operations"].values():
-                if operation["actor"] == capability.actor.identifier and operation["state"] == "PENDING":
+                borrowers = record["display"]["borrowers"] if record["display"] is not None else {}
+                if operation["actor"] in (capability.actor.identifier, *borrowers) and operation["state"] == "PENDING":
                     operation["state"] = "UNKNOWN"
+            if record["display"] is not None:
+                for borrower in state["participants"][capability.actor.identifier]["display"]["borrowers"].values():
+                    if borrower["state"] == "PENDING":
+                        borrower["state"] = "UNKNOWN"
             owner._commit(state, "v2-worker-lost-unknown", participant=capability.actor.identifier)

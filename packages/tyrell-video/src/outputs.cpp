@@ -9,8 +9,10 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <set>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 
@@ -57,6 +59,11 @@ std::optional<DisplayMode> choose_hdmi_mode(const std::vector<DisplayMode>& mode
 #if defined(__linux__)
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/ioctl.h>
+#include <poll.h>
+#include <linux/sync_file.h>
 #include <unistd.h>
 #include <drm_fourcc.h>
 #include <xf86drm.h>
@@ -565,6 +572,316 @@ std::vector<std::string> HdmiSession::video_formats() const { return impl_->vide
 DisplayMode HdmiSession::mode() const { return impl_->selected; }
 std::string HdmiSession::device() const { return impl_->path; }
 
+namespace {
+bool managed_id(const std::string& value) {
+    return value.size() == 32 && std::all_of(value.begin(), value.end(), [](char c) {
+        return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+    });
+}
+
+struct ManagedProperty { std::uint32_t id = 0; std::uint64_t value = 0; };
+ManagedProperty managed_property(int fd, std::uint32_t object, std::uint32_t type, const char* name) {
+    auto* values = drmModeObjectGetProperties(fd, object, type);
+    if(!values) throw std::runtime_error("Cannot inspect managed KMS object");
+    ManagedProperty result;
+    bool invalid = false;
+    for(std::uint32_t i = 0; i < values->count_props; ++i) {
+        auto* property = drmModeGetProperty(fd, values->props[i]);
+        if(!property) { invalid = true; break; }
+        if(std::strcmp(property->name, name) == 0) {
+            if(result.id) invalid = true;
+            result = {property->prop_id, values->prop_values[i]};
+        }
+        drmModeFreeProperty(property);
+    }
+    drmModeFreeObjectProperties(values);
+    if(invalid || !result.id) throw std::runtime_error("Required managed KMS property unavailable");
+    return result;
+}
+} // namespace
+
+struct ManagedHdmiSession::Impl {
+    struct Borrower { std::string operation, proof; };
+    int fd;
+    ManagedHdmiScope scope;
+    ManagedHdmiBinding binding;
+    CompletionHook terminal;
+    std::atomic<ManagedHdmiState> state{ManagedHdmiState::New};
+    std::map<std::string, Borrower> borrowers;
+    std::uint64_t device = 0, inode = 0, rdev = 0, mode = 0;
+    std::string acquire_operation, cleanup_operation, terminal_proof;
+    bool fence = false, neutral = false, suppressed = false;
+    std::uint64_t sequence = 0;
+
+    Impl(int value, ManagedHdmiScope fixed, ManagedHdmiBinding identity, CompletionHook completion)
+        : fd(value), scope(std::move(fixed)), binding(std::move(identity)), terminal(std::move(completion)) {}
+
+    void identity() const {
+        struct stat info{};
+        if(fstat(fd, &info) != 0 || !S_ISCHR(info.st_mode) || major(info.st_rdev) != 226 || minor(info.st_rdev) >= 128 ||
+           static_cast<std::uint64_t>(info.st_dev) != device || static_cast<std::uint64_t>(info.st_ino) != inode ||
+           static_cast<std::uint64_t>(info.st_rdev) != rdev)
+            throw std::runtime_error("Managed DRM descriptor identity changed");
+    }
+
+    bool owned_plane(std::uint32_t id) const {
+        return std::find(scope.planes.begin(), scope.planes.end(), id) != scope.planes.end();
+    }
+
+    // Inspect all routes into the selected CRTC. A second connector or an
+    // unregistered plane invalidates this fixed resource scope before mutation.
+    void routes(bool expect_neutral) const {
+        auto* resources = drmModeGetResources(fd);
+        if(!resources) throw std::runtime_error("Cannot inspect managed KMS routes");
+        bool crtc_found = false, connector_found = false, invalid = false;
+        for(int i = 0; i < resources->count_crtcs; ++i) crtc_found |= resources->crtcs[i] == scope.crtc;
+        try {
+            for(int i = 0; i < resources->count_connectors; ++i) {
+                const auto id = resources->connectors[i];
+                const auto route = managed_property(fd, id, DRM_MODE_OBJECT_CONNECTOR, "CRTC_ID").value;
+                if(id == scope.connector) {
+                    connector_found = true;
+                    invalid |= route != (expect_neutral ? 0 : scope.crtc);
+                } else if(route == scope.crtc) invalid = true;
+            }
+        } catch(...) { drmModeFreeResources(resources); throw; }
+        drmModeFreeResources(resources);
+        if(!crtc_found || !connector_found || invalid) throw std::runtime_error("Managed connector/CRTC scope changed");
+        auto* planes = drmModeGetPlaneResources(fd);
+        if(!planes) throw std::runtime_error("Cannot inspect managed plane scope");
+        std::set<std::uint32_t> found;
+        try {
+            for(std::uint32_t i = 0; i < planes->count_planes; ++i) {
+                const auto id = planes->planes[i];
+                const auto crtc = managed_property(fd, id, DRM_MODE_OBJECT_PLANE, "CRTC_ID").value;
+                const auto fb = managed_property(fd, id, DRM_MODE_OBJECT_PLANE, "FB_ID").value;
+                if(owned_plane(id)) {
+                    found.insert(id);
+                    invalid |= expect_neutral ? (crtc != 0 || fb != 0) :
+                        !((crtc == scope.crtc && fb != 0) || (crtc == 0 && fb == 0));
+                } else if(crtc == scope.crtc) invalid = true;
+            }
+        } catch(...) { drmModeFreePlaneResources(planes); throw; }
+        drmModeFreePlaneResources(planes);
+        if(invalid || found.size() != scope.planes.size()) throw std::runtime_error("Managed plane scope changed");
+        const auto active = managed_property(fd, scope.crtc, DRM_MODE_OBJECT_CRTC, "ACTIVE").value;
+        const auto current_mode = managed_property(fd, scope.crtc, DRM_MODE_OBJECT_CRTC, "MODE_ID").value;
+        if(expect_neutral ? (active != 0 || current_mode != 0) : (active != 1 || !current_mode || (mode && current_mode != mode)))
+            throw std::runtime_error("Managed CRTC state changed");
+    }
+
+    void close_local() noexcept {
+        if(fd >= 0) close(fd);
+        fd = -1;
+        suppressed = true;
+    }
+};
+
+ManagedHdmiSession::ManagedHdmiSession(int fd, ManagedHdmiScope scope, ManagedHdmiBinding binding,
+                                     CompletionHook completion) {
+    if(fd <= 2 || !binding.epoch || !managed_id(binding.resource) || !managed_id(binding.generation) ||
+       !scope.connector || !scope.crtc || scope.planes.empty() || scope.planes.size() > 16 ||
+       std::set<std::uint32_t>(scope.planes.begin(), scope.planes.end()).size() != scope.planes.size() ||
+       std::any_of(scope.planes.begin(), scope.planes.end(), [](auto id) { return id == 0; }))
+        throw std::invalid_argument("Invalid trusted managed HDMI scope");
+    struct stat info{};
+    if(fstat(fd, &info) != 0 || !S_ISCHR(info.st_mode) || major(info.st_rdev) != 226 || minor(info.st_rdev) >= 128)
+        throw std::invalid_argument("Expected an inherited primary DRM descriptor");
+    auto result = std::make_unique<Impl>(fd, std::move(scope), std::move(binding), std::move(completion));
+    result->device = info.st_dev;
+    result->inode = info.st_ino;
+    result->rdev = info.st_rdev;
+    const auto flags = fcntl(fd, F_GETFD);
+    if(flags < 0 || fcntl(fd, F_SETFD, flags | FD_CLOEXEC) < 0)
+        throw std::runtime_error("Cannot secure managed DRM descriptor inheritance");
+    impl_ = std::move(result); // Ownership transfers only after validation.
+}
+
+ManagedHdmiSession::~ManagedHdmiSession() { abandon(); }
+
+bool ManagedHdmiSession::acquire(const std::string& operation, std::string& error) {
+    error.clear();
+    if(!managed_id(operation)) { error = "Invalid coordinator acquire permit"; return false; }
+    if(state() == ManagedHdmiState::Owned && operation == impl_->acquire_operation) return true;
+    if(state() != ManagedHdmiState::New) { error = "Managed HDMI cannot acquire in this state"; return false; }
+    impl_->acquire_operation = operation;
+    try {
+        impl_->identity();
+        if(drmIsMaster(impl_->fd) != 1 || drmSetClientCap(impl_->fd, DRM_CLIENT_CAP_ATOMIC, 1) != 0)
+            throw std::runtime_error("Managed DRM master/atomic capability unavailable");
+        impl_->routes(false);
+        impl_->mode = managed_property(impl_->fd, impl_->scope.crtc, DRM_MODE_OBJECT_CRTC, "MODE_ID").value;
+        managed_property(impl_->fd, impl_->scope.crtc, DRM_MODE_OBJECT_CRTC, "OUT_FENCE_PTR");
+        impl_->state = ManagedHdmiState::Owned;
+        return true;
+    } catch(const std::exception& failure) {
+        impl_->state = ManagedHdmiState::Unknown;
+        error = failure.what();
+        return false;
+    }
+}
+
+bool ManagedHdmiSession::register_borrower(const std::string& id, std::string& error) {
+    error.clear();
+    if(state() != ManagedHdmiState::Owned || !managed_id(id) || impl_->borrowers.size() >= 16 || impl_->borrowers.count(id)) {
+        error = "Managed borrower registry is sealed, invalid or full"; return false;
+    }
+    impl_->borrowers.emplace(id, Impl::Borrower{});
+    return true;
+}
+
+int ManagedHdmiSession::borrow_fd(const std::string& id, const std::string& operation, std::string& error) {
+    error.clear();
+    const auto found = impl_->borrowers.find(id);
+    if(state() != ManagedHdmiState::Owned || !managed_id(operation) || found == impl_->borrowers.end() ||
+       !found->second.operation.empty() || operation == impl_->acquire_operation ||
+       std::any_of(impl_->borrowers.begin(), impl_->borrowers.end(), [&](const auto& item) {
+           return item.second.operation == operation;
+       })) { error = "No registered managed graph permit"; return -1; }
+    const int duplicate = fcntl(impl_->fd, F_DUPFD_CLOEXEC, 3);
+    if(duplicate < 0) { error = "Cannot duplicate registered managed graph FD"; return -1; }
+    found->second.operation = operation;
+    return duplicate;
+}
+
+bool ManagedHdmiSession::borrower_drained(const std::string& id, const std::string& operation,
+                                        const std::string& proof, std::string& error) {
+    error.clear();
+    const auto found = impl_->borrowers.find(id);
+    if((state() != ManagedHdmiState::Owned && state() != ManagedHdmiState::Sealed) || !managed_id(proof) ||
+       found == impl_->borrowers.end() || found->second.operation.empty() || found->second.operation != operation ||
+       (!found->second.proof.empty() && found->second.proof != proof)) {
+        error = "Unverified managed graph completion"; return false;
+    }
+    found->second.proof = proof;
+    return true;
+}
+
+bool ManagedHdmiSession::seal(std::string& error) {
+    error.clear();
+    if(state() == ManagedHdmiState::Sealed) return true;
+    if(state() != ManagedHdmiState::Owned) { error = "Managed HDMI is not owned"; return false; }
+    impl_->state = ManagedHdmiState::Sealed;
+    return true;
+}
+
+bool ManagedHdmiSession::release(const std::string& operation, std::string& error) {
+    error.clear();
+    if(state() == ManagedHdmiState::Released && operation == impl_->cleanup_operation) return true;
+    if(state() != ManagedHdmiState::Sealed || !managed_id(operation) || operation == impl_->acquire_operation ||
+       std::any_of(impl_->borrowers.begin(), impl_->borrowers.end(), [&](const auto& value) {
+           return value.second.operation == operation;
+       }) ||
+       std::any_of(impl_->borrowers.begin(), impl_->borrowers.end(), [](const auto& value) {
+           return value.second.operation.empty() || value.second.proof.empty();
+       })) { error = "Managed HDMI still has an unsealed or undrained graph"; return false; }
+    impl_->cleanup_operation = operation;
+    impl_->state = ManagedHdmiState::Releasing;
+    int fence_fd = -1;
+    drmModeAtomicReq* request = nullptr;
+    try {
+        impl_->identity();
+        impl_->routes(false);
+        if(!impl_->terminal) throw std::runtime_error("No qualified terminal KMS completion hook");
+        request = drmModeAtomicAlloc();
+        if(!request) throw std::runtime_error("Cannot allocate managed KMS transaction");
+        auto add = [&](std::uint32_t object, std::uint32_t type, const char* name, std::uint64_t value) {
+            const auto property = managed_property(impl_->fd, object, type, name);
+            if(drmModeAtomicAddProperty(request, object, property.id, value) < 0)
+                throw std::runtime_error("Cannot prepare managed KMS neutralization");
+        };
+        for(const auto plane : impl_->scope.planes) {
+            add(plane, DRM_MODE_OBJECT_PLANE, "FB_ID", 0);
+            add(plane, DRM_MODE_OBJECT_PLANE, "CRTC_ID", 0);
+        }
+        add(impl_->scope.connector, DRM_MODE_OBJECT_CONNECTOR, "CRTC_ID", 0);
+        add(impl_->scope.crtc, DRM_MODE_OBJECT_CRTC, "ACTIVE", 0);
+        add(impl_->scope.crtc, DRM_MODE_OBJECT_CRTC, "MODE_ID", 0);
+        add(impl_->scope.crtc, DRM_MODE_OBJECT_CRTC, "OUT_FENCE_PTR", reinterpret_cast<std::uintptr_t>(&fence_fd));
+        if(drmModeAtomicCommit(impl_->fd, request, DRM_MODE_ATOMIC_TEST_ONLY | DRM_MODE_ATOMIC_ALLOW_MODESET, nullptr) != 0)
+            throw std::runtime_error("Managed KMS neutral transaction rejected");
+        if(fence_fd != -1) throw std::runtime_error("Unexpected test-only KMS fence");
+        if(drmModeAtomicCommit(impl_->fd, request, DRM_MODE_ATOMIC_NONBLOCK | DRM_MODE_ATOMIC_ALLOW_MODESET, nullptr) != 0)
+            throw std::runtime_error("Managed KMS neutral commit failed");
+        ++impl_->sequence;
+        drmModeAtomicFree(request);
+        request = nullptr;
+        if(fence_fd <= 2 || fcntl(fence_fd, F_SETFD, FD_CLOEXEC) < 0)
+            throw std::runtime_error("Managed KMS completion fence unavailable");
+        pollfd wait{fence_fd, POLLIN, 0};
+        int result;
+        do { result = poll(&wait, 1, -1); } while(result < 0 && errno == EINTR);
+        if(result != 1 || !(wait.revents & POLLIN) || (wait.revents & (POLLERR | POLLHUP | POLLNVAL)))
+            throw std::runtime_error("Managed KMS fence failed");
+        sync_file_info info{};
+        if(ioctl(fence_fd, SYNC_IOC_FILE_INFO, &info) != 0 || info.status != 1)
+            throw std::runtime_error("Managed KMS fence did not confirm successful completion");
+        impl_->fence = true;
+        close(fence_fd); fence_fd = -1;
+        impl_->identity();
+        impl_->routes(true);
+        impl_->neutral = true;
+        if(drmDropMaster(impl_->fd) != 0) throw std::runtime_error("Managed DRM master release failed");
+        impl_->close_local();
+        impl_->terminal_proof = impl_->terminal(impl_->binding, impl_->scope);
+        if(!managed_id(impl_->terminal_proof)) throw std::runtime_error("Terminal KMS backend completion remains unknown");
+        impl_->state = ManagedHdmiState::Released;
+        return true;
+    } catch(const std::exception& failure) {
+        if(request) drmModeAtomicFree(request);
+        if(fence_fd >= 0) close(fence_fd);
+        impl_->state = ManagedHdmiState::Unknown;
+        error = failure.what();
+        return false;
+    }
+}
+
+void ManagedHdmiSession::abandon() noexcept {
+    if(!impl_) return;
+    if(state() != ManagedHdmiState::Released) impl_->state = ManagedHdmiState::Unknown;
+    impl_->close_local();
+}
+
+ManagedHdmiState ManagedHdmiSession::state() const noexcept { return impl_->state.load(); }
+
+std::string ManagedHdmiSession::evidence_json() const {
+    if(state() != ManagedHdmiState::Released) throw std::runtime_error("Managed HDMI has no terminal evidence");
+    std::ostringstream planes;
+    for(std::size_t i = 0; i < impl_->scope.planes.size(); ++i) { if(i) planes << ','; planes << impl_->scope.planes[i]; }
+    std::ostringstream result;
+    result << "{\"kind\":\"kms-v2\",\"epoch\":" << impl_->binding.epoch
+           << ",\"resource\":" << json_string(impl_->binding.resource) << ",\"generation\":" << json_string(impl_->binding.generation)
+           << ",\"connector\":" << impl_->scope.connector << ",\"crtc\":" << impl_->scope.crtc
+           << ",\"planes\":" << json_string(planes.str()) << ",\"device\":" << impl_->device
+           << ",\"inode\":" << impl_->inode << ",\"rdev\":" << impl_->rdev
+           << ",\"acquire_operation\":" << json_string(impl_->acquire_operation)
+           << ",\"cleanup_operation\":" << json_string(impl_->cleanup_operation)
+           << ",\"borrowers\":0,\"atomic_sequence\":" << impl_->sequence
+           << ",\"fence\":true,\"neutral\":true,\"terminal_proof\":" << json_string(impl_->terminal_proof)
+           << ",\"future_writes_suppressed\":true}";
+    return result.str();
+}
+
+std::string ManagedHdmiSession::identity_json() const {
+    std::ostringstream planes;
+    for(std::size_t i = 0; i < impl_->scope.planes.size(); ++i) { if(i) planes << ','; planes << impl_->scope.planes[i]; }
+    std::ostringstream result;
+    result << "{\"kind\":\"kms-v2\",\"epoch\":" << impl_->binding.epoch
+           << ",\"resource\":" << json_string(impl_->binding.resource) << ",\"generation\":" << json_string(impl_->binding.generation)
+           << ",\"connector\":" << impl_->scope.connector << ",\"crtc\":" << impl_->scope.crtc
+           << ",\"planes\":" << json_string(planes.str()) << ",\"device\":" << impl_->device
+           << ",\"inode\":" << impl_->inode << ",\"rdev\":" << impl_->rdev << '}';
+    return result.str();
+}
+
+std::string ManagedHdmiSession::acquired_json() const {
+    if(state() != ManagedHdmiState::Owned && state() != ManagedHdmiState::Sealed)
+        throw std::runtime_error("Managed HDMI has no verified acquisition");
+    auto identity = identity_json();
+    identity.pop_back();
+    return identity + ",\"acquire_operation\":" + json_string(impl_->acquire_operation) + ",\"verified\":true}";
+}
+
 } // namespace tyrell::video
 #else
 namespace tyrell::video {
@@ -588,5 +905,21 @@ std::uint32_t HdmiSession::plane_id() const { return 0; }
 std::vector<std::string> HdmiSession::video_formats() const { return {}; }
 DisplayMode HdmiSession::mode() const { return {}; }
 std::string HdmiSession::device() const { return {}; }
+struct ManagedHdmiSession::Impl { std::atomic<ManagedHdmiState> state{ManagedHdmiState::Unknown}; };
+ManagedHdmiSession::ManagedHdmiSession(int, ManagedHdmiScope, ManagedHdmiBinding, CompletionHook) {
+    throw std::runtime_error("Managed HDMI requires Linux DRM");
+}
+ManagedHdmiSession::~ManagedHdmiSession() = default;
+bool ManagedHdmiSession::acquire(const std::string&, std::string& error) { error = "Managed HDMI requires Linux DRM"; return false; }
+bool ManagedHdmiSession::register_borrower(const std::string&, std::string& error) { error = "Managed HDMI requires Linux DRM"; return false; }
+int ManagedHdmiSession::borrow_fd(const std::string&, const std::string&, std::string& error) { error = "Managed HDMI requires Linux DRM"; return -1; }
+bool ManagedHdmiSession::borrower_drained(const std::string&, const std::string&, const std::string&, std::string& error) { error = "Managed HDMI requires Linux DRM"; return false; }
+bool ManagedHdmiSession::seal(std::string& error) { error = "Managed HDMI requires Linux DRM"; return false; }
+bool ManagedHdmiSession::release(const std::string&, std::string& error) { error = "Managed HDMI requires Linux DRM"; return false; }
+void ManagedHdmiSession::abandon() noexcept {}
+ManagedHdmiState ManagedHdmiSession::state() const noexcept { return ManagedHdmiState::Unknown; }
+std::string ManagedHdmiSession::identity_json() const { throw std::runtime_error("Managed HDMI requires Linux DRM"); }
+std::string ManagedHdmiSession::acquired_json() const { throw std::runtime_error("Managed HDMI requires Linux DRM"); }
+std::string ManagedHdmiSession::evidence_json() const { throw std::runtime_error("Managed HDMI requires Linux DRM"); }
 } // namespace tyrell::video
 #endif

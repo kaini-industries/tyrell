@@ -16,7 +16,7 @@ upgrade the device results in this ledger.
 | Component | Current source | Exact retained or reported artifact | Original M5 evidence | Zero / Gh0st boundary |
 | --- | --- | --- | --- | --- |
 | Status | 0.1.2, event-driven native idle; experimental optional shell link | Retained `0.1.0-1`, SHA `15471a8f…`; historical device `0.1.0-1`, SHA `9f8ad2f3…` | Retained package has automated ARM64 build/install/remove evidence. A **different** same-version package has real LCD, synthetic input and launcher-return evidence. | Zero file image contains retained `15471a8f…`; new Status sources and Gh0st acceptance pending. |
-| Video | 0.1.9, checkpoint/timing gate | Retained `0.1.7-1`, SHA `7ddf4ead…` | Specific H.264 HDMI/software-recovery, audio/caption, ten-minute run and launcher-return evidence applies to retained 0.1.7. | New checkpoint/command/UI sources need device acceptance; live Gh0st media is unsupported while bounded resource handoff is unresolved. |
+| Video | 0.1.9, checkpoint gate and separate managed display APIs | Retained `0.1.7-1`, SHA `7ddf4ead…` | Specific H.264 HDMI/software-recovery, audio/caption, ten-minute run and launcher-return evidence applies to retained 0.1.7. | New source and controlled D1–D3 checks need device acceptance; live Gh0st media remains unsupported while graph/driver/shell integration is pending. |
 | Chess | 0.1.4, optional offline lifecycle | Retained `0.1.1-1`, SHA `c14cb5fe…` | Retained 0.1.1 UI/input, Wi-Fi LAN and launcher-return evidence. | New native/default-package and fake-shell checks cover source behavior; device acceptance remains untested. Shell support defaults off and linked LAN is gated; not in the default Zero payload. |
 | Sandline Tanks | 0.1.0 with GameRuntime 0.1.1 | Earlier native test package SHA `961beb67…`, available only in ignored local artifacts | Historical pre-extraction package has synthetic input/display and Zero-host LAN evidence; opposite LAN direction did not complete. | New shared runtime hooks do not enable an app lifecycle policy or qualify a new binary, Zero image inclusion or Gh0st operation. |
 | Beacon Arena | Framework/example 0.1.1 | No retained qualified device package | Framework/headless/network test history exists; no physical M5 app acceptance. | No default Zero inclusion, app lifecycle policy or Gh0st qualification. |
@@ -28,6 +28,11 @@ historical exact-artifact rows carry the earlier results. This is deliberate,
 including when an app's current implementation already exists. The next scoped
 CI run can establish automated results for that checkout without asserting a
 device result.
+
+D3's current Video source boundary also includes the handoff modules consumed
+by its [native managed display checks](video-managed-display.md). This updates
+the moving source digest; it does not change retained-package identities or
+mark any current-source device scenario passed.
 
 References: [Status device report](device-validation.md),
 [retained Status provenance](../dist/tyrell-status/0.1.0/provenance.json),

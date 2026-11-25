@@ -148,7 +148,10 @@ The follow-up [A2 design](video-async-handoff-design.md) specifies a separate
 negotiated protocol, a shared ownership barrier, observable helper completion
 and conservative quarantine. The separate
 [A2-D1 foundation](video-handoff-foundation.md) now implements the channel,
-authority and durable ledger with inert resource adapters. It still requires
-the future helper, display, media and shell integration increments. Its software
+authority and durable ledger with inert resource adapters. The separate
+[D2 participants](video-handoff-participants.md) and
+[D3 managed display APIs](video-managed-display.md) now supply helper and
+display ownership foundations. Actual media and shell integration, qualified
+driver finality and physical acceptance remain pending. These software
 checks do not qualify device completion or live playback; the current guard
 and normal M5 behavior remain intact. Physical testing remains pending.

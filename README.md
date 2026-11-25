@@ -91,9 +91,10 @@ the protocol and helper ownership work needed after that checkpoint phase.
 The separate [A2-D1 foundation](docs/video-handoff-foundation.md) implements its
 channel, authority and durable ledger. The separate
 [A2-D2 participants](docs/video-handoff-participants.md) add VT/audio backends
-and disposable worker validation. These modules are not installed into Video;
-the existing admission guard remains closed and physical
-testing remains pending.
+and disposable worker validation. [A2-D3 managed display APIs](docs/video-managed-display.md)
+add explicit KMS/LCD ownership, independent producer barriers and completion
+checks. The normal M5 path keeps its existing policy; the managed launch path
+and existing admission guard remain closed. Physical testing remains pending.
 
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
 source provenance and test results. Video 0.1.7 is qualified for the tested

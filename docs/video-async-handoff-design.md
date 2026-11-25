@@ -1,7 +1,7 @@
 # Asynchronous Video handoff and helper ownership
 
-A2 design, revision 1, November 24, 2026. Status: **D1 foundation and D2 standalone
-participants implemented; live resource integration and qualification pending**. The
+A2 design, revision 1, November 24, 2026. Status: **D1 foundation, D2 participants
+and D3 managed display APIs implemented; live integration and qualification pending**. The
 [decision record](../research/video-async-handoff-design.json) binds the inspected
 source, design invariants and future acceptance cases. It is not a runnable
 protocol, a release approval or a claim that those cases passed.
@@ -11,9 +11,12 @@ channel, trusted-launcher session, authority and durable ledger. Its adapters
 are inert and it is not installed into Video. The separate
 [D2 implementation](video-handoff-participants.md) adds actual VT/libpulse
 backends and a disposable worker/stop-post harness; it does not admit live
-hardware or install a service. The historical decision record's
+hardware or install a service. The separate
+[D3 display implementation](video-managed-display.md) adds explicit KMS/LCD
+policies and independent producer barriers, without selecting a managed app
+launch path. The historical decision record's
 19 full integration cases remain unrun; D1 software coverage is recorded
-separately; D1/D2 software checks do not open live admission.
+separately; D1/D2/D3 software checks do not open live admission.
 
 ## Decision and compatibility boundary
 
@@ -26,7 +29,7 @@ quarantines the affected resources.
 This requires changes to a future shell as well as Tyrell. It cannot be added
 transparently to the [pinned Gh0st protocol 1](shell-link-status.md), whose roughly
 100 ms pause window may end in `SIGSTOP`. Video's existing admission guard stays
-closed. The design record itself installs no service or package. D1/D2's
+closed. The design record itself installs no service or package. D1/D2/D3's
 separate implementation adds no environment adoption or live launch path.
 Normal M5 launching and current helpers retain their behavior.
 
@@ -295,8 +298,11 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
    pending-load finality, cancellation and crash uncertainty. Live admission,
    installed service qualification and physical testing remain pending;
    legacy endpoints and privileges are preserved.
-3. Add explicit managed KMS/LCD ownership/destructor policies and backend
-   completion evidence. No independent old-epoch restoration may remain.
+3. **D3 separate managed display APIs:** [KMS/LCD ownership and destructor
+   policies](video-managed-display.md), independent graph/flush borrowers and
+   backend completion evidence. The managed path has no old-epoch restoration;
+   default M5 policy remains independent. Generic driver finality and live
+   integration are still refused without qualification.
 4. Introduce the single-owner media actor and nonblocking control integration.
    Preserve checkpoint and decoder-retry semantics; demonstrate command and
    worker cancellation without inventing a universal teardown deadline.
@@ -306,7 +312,7 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
 
 The [decision record](../research/video-async-handoff-design.json) lists concrete
 future integrated cases and expected refusals. They remain **not run for the
-complete design**. D1/D2 tests exercise their actual modules and disposable
+complete design**. D1/D2/D3 tests exercise their actual modules and disposable
 backends; legacy checks and disposable fixtures cannot validate the future
 integrated managed resource paths.
 
@@ -319,5 +325,6 @@ production call paths; a toy state model is insufficient.
 
 Physical playing/paused LCD/HDMI, preroll/seek/track/caption/output transitions,
 missing HDMI, audio/VT restoration, native launch/return and responsiveness
-remain pending. Current Video 0.1.9, package approvals, image inputs and their
-historical evidence remain unchanged by the separate D1/D2 implementation.
+remain pending. The default Video path preserves M5 behavior; retained package
+approvals, image inputs and historical evidence remain unchanged by the separate
+D1/D2/D3 implementation and do not qualify the new source additions on hardware.
