@@ -120,6 +120,16 @@ installed or linked into Video, so native package suites remain separate; CI
 infrastructure changes still select all eight suites. Device/helper completion,
 power-cut durability and physical acceptance remain pending.
 
+A2-D2 adds required [participant checks](video-handoff-participants.md) to the
+same Python group. Portable workers install libpulse and PulseAudio; tests run
+a private normal-user server with only Unix protocol and null-sink modules.
+No worker connects to a user's audio server, opens a physical console or starts
+the legacy helpers. Wrapped VT ioctls exercise the production adapter; real
+process/callback tests retain permits through pending loads, drain, worker
+fencing and stop-post suppression. Missing Linux/Pulse prerequisites cause
+required skips and fail the suite. D2 remains a disposable profile with live
+admission closed; crash tests establish containment, not automatic recovery.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

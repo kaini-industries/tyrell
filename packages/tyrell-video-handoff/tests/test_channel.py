@@ -22,6 +22,20 @@ HELLO = Message("hello", ("a" * 32, CAPABILITIES))
 
 @unittest.skipUnless(transport._supported(), "Linux SCM_CREDENTIALS and SOCK_SEQPACKET required")
 class ChannelTests(unittest.TestCase):
+    def test_trusted_creator_override_does_not_override_actual_sender_uid(self):
+        left, right = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+        wrong = transport.Channel.adopt(left.detach(), expected_uid=os.getuid()+1,
+            expected_pid=os.getpid(), expected_creator_uid=os.getuid())
+        peer = transport.Channel.adopt(right.detach(), expected_uid=os.getuid(), expected_pid=os.getpid())
+        try:
+            self.assertTrue(peer.send(HELLO))
+            self.assertIsNone(wrong.receive())
+            self.assertEqual(wrong.last_error,"sender-identity-mismatch")
+            self.assertTrue(wrong.lost)
+        finally:
+            wrong.close()
+            peer.close()
+
     def pair(self, expected_pid=None):
         left, right = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
         self.addCleanup(right.close)

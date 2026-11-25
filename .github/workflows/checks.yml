@@ -70,6 +70,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             python3 openssl cmake ninja-build g++ make curl ca-certificates ffmpeg dpkg-dev file binutils xz-utils
+      - name: Install private audio participant prerequisites
+        if: matrix.suite == 'python'
+        run: sudo apt-get install -y --no-install-recommends pulseaudio libpulse0
       - name: Install isolated desktop runtime prerequisites
         if: matrix.suite == 'game' || matrix.suite == 'chess'
         run: |

@@ -89,8 +89,10 @@ Current Video 0.1.9 adds checkpoints and a lifecycle admission guard. Its
 [asynchronous handoff design](docs/video-async-handoff-design.md) sets out
 the protocol and helper ownership work needed after that checkpoint phase.
 The separate [A2-D1 foundation](docs/video-handoff-foundation.md) implements its
-channel, authority and durable ledger with inert resource adapters. It is not
-installed into Video; the existing admission guard remains closed and physical
+channel, authority and durable ledger. The separate
+[A2-D2 participants](docs/video-handoff-participants.md) add VT/audio backends
+and disposable worker validation. These modules are not installed into Video;
+the existing admission guard remains closed and physical
 testing remains pending.
 
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
