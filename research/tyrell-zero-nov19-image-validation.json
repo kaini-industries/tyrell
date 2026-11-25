@@ -1,0 +1,249 @@
+{
+  "schema": 1,
+  "kind": "tyrell-zero-nov19-file-image-validation",
+  "status": "passed-file-image-validation",
+  "completed_date_local": "2026-11-25",
+  "timezone": "America/Chicago",
+  "scope": "Fresh source-built Zero file image, read-only raw verification, independently measured raw/XZ payload equality, captured provenance and package compatibility only.",
+  "official_release": "https://github.com/CardputerZero/pi-gen/releases/tag/20261119-094529-3b0e6f6",
+  "image_source_commit": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda",
+  "image_source_dirty": false,
+  "input_audit": {
+    "path": "research/tyrell-zero-nov19-input-audit.json",
+    "sha256": "c00054bc87a545388c33a8cc993603c2177ff475bd2a72862374f1c2d95aa17c",
+    "bytes": 58153
+  },
+  "pre_image_pipeline": {
+    "path": "research/tyrell-zero-nov19-pipeline.json",
+    "sha256": "f217a1f0ca33003a71db23f57d594745a482482f0e0f31e2d3cbbb4f693bb7fd",
+    "bytes": 19346
+  },
+  "image_job": {
+    "job_id": "20261125T054827270121Z-dbd95ae2",
+    "attempt_id": 1,
+    "mode": "fresh",
+    "resumed": false,
+    "durable_result": {
+      "path": "artifacts/tyrell-zero-nov19-image/20261125T054827270121Z-dbd95ae2-attempt-0001/durable-result.json",
+      "sha256": "3253f04769a355c64815d1c49296b0abf03ef1733546454d5f05ccd1f1922a5c",
+      "bytes": 265
+    },
+    "captured_metadata": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/build-inputs.json",
+      "sha256": "14c7671bd001ca6cf74e862d8eedf0214bfb7c32a671478fb85c140506c3a07c",
+      "bytes": 289659
+    },
+    "captured_input_archive_sha256": "95809ee9b488409cf63fd584eec9655b5cf712944a5b135d653978920bd54cb1",
+    "capture_sha256": "20bfa397253b74a33f16181aff33885af3b2154b2ca34c46a261d010551a5ce6"
+  },
+  "raw_image": {
+    "bytes": 4294967296,
+    "path": "/Volumes/garage/tyrell-build/zero-nov19/raw/20261125T054827270121Z-dbd95ae2-attempt-0001.img",
+    "sha256": "167943270e90f2f5f8bf125362449181bfa31ce52f5ee91adfdde08284e59455"
+  },
+  "compressed_image": {
+    "bytes": 1192730608,
+    "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/tyrell-zero-trixie-arm64-lite.img.xz",
+    "sha256": "d7e6782fe7de4bb00a5d27cc6035497331f0613de44aaae2c1d447ef57d480cb"
+  },
+  "streaming_decompressed_payload": {
+    "bytes": 4294967296,
+    "sha256": "167943270e90f2f5f8bf125362449181bfa31ce52f5ee91adfdde08284e59455"
+  },
+  "raw_xz_and_guest_verifier_hashes_equal": true,
+  "verification": {
+    "status": "passed",
+    "scope": "offline-read-only-image",
+    "passed_checks": 24402,
+    "failed_checks": 0,
+    "guest_report": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/image-verification.json",
+      "sha256": "015a3d30565852b88294497ccb229abc6b759ffdf5f9cdffc3e456e78abccdb7",
+      "bytes": 3699009
+    },
+    "independent_host_report": {
+      "path": "artifacts/tyrell-zero-nov19-image/20261125T054827270121Z-dbd95ae2-attempt-0001/host-file-validation.json",
+      "sha256": "006d435ab67c4342e628943c7bf92c188081babb037c3ce0c9edf550784f6842",
+      "bytes": 27173
+    },
+    "host_validator": {
+      "path": "artifacts/tyrell-zero-nov19-image/20261125T054827270121Z-dbd95ae2-attempt-0001/validate-export.py",
+      "sha256": "d38f818f993acf0cf6f05253e1acf9a0a3ac52ff52e43861e36556cc07a66680",
+      "bytes": 18702
+    },
+    "raw_copy_receipt": {
+      "path": "artifacts/tyrell-zero-nov19-image/20261125T054827270121Z-dbd95ae2-attempt-0001/raw-copy.json",
+      "sha256": "a6ab48d8738a4b1c4fe1078949a388a77e08ba3325a463f4fb546461f61b9de6",
+      "bytes": 714
+    },
+    "captured_tracked_source_inputs_checked": 109
+  },
+  "export": {
+    "directory": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001",
+    "host_manifest": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/image-manifest.json",
+      "sha256": "07df606ea77ae755cf54bfdf3dc216bf0debaa3ecaa525228dcb33efa227e7df",
+      "bytes": 4257864
+    },
+    "guest_manifest": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/guest-image-manifest.json",
+      "sha256": "d395064dda2ea1f5317831f23b7cb7210bcba9a068c043c03f35132af51ad13a",
+      "bytes": 4257455
+    },
+    "checksums": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/SHA256SUMS",
+      "sha256": "6cb7bb72c99647bf150ea3f1b28491e4e7d4e84d7c8dca23c801132f4461a3b3",
+      "bytes": 1123
+    },
+    "attempt": {
+      "path": "/Volumes/garage/tyrell-build/images/20261125T054827270121Z-dbd95ae2-attempt-0001/attempt.json",
+      "sha256": "fd81830c17173a8f8dbb7bfb2aaf6de2b20b810b2f26c2c4b478902eb2442b12",
+      "bytes": 156
+    },
+    "checksum_covered_files": 13,
+    "publication_pointer": "image-artifacts-zero-nov19"
+  },
+  "packages": {
+    "installed_total": 952,
+    "installed_os": 948,
+    "custom": 4,
+    "frozen_os_debs_verified": 948,
+    "official_stock_installed": 1688,
+    "common_with_official_stock": 945,
+    "common_version_or_architecture_differences": {},
+    "zero_only": {
+      "greetd": {
+        "Architecture": "arm64",
+        "Version": "0.10.3-4"
+      },
+      "libcamera-dev": {
+        "Architecture": "arm64",
+        "Version": "0.8.0+rpt20261104-1"
+      },
+      "rpi-connect-lite": {
+        "Architecture": "arm64",
+        "Version": "2.15.0"
+      },
+      "tyrell-status": {
+        "Architecture": "arm64",
+        "Version": "0.1.0-1"
+      },
+      "tyrell-zero-power-policy": {
+        "Architecture": "arm64",
+        "Version": "0.1.1-1"
+      },
+      "tyrell-zero-session": {
+        "Architecture": "arm64",
+        "Version": "0.3.1-1"
+      },
+      "tyrell-zero-store": {
+        "Architecture": "arm64",
+        "Version": "0.1.1-1"
+      }
+    },
+    "official_stock_only_count": 743,
+    "selected_m5_archives_verified": 15,
+    "bsp_and_camera_archives_verified": 40,
+    "retained_store_approvals": [
+      {
+        "architecture": "arm64",
+        "bytes": 546044,
+        "package": "tyrell-status",
+        "sha256": "15471a8f605e826d6f81daf3260602042b70b9c19330cb03b0bf839039533b2b",
+        "version": "0.1.0-1"
+      },
+      {
+        "architecture": "arm64",
+        "bytes": 685526,
+        "package": "tyrell-video",
+        "sha256": "3e6b8f50e0f076e783943e77f61e2b57b856a7168f44886dd7d7646013fb239f",
+        "version": "0.1.6-1"
+      },
+      {
+        "architecture": "arm64",
+        "bytes": 686346,
+        "package": "tyrell-video",
+        "sha256": "7ddf4ead5f9d27e44d92ab510b8cca503847af36762d60b315fea62de4450d79",
+        "version": "0.1.7-1"
+      }
+    ]
+  },
+  "source_commit_hosted_ci": {
+    "status": "passed",
+    "run_url": "https://github.com/kaini-industries/tyrell/actions/runs/45556199906",
+    "source_commit": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda",
+    "suites": 9,
+    "python_tests": 952,
+    "ctest_cases": 190,
+    "skipped": 0,
+    "review": {
+      "path": "artifacts/tyrell-zero-nov19-ci/source-9b2f09c/review.json",
+      "sha256": "14b709994bc8219b5ea0b635e12f02bd6c5d132fb1309d3970e91bb3c318d297",
+      "bytes": 5837
+    }
+  },
+  "preservation": {
+    "legacy_inputs": {
+      "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
+      "image/camera-packages.json": "070cf852959bd4981827cf0ed79c143ecf29d73226c4f168e9831b4a1938b8ef",
+      "image/contracts/tyrell-zero-hardware.json": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491",
+      "image/stock-image.json": "4f978b5ac927ca5daae7f94ee115cf9770ea0db73cf918125a97c6f9e47d7565",
+      "locks/image-apt.json": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e"
+    },
+    "legacy_pointers": {
+      "image-artifacts": {
+        "link": "/Volumes/garage/tyrell-build/images/20261114T182824879955Z-b309a99d",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261114T182824879955Z-b309a99d"
+      },
+      "image-artifacts-control": {
+        "link": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2"
+      },
+      "image-artifacts-zero": {
+        "link": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002"
+      }
+    },
+    "original_seed_repository_unchanged": true,
+    "prior_baseline_and_control_retained": true,
+    "failed_source_receipt_kept_failed": true
+  },
+  "builder": {
+    "initial_state": "Stopped",
+    "final_state": "Stopped",
+    "maintenance": {
+      "path": "artifacts/tyrell-zero-nov19/final-builder-state.json",
+      "sha256": "059f4f056a1d079808eb874c5556f4d859cba2e350dc564d2bf2f8f7faa4ba52",
+      "bytes": 1844
+    },
+    "package_status_matches_stopped_backup": true,
+    "temporary_mounts": [],
+    "loop_devices": [],
+    "update_unit_enablement_restored": true,
+    "guest_free_bytes": 71268868096,
+    "backing_disk_bytes": 240518168576,
+    "pre_expansion_backup": "/Volumes/garage/tyrell-build/maintenance/20261125T044630390433Z-pre-nov19-zero-refresh/tyrell-build-160GiB.raw",
+    "host_cache_offload": {
+      "path": "artifacts/tyrell-zero-nov19/host-cache-offload.json",
+      "sha256": "579da610d98a1d8856511a103dc1024fe5e66baf9a3c4c3366df1bc91ee88cc4",
+      "bytes": 1475
+    }
+  },
+  "acceptance": {
+    "file_image": true,
+    "physical_testing": "pending-by-user-request",
+    "physical_boot_qualified": false,
+    "hardware_qualified": false,
+    "battery_qualified": false,
+    "new_matched_control_built": false,
+    "power_preset": "baseline",
+    "extra_power_tuning_enabled": false
+  },
+  "limitations": [
+    "Source/runtime qualification and CI are distinct from the exported-image checks recorded here.",
+    "No physical setup, expansion, seat/VT, display/input/network/audio/camera/Store or battery testing was performed.",
+    "The official BSP changes battery-gauge behavior; prior physical or battery observations do not qualify this image.",
+    "A new matched control is required before resource or battery benefit claims for this BSP.",
+    "Frozen package bytes do not establish whole-build network isolation or byte-identical image rebuilds; vendor finalization may fetch changelogs or optional metadata."
+  ]
+}

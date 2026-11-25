@@ -72,10 +72,17 @@ constexpr const char *kAccountJournalPath =
     "/var/lib/LaunchWizard/account-migration.state";
 #endif
 
+// The SDL preview and the dry-run tests must never read or write the host's
+// real first-boot state, so the OOBE markers live under the dry-run directory.
+#if LAUNCH_WIZARD_DRY_RUN
+constexpr const char *kRearmOobeMarker = "/tmp/LaunchWizard-dry-run/rearm-run-oobe";
+constexpr const char *kFactoryOobeMarker = "/tmp/LaunchWizard-dry-run/run-oobe";
+#else
 // Dropped by APPLaunch's "Run Setup Wizard" settings entry (re-run on demand).
 constexpr const char *kRearmOobeMarker = "/var/lib/applaunch/run-oobe";
 // Baked into every factory image by pi-gen; removed once first boot finishes.
 constexpr const char *kFactoryOobeMarker = "/var/lib/LaunchWizard/run-oobe";
+#endif
 // One-shot keyboard tutorial marker baked into the image by pi-gen.
 constexpr const char *kKeyboardGuideMarker =
     "/var/lib/LaunchWizard/run-keyboard-guide";
@@ -85,15 +92,30 @@ constexpr const char *kKeyboardGuideBinary =
 // wizard keeps the display after the first-boot lesson ends, so it opts in; the
 // launcher's own keyboard-guide.desktop entry intentionally does not.
 constexpr const char *kKeyboardGuideExitLogoArgument = "--exit-logo";
+// Packaged raspi-config entry point on the device image. Root expansion is a
+// first-boot only step; see should_expand_rootfs() in first_boot_policy.h.
+constexpr const char *kRaspiConfigPath = "/usr/bin/raspi-config";
+// Installed by `raspi-config --expand-rootfs`; grows the filesystem on the next
+// boot. Its presence is the only reliable success signal, because raspi-config
+// exits 0 even when it refuses to repartition.
+constexpr const char *kResizeOnceInitScript = "/etc/init.d/resize2fs_once";
+
+void print_command(const std::vector<std::string> &args, const std::string *stdin_text);
 
 void remove_oobe_markers(std::string *first_error = nullptr)
 {
     static const char *marker_paths[] = {kRearmOobeMarker, kFactoryOobeMarker};
     for (const char *path : marker_paths) {
+#if LAUNCH_WIZARD_DRY_RUN
+        // The SDL preview must never modify the host; announce the removal a
+        // real run would perform instead of unlinking the markers.
+        print_command({"rm", "-f", path}, nullptr);
+#else
         if (remove(path) != 0 && errno != ENOENT && first_error &&
             first_error->empty())
             *first_error = std::string("Failed to remove OOBE marker: ") +
                            strerror(errno);
+#endif
     }
 }
 
@@ -807,15 +829,18 @@ std::string apply_hostname(const std::string &hostname)
     CommandResult result = run_command({"hostnamectl", "set-hostname", hostname});
     if (result.code != 0)
         return result.output.empty() ? "Failed to set hostname" : result.output;
-    const std::string hosts =
-        "127.0.0.1\tlocalhost\n"
-        "127.0.1.1\t" + hostname + "\n";
-    result = run_command({"tee", "/etc/hostname"}, &hostname);
+
+    // hostnamectl updates /etc/hostname but not /etc/hosts; without the
+    // 127.0.1.1 mapping every sudo call warns "unable to resolve host".
+    // $1 is a validated argv element, so it needs no shell escaping.
+    const std::string sync_hosts =
+        R"(if grep -q '^[[:space:]]*127\.0\.1\.1[[:space:]]' /etc/hosts; then )"
+        R"(sed -i "s|^[[:space:]]*127\.0\.1\.1[[:space:]].*|127.0.1.1\t$1|" /etc/hosts; )"
+        R"(else printf '127.0.1.1\t%s\n' "$1" >> /etc/hosts; fi)";
+    result = run_command({"sh", "-c", sync_hosts, "sh", hostname});
     if (result.code != 0)
-        return result.output.empty() ? "Failed to write /etc/hostname" : result.output;
-    result = run_command({"tee", "/etc/hosts.launchwizard"}, &hosts);
-    return result.code == 0 ? std::string() :
-        (result.output.empty() ? "Failed to write hostname hosts file" : result.output);
+        return result.output.empty() ? "Failed to update /etc/hosts" : result.output;
+    return {};
 }
 
 std::string WizardService::set_manual_time(const std::string &date,
@@ -848,6 +873,207 @@ std::string apply_ssh(bool enabled)
     if (!enabled && state.code == 0)
         return "SSH remained enabled after it was disabled";
     return {};
+}
+
+// ---------------------------------------------------------------------------
+// Root filesystem expansion (first boot only, runs just before the restart).
+// ---------------------------------------------------------------------------
+bool root_expansion_enabled()
+{
+#if LAUNCH_WIZARD_DRY_RUN
+    // The SDL preview has no card to repartition, but the step still prints the
+    // command it would run so the dry-run log stays representative.
+    return true;
+#else
+    // A settings-driven re-run replays the OOBE on an already-expanded card, so
+    // its partition table must not be rewritten again. A factory marker still
+    // being present means the first boot never completed and always wins.
+    return should_expand_rootfs(access(kFactoryOobeMarker, F_OK) == 0,
+                                access(kRearmOobeMarker, F_OK) == 0);
+#endif
+}
+
+// `raspi-config --expand-rootfs` recreates the root partition with the same
+// start offset but the card's full length, then installs resize2fs_once to grow
+// the filesystem at the next boot. It prints "Please reboot" and exits 0 even
+// when it bails out (for example when the root partition is not the last one),
+// so the installed init script is the only observable proof that the expansion
+// was actually scheduled; the exit code alone proves nothing.
+std::string run_root_expansion()
+{
+    const CommandResult result = run_command({kRaspiConfigPath, "--expand-rootfs"});
+    if (result.code != 0)
+        return result.output.empty() ? std::string("root expansion failed")
+                                     : result.output;
+#if !LAUNCH_WIZARD_DRY_RUN
+    if (access(kResizeOnceInitScript, F_OK) != 0)
+        return "root expansion was not scheduled";
+#endif
+    return {};
+}
+
+// The image gets exactly one root expansion attempt for its whole lifetime:
+// success, failure, and interruption all consume it. The marker is recorded
+// before raspi-config runs so nothing (a failed apply, a settings re-run, a
+// power loss during the repartition) can ever retry it.
+std::string root_expansion_attempt_path()
+{
+    // Tests and diagnostics can redirect the one-shot marker, like the apply
+    // checkpoint, without touching the image's real first-boot state.
+    const char *override_path = getenv("LAUNCH_WIZARD_EXPANSION_ATTEMPT");
+    if (override_path && override_path[0] != '\0') return override_path;
+#if LAUNCH_WIZARD_DRY_RUN
+    return "/tmp/LaunchWizard-dry-run/rootfs-expansion-attempted";
+#else
+    return "/var/lib/LaunchWizard/rootfs-expansion-attempted";
+#endif
+}
+
+enum class ExpansionAttemptClaim {
+    Claimed,
+    AlreadyAttempted,
+    Failed,
+};
+
+ExpansionAttemptClaim claim_rootfs_expansion_attempt(std::string *error)
+{
+    const std::string path = root_expansion_attempt_path();
+    if (access(path.c_str(), F_OK) == 0)
+        return ExpansionAttemptClaim::AlreadyAttempted;
+
+    const std::string::size_type slash = path.find_last_of('/');
+    if (slash != std::string::npos && slash != 0) {
+        const std::string directory = path.substr(0, slash);
+        if (mkdir(directory.c_str(), 0700) != 0 && errno != EEXIST) {
+            if (error)
+                *error = "cannot create " + directory + ": " + strerror(errno);
+            return ExpansionAttemptClaim::Failed;
+        }
+    }
+
+    const int fd = open(path.c_str(), O_CREAT | O_EXCL | O_WRONLY | O_CLOEXEC, 0644);
+    if (fd >= 0) {
+#if !LAUNCH_WIZARD_DRY_RUN
+        // Make the record durable before the partition table changes, so a power
+        // loss during raspi-config still counts as the one and only attempt.
+        if (fsync(fd) != 0) {
+            const int saved_errno = errno;
+            close(fd);
+            if (error)
+                *error = "cannot persist the root expansion attempt: " +
+                         std::string(strerror(saved_errno));
+            return ExpansionAttemptClaim::Failed;
+        }
+#endif
+        close(fd);
+#if !LAUNCH_WIZARD_DRY_RUN
+        sync();
+#endif
+        return ExpansionAttemptClaim::Claimed;
+    }
+    if (errno == EEXIST)
+        return ExpansionAttemptClaim::AlreadyAttempted;
+    if (error)
+        *error = "cannot record the root expansion attempt: " + std::string(strerror(errno));
+    return ExpansionAttemptClaim::Failed;
+}
+
+// Runs the one-shot first-boot expansion. A previously recorded attempt is a
+// no-op, so the apply pipeline can run again without touching the partition
+// table twice.
+std::string apply_root_expansion()
+{
+    if (!root_expansion_enabled())
+        return {};
+
+    std::string claim_error;
+    switch (claim_rootfs_expansion_attempt(&claim_error)) {
+    case ExpansionAttemptClaim::AlreadyAttempted:
+        return {};
+    case ExpansionAttemptClaim::Failed:
+        return claim_error;
+    case ExpansionAttemptClaim::Claimed:
+        break;
+    }
+    return run_root_expansion();
+}
+
+// ---------------------------------------------------------------------------
+// Skip-path root filesystem expansion (device provisioned before first boot).
+// ---------------------------------------------------------------------------
+bool launch_wizard::WizardService::expand_rootfs_for_skipped_boot()
+{
+#if !LAUNCH_WIZARD_DRY_RUN
+    if (geteuid() != 0) {
+        fprintf(stderr,
+                "LaunchWizard: skipped first boot must expand as root\n");
+        return false;
+    }
+#endif
+
+    // Only a factory marker may expand: it means this boot is the image's
+    // first and the OOBE was skipped only because the account was already
+    // configured (Imager). Every other skip happens on an already-expanded
+    // card, whose partition table must not be rewritten again.
+    if (!should_expand_rootfs_on_skip(access(kFactoryOobeMarker, F_OK) == 0))
+        return false;
+
+    std::string claim_error;
+    switch (claim_rootfs_expansion_attempt(&claim_error)) {
+    case ExpansionAttemptClaim::AlreadyAttempted:
+        // The single attempt was already made (even if it failed or was cut
+        // short); never retry it, just hand off.
+        return false;
+    case ExpansionAttemptClaim::Failed:
+        fprintf(stderr,
+                "LaunchWizard: cannot record the root expansion attempt (%s); "
+                "starting APPLaunch\n",
+                claim_error.c_str());
+        return false;
+    case ExpansionAttemptClaim::Claimed:
+        break;
+    }
+
+    const std::string expansion_error = run_root_expansion();
+    if (!expansion_error.empty()) {
+        fprintf(stderr,
+                "LaunchWizard: root expansion on skipped first boot failed: %s; "
+                "starting APPLaunch\n",
+                expansion_error.c_str());
+        return false;
+    }
+
+    // Drop the OOBE markers before rebooting so the next boot hands off to
+    // APPLaunch instead of showing the wizard again (the attempt marker already
+    // guarantees the expansion itself is never retried). If the marker cannot
+    // be removed, hand off now rather than reboot into another skip decision.
+    std::string marker_error;
+    remove_oobe_markers(&marker_error);
+    if (!marker_error.empty()) {
+        fprintf(stderr,
+                "LaunchWizard: root expansion scheduled, but the OOBE marker "
+                "could not be removed (%s); starting APPLaunch\n",
+                marker_error.c_str());
+        return false;
+    }
+
+#if !LAUNCH_WIZARD_DRY_RUN
+    // raspi-config only rewrites the partition table and installs
+    // resize2fs_once; the filesystem itself grows during the reboot.
+    sync();
+#endif
+
+    printf("LaunchWizard: root filesystem expansion scheduled, rebooting\n");
+    fflush(stdout);
+    const std::string reboot_error = reboot();
+    if (!reboot_error.empty()) {
+        fprintf(stderr,
+                "LaunchWizard: reboot failed after scheduling root expansion: "
+                "%s; starting APPLaunch\n",
+                reboot_error.c_str());
+        return false;
+    }
+    return true;
 }
 
 std::string WizardService::connect_wifi(const std::string &ssid, const std::string &password,
@@ -1039,6 +1265,13 @@ std::string WizardService::apply(
         {"Enabling APPLaunch service...", [username] {
             return enable_applaunch_service(username, kDefaultUserUid);
         }},
+        // Expansion rewrites the partition table and only takes effect on the
+        // reboot that ends the OOBE, so it runs after every other configuration
+        // step and before the final step disables the service and drops the
+        // markers. The image gets one attempt only: it is recorded before
+        // raspi-config runs, so a failure or an interrupted apply never retries
+        // it automatically (run the command manually if it failed).
+        best_effort("Expanding root filesystem...", apply_root_expansion),
         {"Finalizing configuration...", [] {
             CommandResult disabled =
                 run_command({"systemctl", "disable", "LaunchWizard.service"});
@@ -1099,7 +1332,8 @@ bool launch_wizard::WizardService::should_run()
     // "pi", with no password or the baked "raspberry" default. A renamed user
     // or a user-chosen password means Raspberry Pi Imager provisioned the
     // device, so first boot skips straight to the launcher
-    // (finish_configured_system() then removes the marker).
+    // (finish_configured_system() expands the card once and reboots while the
+    // factory marker is still present, then removes the marker).
     state.factory_marker = access(kFactoryOobeMarker, F_OK) == 0;
     state.factory_username = first_user_has_factory_name();
     state.user_has_password = first_user_has_password();
@@ -1244,6 +1478,12 @@ int launch_wizard::WizardService::finish_configured_system()
         return 1;
     }
 #endif
+
+    // A factory card can skip the OOBE when the account was already configured
+    // (Raspberry Pi Imager). The apply pipeline then never runs, so grow the
+    // card here and reboot; the skip check on the next boot hands off instead.
+    if (expand_rootfs_for_skipped_boot())
+        return 0;
 
     std::string user = current_first_user();
     if (user.empty() || user == "root") {

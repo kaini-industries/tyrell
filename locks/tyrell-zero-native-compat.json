@@ -2,7 +2,7 @@
   "assets": {
     "launcher": {
       "path": "/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch",
-      "sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c"
+      "sha256": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7"
     },
     "store_backend": {
       "path": "/usr/libexec/tyrell-zero/appstore-package-helper",
@@ -14,11 +14,11 @@
     },
     "store_original": {
       "path": "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor",
-      "sha256": "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e"
+      "sha256": "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa"
     },
     "wizard": {
       "path": "/usr/libexec/tyrell-zero/LaunchWizard",
-      "sha256": "6512dd3c6a370960f3896560639760e4aa67433755f5c5d9819ed913de86e924"
+      "sha256": "821034416993d5b7f594539a6b9e960cfd974006e3a9a2be98c19833cbe35d7d"
     }
   },
   "complete": true,
@@ -46,17 +46,32 @@
     "/etc/pam.d/su-l": "4d10241676e97e5e8d8935e5c8e8f6cb2f871afb881059715f155909be9ebd77",
     "/etc/pam.d/sudo": "5355ef86ec2f1103fbb9db4f441ec15abdc31383d85774b77849b1fb3bed302e",
     "/etc/pam.d/sudo-i": "46a50463de89ae075fbcfced2efc1a4c56d45d4cb3d47ea02fbb599eaa2e5392",
+    "/etc/systemd/system/fstrim.timer": {
+      "symlink": "/dev/null"
+    },
+    "/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service": {
+      "symlink": "/usr/lib/systemd/system/cardputerzero-diskid.service"
+    },
+    "/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf": "5577da2959dd767ba8770354868a3033238ac78161838f67f4e65751c539263b",
+    "/etc/systemd/system/sysinit.target.wants/rpi-resize.service": {
+      "symlink": "/usr/lib/systemd/system/rpi-resize.service"
+    },
     "/etc/udev/rules.d/99-cardputer-zero-keyboard.rules": "8463b9ddcce41bbd62b101688e33692f674be62727805bdb2a0ee4870d4843f9",
     "/etc/udev/rules.d/99-cardputer-zero-lcd.rules": "d002fa4af6df075b50df7b13c7de2133f3a2b57d13b57e7732fd261a7fc93f05",
     "/etc/udev/rules.d/99-ignore-i2c-key.rules": "12d2b0272bb493ccd14d8e23bbef9fe4cc2db2bb5e75524624d7f517a200da0a",
     "/etc/udev/rules.d/99-rpi-keyboard.rules": "45894bf3044e0e3624a8ce57b60f834165a39a5e4186189b66886ced57b0604a",
+    "/usr/lib/cardputerzero/randomize-disk-id": "4ca2b3dfc1de7c0b6c984e57ab4f0107a45c60099d19c77bec43b5efcf5fbd2a",
     "/usr/lib/systemd/system/LaunchWizard.service": "405a4bf37d4f452ded89c7ae3d9baaee512d8488c40b72449a032a3eabcae9ac",
     "/usr/lib/systemd/system/NetworkManager.service": "0234192800f45e2dadad8aa896a6f6b40024fd248615371ce889772a63268edd",
+    "/usr/lib/systemd/system/applaunch-apps-updater.service": "3bffa49433d5a4df621bf904487460f8de3cab836fd3a7db181165bb9ad4fef1",
+    "/usr/lib/systemd/system/applaunch-apt-update.service": "e991ea9b6af382068f7446bb3d6b7400846c403d161fdf46fcc9a2dc18f2f82a",
     "/usr/lib/systemd/system/applaunch-updater.service": "6d34c480fbafb2fc2cccf276cffcebba5a8e9b26cb183e2ed45a239ed3291c49",
     "/usr/lib/systemd/system/bluetooth.service": "4386f57721502d49bbeffd6acb98437dd58d65419724eb5f6c8af6b78ff6ec86",
+    "/usr/lib/systemd/system/cardputerzero-diskid.service": "17fbcf83f49e5ee91d469e6374af9780deeb039cad28dbf9044c15617be3fbce",
     "/usr/lib/systemd/system/dbus.service": "dd0c15ee9b45ee75295d0d44e81052dbd20302db600ae80ebd6ede076eefad0f",
     "/usr/lib/systemd/system/greetd.service": "7d1bb4faf31b0cfc7b994a817f16dee4b45f67049d683b159bb17b3b46056776",
     "/usr/lib/systemd/system/polkit.service": "33a1ec8e16691b76e71e023f7b1d4ac8a995e95a0e88d39ba920dd586bcf8cd0",
+    "/usr/lib/systemd/system/rpi-resize.service": "07e49b83133fa2cbe360d0a7da3c3cd66f61f6a3f26945a45854984db45e4488",
     "/usr/lib/systemd/system/systemd-logind.service": "37563c6df1a510141bfd0777c20dfcc1c17087cdb56d3f71971a57d3cd380e64",
     "/usr/lib/systemd/system/udisks2.service": "edbe6a50b0f8bdbd29f01fba10e96333c3523c2c1cbb6d91c1326da99b2ff3c2",
     "/usr/lib/udev/rules.d/10-vc.rules": "8a8918bdae6723870efada3b7b84f780dab34e3aa26a7c4f2acb5ff9e6fcc9d3",
@@ -138,6 +153,7 @@
     "/usr/lib/udev/rules.d/97-hid2hci.rules": "a30ee87499015d891b1ce6c19d13c2011c9192c0a2da42f94b21b8a9b8de60f3",
     "/usr/lib/udev/rules.d/99-com.rules": "268ccf856cf2bd990c8afe8d9f53df03c0308ab00c30aa49405c9f41115b4401",
     "/usr/lib/udev/rules.d/99-systemd.rules": "d63ba2ea309aadf7794a5f84b0f394c2e48fe630640aa37e9963cd9d1b769d89",
+    "/usr/libexec/applaunch-apps-updater": "dd6ed582580633d3017f29533d058a784237df167b0d812ad33f1b674894a1a6",
     "/usr/share/polkit-1/actions/io.systemd.credentials.policy": "420012cda45aebb3a011e5d4b07ae086081bf5e8e51d5318bd523320564acc16",
     "/usr/share/polkit-1/actions/org.dpkg.pkexec.update-alternatives.policy": "1d9b3e2745d17e399e6823119909a6614b17c402ca020c0ea0a097212503b70c",
     "/usr/share/polkit-1/actions/org.freedesktop.NetworkManager.policy": "28637287354d3363213f42b6a7781c6357647e6d80164f316a717c684b1e2349",
@@ -154,7 +170,7 @@
     "/usr/share/polkit-1/rules.d/50-default.rules": "29f073ed9a8a6996b62f718e2bec962d5c84d311d23bb874830b4f9887eeabbf",
     "/usr/share/polkit-1/rules.d/50-factory_test-networkmanager.rules": "cdcf4129d4d704c21e6c19903ccd6230ed0819678227d50a55bd5deeb30ffe31",
     "/usr/share/polkit-1/rules.d/50-factory_test-power.rules": "2df6325b373f0882188fbdbbcfd4156e20112d1a8836df9c9f20414af70d3c88",
-    "/usr/share/polkit-1/rules.d/60-applaunch-updater.rules": "6aa719b90820083129a0515a9f6caf5cb62b7648d486b53a7612c1314835ad4e",
+    "/usr/share/polkit-1/rules.d/60-applaunch-updater.rules": "b29af60e6785b8b1283916371d112890ab30c4173192c7e891decf62ba736155",
     "/usr/share/polkit-1/rules.d/org.freedesktop.NetworkManager.rules": "c9c419a58f716c4de1f469a362dbb00745c0d35ae3077857b03168bdd9b06ee0",
     "/usr/share/polkit-1/rules.d/systemd-networkd.rules": "f199e386a9297858331b00df07ed0b0ee5fcf4bea67f6c0bccc8a92b7e310bbd"
   },
@@ -176,7 +192,7 @@
     "/usr/bin/camera_app": {
       "gid": 0,
       "mode": 493,
-      "sha256": "3556334697701ac1de3f1a616a99ff27296511fc0518299275ce2a88f53db392",
+      "sha256": "4476db3eda3508795c281f80065310dde503b760cf4867aadf3aec594116c3b6",
       "type": "file",
       "uid": 0
     },
@@ -218,14 +234,14 @@
     "/usr/bin/factory_precheck": {
       "gid": 0,
       "mode": 493,
-      "sha256": "1bcb60a021850b81785e8134d4d0db7ea15ee3940353d568198d171199f1b3b5",
+      "sha256": "7633fb51586ba2a5ef177d0be51ad86a7bcb56fd9983cb4ba109aab7808afcc7",
       "type": "file",
       "uid": 0
     },
     "/usr/bin/factory_test": {
       "gid": 0,
       "mode": 493,
-      "sha256": "9e1f7b9ef034dee3dabb8e4770254d013f55453dd0baba01bd10f3413c09a5b9",
+      "sha256": "5acd51152129b9a67ea7fa6210962ab01f580180cc9c78884a0d6d832fcf98f5",
       "type": "file",
       "uid": 0
     },
@@ -281,14 +297,14 @@
     "/usr/lib/aarch64-linux-gnu/dri/libdril_dri.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "80f1f4fa8ffb05ea6de04d8d22827d900a45f126636209a2b0eb460418d4f01a",
+      "sha256": "d4099936f103bbd81e7e5d6be4ba283b5efe6b5643ccc00d71836bf4050b40d4",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/gbm/dri_gbm.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "3b4ddb6adcee253188981c0924c3c844dbf6dc47fc33a503b88b4dbd696ee920",
+      "sha256": "6d435ad2148288983a09730e507551c59393867a6ea371e5c632b9ad54d4fc40",
       "type": "file",
       "uid": 0
     },
@@ -302,21 +318,21 @@
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_pisp.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "d450fb8d0d134451ad8a2a68f2b95ad7360d41237c0180009bc02b9c7a475da2",
+      "sha256": "580924ef47a04b4a9a3578bf29be1b5ac226a0bea65cdbd685bfa22d76e28a6d",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_vc4.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "65bd8be508d6ecef599dc0828b94bee50a7a6dd984608acbbdb9488ae198cb81",
+      "sha256": "7df84e4ec27da1e20e4ec8bb8877c76283a5096800adf37f1610f5eca97f9f19",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_vimc.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "f1aa4c8d749108758912d1516856d79c8f741040eb478cb643272f4c2106923c",
+      "sha256": "153f0087dd49f5608d78a30e73b8390f587614b29484aa45084dfcbec31789be",
       "type": "file",
       "uid": 0
     },
@@ -337,7 +353,7 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-avb.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "ff26d9641828da77124d0d16274c0de74e4855326d2cd8467e8f7f56233dba7e",
+      "sha256": "4563f8908162496d408fe8a1e259445ebdbf8832f81372c7505433b15b9cb3ef",
       "type": "file",
       "uid": 0
     },
@@ -365,7 +381,7 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-echo-cancel.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "64028169c5763f82c256f5147166a8f698788d1f55d6456da1c4b0fb56b83bd3",
+      "sha256": "aedb5a759f540f20e84f2e65a0250735c0ae87717a8e2ec45161a70639210d21",
       "type": "file",
       "uid": 0
     },
@@ -470,21 +486,21 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-native.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "7f5d906984f927bce4390f6d36d6b6159231b1fd7ebac62de1d654e88696d1e2",
+      "sha256": "7e1462aedf873f6ee4c903ef1490b0541f6a1732ac69ee6994bd3dd8cc8bad07",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-pulse.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "961019790afe0c1ecd673650ce1bc354be2c75bb144d6e8118304c8007ed487b",
+      "sha256": "c2348900ced5a3cbe638ff4443909aa52069dfcef8dde32d8f605ccdda8c9da6",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-simple.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "5b62c92f266bee5c09e03de2406a1b2c615c2f7af9b983fb235af457ddad3981",
+      "sha256": "ca75693959e6a4521b277c3dc4d0338dc92ff30670885d7adbce2f7a94efb76b",
       "type": "file",
       "uid": 0
     },
@@ -505,7 +521,7 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-raop-sink.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "6d048886ddec7a72c69578a869e53d83bea93bc29054a9c5c2c1205ec5b9606c",
+      "sha256": "0a0da6f699ec6be9738cff6ffbf579bc568a1689ccb9b8ec8f89d8b36ff5378f",
       "type": "file",
       "uid": 0
     },
@@ -547,21 +563,21 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-session.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "c76b70950af46564b5fc71207423e69c0a15bfbe4adf1792d100ca3f58199a26",
+      "sha256": "e2cdbf437cfe6d8cdc623734f1fad88c0db9485dd4ff0422a89341ee7f57b997",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-sink.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "f49abcfbee7ed2ae789181b76d1f729a97ae92f6aa7bbc391c1a3a24580d3f55",
+      "sha256": "50f2cce1f37afaf033a0ed56dcad481171ee432e9fcd462f3c2bb858ac347983",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-source.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "ce87037166065677a58bcded135d1d26eb5ed02aaafac4fd805bb0e047849e13",
+      "sha256": "4440dcf44d87f59df5f491e0a5ad86bc21dcc1d7402cfa2cc2ac4283f979a9b9",
       "type": "file",
       "uid": 0
     },
@@ -610,14 +626,14 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-recv.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "5fd05e01b2833fe1420fcec66115dbaee06ea8d9ac67b1bb740dcb577ebe375d",
+      "sha256": "e93cb7517d62a06708b2949169172cb900cb466bc5e27a27db6490345beb1984",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-send.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "326d321d6292dd347a5dfb51944aaf1912fa4544d4618442db1b416838797567",
+      "sha256": "6fd96db632221c66c7805257ffb915d763eaa0def2d196c4235a3a2091c27169",
       "type": "file",
       "uid": 0
     },
@@ -967,63 +983,63 @@
     "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-null.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "24060bc18c2fbbd954bc3f7772372583e2be2d0baed784660ac46e2076125428",
+      "sha256": "26c584d264bb62b1efc176b9ac986bac4164309694f417f78778f6a4d53d93ed",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-webrtc.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "3b0b92f342555acfdc98f7063ed4c8dd307448c79e8dcebd4abe494ddec8e738",
+      "sha256": "7f51e58c1b212c38bc9e153727ffe0404a35a2156ff21c9cc66fe17062422dc4",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/alsa/libspa-alsa.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "ab960619dce3657fddb1eccda06b3c06d421078b29c5246f70a28844ed745ae0",
+      "sha256": "e110c93e1343fad623dfa44758ff64ed4e86737e98ef8632ef57bd13b77706be",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audioconvert/libspa-audioconvert.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "f5f4e7d4ef9cfb11f498e8ee359cb04c4974ab166d025c194629409e17749890",
+      "sha256": "b31c8385fc062ff4563e78c9c54db59098b2c676676e06cca09a67f27b511553",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audiomixer/libspa-audiomixer.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "7902192105a826b400d32791624cbc6b91571c24b699b173b4eca33f93f60ede",
+      "sha256": "b7c39902a63a53b17006e0148f7a0709dcfc0aac99df1ba60ccebcc9714a6824",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audiotestsrc/libspa-audiotestsrc.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "05742b27486cc8eacf5b2a8e64272dc8b1c96d7c3f1a8d07a58f79fa1e08ca67",
+      "sha256": "dbdface0f7128bc57bfd818f89ddcd765292d32767ee4694cda8614a20b1fca8",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/avb/libspa-avb.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "92feab85ff1621dda9af3ecb5224192f445e01d56766ed333ea5d1c59cc5c533",
+      "sha256": "ac0fc1155bbfb8deac7003d9a5bfc88fc72d20f25e1d63d88ba6c2e39c5ba745",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-bluez5.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "7509383ed391cb153863bc179b6838fcecbf44d1aa953c845e335c9cce3ad608",
+      "sha256": "615ece913eb0fac8f540a52c57730d021d6ae7946256a386e5316524a8f9eb9e",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-aptx.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "151c448cf6b55e340a26b5350e7502cb8505f1b6fc2b93b7eb4da1a141bd177a",
+      "sha256": "d6cb927986c6f0b1edf78d3c0f2b2a653b55cb283ad76410191fa4021e72a9bc",
       "type": "file",
       "uid": 0
     },
@@ -1072,119 +1088,119 @@
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-sbc.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "16e974f609d901230e7cecd13814432ed257129ed98c58a9c57b2f5a1ab405ea",
+      "sha256": "b26fd193608dde05a91aaf84985008d24d2f273aaabc68e02a94fd923610429d",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/control/libspa-control.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "51190b3167af3372519e9b1d60bed4eb308232fc679e4d7cfe041dd01a1985dd",
+      "sha256": "68c0f60734636e53d4dec45a7c3d5dd4f95a4e3305c7f5a07083163f3c9e6a4a",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-builtin.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "8f11dd6224912764af9b4f9c692994d9298665bb588fe899d99a49c177683247",
+      "sha256": "4b35bb89512042058a15b31c40dd47bd458a5127e43ab93e9785300b55b36b9d",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ebur128.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "a5b081b15080b182a970f4d1a56351fca9ac0b5ece9ec2bd69a83d06b5f6fd01",
+      "sha256": "5d0ad5e53dc495b89f89ba42901615ff6f73ffad52d912041421efa8cbe55594",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ladspa.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "0c57d163c2aa3df93ea6a12555102a7fc25a219a8337f976c837594fd4dd8af9",
+      "sha256": "a1a5b5f1de2d08a3e55a5e1f4cc30026b234c10c5e4c1ed9b5d3df8e13fca598",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-lv2.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "0cbbd60bca95514e394a5de6daf612c492a3f2999efe1028c9552deb612a3fd8",
+      "sha256": "19608acf9413ceee800917fe180454197496372143953625edb010ad7fdff6b4",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-sofa.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "d70aa5d3a5e005a06620130f341b504b0abd0b6bc83a6793b7b1bd5badb2cc23",
+      "sha256": "1bef50a3953ef546542b08eb0587acc15871d80e7f8face98efe43ca1be11b82",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "b8f04814d66f154ba7ef9d297e47596005a18e3526d804ae428f251b0623ef34",
+      "sha256": "9e56f17b01d0010ce4c2bae99017d0c4e18c9be9b9023f2446e68bd5a0eb4ebc",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/libcamera/libspa-libcamera.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "00fcff41940e37f7d12fd5d643a399d3abbf8bb31d6684f0093789dd2b79ec06",
+      "sha256": "f158b8f4dc0eb212b90f994ff8d21cbc57b64f64757dd525c410065a8403a63a",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/libspa.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "5fc356a7834db023958f10d66812ca54e460ec5e49d822782fda31af6f34bf4f",
+      "sha256": "512353428e3015f0ff7014619c5a64e43e6c7a9e53c299c751648a116c745074",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-dbus.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "ed1e69cb66372a79e0bc15786d6d632c1fec110f137cfc9a2e2bba6d24e1e73b",
+      "sha256": "152084f541c89d6457cc6cfe7781f0da26ae69e25394946cddc58a7cfc5bca88",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-journal.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "56fb7dcbf39e1d29d65b84b8a2e052b11be897ba222fe8af0381cb917026fe4f",
+      "sha256": "5d6c057f66db4ff3cac8fb8a5aa77b556fee8514d41b1173bd8360a9488aee47",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-support.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "562ccf3967383b9ff6d14109fbc6bf987fa1d25c710af7bcfd0b0a1b5d1cb843",
+      "sha256": "a21e55f0546e9c17873a3352f3b5425d6bd4d21b9a7bc4bda2dc7f4841b292b2",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/test/libspa-test.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "61dce5ed02018a5cd6971401fc5e7803863c4356735dca26b93df884ab28b231",
+      "sha256": "95db01555fc3b40119d2b86f88d5e4b4b94e03711c2a0915b4dea20971f9df61",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/v4l2/libspa-v4l2.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "3026616658b8411d882f47d37ffe0ba66e9b626d941054ca92badb79b4214397",
+      "sha256": "4b46bb4f07d805cac1bb45ba891ff48d4367b429029627b5edf70bf4e3c41722",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/videoconvert/libspa-videoconvert.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "9826ab07d4f3c96fbdec97e4c6cdaa57ebfafe018155abb2de59f6bf4a5e5070",
+      "sha256": "ba3cc70b9f8980836256591cbaf257bed5438a0275c9d82d9399251e649eeda3",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/videotestsrc/libspa-videotestsrc.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "c414ef8824d93d43764841506350e07bc52dec7dd87f6cb7265e2840cae760bc",
+      "sha256": "e162b654bad1eac58c0c6ba6b39f086602ba8c99ac4f42c176bfaea3895e06c6",
       "type": "file",
       "uid": 0
     },
@@ -1205,7 +1221,7 @@
     "/usr/lib/python3/dist-packages/libcamera/_libcamera.cpython-313-aarch64-linux-gnu.so": {
       "gid": 0,
       "mode": 420,
-      "sha256": "a733cf9fcf8d0da2e8fc96b5590211ec26117802437b81dbaf41ba0b0c6a679b",
+      "sha256": "5e41c318841e883f810e066f55c26c5f11980885ef0b7ba761775aa3701b8683",
       "type": "file",
       "uid": 0
     },
@@ -1240,14 +1256,14 @@
     "/usr/libexec/tyrell-zero-session-recovery": {
       "gid": 0,
       "mode": 493,
-      "sha256": "926673068218fbdd8ee5519ba6aaeffb5cba0030f6c0599672c8f46f589cab23",
+      "sha256": "81ce56867b64fed5f304f12622b412a97c41788a264388752e274da38b887000",
       "type": "file",
       "uid": 0
     },
     "/usr/libexec/tyrell-zero/LaunchWizard": {
       "gid": 0,
       "mode": 493,
-      "sha256": "6512dd3c6a370960f3896560639760e4aa67433755f5c5d9819ed913de86e924",
+      "sha256": "821034416993d5b7f594539a6b9e960cfd974006e3a9a2be98c19833cbe35d7d",
       "type": "file",
       "uid": 0
     },
@@ -1296,21 +1312,21 @@
     "/usr/share/APPLaunch/adb/cardputer-adb-hotplug": {
       "gid": 0,
       "mode": 493,
-      "sha256": "f6aba5919e4313edc30eec5c50af72602997623994652f8b8d0276dfa5f53f2b",
+      "sha256": "93fc791d90383bbe1a3d3d69cc7e79b47afb3d1febb399e437c06809fcfceac9",
       "type": "file",
       "uid": 0
     },
     "/usr/share/APPLaunch/bin/LaunchWizard": {
       "gid": 0,
       "mode": 493,
-      "sha256": "8b8cdf2535d3b3103f17b69de89000c0c533db1c27bf2f63a151770384632b12",
+      "sha256": "83572cb7ea3c420aec026fed96f723ff359679e2620bbd39feee4b5a8daf70fa",
       "type": "file",
       "uid": 0
     },
     "/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch": {
       "gid": 0,
       "mode": 493,
-      "sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+      "sha256": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7",
       "type": "file",
       "uid": 0
     },
@@ -1324,14 +1340,14 @@
     "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor": {
       "gid": 0,
       "mode": 493,
-      "sha256": "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e",
+      "sha256": "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa",
       "type": "file",
       "uid": 0
     },
     "/usr/share/APPLaunch/bin/M5CardputerZero-Calculator": {
       "gid": 0,
       "mode": 493,
-      "sha256": "86d4cb61c94c95b82f1ef558d2140dbaf3e37168d4afe369f4b886f701c51099",
+      "sha256": "f8972d426712bfa6d6c2631f44dd836d4aaa6d5207771f7d8f47e78d71ab8bb1",
       "type": "file",
       "uid": 0
     },
@@ -1359,14 +1375,14 @@
     "/usr/share/APPLaunch/bin/M5CardputerZero-Compass": {
       "gid": 0,
       "mode": 493,
-      "sha256": "f5d0c8456f4934141da40dc62eea1913dd93b03dc8cfa723e8f0d3ac25f2be02",
+      "sha256": "4123629dbfbba261bd5729cbd9790ff558828bbbf330fbb030cb1ff3f7be2ac5",
       "type": "file",
       "uid": 0
     },
     "/usr/share/APPLaunch/bin/M5CardputerZero-Files": {
       "gid": 0,
       "mode": 493,
-      "sha256": "edc10d852fef8ed0a1ea92d238b4ddc3928610394ce56e097e82aa9bce5d4b13",
+      "sha256": "480286a19519cfb2db96a84c3b24499ec89a56a05de3e3d657754bfaf63a2375",
       "type": "file",
       "uid": 0
     },
@@ -1415,7 +1431,7 @@
     "/usr/share/APPLaunch/bin/ZClaw": {
       "gid": 0,
       "mode": 493,
-      "sha256": "91054e47123fb07ee030e89f64d54783b95c96ea25075bf62ad0a64ede1bbef3",
+      "sha256": "a22e4a66c150d4a0c056a474c434116708e5fa44f9c750a90440afb7aea06b64",
       "type": "file",
       "uid": 0
     },
@@ -1430,14 +1446,14 @@
   "elf_roots": {
     "/usr/bin/apt": "e730b8e418bc5826eb9100e479b4e3296e30e597c53b6c9ce3631226e3d9c5dd",
     "/usr/bin/apt-get": "8124a02e29b28b0f0164a816f4b2ad5ceae457cfa49fe75d89dc5d4ff52754ef",
-    "/usr/bin/camera_app": "3556334697701ac1de3f1a616a99ff27296511fc0518299275ce2a88f53db392",
+    "/usr/bin/camera_app": "4476db3eda3508795c281f80065310dde503b760cf4867aadf3aec594116c3b6",
     "/usr/bin/dbus-daemon": "12be1f31e84f9c1dff01fa2652b3d4ce582b894d3faae470f005da5dac7c5207",
     "/usr/bin/dpkg": "d8878dcd8949b2d18359b98082e18b2c3bb77f4cbe14e7a90f58b3fad2670e79",
     "/usr/bin/dpkg-deb": "496045198f358af6537c40a217ac56d43f14a36a8864778f4e6f5fc5bc6290c1",
     "/usr/bin/dpkg-divert": "d0b380f67dcf94e287b2c5d2ac6e2f681d8c28a6bd71f801c07d48a29b0a9186",
     "/usr/bin/dpkg-query": "a5377f6b04e6d251d013c13a2399cb83db8462bf249949b5d76ae0e22842e83a",
-    "/usr/bin/factory_precheck": "1bcb60a021850b81785e8134d4d0db7ea15ee3940353d568198d171199f1b3b5",
-    "/usr/bin/factory_test": "9e1f7b9ef034dee3dabb8e4770254d013f55453dd0baba01bd10f3413c09a5b9",
+    "/usr/bin/factory_precheck": "7633fb51586ba2a5ef177d0be51ad86a7bcb56fd9983cb4ba109aab7808afcc7",
+    "/usr/bin/factory_test": "5acd51152129b9a67ea7fa6210962ab01f580180cc9c78884a0d6d832fcf98f5",
     "/usr/bin/pipewire": "e80c98bc69492568ffcfbf86399b3483a9c1709dbb4f3c5f6bce241f5f00fc22",
     "/usr/bin/pipewire-pulse": "e80c98bc69492568ffcfbf86399b3483a9c1709dbb4f3c5f6bce241f5f00fc22",
     "/usr/bin/pkexec": "21538bac9c8f7adb144e6000da529e6632b0b513540436368b38770c2140a4b8",
@@ -1445,19 +1461,19 @@
     "/usr/bin/sudo": "e52d68cffda9da0a303146d7ab1cb015117870c122a08f5a586df3808fec3862",
     "/usr/bin/tyrell-status": "e16fd0262d23296efdd4df90cfacd625e78686a9a39d5aba603634f7e03b4d1f",
     "/usr/bin/wireplumber": "4af6af7a66563130fab450b1c867afa3e846d386748402a98afba6c8122199b0",
-    "/usr/lib/aarch64-linux-gnu/dri/libdril_dri.so": "80f1f4fa8ffb05ea6de04d8d22827d900a45f126636209a2b0eb460418d4f01a",
-    "/usr/lib/aarch64-linux-gnu/gbm/dri_gbm.so": "3b4ddb6adcee253188981c0924c3c844dbf6dc47fc33a503b88b4dbd696ee920",
+    "/usr/lib/aarch64-linux-gnu/dri/libdril_dri.so": "d4099936f103bbd81e7e5d6be4ba283b5efe6b5643ccc00d71836bf4050b40d4",
+    "/usr/lib/aarch64-linux-gnu/gbm/dri_gbm.so": "6d435ad2148288983a09730e507551c59393867a6ea371e5c632b9ad54d4fc40",
     "/usr/lib/aarch64-linux-gnu/gio/modules/libdconfsettings.so": "7fe64773f77aa1407e8403bfe4bb9211d83ceac60ff0b204fff7538529e06d61",
-    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_pisp.so": "d450fb8d0d134451ad8a2a68f2b95ad7360d41237c0180009bc02b9c7a475da2",
-    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_vc4.so": "65bd8be508d6ecef599dc0828b94bee50a7a6dd984608acbbdb9488ae198cb81",
-    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_vimc.so": "f1aa4c8d749108758912d1516856d79c8f741040eb478cb643272f4c2106923c",
+    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_pisp.so": "580924ef47a04b4a9a3578bf29be1b5ac226a0bea65cdbd685bfa22d76e28a6d",
+    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_vc4.so": "7df84e4ec27da1e20e4ec8bb8877c76283a5096800adf37f1610f5eca97f9f19",
+    "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_vimc.so": "153f0087dd49f5608d78a30e73b8390f587614b29484aa45084dfcbec31789be",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-access.so": "c27b12611c20f44d83277b7b3b8753d9005661d7e9530019825b6481589d19ff",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-adapter.so": "0ab44e5e653fb3c5f82d4550e42aec73cddca6fa60787a1af3a66b0c54d3e98e",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-avb.so": "ff26d9641828da77124d0d16274c0de74e4855326d2cd8467e8f7f56233dba7e",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-avb.so": "4563f8908162496d408fe8a1e259445ebdbf8832f81372c7505433b15b9cb3ef",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-client-device.so": "492cea61d4acce254bb9989649df4f5d027665d3efa82a6f7f3109dbf4c08a11",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-client-node.so": "e851629c4d00d02ade0b4509b0a44d780eb329b544cf36074e64eacb6a878d9d",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-combine-stream.so": "3e5c84a3c0ec6695894a5426c894d2d3c4dd02621ad2644471f6372ceeaf5094",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-echo-cancel.so": "64028169c5763f82c256f5147166a8f698788d1f55d6456da1c4b0fb56b83bd3",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-echo-cancel.so": "aedb5a759f540f20e84f2e65a0250735c0ae87717a8e2ec45161a70639210d21",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-fallback-sink.so": "1f698f519cb4f7fa9f705231d668aa5c910f72b5483923e019c87f3064bfe1b7",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-ffado-driver.so": "1f0f499f559144a55224f7dd037c7372d14a52c9f29954c9f11410e5588fc1cb",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-filter-chain.so": "745a9d46d5f39b32dfdf92977b809ff3a357002a41d7ea5c8a637f9238c254a2",
@@ -1472,28 +1488,28 @@
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-pipe-tunnel.so": "41b838100d2285b623142cb0a7a27a6944f0efe09b8e94cf34c3d3aa6db2107f",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-portal.so": "981aae51d39a2651a7e86b08a27842cbe6604805df5eab2209ab248a75f89830",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-profiler.so": "45bf96a7dc5a334e871f9fe7df01cbf460538a1b7e431585086ff33ae057dfbf",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-native.so": "7f5d906984f927bce4390f6d36d6b6159231b1fd7ebac62de1d654e88696d1e2",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-pulse.so": "961019790afe0c1ecd673650ce1bc354be2c75bb144d6e8118304c8007ed487b",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-simple.so": "5b62c92f266bee5c09e03de2406a1b2c615c2f7af9b983fb235af457ddad3981",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-native.so": "7e1462aedf873f6ee4c903ef1490b0541f6a1732ac69ee6994bd3dd8cc8bad07",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-pulse.so": "c2348900ced5a3cbe638ff4443909aa52069dfcef8dde32d8f605ccdda8c9da6",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-simple.so": "ca75693959e6a4521b277c3dc4d0338dc92ff30670885d7adbce2f7a94efb76b",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-pulse-tunnel.so": "f5c08e606209c791877c0dd572e29f6e0cc7425af11b913063240528a16656b5",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-raop-discover.so": "29cf133b0a2f34823887b92af3fef37a92b9eee19ec0855428d080e059dbfefb",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-raop-sink.so": "6d048886ddec7a72c69578a869e53d83bea93bc29054a9c5c2c1205ec5b9606c",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-raop-sink.so": "0a0da6f699ec6be9738cff6ffbf579bc568a1689ccb9b8ec8f89d8b36ff5378f",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-roc-sink.so": "d326a25ec37d2a4b67e59f32ff22051ef97d1f30ba7959f9087560af5eb5928f",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-roc-source.so": "41598292a53711021aaf86d414b4a569d6d39ca0dab3d6ca9020335dfcbc230f",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rt.so": "16be77932233bc12a0b7f9417aa998a51af79e45e343c0d772358aa300046f22",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtkit.so": "7cf7a75daa82f26e09a694b66a8098852806787258eea208d4083738da80a0ef",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-sap.so": "4364df230555398757f9354d16a67b53382dbbf33ee15ba86070e8da9b93ebd5",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-session.so": "c76b70950af46564b5fc71207423e69c0a15bfbe4adf1792d100ca3f58199a26",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-sink.so": "f49abcfbee7ed2ae789181b76d1f729a97ae92f6aa7bbc391c1a3a24580d3f55",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-source.so": "ce87037166065677a58bcded135d1d26eb5ed02aaafac4fd805bb0e047849e13",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-session.so": "e2cdbf437cfe6d8cdc623734f1fad88c0db9485dd4ff0422a89341ee7f57b997",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-sink.so": "50f2cce1f37afaf033a0ed56dcad481171ee432e9fcd462f3c2bb858ac347983",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-source.so": "4440dcf44d87f59df5f491e0a5ad86bc21dcc1d7402cfa2cc2ac4283f979a9b9",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-session-manager.so": "fb63beb993163bc7d2cf119229da83e6887eb6e57cdb6589ed9f9b3ab3a9cf6e",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-snapcast-discover.so": "e14242f1526e3eef35da3e099cef707243dd48f863e76880b1f1ba361b884555",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-spa-device-factory.so": "94545d90e9f13751b656c52d20fb7d14d96d1d012759884eab5652dfefdf95d4",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-spa-device.so": "20f820933266880e31a02074b378ec2c471e1783acdc3b5579ae8026c4e45635",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-spa-node-factory.so": "1f6e199cfd140309556c0f1796a859757b572d7eadd962cce1fe3b326ce2502c",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-spa-node.so": "b40fafb715edec349c8c155bf1a2f2d6537f2040bca8afc02d704273898cfe20",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-recv.so": "5fd05e01b2833fe1420fcec66115dbaee06ea8d9ac67b1bb740dcb577ebe375d",
-    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-send.so": "326d321d6292dd347a5dfb51944aaf1912fa4544d4618442db1b416838797567",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-recv.so": "e93cb7517d62a06708b2949169172cb900cb466bc5e27a27db6490345beb1984",
+    "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-send.so": "6fd96db632221c66c7805257ffb915d763eaa0def2d196c4235a3a2091c27169",
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-zeroconf-discover.so": "0dab8eb8a57f7bad9bf2625f71c17c9545eef7e61f7cbdf7b07b390699e8780b",
     "/usr/lib/aarch64-linux-gnu/security/pam_access.so": "6bc9662367d46be71fef754065b89f90c89479874fa9ea6c1b09438972b18a4a",
     "/usr/lib/aarch64-linux-gnu/security/pam_canonicalize_user.so": "7baa29afa75cfe22c15ea55932db289ec3f465eb3d7bc4f3e41539b4c4e9618a",
@@ -1543,72 +1559,72 @@
     "/usr/lib/aarch64-linux-gnu/security/pam_warn.so": "5894e9509a694b0d83c94fd2ec9100cf0ed5c7444066181406a2946b5c8b458e",
     "/usr/lib/aarch64-linux-gnu/security/pam_wheel.so": "758d5c8f69726549f7ee293fbe948993a8a2fd6ac4d08538772e820b28efa20a",
     "/usr/lib/aarch64-linux-gnu/security/pam_xauth.so": "93078c67577eceeb04409b14620e2b8ece1d06ed95fa7df1ba2ac6f58048797c",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-null.so": "24060bc18c2fbbd954bc3f7772372583e2be2d0baed784660ac46e2076125428",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-webrtc.so": "3b0b92f342555acfdc98f7063ed4c8dd307448c79e8dcebd4abe494ddec8e738",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/alsa/libspa-alsa.so": "ab960619dce3657fddb1eccda06b3c06d421078b29c5246f70a28844ed745ae0",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/audioconvert/libspa-audioconvert.so": "f5f4e7d4ef9cfb11f498e8ee359cb04c4974ab166d025c194629409e17749890",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/audiomixer/libspa-audiomixer.so": "7902192105a826b400d32791624cbc6b91571c24b699b173b4eca33f93f60ede",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/audiotestsrc/libspa-audiotestsrc.so": "05742b27486cc8eacf5b2a8e64272dc8b1c96d7c3f1a8d07a58f79fa1e08ca67",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/avb/libspa-avb.so": "92feab85ff1621dda9af3ecb5224192f445e01d56766ed333ea5d1c59cc5c533",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-bluez5.so": "7509383ed391cb153863bc179b6838fcecbf44d1aa953c845e335c9cce3ad608",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-aptx.so": "151c448cf6b55e340a26b5350e7502cb8505f1b6fc2b93b7eb4da1a141bd177a",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-null.so": "26c584d264bb62b1efc176b9ac986bac4164309694f417f78778f6a4d53d93ed",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-webrtc.so": "7f51e58c1b212c38bc9e153727ffe0404a35a2156ff21c9cc66fe17062422dc4",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/alsa/libspa-alsa.so": "e110c93e1343fad623dfa44758ff64ed4e86737e98ef8632ef57bd13b77706be",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/audioconvert/libspa-audioconvert.so": "b31c8385fc062ff4563e78c9c54db59098b2c676676e06cca09a67f27b511553",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/audiomixer/libspa-audiomixer.so": "b7c39902a63a53b17006e0148f7a0709dcfc0aac99df1ba60ccebcc9714a6824",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/audiotestsrc/libspa-audiotestsrc.so": "dbdface0f7128bc57bfd818f89ddcd765292d32767ee4694cda8614a20b1fca8",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/avb/libspa-avb.so": "ac0fc1155bbfb8deac7003d9a5bfc88fc72d20f25e1d63d88ba6c2e39c5ba745",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-bluez5.so": "615ece913eb0fac8f540a52c57730d021d6ae7946256a386e5316524a8f9eb9e",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-aptx.so": "d6cb927986c6f0b1edf78d3c0f2b2a653b55cb283ad76410191fa4021e72a9bc",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-faststream.so": "d2256af3f5a837c3cf2f1434b1f6c705255c630919aa27110b985401fb834ea7",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-g722.so": "d29bd35758f725b941efe82c6ac4889bb7beaa67823f5ad3ab1e388176a0af1d",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-lc3.so": "a5056152f07ea74febe7515d9b85956ee2f368ca74a31fed1a76bdae97c0cb92",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-ldac.so": "03b313aa723067f3625ebeccbedf4a97aec2aa48c2b87421928d563052428ec5",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-opus-g.so": "ae6028406df27cad1b0630ce88ccdaa76f0f21ecd7dd52f71ebb0f0e7314ea12",
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-opus.so": "c1c5fe95ff7afd7f8af0b8803844337f5cfb759ed1e3fbc5bacea16078737389",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-sbc.so": "16e974f609d901230e7cecd13814432ed257129ed98c58a9c57b2f5a1ab405ea",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/control/libspa-control.so": "51190b3167af3372519e9b1d60bed4eb308232fc679e4d7cfe041dd01a1985dd",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-builtin.so": "8f11dd6224912764af9b4f9c692994d9298665bb588fe899d99a49c177683247",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ebur128.so": "a5b081b15080b182a970f4d1a56351fca9ac0b5ece9ec2bd69a83d06b5f6fd01",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ladspa.so": "0c57d163c2aa3df93ea6a12555102a7fc25a219a8337f976c837594fd4dd8af9",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-lv2.so": "0cbbd60bca95514e394a5de6daf612c492a3f2999efe1028c9552deb612a3fd8",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-sofa.so": "d70aa5d3a5e005a06620130f341b504b0abd0b6bc83a6793b7b1bd5badb2cc23",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph.so": "b8f04814d66f154ba7ef9d297e47596005a18e3526d804ae428f251b0623ef34",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/libcamera/libspa-libcamera.so": "00fcff41940e37f7d12fd5d643a399d3abbf8bb31d6684f0093789dd2b79ec06",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/libspa.so": "5fc356a7834db023958f10d66812ca54e460ec5e49d822782fda31af6f34bf4f",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-dbus.so": "ed1e69cb66372a79e0bc15786d6d632c1fec110f137cfc9a2e2bba6d24e1e73b",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-journal.so": "56fb7dcbf39e1d29d65b84b8a2e052b11be897ba222fe8af0381cb917026fe4f",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-support.so": "562ccf3967383b9ff6d14109fbc6bf987fa1d25c710af7bcfd0b0a1b5d1cb843",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/test/libspa-test.so": "61dce5ed02018a5cd6971401fc5e7803863c4356735dca26b93df884ab28b231",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/v4l2/libspa-v4l2.so": "3026616658b8411d882f47d37ffe0ba66e9b626d941054ca92badb79b4214397",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/videoconvert/libspa-videoconvert.so": "9826ab07d4f3c96fbdec97e4c6cdaa57ebfafe018155abb2de59f6bf4a5e5070",
-    "/usr/lib/aarch64-linux-gnu/spa-0.2/videotestsrc/libspa-videotestsrc.so": "c414ef8824d93d43764841506350e07bc52dec7dd87f6cb7265e2840cae760bc",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-sbc.so": "b26fd193608dde05a91aaf84985008d24d2f273aaabc68e02a94fd923610429d",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/control/libspa-control.so": "68c0f60734636e53d4dec45a7c3d5dd4f95a4e3305c7f5a07083163f3c9e6a4a",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-builtin.so": "4b35bb89512042058a15b31c40dd47bd458a5127e43ab93e9785300b55b36b9d",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ebur128.so": "5d0ad5e53dc495b89f89ba42901615ff6f73ffad52d912041421efa8cbe55594",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ladspa.so": "a1a5b5f1de2d08a3e55a5e1f4cc30026b234c10c5e4c1ed9b5d3df8e13fca598",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-lv2.so": "19608acf9413ceee800917fe180454197496372143953625edb010ad7fdff6b4",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-sofa.so": "1bef50a3953ef546542b08eb0587acc15871d80e7f8face98efe43ca1be11b82",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph.so": "9e56f17b01d0010ce4c2bae99017d0c4e18c9be9b9023f2446e68bd5a0eb4ebc",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/libcamera/libspa-libcamera.so": "f158b8f4dc0eb212b90f994ff8d21cbc57b64f64757dd525c410065a8403a63a",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/libspa.so": "512353428e3015f0ff7014619c5a64e43e6c7a9e53c299c751648a116c745074",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-dbus.so": "152084f541c89d6457cc6cfe7781f0da26ae69e25394946cddc58a7cfc5bca88",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-journal.so": "5d6c057f66db4ff3cac8fb8a5aa77b556fee8514d41b1173bd8360a9488aee47",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-support.so": "a21e55f0546e9c17873a3352f3b5425d6bd4d21b9a7bc4bda2dc7f4841b292b2",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/test/libspa-test.so": "95db01555fc3b40119d2b86f88d5e4b4b94e03711c2a0915b4dea20971f9df61",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/v4l2/libspa-v4l2.so": "4b46bb4f07d805cac1bb45ba891ff48d4367b429029627b5edf70bf4e3c41722",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/videoconvert/libspa-videoconvert.so": "ba3cc70b9f8980836256591cbaf257bed5438a0275c9d82d9399251e649eeda3",
+    "/usr/lib/aarch64-linux-gnu/spa-0.2/videotestsrc/libspa-videotestsrc.so": "e162b654bad1eac58c0c6ba6b39f086602ba8c99ac4f42c176bfaea3895e06c6",
     "/usr/lib/polkit-1/polkitd": "0aac0b1be7b4df971d81dbc48ff9f14042836489c16cb1cd966be87da3676130",
     "/usr/lib/python3/dist-packages/gpiod/_ext.cpython-313-aarch64-linux-gnu.so": "312d30ee20405501e66b794352180d876e1844287490f5038cb883397ce6e554",
-    "/usr/lib/python3/dist-packages/libcamera/_libcamera.cpython-313-aarch64-linux-gnu.so": "a733cf9fcf8d0da2e8fc96b5590211ec26117802437b81dbaf41ba0b0c6a679b",
+    "/usr/lib/python3/dist-packages/libcamera/_libcamera.cpython-313-aarch64-linux-gnu.so": "5e41c318841e883f810e066f55c26c5f11980885ef0b7ba761775aa3701b8683",
     "/usr/lib/python3/dist-packages/spidev.cpython-313-aarch64-linux-gnu.so": "58729b8a3ef94d32ac2a144cb57ad91a25ddbc4ccb440d07707513a7a0242fcd",
     "/usr/lib/systemd/systemd-logind": "8d0abb01b76e30b73d1562276d993e07c5dd8950e98df87249a647eceec21a33",
     "/usr/lib/systemd/systemd-udevd": "9a9631782584d625f84ea09e42b8e945dd65c7df68f9ccb049481b79fa66c7af",
     "/usr/libexec/bluetooth/bluetoothd": "9c1d4fc44a31d800a3bd897e55e46f07a99e7b096e88f51e3e20fb58e3ee2178",
     "/usr/libexec/rtkit-daemon": "9f22b4b14239e821d65510c4890036ba4a47c36ced8f3233c21eeb5dcf9fc3b0",
-    "/usr/libexec/tyrell-zero-session-recovery": "926673068218fbdd8ee5519ba6aaeffb5cba0030f6c0599672c8f46f589cab23",
-    "/usr/libexec/tyrell-zero/LaunchWizard": "6512dd3c6a370960f3896560639760e4aa67433755f5c5d9819ed913de86e924",
+    "/usr/libexec/tyrell-zero-session-recovery": "81ce56867b64fed5f304f12622b412a97c41788a264388752e274da38b887000",
+    "/usr/libexec/tyrell-zero/LaunchWizard": "821034416993d5b7f594539a6b9e960cfd974006e3a9a2be98c19833cbe35d7d",
     "/usr/libexec/udisks2/udisksd": "94fb3ab80e8a0ac38dd6cba6f86511042e87625436e67103ba9403425dc70852",
     "/usr/sbin/NetworkManager": "c6ff9e2b34e980d314136f91181f7325d060784286a0f9874776d85779eadbf9",
     "/usr/sbin/avahi-daemon": "7e2694c0458ae9f6bbd3f19954bcbaec0e2552e72c673f78dd9faa6807304e35",
     "/usr/sbin/greetd": "09fdec5d4a4808c8a0260c1afd96ce1bdb46f0c54d52fe8489417aa0a39cd607",
     "/usr/sbin/sshd": "92ab0b03133151a40e95fabd42059450ed00ba4de0e07e8f2b73ce320f2bb077",
     "/usr/sbin/wpa_supplicant": "7ab42962882922894aaa889d1d7415243a3c980411032c30319bf7a56f158669",
-    "/usr/share/APPLaunch/adb/cardputer-adb-hotplug": "f6aba5919e4313edc30eec5c50af72602997623994652f8b8d0276dfa5f53f2b",
-    "/usr/share/APPLaunch/bin/LaunchWizard": "8b8cdf2535d3b3103f17b69de89000c0c533db1c27bf2f63a151770384632b12",
-    "/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+    "/usr/share/APPLaunch/adb/cardputer-adb-hotplug": "93fc791d90383bbe1a3d3d69cc7e79b47afb3d1febb399e437c06809fcfceac9",
+    "/usr/share/APPLaunch/bin/LaunchWizard": "83572cb7ea3c420aec026fed96f723ff359679e2620bbd39feee4b5a8daf70fa",
+    "/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7",
     "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore": "92dacc50b166d57ce20494013e21af847288a48e66d8331a08b0f3d3ef478f30",
-    "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor": "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e",
-    "/usr/share/APPLaunch/bin/M5CardputerZero-Calculator": "86d4cb61c94c95b82f1ef558d2140dbaf3e37168d4afe369f4b886f701c51099",
+    "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor": "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa",
+    "/usr/share/APPLaunch/bin/M5CardputerZero-Calculator": "f8972d426712bfa6d6c2631f44dd836d4aaa6d5207771f7d8f47e78d71ab8bb1",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Cap-CC1101-NFC": "feab69df1e0f0b54f7216828ab3ac923fb02b60481b3eb5ddbb1fcba73def646",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Cap-CC1101-SubG-Chat": "fae6170efaac2d5eefd518191a4ab3c156a8d4a0d6bfd7832cece5eed938ed7d",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Cap-LoRa-1262-GPS": "bfaa5d0f287a68135c52c9effaeeadb0b882f1ef3fba00b8770873b64ce252d7",
-    "/usr/share/APPLaunch/bin/M5CardputerZero-Compass": "f5d0c8456f4934141da40dc62eea1913dd93b03dc8cfa723e8f0d3ac25f2be02",
-    "/usr/share/APPLaunch/bin/M5CardputerZero-Files": "edc10d852fef8ed0a1ea92d238b4ddc3928610394ce56e097e82aa9bce5d4b13",
+    "/usr/share/APPLaunch/bin/M5CardputerZero-Compass": "4123629dbfbba261bd5729cbd9790ff558828bbbf330fbb030cb1ff3f7be2ac5",
+    "/usr/share/APPLaunch/bin/M5CardputerZero-Files": "480286a19519cfb2db96a84c3b24499ec89a56a05de3e3d657754bfaf63a2375",
     "/usr/share/APPLaunch/bin/M5CardputerZero-IR-Chat": "2558ce42fca03460d7a2ad41ec68415d4161790393bb61445998bd34b7a7c513",
     "/usr/share/APPLaunch/bin/M5CardputerZero-IR-Remote": "a6792c203eb580fecb0d421e308cccfb5f2eaf9d48623ed9be3c5c7928b7b7a6",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Keyboard-Guide": "2c9b41b8af91c35d1d8af356fbd47a12d623dc4fb9e92b6c88c7a49ffe4758ec",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Music": "2677cfc1ff8e4ef61710f486ed5d37c66c6cee7cd1113c53fe68b0ffc3d1510b",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Piano": "50645ba275e5d335898074ea632808d5d6f40388445ce78eab0033b968470c22",
     "/usr/share/APPLaunch/bin/M5CardputerZero-Recorder": "53e12d7b227699ae008e1ac88827e2b25ab5b8983c693fd4d94349f7b7536b9b",
-    "/usr/share/APPLaunch/bin/ZClaw": "91054e47123fb07ee030e89f64d54783b95c96ea25075bf62ad0a64ede1bbef3",
+    "/usr/share/APPLaunch/bin/ZClaw": "a22e4a66c150d4a0c056a474c434116708e5fa44f9c750a90440afb7aea06b64",
     "/usr/share/Cap-LoRa-1262/bin/Cap-LoRa-1262": "3274187ff45b72cb12d34e107ae701a7fcd4e595b8f75232332a0942aec33078"
   },
   "installed_packages": {
@@ -1658,7 +1674,7 @@
     },
     "applaunch": {
       "Architecture": "arm64",
-      "Version": "0.6.105"
+      "Version": "0.6.111"
     },
     "apt": {
       "Architecture": "arm64",
@@ -1738,7 +1754,7 @@
     },
     "camera": {
       "Architecture": "arm64",
-      "Version": "1.0.2-m5stack1"
+      "Version": "1.0.4-m5stack1"
     },
     "cifs-utils": {
       "Architecture": "arm64",
@@ -1946,7 +1962,7 @@
     },
     "factorytest": {
       "Architecture": "arm64",
-      "Version": "1.0.0-m5stack1"
+      "Version": "1.0.3-m5stack1"
     },
     "fakeroot": {
       "Architecture": "arm64",
@@ -2506,23 +2522,23 @@
     },
     "libcamera-dev": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
     "libcamera-ipa": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
     "libcamera-tools": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
     "libcamera-v4l2": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
-    "libcamera0.7": {
+    "libcamera0.8": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
     "libcap-ng0": {
       "Architecture": "arm64",
@@ -2722,7 +2738,7 @@
     },
     "libegl-mesa0": {
       "Architecture": "arm64",
-      "Version": "26.2.6-1~bpo13+0~rpt2"
+      "Version": "26.2.7-1~bpo13+0~rpt1"
     },
     "libegl1": {
       "Architecture": "arm64",
@@ -2838,7 +2854,7 @@
     },
     "libgbm1": {
       "Architecture": "arm64",
-      "Version": "26.2.6-1~bpo13+0~rpt2"
+      "Version": "26.2.7-1~bpo13+0~rpt1"
     },
     "libgcc-14-dev": {
       "Architecture": "arm64",
@@ -2894,7 +2910,7 @@
     },
     "libgl1-mesa-dri": {
       "Architecture": "arm64",
-      "Version": "26.2.6-1~bpo13+0~rpt2"
+      "Version": "26.2.7-1~bpo13+0~rpt1"
     },
     "libgles2": {
       "Architecture": "arm64",
@@ -2922,7 +2938,7 @@
     },
     "libglx-mesa0": {
       "Architecture": "arm64",
-      "Version": "26.2.6-1~bpo13+0~rpt2"
+      "Version": "26.2.7-1~bpo13+0~rpt1"
     },
     "libglx0": {
       "Architecture": "arm64",
@@ -3462,7 +3478,7 @@
     },
     "libopenexr-3-1-30": {
       "Architecture": "arm64",
-      "Version": "3.2.12-1~deb13u1"
+      "Version": "3.2.12-1~deb13u2"
     },
     "libopenfec1": {
       "Architecture": "arm64",
@@ -3566,11 +3582,11 @@
     },
     "libpipewire-0.3-0t64": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "libpipewire-0.3-modules": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "libpisp-common": {
       "Architecture": "all",
@@ -3664,26 +3680,6 @@
       "Architecture": "arm64",
       "Version": "3.13.5-2+deb13u5"
     },
-    "libqt5core5t64": {
-      "Architecture": "arm64",
-      "Version": "5.15.15+dfsg-6+deb13u1"
-    },
-    "libqt5dbus5t64": {
-      "Architecture": "arm64",
-      "Version": "5.15.15+dfsg-6+deb13u1"
-    },
-    "libqt5gui5t64": {
-      "Architecture": "arm64",
-      "Version": "5.15.15+dfsg-6+deb13u1"
-    },
-    "libqt5network5t64": {
-      "Architecture": "arm64",
-      "Version": "5.15.15+dfsg-6+deb13u1"
-    },
-    "libqt5widgets5t64": {
-      "Architecture": "arm64",
-      "Version": "5.15.15+dfsg-6+deb13u1"
-    },
     "libqt6core6t64": {
       "Architecture": "arm64",
       "Version": "6.8.2+dfsg-9+deb13u2"
@@ -3750,7 +3746,7 @@
     },
     "librpicam-app1": {
       "Architecture": "arm64",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "librpieepromab0": {
       "Architecture": "arm64",
@@ -3894,15 +3890,15 @@
     },
     "libspa-0.2-bluetooth": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "libspa-0.2-libcamera": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "libspa-0.2-modules": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "libspeex1": {
       "Architecture": "arm64",
@@ -4300,10 +4296,6 @@
       "Architecture": "arm64",
       "Version": "1.17.0-2+b1"
     },
-    "libxcb-xinerama0": {
-      "Architecture": "arm64",
-      "Version": "1.17.0-2+b1"
-    },
     "libxcb-xinput0": {
       "Architecture": "arm64",
       "Version": "1.17.0-2+b1"
@@ -4546,11 +4538,11 @@
     },
     "m5cardputerzero-compass": {
       "Architecture": "arm64",
-      "Version": "0.2.4"
+      "Version": "1.0.1"
     },
     "m5cardputerzero-files": {
       "Architecture": "arm64",
-      "Version": "1.0.2"
+      "Version": "1.0.3"
     },
     "m5cardputerzero-ir-chat": {
       "Architecture": "arm64",
@@ -4606,7 +4598,7 @@
     },
     "mesa-libgallium": {
       "Architecture": "arm64",
-      "Version": "26.2.6-1~bpo13+0~rpt2"
+      "Version": "26.2.7-1~bpo13+0~rpt1"
     },
     "mkvtoolnix": {
       "Architecture": "arm64",
@@ -4750,19 +4742,19 @@
     },
     "pipewire": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "pipewire-bin": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "pipewire-libcamera": {
       "Architecture": "all",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "pipewire-pulse": {
       "Architecture": "arm64",
-      "Version": "1.4.2-1+rpt3"
+      "Version": "1.4.2-1+rpt5"
     },
     "pkexec": {
       "Architecture": "arm64",
@@ -4938,7 +4930,7 @@
     },
     "python3-libcamera": {
       "Architecture": "arm64",
-      "Version": "0.7.2+rpt20260817-1"
+      "Version": "0.8.0+rpt20261104-1"
     },
     "python3-libgpiod": {
       "Architecture": "arm64",
@@ -4986,7 +4978,7 @@
     },
     "python3-picamera2": {
       "Architecture": "all",
-      "Version": "0.3.37-1"
+      "Version": "0.3.39-1"
     },
     "python3-pidng": {
       "Architecture": "arm64",
@@ -5003,10 +4995,6 @@
     "python3-pip-whl": {
       "Architecture": "all",
       "Version": "25.1.1+dfsg-1+rpt1"
-    },
-    "python3-prctl": {
-      "Architecture": "arm64",
-      "Version": "1.8.1-1+b7"
     },
     "python3-pycryptodome": {
       "Architecture": "arm64",
@@ -5158,7 +5146,7 @@
     },
     "rpi-eeprom": {
       "Architecture": "all",
-      "Version": "28.36-1"
+      "Version": "28.37-1"
     },
     "rpi-keyboard-config": {
       "Architecture": "all",
@@ -5190,27 +5178,27 @@
     },
     "rpicam-apps": {
       "Architecture": "all",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpicam-apps-core": {
       "Architecture": "arm64",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpicam-apps-encoder": {
       "Architecture": "arm64",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpicam-apps-lite": {
       "Architecture": "all",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpicam-apps-opencv-postprocess": {
       "Architecture": "arm64",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpicam-apps-preview": {
       "Architecture": "arm64",
-      "Version": "1.13.0-1"
+      "Version": "1.15.0-1"
     },
     "rpieepromab": {
       "Architecture": "arm64",
@@ -5310,15 +5298,15 @@
     },
     "tyrell-zero-power-policy": {
       "Architecture": "arm64",
-      "Version": "0.1.0-1"
+      "Version": "0.1.1-1"
     },
     "tyrell-zero-session": {
       "Architecture": "arm64",
-      "Version": "0.3.0-1"
+      "Version": "0.3.1-1"
     },
     "tyrell-zero-store": {
       "Architecture": "arm64",
-      "Version": "0.1.0-1"
+      "Version": "0.1.1-1"
     },
     "tzdata": {
       "Architecture": "all",
@@ -5510,11 +5498,11 @@
     "/lib/aarch64-linux-gnu/libc.so.6": {
       "sha256": "299c5552010a3daed3d45ec46c231d28a50c501ab1f84ccebac4561939954986"
     },
-    "/lib/aarch64-linux-gnu/libcamera-base.so.0.7": {
-      "symlink": "libcamera-base.so.0.7.2"
+    "/lib/aarch64-linux-gnu/libcamera-base.so.0.8": {
+      "symlink": "libcamera-base.so.0.8.0"
     },
-    "/lib/aarch64-linux-gnu/libcamera.so.0.7": {
-      "symlink": "libcamera.so.0.7.2"
+    "/lib/aarch64-linux-gnu/libcamera.so.0.8": {
+      "symlink": "libcamera.so.0.8.0"
     },
     "/lib/aarch64-linux-gnu/libcap-ng.so.0": {
       "symlink": "libcap-ng.so.0.0.0"
@@ -5536,6 +5524,9 @@
     },
     "/lib/aarch64-linux-gnu/libcurl-gnutls.so.4": {
       "symlink": "libcurl-gnutls.so.4.8.0"
+    },
+    "/lib/aarch64-linux-gnu/libcurl.so.4": {
+      "symlink": "libcurl.so.4.8.0"
     },
     "/lib/aarch64-linux-gnu/libdaemon.so.0": {
       "symlink": "libdaemon.so.0.5.0"
@@ -5907,7 +5898,7 @@
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/d3d12_drv_video.so": {
-      "symlink": "../libgallium-26.2.6-1~bpo13+0~rpt2.so"
+      "symlink": "../libgallium-26.2.7-1~bpo13+0~rpt1.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/drm-rp1-dpi_dri.so": {
       "symlink": "libdril_dri.so"
@@ -5973,7 +5964,7 @@
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/libdril_dri.so": {
-      "sha256": "80f1f4fa8ffb05ea6de04d8d22827d900a45f126636209a2b0eb460418d4f01a"
+      "sha256": "d4099936f103bbd81e7e5d6be4ba283b5efe6b5643ccc00d71836bf4050b40d4"
     },
     "/usr/lib/aarch64-linux-gnu/dri/lima_dri.so": {
       "symlink": "libdril_dri.so"
@@ -6003,7 +5994,7 @@
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/nouveau_drv_video.so": {
-      "symlink": "../libgallium-26.2.6-1~bpo13+0~rpt2.so"
+      "symlink": "../libgallium-26.2.7-1~bpo13+0~rpt1.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/panel-mipi-dbi_dri.so": {
       "symlink": "libdril_dri.so"
@@ -6024,13 +6015,13 @@
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/r600_drv_video.so": {
-      "symlink": "../libgallium-26.2.6-1~bpo13+0~rpt2.so"
+      "symlink": "../libgallium-26.2.7-1~bpo13+0~rpt1.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/radeonsi_dri.so": {
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/radeonsi_drv_video.so": {
-      "symlink": "../libgallium-26.2.6-1~bpo13+0~rpt2.so"
+      "symlink": "../libgallium-26.2.7-1~bpo13+0~rpt1.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/rcar-du_dri.so": {
       "symlink": "libdril_dri.so"
@@ -6081,7 +6072,7 @@
       "symlink": "libdril_dri.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/virtio_gpu_drv_video.so": {
-      "symlink": "../libgallium-26.2.6-1~bpo13+0~rpt2.so"
+      "symlink": "../libgallium-26.2.7-1~bpo13+0~rpt1.so"
     },
     "/usr/lib/aarch64-linux-gnu/dri/vkms_dri.so": {
       "symlink": "libdril_dri.so"
@@ -6102,7 +6093,7 @@
       "sha256": "5ed65daed467e10a925a3b7581e02a5d0ead0717e4eb17f2bf854a665471d921"
     },
     "/usr/lib/aarch64-linux-gnu/gbm/dri_gbm.so": {
-      "sha256": "3b4ddb6adcee253188981c0924c3c844dbf6dc47fc33a503b88b4dbd696ee920"
+      "sha256": "6d435ad2148288983a09730e507551c59393867a6ea371e5c632b9ad54d4fc40"
     },
     "/usr/lib/aarch64-linux-gnu/gconv/ANSI_X3.110.so": {
       "sha256": "0a170860ace28d8d25b9f8d3758219e9ed93933b07dcb6ffc38348fa4c86a09b"
@@ -6942,7 +6933,7 @@
       "symlink": "libEGL_mesa.so.0.0.0"
     },
     "/usr/lib/aarch64-linux-gnu/libEGL_mesa.so.0.0.0": {
-      "sha256": "48b2da135bb0be5c3f936a4894ba46651e01a4daac13bc33dbd37c0985851035"
+      "sha256": "9024575ebf679547f9bd9d2b58bd72ba8c7627b98a8fc152180c604f048bb837"
     },
     "/usr/lib/aarch64-linux-gnu/libFLAC.so.14": {
       "symlink": "libFLAC.so.14.0.0"
@@ -6975,7 +6966,7 @@
       "symlink": "libGLX_mesa.so.0.0.0"
     },
     "/usr/lib/aarch64-linux-gnu/libGLX_mesa.so.0.0.0": {
-      "sha256": "a4fda097dcef19974c5d6653ae9406803a922e8e1dc389cf25aa443ff05459ee"
+      "sha256": "9d30c8b81a4be39f74777f8bd92dca51c1d327c2e3fe7e2263e4d698712542d1"
     },
     "/usr/lib/aarch64-linux-gnu/libGLdispatch.so.0": {
       "symlink": "libGLdispatch.so.0.0.0"
@@ -7051,78 +7042,6 @@
     },
     "/usr/lib/aarch64-linux-gnu/libOpenGL.so.0.0.0": {
       "sha256": "3a97c7377af7d2d5370f47d6ac73e3d783965e630223750dfe19ed35d0c4f49d"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Core.so.5": {
-      "symlink": "libQt5Core.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Core.so.5.15": {
-      "symlink": "libQt5Core.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Core.so.5.15.15": {
-      "sha256": "9f9fc73d49b2dd020707fa0b42a620a0951c7ee468d70a8b654eabf5fb2c8fad"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5DBus.so.5": {
-      "symlink": "libQt5DBus.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5DBus.so.5.15": {
-      "symlink": "libQt5DBus.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5DBus.so.5.15.15": {
-      "sha256": "c64f53513c33a3e8507ba7835e6260fc4315b3accaf86329898696d4ca511b62"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFSDeviceIntegration.so.5": {
-      "symlink": "libQt5EglFSDeviceIntegration.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFSDeviceIntegration.so.5.15": {
-      "symlink": "libQt5EglFSDeviceIntegration.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFSDeviceIntegration.so.5.15.15": {
-      "sha256": "4260fe484d6950ad189d2b46f63a903f552fa95eeae026a0d7d5724e226adcf2"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFsKmsSupport.so.5": {
-      "symlink": "libQt5EglFsKmsSupport.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFsKmsSupport.so.5.15": {
-      "symlink": "libQt5EglFsKmsSupport.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5EglFsKmsSupport.so.5.15.15": {
-      "sha256": "1de30b9cef6253075509dc916d0cd1dd43f2cf90cbf4151914a9eb31c55cb08e"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Gui.so.5": {
-      "symlink": "libQt5Gui.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Gui.so.5.15": {
-      "symlink": "libQt5Gui.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Gui.so.5.15.15": {
-      "sha256": "b7ba1b3de460138cd912ea29d792e6de35c7b5480671472a7aeeac7ba84ec005"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Network.so.5": {
-      "symlink": "libQt5Network.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Network.so.5.15": {
-      "symlink": "libQt5Network.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Network.so.5.15.15": {
-      "sha256": "f84c6b1e1bd1f5b4ea4b324426330e6043f3ee62927bfc7fac2326a41d1cf27b"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Widgets.so.5": {
-      "symlink": "libQt5Widgets.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Widgets.so.5.15": {
-      "symlink": "libQt5Widgets.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5Widgets.so.5.15.15": {
-      "sha256": "8db3c47b79b281622a95b7561dbb3fb0f15e2aa4d0439f9eb03bfa572fe27542"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5XcbQpa.so.5": {
-      "symlink": "libQt5XcbQpa.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5XcbQpa.so.5.15": {
-      "symlink": "libQt5XcbQpa.so.5.15.15"
-    },
-    "/usr/lib/aarch64-linux-gnu/libQt5XcbQpa.so.5.15.15": {
-      "sha256": "92538d21eac917a052368cb40f46a6e219c76f54fc736c436c4adcb22f808410"
     },
     "/usr/lib/aarch64-linux-gnu/libQt6Core.so.6": {
       "symlink": "libQt6Core.so.6.8.2"
@@ -8214,40 +8133,40 @@
       "sha256": "a855b2dad43fb7ae31fa8ea708b5c56f8b56d686bee4f1d0ebc5496b5c6343df"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera-base.so": {
-      "symlink": "libcamera-base.so.0.7"
+      "symlink": "libcamera-base.so.0.8"
     },
-    "/usr/lib/aarch64-linux-gnu/libcamera-base.so.0.7": {
-      "symlink": "libcamera-base.so.0.7.2"
+    "/usr/lib/aarch64-linux-gnu/libcamera-base.so.0.8": {
+      "symlink": "libcamera-base.so.0.8.0"
     },
-    "/usr/lib/aarch64-linux-gnu/libcamera-base.so.0.7.2": {
-      "sha256": "3654f347be798d188f6f1ff77d603d03dd381de0ea076122babbc5eed1d1358b"
+    "/usr/lib/aarch64-linux-gnu/libcamera-base.so.0.8.0": {
+      "sha256": "a8bf366a21a719b2247c2d7671386e904e83852a4b5042bd16bc6c8faf90fbbc"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera.so": {
-      "symlink": "libcamera.so.0.7"
+      "symlink": "libcamera.so.0.8"
     },
-    "/usr/lib/aarch64-linux-gnu/libcamera.so.0.7": {
-      "symlink": "libcamera.so.0.7.2"
+    "/usr/lib/aarch64-linux-gnu/libcamera.so.0.8": {
+      "symlink": "libcamera.so.0.8.0"
     },
-    "/usr/lib/aarch64-linux-gnu/libcamera.so.0.7.2": {
-      "sha256": "5ea0d7c3247452fa4602bfcb9815212062456b93f26d3e154b5c3cd31bef00c6"
+    "/usr/lib/aarch64-linux-gnu/libcamera.so.0.8.0": {
+      "sha256": "a39f8d1c0c3fdcc3d7547760b5707c01d1478c0892f6f71ca21b5f78e12133f6"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_pisp.so": {
-      "sha256": "d450fb8d0d134451ad8a2a68f2b95ad7360d41237c0180009bc02b9c7a475da2"
+      "sha256": "580924ef47a04b4a9a3578bf29be1b5ac226a0bea65cdbd685bfa22d76e28a6d"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_pisp.so.sign": {
-      "sha256": "5a3db09b522b89f61d4a0b6a60dd344712380e924452741be051fd245b59b6e2"
+      "sha256": "89e6109e1bfb30ae54d13ff49def98eebbc07bde70e903017dc40b2ab35af05e"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_vc4.so": {
-      "sha256": "65bd8be508d6ecef599dc0828b94bee50a7a6dd984608acbbdb9488ae198cb81"
+      "sha256": "7df84e4ec27da1e20e4ec8bb8877c76283a5096800adf37f1610f5eca97f9f19"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_rpi_vc4.so.sign": {
-      "sha256": "1adbe3dbdd9f19e34dac14b2ec646fbd81f135c0deb4efb3744dcf86832ad926"
+      "sha256": "574987bf121d8f1fba4d94a52f3dc655497e2f79ab821a74e34d7ac7bc55b18d"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_vimc.so": {
-      "sha256": "f1aa4c8d749108758912d1516856d79c8f741040eb478cb643272f4c2106923c"
+      "sha256": "153f0087dd49f5608d78a30e73b8390f587614b29484aa45084dfcbec31789be"
     },
     "/usr/lib/aarch64-linux-gnu/libcamera/ipa/ipa_vimc.so.sign": {
-      "sha256": "011bd26c799a3c318e087e2dd0742542636ba388a48a8d3eeea155f8028a8096"
+      "sha256": "71b46d8e9de112c507454bcb0637d06a6794d2f648530281246e6430283c5930"
     },
     "/usr/lib/aarch64-linux-gnu/libcap-ng.so.0": {
       "symlink": "libcap-ng.so.0.0.0"
@@ -8786,8 +8705,8 @@
     "/usr/lib/aarch64-linux-gnu/libfuse3.so.4": {
       "symlink": "libfuse3.so.3.17.2"
     },
-    "/usr/lib/aarch64-linux-gnu/libgallium-26.2.6-1~bpo13+0~rpt2.so": {
-      "sha256": "0330e2aec721436c28b67f78240055692b21fa3bcca7f864a87f5e6ef9e9f5ee"
+    "/usr/lib/aarch64-linux-gnu/libgallium-26.2.7-1~bpo13+0~rpt1.so": {
+      "sha256": "d30da936e85f751ee504e6ef285b991aa9a77d8d9c6d6aa90986556f400db9ee"
     },
     "/usr/lib/aarch64-linux-gnu/libgbm.so.1": {
       "symlink": "libgbm.so.1.0.0"
@@ -9981,7 +9900,7 @@
       "symlink": "libpipewire-0.3.so.0.1402.0"
     },
     "/usr/lib/aarch64-linux-gnu/libpipewire-0.3.so.0.1402.0": {
-      "sha256": "0e669577507f47840c584eaf992b79a4bc2c9583b992a1128733e25b70f17cda"
+      "sha256": "4d11a5336d3122487fe1d0a18d8cd0549b8073de89d521386b65ce0cb1f25314"
     },
     "/usr/lib/aarch64-linux-gnu/libpisp.so.1": {
       "symlink": "libpisp.so.1.8.0"
@@ -10179,10 +10098,10 @@
       "sha256": "cedc1ed49f28d60877a3514972d0e63fc971b29d3933caab7a6ecb9f1db98db0"
     },
     "/usr/lib/aarch64-linux-gnu/librpicam_app.so.1": {
-      "symlink": "librpicam_app.so.1.13.0"
+      "symlink": "librpicam_app.so.1.15.0"
     },
-    "/usr/lib/aarch64-linux-gnu/librpicam_app.so.1.13.0": {
-      "sha256": "0dc89857c0777c422fb3447932c0fed27b524745371e92476a1aadcb31d02fba"
+    "/usr/lib/aarch64-linux-gnu/librpicam_app.so.1.15.0": {
+      "sha256": "549c606513efba9f513e42926f9a43de5c1113ab608fe31209d0e6568b0de14b"
     },
     "/usr/lib/aarch64-linux-gnu/librpieepromab.so.0": {
       "sha256": "fd7558d00e7332bb8ef09539514b4846e6fcdb2b820e704f1b1b3db837797ca8"
@@ -10889,12 +10808,6 @@
     "/usr/lib/aarch64-linux-gnu/libxcb-xfixes.so.0.0.0": {
       "sha256": "ea47ff0969f4df4a507b4ada5fc144a0511a00e1a54cd32044d92ae18d6bc441"
     },
-    "/usr/lib/aarch64-linux-gnu/libxcb-xinerama.so.0": {
-      "symlink": "libxcb-xinerama.so.0.0.0"
-    },
-    "/usr/lib/aarch64-linux-gnu/libxcb-xinerama.so.0.0.0": {
-      "sha256": "7e0c579036da7806395e99939760fe8d05684a89fb7732ff8cb760f35fd1e8d8"
-    },
     "/usr/lib/aarch64-linux-gnu/libxcb-xinput.so.0": {
       "symlink": "libxcb-xinput.so.0.1.0"
     },
@@ -11229,7 +11142,7 @@
       "sha256": "0ab44e5e653fb3c5f82d4550e42aec73cddca6fa60787a1af3a66b0c54d3e98e"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-avb.so": {
-      "sha256": "ff26d9641828da77124d0d16274c0de74e4855326d2cd8467e8f7f56233dba7e"
+      "sha256": "4563f8908162496d408fe8a1e259445ebdbf8832f81372c7505433b15b9cb3ef"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-client-device.so": {
       "sha256": "492cea61d4acce254bb9989649df4f5d027665d3efa82a6f7f3109dbf4c08a11"
@@ -11241,7 +11154,7 @@
       "sha256": "3e5c84a3c0ec6695894a5426c894d2d3c4dd02621ad2644471f6372ceeaf5094"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-echo-cancel.so": {
-      "sha256": "64028169c5763f82c256f5147166a8f698788d1f55d6456da1c4b0fb56b83bd3"
+      "sha256": "aedb5a759f540f20e84f2e65a0250735c0ae87717a8e2ec45161a70639210d21"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-fallback-sink.so": {
       "sha256": "1f698f519cb4f7fa9f705231d668aa5c910f72b5483923e019c87f3064bfe1b7"
@@ -11286,13 +11199,13 @@
       "sha256": "45bf96a7dc5a334e871f9fe7df01cbf460538a1b7e431585086ff33ae057dfbf"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-native.so": {
-      "sha256": "7f5d906984f927bce4390f6d36d6b6159231b1fd7ebac62de1d654e88696d1e2"
+      "sha256": "7e1462aedf873f6ee4c903ef1490b0541f6a1732ac69ee6994bd3dd8cc8bad07"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-pulse.so": {
-      "sha256": "961019790afe0c1ecd673650ce1bc354be2c75bb144d6e8118304c8007ed487b"
+      "sha256": "c2348900ced5a3cbe638ff4443909aa52069dfcef8dde32d8f605ccdda8c9da6"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-protocol-simple.so": {
-      "sha256": "5b62c92f266bee5c09e03de2406a1b2c615c2f7af9b983fb235af457ddad3981"
+      "sha256": "ca75693959e6a4521b277c3dc4d0338dc92ff30670885d7adbce2f7a94efb76b"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-pulse-tunnel.so": {
       "sha256": "f5c08e606209c791877c0dd572e29f6e0cc7425af11b913063240528a16656b5"
@@ -11301,7 +11214,7 @@
       "sha256": "29cf133b0a2f34823887b92af3fef37a92b9eee19ec0855428d080e059dbfefb"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-raop-sink.so": {
-      "sha256": "6d048886ddec7a72c69578a869e53d83bea93bc29054a9c5c2c1205ec5b9606c"
+      "sha256": "0a0da6f699ec6be9738cff6ffbf579bc568a1689ccb9b8ec8f89d8b36ff5378f"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-roc-sink.so": {
       "sha256": "d326a25ec37d2a4b67e59f32ff22051ef97d1f30ba7959f9087560af5eb5928f"
@@ -11319,13 +11232,13 @@
       "sha256": "4364df230555398757f9354d16a67b53382dbbf33ee15ba86070e8da9b93ebd5"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-session.so": {
-      "sha256": "c76b70950af46564b5fc71207423e69c0a15bfbe4adf1792d100ca3f58199a26"
+      "sha256": "e2cdbf437cfe6d8cdc623734f1fad88c0db9485dd4ff0422a89341ee7f57b997"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-sink.so": {
-      "sha256": "f49abcfbee7ed2ae789181b76d1f729a97ae92f6aa7bbc391c1a3a24580d3f55"
+      "sha256": "50f2cce1f37afaf033a0ed56dcad481171ee432e9fcd462f3c2bb858ac347983"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-rtp-source.so": {
-      "sha256": "ce87037166065677a58bcded135d1d26eb5ed02aaafac4fd805bb0e047849e13"
+      "sha256": "4440dcf44d87f59df5f491e0a5ad86bc21dcc1d7402cfa2cc2ac4283f979a9b9"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-session-manager.so": {
       "sha256": "fb63beb993163bc7d2cf119229da83e6887eb6e57cdb6589ed9f9b3ab3a9cf6e"
@@ -11346,10 +11259,10 @@
       "sha256": "b40fafb715edec349c8c155bf1a2f2d6537f2040bca8afc02d704273898cfe20"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-recv.so": {
-      "sha256": "5fd05e01b2833fe1420fcec66115dbaee06ea8d9ac67b1bb740dcb577ebe375d"
+      "sha256": "e93cb7517d62a06708b2949169172cb900cb466bc5e27a27db6490345beb1984"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-vban-send.so": {
-      "sha256": "326d321d6292dd347a5dfb51944aaf1912fa4544d4618442db1b416838797567"
+      "sha256": "6fd96db632221c66c7805257ffb915d763eaa0def2d196c4235a3a2091c27169"
     },
     "/usr/lib/aarch64-linux-gnu/pipewire-0.3/libpipewire-module-zeroconf-discover.so": {
       "sha256": "0dab8eb8a57f7bad9bf2625f71c17c9545eef7e61f7cbdf7b07b390699e8780b"
@@ -11359,87 +11272,6 @@
     },
     "/usr/lib/aarch64-linux-gnu/pulseaudio/libpulsedsp.so": {
       "sha256": "0b2597fbe2cfab834175fe6cf7bd2d46e416bf77be7bc21bd8a5c4780105aec0"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/bearer/libqconnmanbearer.so": {
-      "sha256": "ae4f566477e358803d60ac52c6f42e1e4bf3661bbf445bd7453c72ee73517023"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/bearer/libqgenericbearer.so": {
-      "sha256": "0f876fc4ace11a7a2324eb17a45413a2df3813e85551be7d0e3d19b4bb41d6dc"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/bearer/libqnmbearer.so": {
-      "sha256": "d88810e0a9042457efe4ba9e6cfef08392aca587cd9a29cdd183cae7f449bc7f"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/egldeviceintegrations/libqeglfs-emu-integration.so": {
-      "sha256": "c9151ede6822e94a1fd0aa0f6b54064ac4373ffb536c783cb72e6d3f5633bba8"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/egldeviceintegrations/libqeglfs-kms-egldevice-integration.so": {
-      "sha256": "a0d955a5cd8b24c0c75e3107bdeb94b4ab6837a71a7e44220d6258a81794f582"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/egldeviceintegrations/libqeglfs-kms-integration.so": {
-      "sha256": "426e5eae507785b55d21737798e3ddf8e8e126661e54d89a680de5437c403fd6"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/egldeviceintegrations/libqeglfs-x11-integration.so": {
-      "sha256": "4ee691d6dd95da5cba849e47ee4ae02cf894e4dc2433e1486b2787f5c21f2f3d"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqevdevkeyboardplugin.so": {
-      "sha256": "5694f9b01e8b3dbd3cfa51a846fad561ecaa8433133a7a253a46b9b988fe65b0"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqevdevmouseplugin.so": {
-      "sha256": "57b0d6079cb5194412da55c54d0459f624fe87256725b62670306025a08c89cd"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqevdevtabletplugin.so": {
-      "sha256": "af600d12a67d4f8a4597a0b4f16d30bc51983d56a1684ab022a2c173e58fef20"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqevdevtouchplugin.so": {
-      "sha256": "ec21f1eb60b3a149b444b3d378887df1f19e89b19c2e3996fa6970a1363d85b2"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqlibinputplugin.so": {
-      "sha256": "75127b069706d9536c3fd4b7a53d95c8f0c5cd91698c01ab31d5cbe780488109"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/generic/libqtuiotouchplugin.so": {
-      "sha256": "3dca77b0ef45fd5ec3aa514df90c247cab6ab3b4c31b559ccaf798f072a34d9f"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/imageformats/libqgif.so": {
-      "sha256": "d66be0482a7bfa96cecfd9c58b552371a8e9e019068efaf9b1cbfb84ed3148db"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/imageformats/libqico.so": {
-      "sha256": "738f48f776a186860b259d043167ee4e9a45d00186434a0b89d922b4692a9092"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/imageformats/libqjpeg.so": {
-      "sha256": "7663f9e9c193a8e6149c576b14e9ffb66917c2e59591aacb49f92195186ebdc4"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforminputcontexts/libcomposeplatforminputcontextplugin.so": {
-      "sha256": "cd0ead1d214d6d425b48b81cbf115f21ea89a37c68bc353d6633c9e387dda55a"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforminputcontexts/libibusplatforminputcontextplugin.so": {
-      "sha256": "a2feeb7175be3309943408739dce672fa1ade560813e4f4d967c6a1d559117f2"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqeglfs.so": {
-      "sha256": "b70455a00a9dd069e67c915d0e1e80eee2cbb6c4d8d1778535098be50169f04b"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqlinuxfb.so": {
-      "sha256": "2f9105fa5e0d4d90f39052e60f9646bc166d1653f84d9b6d34e8bbc6bb04b08a"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqminimal.so": {
-      "sha256": "944a8a85dce6300c68f33ce16f3ebeb0f72e3637de43e9cb737469d0cff124db"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqminimalegl.so": {
-      "sha256": "be322ddc62de1d863bc9a15a52e7eca9135068d103254357893c66139acf872f"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqoffscreen.so": {
-      "sha256": "3cc2d0f263c0da382adaf05b0d9144627e2f4b64b21cee3de26897eef12efb48"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqvnc.so": {
-      "sha256": "b3ed72cf82ed6c0e1b0f9e160e9a043fd7284c1ac795d7bc4cfb3a4f22ab08ee"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/platforms/libqxcb.so": {
-      "sha256": "ad27113d82156edb51ca0ce80bc718db0ec6b1bad9f6a8c3ffdc8d9040575902"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/xcbglintegrations/libqxcb-egl-integration.so": {
-      "sha256": "e48b55f82b8bdf6d66718852a55c66123178004641f2e3a5027915dc876be298"
-    },
-    "/usr/lib/aarch64-linux-gnu/qt5/plugins/xcbglintegrations/libqxcb-glx-integration.so": {
-      "sha256": "2d956254f61658b249d0967951111f5c7f400b1286d41b29694baee2bb6bf881"
     },
     "/usr/lib/aarch64-linux-gnu/qt6/plugins/egldeviceintegrations/libqeglfs-emu-integration.so": {
       "sha256": "45460e9da31e2c8679ce4c9b10b61449f619b3e3f8972388d8193f1c78fb9d02"
@@ -11514,25 +11346,25 @@
       "sha256": "9cd356d448c98f68c124a3705dc2974681bf54e734784d337ba0163edc126fd5"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-encoder/libav-encoder.so": {
-      "sha256": "e5411523e97277c6790791d2abc53b90e67cc1769965a1f96a8b52ebf4c6fdab"
+      "sha256": "d77cd178a880882075723b656bba753290e1a97102b89bdd442079e82abd0ab9"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-postproc/core-postproc.so": {
-      "sha256": "c0849b6d64e63a53f857b38c69b1fd2a98e5856488820563d6754c186af8516d"
+      "sha256": "8bb5c4fb810eb72c358ee926afa5bee14d55ecff7757291f11182f8eaeba2ac3"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-postproc/opencv-postproc.so": {
-      "sha256": "71c005cd6db5c7615223eb135ac2105346826cf4efef29945b6894210592f547"
+      "sha256": "6732565de367085d28b433dbaa564bbb2bbabc8e7f2d22d67518e0d5e55a98bf"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-preview/drm-preview.so": {
-      "sha256": "63288df49fbc4ac240b30b5836a578c60e213c2143534c1976e654874e2c61f9"
+      "sha256": "dd0c4f6d45d7f1528605cb0b2dcd950ba860c34192a6918c7c6d041ad21f9b23"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-preview/egl-preview.so": {
-      "sha256": "58eb696e93ce54494c60dfbc6a9bcff9eb66dafd5f66cc3aa30764e971c33e16"
+      "sha256": "8074741b55119f2e337645b5fd3f0656999580123817c07fe8747d46dcd7d5dc"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-preview/qt-preview.so": {
-      "sha256": "b324677b4649087bce3cb8bcdbea9ee7628b4d57c6f38f3b66764609e1491c2f"
+      "sha256": "754add6b5c1374ced871ddfa937f0502a6b5ac50b42022db97c8f526fca05416"
     },
     "/usr/lib/aarch64-linux-gnu/rpicam-apps-preview/wayland-egl-preview.so": {
-      "sha256": "762c73f23aba8a33fee8f9b272627d5ec58fca60600a10d6f131b6550e3ebae5"
+      "sha256": "c6ffab268f95cbd0571d93c29db8c86cd7d050d2f2182b0a57c0caa6a3f8fe09"
     },
     "/usr/lib/aarch64-linux-gnu/rsocket/librspreload.so": {
       "sha256": "feb26f0abe967f15dbbf2160ae07a4d6b8a06ee43ce1ffdc777d270cf42164b6"
@@ -11760,31 +11592,31 @@
       "sha256": "93078c67577eceeb04409b14620e2b8ece1d06ed95fa7df1ba2ac6f58048797c"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-null.so": {
-      "sha256": "24060bc18c2fbbd954bc3f7772372583e2be2d0baed784660ac46e2076125428"
+      "sha256": "26c584d264bb62b1efc176b9ac986bac4164309694f417f78778f6a4d53d93ed"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/aec/libspa-aec-webrtc.so": {
-      "sha256": "3b0b92f342555acfdc98f7063ed4c8dd307448c79e8dcebd4abe494ddec8e738"
+      "sha256": "7f51e58c1b212c38bc9e153727ffe0404a35a2156ff21c9cc66fe17062422dc4"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/alsa/libspa-alsa.so": {
-      "sha256": "ab960619dce3657fddb1eccda06b3c06d421078b29c5246f70a28844ed745ae0"
+      "sha256": "e110c93e1343fad623dfa44758ff64ed4e86737e98ef8632ef57bd13b77706be"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audioconvert/libspa-audioconvert.so": {
-      "sha256": "f5f4e7d4ef9cfb11f498e8ee359cb04c4974ab166d025c194629409e17749890"
+      "sha256": "b31c8385fc062ff4563e78c9c54db59098b2c676676e06cca09a67f27b511553"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audiomixer/libspa-audiomixer.so": {
-      "sha256": "7902192105a826b400d32791624cbc6b91571c24b699b173b4eca33f93f60ede"
+      "sha256": "b7c39902a63a53b17006e0148f7a0709dcfc0aac99df1ba60ccebcc9714a6824"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/audiotestsrc/libspa-audiotestsrc.so": {
-      "sha256": "05742b27486cc8eacf5b2a8e64272dc8b1c96d7c3f1a8d07a58f79fa1e08ca67"
+      "sha256": "dbdface0f7128bc57bfd818f89ddcd765292d32767ee4694cda8614a20b1fca8"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/avb/libspa-avb.so": {
-      "sha256": "92feab85ff1621dda9af3ecb5224192f445e01d56766ed333ea5d1c59cc5c533"
+      "sha256": "ac0fc1155bbfb8deac7003d9a5bfc88fc72d20f25e1d63d88ba6c2e39c5ba745"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-bluez5.so": {
-      "sha256": "7509383ed391cb153863bc179b6838fcecbf44d1aa953c845e335c9cce3ad608"
+      "sha256": "615ece913eb0fac8f540a52c57730d021d6ae7946256a386e5316524a8f9eb9e"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-aptx.so": {
-      "sha256": "151c448cf6b55e340a26b5350e7502cb8505f1b6fc2b93b7eb4da1a141bd177a"
+      "sha256": "d6cb927986c6f0b1edf78d3c0f2b2a653b55cb283ad76410191fa4021e72a9bc"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-faststream.so": {
       "sha256": "d2256af3f5a837c3cf2f1434b1f6c705255c630919aa27110b985401fb834ea7"
@@ -11805,55 +11637,55 @@
       "sha256": "c1c5fe95ff7afd7f8af0b8803844337f5cfb759ed1e3fbc5bacea16078737389"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/bluez5/libspa-codec-bluez5-sbc.so": {
-      "sha256": "16e974f609d901230e7cecd13814432ed257129ed98c58a9c57b2f5a1ab405ea"
+      "sha256": "b26fd193608dde05a91aaf84985008d24d2f273aaabc68e02a94fd923610429d"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/control/libspa-control.so": {
-      "sha256": "51190b3167af3372519e9b1d60bed4eb308232fc679e4d7cfe041dd01a1985dd"
+      "sha256": "68c0f60734636e53d4dec45a7c3d5dd4f95a4e3305c7f5a07083163f3c9e6a4a"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-builtin.so": {
-      "sha256": "8f11dd6224912764af9b4f9c692994d9298665bb588fe899d99a49c177683247"
+      "sha256": "4b35bb89512042058a15b31c40dd47bd458a5127e43ab93e9785300b55b36b9d"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ebur128.so": {
-      "sha256": "a5b081b15080b182a970f4d1a56351fca9ac0b5ece9ec2bd69a83d06b5f6fd01"
+      "sha256": "5d0ad5e53dc495b89f89ba42901615ff6f73ffad52d912041421efa8cbe55594"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-ladspa.so": {
-      "sha256": "0c57d163c2aa3df93ea6a12555102a7fc25a219a8337f976c837594fd4dd8af9"
+      "sha256": "a1a5b5f1de2d08a3e55a5e1f4cc30026b234c10c5e4c1ed9b5d3df8e13fca598"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-lv2.so": {
-      "sha256": "0cbbd60bca95514e394a5de6daf612c492a3f2999efe1028c9552deb612a3fd8"
+      "sha256": "19608acf9413ceee800917fe180454197496372143953625edb010ad7fdff6b4"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph-plugin-sofa.so": {
-      "sha256": "d70aa5d3a5e005a06620130f341b504b0abd0b6bc83a6793b7b1bd5badb2cc23"
+      "sha256": "1bef50a3953ef546542b08eb0587acc15871d80e7f8face98efe43ca1be11b82"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/filter-graph/libspa-filter-graph.so": {
-      "sha256": "b8f04814d66f154ba7ef9d297e47596005a18e3526d804ae428f251b0623ef34"
+      "sha256": "9e56f17b01d0010ce4c2bae99017d0c4e18c9be9b9023f2446e68bd5a0eb4ebc"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/libcamera/libspa-libcamera.so": {
-      "sha256": "00fcff41940e37f7d12fd5d643a399d3abbf8bb31d6684f0093789dd2b79ec06"
+      "sha256": "f158b8f4dc0eb212b90f994ff8d21cbc57b64f64757dd525c410065a8403a63a"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/libspa.so": {
-      "sha256": "5fc356a7834db023958f10d66812ca54e460ec5e49d822782fda31af6f34bf4f"
+      "sha256": "512353428e3015f0ff7014619c5a64e43e6c7a9e53c299c751648a116c745074"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-dbus.so": {
-      "sha256": "ed1e69cb66372a79e0bc15786d6d632c1fec110f137cfc9a2e2bba6d24e1e73b"
+      "sha256": "152084f541c89d6457cc6cfe7781f0da26ae69e25394946cddc58a7cfc5bca88"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-journal.so": {
-      "sha256": "56fb7dcbf39e1d29d65b84b8a2e052b11be897ba222fe8af0381cb917026fe4f"
+      "sha256": "5d6c057f66db4ff3cac8fb8a5aa77b556fee8514d41b1173bd8360a9488aee47"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/support/libspa-support.so": {
-      "sha256": "562ccf3967383b9ff6d14109fbc6bf987fa1d25c710af7bcfd0b0a1b5d1cb843"
+      "sha256": "a21e55f0546e9c17873a3352f3b5425d6bd4d21b9a7bc4bda2dc7f4841b292b2"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/test/libspa-test.so": {
-      "sha256": "61dce5ed02018a5cd6971401fc5e7803863c4356735dca26b93df884ab28b231"
+      "sha256": "95db01555fc3b40119d2b86f88d5e4b4b94e03711c2a0915b4dea20971f9df61"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/v4l2/libspa-v4l2.so": {
-      "sha256": "3026616658b8411d882f47d37ffe0ba66e9b626d941054ca92badb79b4214397"
+      "sha256": "4b46bb4f07d805cac1bb45ba891ff48d4367b429029627b5edf70bf4e3c41722"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/videoconvert/libspa-videoconvert.so": {
-      "sha256": "9826ab07d4f3c96fbdec97e4c6cdaa57ebfafe018155abb2de59f6bf4a5e5070"
+      "sha256": "ba3cc70b9f8980836256591cbaf257bed5438a0275c9d82d9399251e649eeda3"
     },
     "/usr/lib/aarch64-linux-gnu/spa-0.2/videotestsrc/libspa-videotestsrc.so": {
-      "sha256": "c414ef8824d93d43764841506350e07bc52dec7dd87f6cb7265e2840cae760bc"
+      "sha256": "e162b654bad1eac58c0c6ba6b39f086602ba8c99ac4f42c176bfaea3895e06c6"
     },
     "/usr/lib/aarch64-linux-gnu/systemd/libsystemd-core-257.so": {
       "sha256": "44786c07036c7691392d001046a1d70789e0911067c12aacce27ca68f58e5699"
@@ -12261,7 +12093,7 @@
     "/boot/firmware/overlays/bq27220_v5.dtbo": {
       "gid": 0,
       "mode": 420,
-      "sha256": "30d7b249a47dce281a846908122a68230ae82c6ae34e6ab4930c83faf0824b5a",
+      "sha256": "14b5bc371fe63fd6ad9109436e9c201088a62aed9fd8f6f8a45257e5db5e1511",
       "type": "file",
       "uid": 0
     },
@@ -14788,7 +14620,7 @@
     "/etc/cardputerzero-dtoverlays.commit": {
       "gid": 0,
       "mode": 420,
-      "sha256": "747320762b4e447445f67fa945805b524d5bfb8f4e3029733a0e7b46f40b9a45",
+      "sha256": "67e01f13f60270c0f667ba02f6e6e849d8a4efb3dcbce31baf5613a38d6005cb",
       "type": "file",
       "uid": 0
     },
@@ -20722,17 +20554,24 @@
       "type": "file",
       "uid": 0
     },
+    "/usr/lib/firmware/raspberrypi/bootloader-2712/latest/pieeprom-2026-11-16.bin": {
+      "gid": 0,
+      "mode": 420,
+      "sha256": "6749292a8d8bea0034f233ccdfc45509da54e868a866c8e8d9dc36d3ff765d76",
+      "type": "file",
+      "uid": 0
+    },
     "/usr/lib/firmware/raspberrypi/bootloader-2712/latest/recovery.bin": {
       "gid": 0,
       "mode": 420,
-      "sha256": "be2374d0f480c200f2326f8265548309537b4b25dba58c5c18440c9c9fbfdd99",
+      "sha256": "bab8ff7509afef7a8d1d00b6b3bc160c3077299aff6f05d31008236a989230d5",
       "type": "file",
       "uid": 0
     },
     "/usr/lib/firmware/raspberrypi/bootloader-2712/release-notes.md": {
       "gid": 0,
       "mode": 420,
-      "sha256": "e494abb1de66244ce4f2c63247dd87d5e9872d86b783586ae7011a9a7771ff71",
+      "sha256": "c0c88e98b807131285b60899158f597f212588bdcf93b800974bad5cb90e338a",
       "type": "file",
       "uid": 0
     },
@@ -20746,7 +20585,7 @@
     "/usr/lib/firmware/raspberrypi/bootloader-2712/versions.txt": {
       "gid": 0,
       "mode": 420,
-      "sha256": "6c43d6260f9ba7413bbbc83e39f8a40c58050af0b30d4ea6896c3a72d6415ce8",
+      "sha256": "c5285fbf23fa45e17fb625350a203cfb0462771ff9e845bb32ec5bd507c8bd5a",
       "type": "file",
       "uid": 0
     },
@@ -43769,7 +43608,7 @@
     "/usr/lib/modules/6.18.39+rpt-rpi-v8/extra/bq27xxx_battery.ko": {
       "gid": 0,
       "mode": 420,
-      "sha256": "0e3ced9e116d0f070575791d29c8de603a95cae9fa174421409922c0fbe03af8",
+      "sha256": "ce6ca1f9e5a13b46c6cffa6a9264cc18307b6e1d966954f9fe6378a6023e99da",
       "type": "file",
       "uid": 0
     },
@@ -59719,7 +59558,7 @@
     "android-libboringssl": "14.0.0+r45-2",
     "android-libcutils": "1:34.0.5-12",
     "android-liblog": "1:34.0.5-12",
-    "applaunch": "0.6.105",
+    "applaunch": "0.6.111",
     "apt": "3.0.4",
     "apt-listchanges": "4.8",
     "apt-utils": "3.0.4",
@@ -59739,7 +59578,7 @@
     "busybox": "1:1.37.0-6+b9",
     "bzip2": "1.0.8-6",
     "ca-certificates": "20250419+deb13u1",
-    "camera": "1.0.2-m5stack1",
+    "camera": "1.0.4-m5stack1",
     "cifs-utils": "2:7.4-1+deb13u2",
     "cloud-guest-utils": "0.33-1",
     "cloud-init": "25.2-1~bpo13+1+rpt20",
@@ -59791,7 +59630,7 @@
     "eject": "2.41.5-0+deb13u1",
     "ethtool": "1:6.14.2-1",
     "exfatprogs": "1.2.9-1+deb13u1",
-    "factorytest": "1.0.0-m5stack1",
+    "factorytest": "1.0.3-m5stack1",
     "fakeroot": "1.37.1.1-1",
     "fastfetch": "2.40.4+dfsg-1",
     "fbset": "2.1-34",
@@ -59931,11 +59770,11 @@
     "libcaca0": "0.99.beta20-5+deb13u1",
     "libcairo-gobject2": "1.18.4-1+rpt1",
     "libcairo2": "1.18.4-1+rpt1",
-    "libcamera-dev": "0.7.2+rpt20260817-1",
-    "libcamera-ipa": "0.7.2+rpt20260817-1",
-    "libcamera-tools": "0.7.2+rpt20260817-1",
-    "libcamera-v4l2": "0.7.2+rpt20260817-1",
-    "libcamera0.7": "0.7.2+rpt20260817-1",
+    "libcamera-dev": "0.8.0+rpt20261104-1",
+    "libcamera-ipa": "0.8.0+rpt20261104-1",
+    "libcamera-tools": "0.8.0+rpt20261104-1",
+    "libcamera-v4l2": "0.8.0+rpt20261104-1",
+    "libcamera0.8": "0.8.0+rpt20261104-1",
     "libcap-ng0": "0.8.5-4+b1",
     "libcap2": "1:2.75-10+deb13u1+b3",
     "libcap2-bin": "1:2.75-10+deb13u1+b3",
@@ -59985,7 +59824,7 @@
     "libebml5": "1.4.5-1+b1",
     "libebur128-1": "1.2.6-1+b2",
     "libedit2": "3.1-20250104-1",
-    "libegl-mesa0": "26.2.6-1~bpo13+0~rpt2",
+    "libegl-mesa0": "26.2.7-1~bpo13+0~rpt1",
     "libegl1": "1.7.0-1+b2",
     "libelf1t64": "0.192-4",
     "libepoxy0": "1.5.10-2",
@@ -60014,7 +59853,7 @@
     "libfribidi0": "1.0.16-1",
     "libftdi1-2": "1.5-10",
     "libfuse3-4": "3.17.2-3",
-    "libgbm1": "26.2.6-1~bpo13+0~rpt2",
+    "libgbm1": "26.2.7-1~bpo13+0~rpt1",
     "libgcc-14-dev": "14.2.0-19",
     "libgcc-s1": "14.2.0-19",
     "libgcrypt20": "1.11.0-7+deb13u1",
@@ -60028,14 +59867,14 @@
     "libgfxdr0": "11.1-6",
     "libgirepository-1.0-1": "1.84.0-1",
     "libgl1": "1.7.0-1+b2",
-    "libgl1-mesa-dri": "26.2.6-1~bpo13+0~rpt2",
+    "libgl1-mesa-dri": "26.2.7-1~bpo13+0~rpt1",
     "libgles2": "1.7.0-1+b2",
     "libglib2.0-0t64": "2.84.4-3~deb13u5",
     "libglib2.0-data": "2.84.4-3~deb13u5",
     "libglibmm-2.4-1t64": "2.66.8-1",
     "libglusterfs0": "11.1-6",
     "libglvnd0": "1.7.0-1+b2",
-    "libglx-mesa0": "26.2.6-1~bpo13+0~rpt2",
+    "libglx-mesa0": "26.2.7-1~bpo13+0~rpt1",
     "libglx0": "1.7.0-1+b2",
     "libgme0": "0.6.3-7+b2",
     "libgmp10": "2:6.3.0+dfsg-3",
@@ -60170,7 +60009,7 @@
     "libopencv-flann410": "4.10.0+dfsg-5",
     "libopencv-imgproc410": "4.10.0+dfsg-5",
     "libopencv-objdetect410": "4.10.0+dfsg-5",
-    "libopenexr-3-1-30": "3.2.12-1~deb13u1",
+    "libopenexr-3-1-30": "3.2.12-1~deb13u2",
     "libopenfec1": "1.4.2.11+dfsg-1",
     "libopengl0": "1.7.0-1+b2",
     "libopenjp2-7": "2.5.3-2.1~deb13u2",
@@ -60196,8 +60035,8 @@
     "libperl5.40": "5.40.1-6+deb13u1",
     "libpgm-5.3-0t64": "5.3.128~dfsg-2.1+b1",
     "libpipeline1": "1.5.8-1",
-    "libpipewire-0.3-0t64": "1.4.2-1+rpt3",
-    "libpipewire-0.3-modules": "1.4.2-1+rpt3",
+    "libpipewire-0.3-0t64": "1.4.2-1+rpt5",
+    "libpipewire-0.3-modules": "1.4.2-1+rpt5",
     "libpisp-common": "1.8.0-1",
     "libpisp1": "1.8.0-1",
     "libpixman-1-0": "0.46.4-1+rpt1",
@@ -60221,11 +60060,6 @@
     "libpython3.13": "3.13.5-2+deb13u5",
     "libpython3.13-minimal": "3.13.5-2+deb13u5",
     "libpython3.13-stdlib": "3.13.5-2+deb13u5",
-    "libqt5core5t64": "5.15.15+dfsg-6+deb13u1",
-    "libqt5dbus5t64": "5.15.15+dfsg-6+deb13u1",
-    "libqt5gui5t64": "5.15.15+dfsg-6+deb13u1",
-    "libqt5network5t64": "5.15.15+dfsg-6+deb13u1",
-    "libqt5widgets5t64": "5.15.15+dfsg-6+deb13u1",
     "libqt6core6t64": "6.8.2+dfsg-9+deb13u2",
     "libqt6dbus6": "6.8.2+dfsg-9+deb13u2",
     "libqt6gui6": "6.8.2+dfsg-9+deb13u2",
@@ -60242,7 +60076,7 @@
     "libreadline8t64": "8.2-6",
     "librist4": "0.2.11+dfsg-1",
     "libroc0.4": "0.4.0+dfsg-5",
-    "librpicam-app1": "1.13.0-1",
+    "librpicam-app1": "1.15.0-1",
     "librpieepromab0": "20260626-1",
     "librpifwcrypto0": "20260626-1",
     "librsvg2-2": "2.60.0+dfsg-1+deb13u1",
@@ -60278,9 +60112,9 @@
     "libsource-highlight-common": "3.1.9-4.3",
     "libsource-highlight4t64": "3.1.9-4.3+b1",
     "libsoxr0": "0.1.3-4+b2",
-    "libspa-0.2-bluetooth": "1.4.2-1+rpt3",
-    "libspa-0.2-libcamera": "1.4.2-1+rpt3",
-    "libspa-0.2-modules": "1.4.2-1+rpt3",
+    "libspa-0.2-bluetooth": "1.4.2-1+rpt5",
+    "libspa-0.2-libcamera": "1.4.2-1+rpt5",
+    "libspa-0.2-modules": "1.4.2-1+rpt5",
     "libspeex1": "1.2.1-3",
     "libspeexdsp1": "1.2.1-3",
     "libsphinxbase3t64": "0.8+5prealpha+1-21+b1",
@@ -60380,7 +60214,6 @@
     "libxcb-sync1": "1.17.0-2+b1",
     "libxcb-util1": "0.4.1-1",
     "libxcb-xfixes0": "1.17.0-2+b1",
-    "libxcb-xinerama0": "1.17.0-2+b1",
     "libxcb-xinput0": "1.17.0-2+b1",
     "libxcb-xkb1": "1.17.0-2+b1",
     "libxcb1": "1.17.0-2+b1",
@@ -60441,8 +60274,8 @@
     "m5cardputerzero-cap-cc1101-subg-chat": "1.0.1",
     "m5cardputerzero-cap-lora-1262": "1.0.1-m5stack1",
     "m5cardputerzero-cap-lora-1262-gps": "1.0.0",
-    "m5cardputerzero-compass": "0.2.4",
-    "m5cardputerzero-files": "1.0.2",
+    "m5cardputerzero-compass": "1.0.1",
+    "m5cardputerzero-files": "1.0.3",
     "m5cardputerzero-ir-chat": "0.1.3",
     "m5cardputerzero-ir-remote": "0.1.4",
     "m5cardputerzero-keyboard-guide": "1.0.1",
@@ -60456,7 +60289,7 @@
     "mariadb-common": "1:11.8.6-0+deb13u1",
     "mawk": "1.3.4.20250131-1",
     "media-types": "13.0.0",
-    "mesa-libgallium": "26.2.6-1~bpo13+0~rpt2",
+    "mesa-libgallium": "26.2.7-1~bpo13+0~rpt1",
     "mkvtoolnix": "92.0-1+deb13u1",
     "mount": "2.41.5-0+deb13u1",
     "mysql-common": "5.8+1.1.1",
@@ -60492,10 +60325,10 @@
     "perl-base": "5.40.1-6+deb13u1",
     "perl-modules-5.40": "5.40.1-6+deb13u1",
     "pinentry-curses": "1.3.1-2",
-    "pipewire": "1.4.2-1+rpt3",
-    "pipewire-bin": "1.4.2-1+rpt3",
-    "pipewire-libcamera": "1.4.2-1+rpt3",
-    "pipewire-pulse": "1.4.2-1+rpt3",
+    "pipewire": "1.4.2-1+rpt5",
+    "pipewire-bin": "1.4.2-1+rpt5",
+    "pipewire-libcamera": "1.4.2-1+rpt5",
+    "pipewire-pulse": "1.4.2-1+rpt5",
     "pkexec": "126-2",
     "pkg-config": "1.8.1-4",
     "pkgconf": "1.8.1-4",
@@ -60539,7 +60372,7 @@
     "python3-kms++": "0~git20250807.1813ada-1",
     "python3-lgpio": "0.2.2-1~rpt1+trixie",
     "python3-libarchive-c": "5.1-1",
-    "python3-libcamera": "0.7.2+rpt20260817-1",
+    "python3-libcamera": "0.8.0+rpt20261104-1",
     "python3-libgpiod": "2.2.1-2+deb13u1",
     "python3-linkify-it": "2.0.3-1",
     "python3-markdown-it": "3.0.0-3",
@@ -60551,12 +60384,11 @@
     "python3-numpy-dev": "1:2.2.4+ds-1",
     "python3-oauthlib": "3.2.2-3",
     "python3-openexr": "1.3.10-1",
-    "python3-picamera2": "0.3.37-1",
+    "python3-picamera2": "0.3.39-1",
     "python3-pidng": "4.0.9+git20260513.b096d0b-1",
     "python3-piexif": "1.1.3-2",
     "python3-pil": "11.1.0-5+deb13u4",
     "python3-pip-whl": "25.1.1+dfsg-1+rpt1",
-    "python3-prctl": "1.8.1-1+b7",
     "python3-pycryptodome": "3.20.0+dfsg-3",
     "python3-pygments": "2.18.0+dfsg-2",
     "python3-referencing": "0.36.2-1",
@@ -60594,7 +60426,7 @@
     "rpcsvc-proto": "1.4.3-1+b1",
     "rpi-cloud-init-mods": "1:20260119",
     "rpi-connect-lite": "2.15.0",
-    "rpi-eeprom": "28.36-1",
+    "rpi-eeprom": "28.37-1",
     "rpi-keyboard-config": "1.0",
     "rpi-keyboard-fw-update": "1.0.1",
     "rpi-loop-utils": "1.2.4",
@@ -60602,12 +60434,12 @@
     "rpi-systemd-config": "1.1.1",
     "rpi-update": "20230904",
     "rpi-usb-gadget": "1.0.6",
-    "rpicam-apps": "1.13.0-1",
-    "rpicam-apps-core": "1.13.0-1",
-    "rpicam-apps-encoder": "1.13.0-1",
-    "rpicam-apps-lite": "1.13.0-1",
-    "rpicam-apps-opencv-postprocess": "1.13.0-1",
-    "rpicam-apps-preview": "1.13.0-1",
+    "rpicam-apps": "1.15.0-1",
+    "rpicam-apps-core": "1.15.0-1",
+    "rpicam-apps-encoder": "1.15.0-1",
+    "rpicam-apps-lite": "1.15.0-1",
+    "rpicam-apps-opencv-postprocess": "1.15.0-1",
+    "rpicam-apps-preview": "1.15.0-1",
     "rpieepromab": "20260626-1",
     "rpifwcrypto": "20260626-1",
     "rsync": "3.5.0+ds1-0+deb13u1",
@@ -60632,9 +60464,9 @@
     "sysvinit-utils": "3.14-4",
     "tar": "1.35+dfsg-3.1",
     "tyrell-status": "0.1.0-1",
-    "tyrell-zero-power-policy": "0.1.0-1",
-    "tyrell-zero-session": "0.3.0-1",
-    "tyrell-zero-store": "0.1.0-1",
+    "tyrell-zero-power-policy": "0.1.1-1",
+    "tyrell-zero-session": "0.3.1-1",
+    "tyrell-zero-store": "0.1.1-1",
     "tzdata": "2026f-0+deb13u1",
     "ucf": "3.0052",
     "udev": "257.13-1~deb13u1",
@@ -60672,6 +60504,8 @@
     "/usr/share/APPLaunch/share/audio/Ding2.wav": "4dbc404e4700fc208655d1093f8611d732355350566bc34eae704b5028f04b7a",
     "/usr/share/APPLaunch/share/audio/LICENSE-LAUNCH-WIZARD-AUDIO.txt": "087a75b70d29a0636f6ed72e255e90c03c536866b8778103631922d30cf5a1ad",
     "/usr/share/APPLaunch/share/audio/LICENSE-UI-SFX.txt": "eb4c51caf2fbe009adbf43deffd53bfd2c45112a4bf390c9cdec6f6b035336bc",
+    "/usr/share/APPLaunch/share/audio/applaunch-arcade-refund.mp3": "16be5f16d85097b54045897cb5f2b26126f123ecee29f948f660b5aff8c45c41",
+    "/usr/share/APPLaunch/share/audio/applaunch-arcade-warning.mp3": "93a6ef3cef83a51f3f8449c9937665410d9efe0656c32c8f5f3423f6c465d80f",
     "/usr/share/APPLaunch/share/audio/blocked.mp3": "cc7bbc38ded1d23194e35aff43a787a3d8fdc28c421313bc3d0c9dad446051f5",
     "/usr/share/APPLaunch/share/audio/enter.wav": "ac9f9576d34583bf282b6287b1832fb90e1b930b765e4890ce069f6f35e833d8",
     "/usr/share/APPLaunch/share/audio/key_back.wav": "edcc0b2206f9a78cde3eb1a4afba4d38ece3ed8e6be702b69c6ac1d9506939b0",
@@ -60809,23 +60643,23 @@
     "retained_hardware_trees_unchanged": true
   },
   "runtime_files": {
-    "/usr/lib/tyrell-zero/session/state.py": "799beb150b86271a7739aacd14f232865f71c0305351f797bf0d7e6664e432a9",
+    "/usr/lib/tyrell-zero/session/state.py": "ffae9d637560abe29c9221aa11a1a6cc00287e468956f1404a1b980474419b8f",
     "/usr/lib/tyrell-zero/session/supervisor.py": "653e51cc3a72a7db2fbadde21916e297ff9c365f2ebc48f4b49d6f97be1fd878",
     "/usr/lib/tyrell-zero/session/wizard_complete.py": "5c3d9cf0401fadf6e4f7075c8afa38b09f7606d3dd1a31372c2d177930daa4a1",
-    "/usr/lib/tyrell-zero/store/guard.py": "2609aaf686e36d6d46cd7432eb658d6974a90f4c1c295b6d37396f49dfca88fd",
+    "/usr/lib/tyrell-zero/store/guard.py": "38be3a02e408288866bdb5ac1156fe902ae887658b12a5ae94e01282940d326d",
     "/usr/libexec/tyrell-zero-session": "5582208f3742ae0a5a800602472634f53fa8be4c6f9f738bc4221b025b21e188",
-    "/usr/libexec/tyrell-zero-session-recovery": "926673068218fbdd8ee5519ba6aaeffb5cba0030f6c0599672c8f46f589cab23",
+    "/usr/libexec/tyrell-zero-session-recovery": "81ce56867b64fed5f304f12622b412a97c41788a264388752e274da38b887000",
     "/usr/libexec/tyrell-zero-session-state": "b7a6f2c532d8970a5613c337d2485e9143d47ba02ce8f3bd0faeebde392450d5",
     "/usr/libexec/tyrell-zero-wizard-complete": "43ac2afb578696fe48aa5217efe9fc1b93e33acfcf87d569a20d4dd9db7fc3bc",
     "/usr/share/APPLaunch/share/font/DejaVuSans.ttf": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22",
     "/usr/share/APPLaunch/share/font/DejaVuSerif.ttf": "a52c2a69dfc93d0b511b98c1019a57eb3d6a62d328bdf1387f00851b02e3a315",
     "/usr/share/APPLaunch/share/font/NotoSansCJK-Regular.ttc": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
     "/usr/share/APPLaunch/share/font/NotoSerifCJK-Regular.ttc": "5d9c31a059600193c9d7968a998bde886ccdc77e934006ad243b41794c496a7d",
-    "/usr/share/tyrell-zero/store-catalog.json": "3c8b509383b3fb31bf7e5780d0203a7425ea4a692e3483dd50515d4234a3085b",
-    "/usr/share/tyrell-zero/store-policy.json": "8f6aa6757e0a9478bee245147884e3b03bdc4322b24a9db76881111d91fddfb4"
+    "/usr/share/tyrell-zero/store-catalog.json": "c244363ce8df9b92a23760dffcc2c7479ccac87b45c2197add9f44c5b83aaecb",
+    "/usr/share/tyrell-zero/store-policy.json": "c98a158ec922a3e09d468f2a53e35baa3946ac71c3c6c7ef9388769b329ffb1f"
   },
   "schema": 1,
   "scope": "isolated-retained-stage2-root-with-pinned-runtime-and-custom-packages",
-  "source_qualification_sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
-  "system_qualification_sha256": "bbd359052f8e6f48c6c38bd912fc691c38bbeb4df50b85d1cfad7e8990255087"
+  "source_qualification_sha256": "c938a5ab642aab3872dac550ac73b48e5382dd0523e3ac59c0e7da515b67c20e",
+  "system_qualification_sha256": "df8de1e3fe20d27b93f00ee24ea5872e23a3c5dfee17d0010cfc4b6b2a58c1d5"
 }

@@ -20,6 +20,22 @@ EXPECTED = {
     'stage2/05-cardputerzero/02-run.sh': 'b6bd753723d6dd9599185b369884ac14b7ad0bb056d9bb1012a1d566c0989acb',
     'stage2/05-cardputerzero/03-run.sh': 'c700ef1af64fc813406eafc7620bb3ae20582d98af217f986c5fb2e0053bbfbe',
 }
+# The legacy full-source path retains its September baseline. Zero's refresh is
+# a separate reviewed recipe, not an arbitrary caller-selected vendor checkout.
+ZERO_BASELINE = '3b0e6f61520afb59598b188c803c1b9e8d63737f'
+ZERO_EXPECTED = {
+    'build.sh': 'bbf9b1c72ee0858b08951483607f9a1ce05159b72f29277bef9c6713b10e5e81',
+    'stage2/05-cardputerzero/01-run.sh': 'fd45585161d2208c838a6a37b476700b9e920478900dbcf9012764803f520edf',
+    'stage2/05-cardputerzero/02-run.sh': 'cce5987bb38b8ec1b0daaebbf4dab98261d029ba38da80d53f4aca936ac15ef5',
+    'stage2/05-cardputerzero/03-run.sh': 'c700ef1af64fc813406eafc7620bb3ae20582d98af217f986c5fb2e0053bbfbe',
+    'stage2/05-cardputerzero/05-run.sh': 'a22d9cd7126b740e6ec46ad3b9317f6a433a8a69f1c2ca683c4361daadaf2b1e',
+}
+ZERO_VENDOR = {
+    'bsp_commit': 'a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4',
+    'bsp_sha256': 'bb671341f2419b2cd20607fb7e00fde4a35a338a8de7036632430375a66514d0',
+    'launcher_sha256': '8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2',
+}
+
 BOOT_HASHES = [
     '/boot/firmware/config.txt',
     '/boot/firmware/start.elf',
@@ -62,32 +78,45 @@ def main():
     parser.add_argument('vendor_checkout', type=Path)
     parser.add_argument('assets_dir', type=Path)
     parser.add_argument('metadata_json', type=Path)
+    parser.add_argument('--zero-profile', action='store_true',
+                        help='Use the separate reviewed November 19 Zero vendor lock')
     args = parser.parse_args()
     vendor = args.vendor_checkout.resolve()
     assets = args.assets_dir.resolve()
     metadata_path = args.metadata_json.resolve()
-    lock = json.loads(Path(__file__).with_name('baseline-apps.json').read_text())
-    camera_lock = json.loads(Path(__file__).with_name('camera-packages.json').read_text())
+    baseline = ZERO_BASELINE if args.zero_profile else BASELINE
+    expected_files = ZERO_EXPECTED if args.zero_profile else EXPECTED
+    applaunch_version = '0.6.111' if args.zero_profile else '0.6.105'
+    lock_name = 'zero-baseline-apps.json' if args.zero_profile else 'baseline-apps.json'
+    lock = json.loads(Path(__file__).with_name(lock_name).read_text())
+    camera_name = 'zero-camera-packages.json' if args.zero_profile else 'camera-packages.json'
+    camera_lock = json.loads(Path(__file__).with_name(camera_name).read_text())
     metadata = json.loads(metadata_path.read_text())
-    if lock['pi_gen_commit'] != BASELINE:
+    if args.zero_profile and (metadata.get('profile_id') != 'tyrell-zero'
+            or lock['drivers']['commit'] != ZERO_VENDOR['bsp_commit']
+            or lock['drivers']['sha256'] != ZERO_VENDOR['bsp_sha256']
+            or lock['launcher']['sha256'] != ZERO_VENDOR['launcher_sha256']
+            or lock['launcher']['package_version'] != applaunch_version):
+        raise ValueError('Unreviewed Zero vendor identity')
+    if lock['pi_gen_commit'] != baseline:
         raise ValueError('Unexpected pi-gen baseline in application lock')
     if (vendor / '.git').exists():
         actual = subprocess.check_output(['git', '-C', str(vendor), 'rev-parse', 'HEAD'], text=True).strip()
-        if actual != BASELINE:
+        if actual != baseline:
             raise ValueError('Vendor Git checkout does not match the baseline')
     # This also supports an archive whose entire download was verified by the
     # caller: pin critical pristine chunks before applying any local mutation.
-    for relative, expected in EXPECTED.items():
+    for relative, expected in expected_files.items():
         if sha256(vendor / relative) != expected:
             raise ValueError('Expected pristine baseline file: ' + relative)
     if (vendor / 'stage4/99-tyrell').exists():
         raise ValueError('Project stage already exists; prepare a pristine baseline')
 
     for key, expected in {
-        'pi_gen_commit': BASELINE,
+        'pi_gen_commit': baseline,
         'drivers_commit': lock['drivers']['commit'],
         'kernel_release': '6.18.39+rpt-rpi-v8',
-        'applaunch_version': '0.6.105',
+        'applaunch_version': applaunch_version,
     }.items():
         if metadata.get(key) != expected:
             raise ValueError('Unexpected image metadata field: ' + key)
@@ -203,7 +232,7 @@ test "$(dpkg-deb -f /var/tmp/tyrell-status.deb Architecture)" = arm64
 dpkg --install /var/tmp/tyrell-status.deb
 test "$(dpkg-query -W -f={version_field} tyrell-status)" = {package_version}
 test "$(dpkg-query -W -f={version_field} linux-image-rpi-v8)" = '1:6.18.39-1+rpt1'
-test "$(dpkg-query -W -f={version_field} applaunch)" = '0.6.105'
+test "$(dpkg-query -W -f={version_field} applaunch)" = '{applaunch_version}'
 test "$(cat /etc/cardputerzero-dtoverlays.commit)" = '{lock['drivers']['commit']}'
 {camera_checks}
 /usr/bin/tyrell-status --version
@@ -228,13 +257,15 @@ TYRELL_IMAGE_METADATA
     fragment = (
         '# Generated verified local inputs; source this from pi-gen config.\n'
         'export APPLAUNCH_DEB_FILE=' + shlex.quote(str(launcher)) + '\n'
-        'export GIT_HASH=' + shlex.quote(BASELINE) + '\n'
+        'export GIT_HASH=' + shlex.quote(baseline) + '\n'
     )
+    if args.zero_profile:
+        fragment += "export APPLAUNCH_ARTIFACT_URL=''\n"
     (vendor / 'tyrell-inputs.conf').write_text(fragment)
     changed = ['stage2/00-tyrell-camera/00-run.sh', 'stage2/05-cardputerzero/01-run.sh', 'stage2/05-cardputerzero/02-run.sh', 'stage2/05-cardputerzero/03-run.sh',
                'stage4/99-tyrell/00-run.sh', 'stage2/SKIP_IMAGES', 'tyrell-inputs.conf']
     report = {
-        'pi_gen_commit': BASELINE, 'drivers_commit': lock['drivers']['commit'],
+        'pi_gen_commit': baseline, 'drivers_commit': lock['drivers']['commit'],
         'launcher_sha256': lock['launcher']['sha256'], 'package_sha256': metadata['package_sha256'],
         'apps': len(app_assets), 'config_fragment': str(vendor / 'tyrell-inputs.conf'),
         'camera_packages_locked': len(camera_assets), 'camera_packages_preinstalled': len(camera_preinstall),

@@ -22,10 +22,10 @@ class ProfileTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name).resolve()
-        for name in [PROFILE, 'image/contracts/tyrell-zero-hardware.json',
+        for name in [PROFILE, 'image/contracts/tyrell-zero-hardware-nov19.json',
                      'image/contracts/tyrell-zero-power.json',
-                     'image/baseline-apps.json', 'image/camera-packages.json',
-                     'locks/image-apt.json']:
+                     'image/zero-baseline-apps.json', 'image/zero-camera-packages.json',
+                     'locks/tyrell-zero-seed-apt.json']:
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, path)
@@ -37,7 +37,7 @@ class ProfileTests(unittest.TestCase):
         (self.root / name).write_text(json.dumps(value, indent=2) + '\n')
 
     def contract(self, kind, mutate, *, rebind=True):
-        name = 'image/contracts/tyrell-zero-' + kind + '.json'
+        name = self.read()['contracts'][kind]['path']
         value = self.read(name)
         mutate(value)
         self.write(value, name)
@@ -97,6 +97,15 @@ class ProfileTests(unittest.TestCase):
         self.write(value)
         self.invalid('output')
 
+    def test_zero_refresh_cannot_select_the_legacy_seed_or_vendor_locks(self):
+        original = self.read()
+        for role, legacy in [('apps', 'image/baseline-apps.json'),
+                             ('camera', 'image/camera-packages.json')]:
+            value = copy.deepcopy(original);value['vendor_inputs'][role]['path'] = legacy
+            self.write(value);self.invalid('input path')
+        value = copy.deepcopy(original);value['lock_paths']['seed_apt'] = 'locks/image-apt.json'
+        self.write(value);self.invalid('lock_paths')
+
     def test_rejects_an_optimized_default_before_qualification(self):
         value = self.read()
         value['selected_power_preset'] = 'combined'
@@ -121,7 +130,7 @@ class ProfileTests(unittest.TestCase):
 
     def test_profile_cannot_reuse_full_source_apt_selection(self):
         value = self.read()
-        value['lock_paths']['apt'] = 'locks/image-apt.json'
+        value['lock_paths']['apt'] = 'locks/tyrell-zero-seed-apt.json'
         self.write(value)
         self.invalid('lock_paths')
 
@@ -247,17 +256,22 @@ class ProfileTests(unittest.TestCase):
 
     def pipeline_fixture(self):
         """Bind a small proof graph; mock only the separately tested APT validator."""
+        profile = self.read();profile['readiness'].update(phase='pipeline', image_build_enabled=True)
+        self.write(profile)
         implementations = [
             'image/zero_pipeline.py', 'image/zero_resume.py', 'image/run-zero-job.py',
-            'image/prepare-zero.py', 'builder/build-zero-image.sh', 'image/zero_activation.py',
+            'image/prepare-zero.py', 'image/prepare-vendor.py', 'image/apt-lock.py', 'builder/build-zero-image.sh', 'image/zero_activation.py',
             'image/verify-zero.py', 'image/zero-lock.py', 'image/build-image.py', 'image/profiles.py',
             'builder/zero-bsp-check.py', 'builder/zero-pipeline-smoke.py']
         for name in implementations:
             target = self.root / name;target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / name, target)
-        files = {name: profiles.sha256(self.root / name) for name in implementations}
-        versions = {'tyrell-status': '0.1.0-1', 'tyrell-zero-session': '0.3.0-1',
-                    'tyrell-zero-power-policy': '0.1.0-1', 'tyrell-zero-store': '0.1.0-1'}
+        inputs = [PROFILE, profiles.LOCK_PATHS['seed_apt'],
+                  *(item['path'] for item in profile['vendor_inputs'].values()),
+                  *(item['path'] for item in profile['contracts'].values())]
+        files = {name: profiles.sha256(self.root / name) for name in [*implementations, *inputs]}
+        versions = {'tyrell-status': '0.1.0-1', 'tyrell-zero-session': '0.3.1-1',
+                    'tyrell-zero-power-policy': '0.1.1-1', 'tyrell-zero-store': '0.1.1-1'}
         artifact = self.root / 'artifacts/fixture';artifact.mkdir(parents=True, exist_ok=True)
         def put(name, value):
             target = self.root / name;target.parent.mkdir(parents=True, exist_ok=True)
@@ -312,8 +326,6 @@ class ProfileTests(unittest.TestCase):
         fixture = {'proof': proof, 'proof_path': 'artifacts/fixture/pipeline.json',
                    'build': {'schema_version': 1, 'packages': versions}}
         self.publish_pipeline_fixture(fixture)
-        profile = self.read();profile['readiness'].update(phase='pipeline', image_build_enabled=True)
-        self.write(profile)
         return fixture
 
     def publish_pipeline_fixture(self, fixture):
@@ -364,6 +376,21 @@ class ProfileTests(unittest.TestCase):
                 self.change_pipeline_report(fixture, key, lambda record, name=name: record['files_sha256'].pop(name))
         self.publish_pipeline_fixture(fixture)
         self.assert_pipeline_blocked('implementation proof is incomplete')
+
+    def test_baseline_helper_and_selected_inputs_cannot_be_omitted_from_rebound_proof(self):
+        profile = self.read()
+        critical = ['image/prepare-vendor.py', 'image/apt-lock.py', PROFILE, profiles.LOCK_PATHS['seed_apt'],
+                    *(item['path'] for item in profile['vendor_inputs'].values()),
+                    *(item['path'] for item in profile['contracts'].values())]
+        for name in critical:
+            with self.subTest(missing=name):
+                fixture = self.pipeline_fixture()
+                fixture['proof']['files_sha256'].pop(name)
+                for key in ('runner_prepare', 'host_tests'):
+                    self.change_pipeline_report(fixture, key,
+                        lambda record, name=name: record['files_sha256'].pop(name))
+                self.publish_pipeline_fixture(fixture)
+                self.assert_pipeline_blocked('implementation proof is incomplete')
 
     def test_rebound_native_reports_must_name_the_actual_helpers(self):
         for key, field, reason in [('runner_failure_fixture', 'smoke_helper_sha256', 'changed runner code'),

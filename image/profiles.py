@@ -22,22 +22,22 @@ HARDWARE_IDS = {
     'ethernet', 'usb_modes', 'expansion',
 }
 PINS = {
-    'pi_gen_commit': '5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4',
-    'bsp_commit': '75518549a2640486f5d13ea72ca4935b198d7c20',
-    'bsp_archive_sha256': 'a541239495b9e1c15d2fe580c2cee4587ba9667e427d5f4d15d45038d8fd93a0',
+    'pi_gen_commit': '3b0e6f61520afb59598b188c803c1b9e8d63737f',
+    'bsp_commit': 'a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4',
+    'bsp_archive_sha256': 'bb671341f2419b2cd20607fb7e00fde4a35a338a8de7036632430375a66514d0',
     'kernel_release': '6.18.39+rpt-rpi-v8',
     'kernel_package': '1:6.18.39-1+rpt1',
-    'applaunch_version': '0.6.105',
-    'applaunch_source': 'e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f',
-    'applaunch_deb_sha256': 'a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544',
-    'applaunch_main_sha256': '9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c',
+    'applaunch_version': '0.6.111',
+    'applaunch_source': 'fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8',
+    'applaunch_deb_sha256': '8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2',
+    'applaunch_main_sha256': 'e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7',
     'raspberrypi_sys_mods_version': '1:20260914',
     'raspberrypi_sys_mods_sha256': 'a6169bc9506b36ba92d72c88d3390b6eefc8eb616fd9a46100f9bbf3ac088211',
-    'seed_apt_lock_sha256': '7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e',
+    'seed_apt_lock_sha256': '4016f27e11664a903559b80971f65a0cbe91699fcdffbe70daa65ccb751fad00',
     'greetd_version': '0.10.3-4',
 }
 LOCK_PATHS = {
-    'seed_apt': 'locks/image-apt.json',
+    'seed_apt': 'locks/tyrell-zero-seed-apt.json',
     'build': 'locks/tyrell-zero-build-inputs.json',
     'source': 'locks/tyrell-zero-session-source.json',
     'apt': 'locks/tyrell-zero-apt.json',
@@ -231,7 +231,7 @@ def _load_profile(path=DEFAULT_PROFILE, root=ROOT):
                     'pins', 'contracts', 'lock_paths', 'custom_packages',
                     'selected_power_preset', 'runtime_roots', 'desktop_policy',
                     'safety', 'readiness', 'vendor_inputs'}, 'Zero profile')
-    for key, expected in {'schema': 1, 'id': 'tyrell-zero', 'profile_version': 1,
+    for key, expected in {'schema': 1, 'id': 'tyrell-zero', 'profile_version': 2,
                           'plan_revision': 3, 'architecture': 'arm64', 'release': 'trixie',
                           'build_mode': 'zero-native', 'stages': STAGES,
                           'integration_stage': 'stage2/99-tyrell', 'output': OUTPUT,
@@ -246,7 +246,7 @@ def _load_profile(path=DEFAULT_PROFILE, root=ROOT):
         'exclude_display_manager': 'lightdm', 'exclude_compositor': 'labwc',
         'retain_required_shared_libraries': True}, 'desktop policy')
     _keys(profile['readiness'], {'phase', 'image_build_enabled', 'reason'}, 'Readiness')
-    if profile['readiness']['phase'] not in {'foundation', 'pipeline'}:
+    if profile['readiness']['phase'] not in {'foundation', 'pipeline', 'nov19-baseline-refresh'}:
         raise ProfileError('Unsupported readiness phase')
     if type(profile['readiness']['image_build_enabled']) is not bool:
         raise ProfileError('Build enablement must be an explicit boolean')
@@ -254,12 +254,13 @@ def _load_profile(path=DEFAULT_PROFILE, root=ROOT):
         raise ProfileError('Foundation needs an actionable readiness reason')
     _keys(profile['contracts'], {'hardware', 'power'}, 'Contracts')
     for kind, validator in [('hardware', _hardware), ('power', _power)]:
-        _, value = _reference(root, profile['contracts'][kind],
-                              'image/contracts/tyrell-zero-' + kind + '.json')
+        expected_path = ('image/contracts/tyrell-zero-hardware-nov19.json' if kind == 'hardware'
+                         else 'image/contracts/tyrell-zero-power.json')
+        _, value = _reference(root, profile['contracts'][kind], expected_path)
         validator(value)
     _keys(profile['vendor_inputs'], {'apps', 'camera'}, 'Vendor inputs')
-    _, vendor = _reference(root, profile['vendor_inputs']['apps'], 'image/baseline-apps.json')
-    _reference(root, profile['vendor_inputs']['camera'], 'image/camera-packages.json')
+    _, vendor = _reference(root, profile['vendor_inputs']['apps'], 'image/zero-baseline-apps.json')
+    _reference(root, profile['vendor_inputs']['camera'], 'image/zero-camera-packages.json')
     if (vendor['pi_gen_commit'] != PINS['pi_gen_commit'] or
             vendor['drivers']['commit'] != PINS['bsp_commit'] or
             vendor['drivers']['sha256'] != PINS['bsp_archive_sha256'] or
@@ -283,7 +284,7 @@ def _load_profile(path=DEFAULT_PROFILE, root=ROOT):
                            'network': {'network-manager', 'wpasupplicant', 'openssh-server', 'bluez', 'avahi-daemon'},
                            'audio': {'pipewire', 'pipewire-pulse', 'wireplumber', 'rtkit', 'alsa-utils'},
                            'storage': {'udisks2'}, 'maintenance': {'apt', 'ca-certificates'},
-                           'vendor': {'applaunch'}, 'camera': {'libcamera0.7', 'libcamera-ipa', 'rpicam-apps'},
+                           'vendor': {'applaunch'}, 'camera': {'libcamera0.8', 'libcamera-ipa', 'rpicam-apps'},
                            'graphics': {'libdrm2', 'libegl1', 'libgles2'}}.items():
         if not needed.issubset(groups[group]):
             raise ProfileError('Protected runtime roots omitted: ' + group)
@@ -356,9 +357,13 @@ def inspect_profile(path=DEFAULT_PROFILE, root=ROOT):
         if (documents.get('build') or {}).get('packages')!=versions:
             raise ProfileError('Build package versions differ from qualified custom payloads')
         required={'image/zero_pipeline.py','image/zero_resume.py','image/run-zero-job.py',
-                  'image/prepare-zero.py','builder/build-zero-image.sh','image/zero_activation.py',
-                  'image/verify-zero.py','image/zero-lock.py','image/build-image.py','image/profiles.py',
+                  'image/prepare-zero.py','image/prepare-vendor.py','builder/build-zero-image.sh','image/zero_activation.py',
+                  'image/verify-zero.py','image/zero-lock.py','image/apt-lock.py','image/build-image.py','image/profiles.py',
                   'builder/zero-bsp-check.py','builder/zero-pipeline-smoke.py'}
+        required.add(str(repository_path(root,path).relative_to(root)))
+        required.add(LOCK_PATHS['seed_apt'])
+        required.update(item['path'] for item in profile['vendor_inputs'].values())
+        required.update(item['path'] for item in profile['contracts'].values())
         files=proof.get('files_sha256',{})
         if not required.issubset(files):raise ProfileError('Pipeline implementation proof is incomplete')
         for name,identity in files.items():

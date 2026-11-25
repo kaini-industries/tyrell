@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "id": "tyrell-zero",
-  "profile_version": 1,
+  "profile_version": 2,
   "plan_revision": 3,
   "architecture": "arm64",
   "release": "trixie",
@@ -19,24 +19,24 @@
     "compressed": "tyrell-zero-trixie-arm64-lite.img.xz"
   },
   "pins": {
-    "pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
-    "bsp_commit": "75518549a2640486f5d13ea72ca4935b198d7c20",
-    "bsp_archive_sha256": "a541239495b9e1c15d2fe580c2cee4587ba9667e427d5f4d15d45038d8fd93a0",
+    "pi_gen_commit": "3b0e6f61520afb59598b188c803c1b9e8d63737f",
+    "bsp_commit": "a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4",
+    "bsp_archive_sha256": "bb671341f2419b2cd20607fb7e00fde4a35a338a8de7036632430375a66514d0",
     "kernel_release": "6.18.39+rpt-rpi-v8",
     "kernel_package": "1:6.18.39-1+rpt1",
-    "applaunch_version": "0.6.105",
-    "applaunch_source": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
-    "applaunch_deb_sha256": "a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544",
-    "applaunch_main_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+    "applaunch_version": "0.6.111",
+    "applaunch_source": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+    "applaunch_deb_sha256": "8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2",
+    "applaunch_main_sha256": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7",
     "raspberrypi_sys_mods_version": "1:20260914",
     "raspberrypi_sys_mods_sha256": "a6169bc9506b36ba92d72c88d3390b6eefc8eb616fd9a46100f9bbf3ac088211",
-    "seed_apt_lock_sha256": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e",
+    "seed_apt_lock_sha256": "4016f27e11664a903559b80971f65a0cbe91699fcdffbe70daa65ccb751fad00",
     "greetd_version": "0.10.3-4"
   },
   "contracts": {
     "hardware": {
-      "path": "image/contracts/tyrell-zero-hardware.json",
-      "sha256": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491"
+      "path": "image/contracts/tyrell-zero-hardware-nov19.json",
+      "sha256": "725610b8a319f420671a62c75d621c51da3e0a7f195fc3c90c53088fc2d72e6e"
     },
     "power": {
       "path": "image/contracts/tyrell-zero-power.json",
@@ -44,7 +44,7 @@
     }
   },
   "lock_paths": {
-    "seed_apt": "locks/image-apt.json",
+    "seed_apt": "locks/tyrell-zero-seed-apt.json",
     "source": "locks/tyrell-zero-session-source.json",
     "apt": "locks/tyrell-zero-apt.json",
     "apps": "locks/tyrell-zero-apps.json",
@@ -91,7 +91,7 @@
       "applaunch"
     ],
     "camera": [
-      "libcamera0.7",
+      "libcamera0.8",
       "libcamera-ipa",
       "libcamera-tools",
       "libcamera-v4l2",
@@ -123,18 +123,18 @@
     "automatic_security_deferral": false
   },
   "readiness": {
-    "phase": "pipeline",
+    "phase": "nov19-baseline-refresh",
     "image_build_enabled": true,
     "reason": "Input and implementation qualification are checked from bound receipts; image export, physical hardware and battery acceptance remain separate."
   },
   "vendor_inputs": {
     "apps": {
-      "path": "image/baseline-apps.json",
-      "sha256": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de"
+      "path": "image/zero-baseline-apps.json",
+      "sha256": "5a41bd708c151b85898f619222b54d2bd671c25b9a0c1931a33687bf3a54a06d"
     },
     "camera": {
-      "path": "image/camera-packages.json",
-      "sha256": "070cf852959bd4981827cf0ed79c143ecf29d73226c4f168e9831b4a1938b8ef"
+      "path": "image/zero-camera-packages.json",
+      "sha256": "3f31057a729b99e7d6049f10fdde8955e53e1f5ee4ba54d58bcc3e1fa9d86ed7"
     }
   }
 }

@@ -14,25 +14,25 @@ import tarfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_VENDOR_DEB = Path('/Volumes/garage/tyrell-build/downloads/applaunch_0.6.105-m5stack1_arm64.deb')
+DEFAULT_VENDOR_DEB = ROOT / 'build/zero-vendor/downloads/applaunch_0.6.111-m5stack1_arm64.deb'
 
 
 def baseline_assets(baseline):
     api = runpy.run_path(str(ROOT / 'scripts/builder'))
     safe = runpy.run_path(str(ROOT / 'builder/zero.py'))
-    if baseline.is_symlink() or not baseline.is_file() or api['digest'](baseline) != 'a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544':
+    if baseline.is_symlink() or not baseline.is_file() or api['digest'](baseline) != '8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2':
         raise RuntimeError('Exact cached vendor applaunch package required')
     members = subprocess.check_output(['ar', 't', str(baseline)], text=True).splitlines()
     data = [name for name in members if name.startswith('data.tar')]
     if len(data) != 1:
         raise RuntimeError('Invalid vendor Debian archive')
     payload = subprocess.check_output(['ar', 'p', str(baseline), data[0]])
-    folder = safe['generated_path'](ROOT / 'build/zero-integration/vendor')
+    folder = safe['generated_path'](ROOT / 'build/zero-integration/vendor' / api['digest'](baseline))
     folder.mkdir(parents=True, exist_ok=True)
     assets = {}
     with tarfile.open(fileobj=io.BytesIO(payload), mode='r:*') as archive:
-        for name, identity in {'M5CardputerZero-APPLaunch':'9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c',
-                               'M5CardputerZero-AppStore':'e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e'}.items():
+        for name, identity in {'M5CardputerZero-APPLaunch':'e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7',
+                               'M5CardputerZero-AppStore':'cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa'}.items():
             expected = 'usr/share/APPLaunch/bin/' + name
             entries = [m for m in archive.getmembers() if m.name.removeprefix('./') == expected]
             if len(entries) != 1 or not entries[0].isfile() or entries[0].size > 32 * 1024**2:

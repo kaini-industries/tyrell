@@ -58,7 +58,7 @@ def main():
             parser.error("Unsafe source input: " + name)
     output = args.output_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    deb = output / "tyrell-zero-power-policy_0.1.0-1_arm64.deb"
+    deb = output / "tyrell-zero-power-policy_0.1.1-1_arm64.deb"
     if deb.exists():
         parser.error("Output already exists; use a fresh artifact directory")
     env = dict(os.environ, TYRELL_POWER_CONTRACT=str(args.contract.resolve()),
@@ -72,7 +72,7 @@ def main():
         return tests.returncode
     inputs = {name: sha(PACKAGE / name) for name in files}
     provenance = {
-        "schema": 1, "package": "tyrell-zero-power-policy", "version": "0.1.0-1",
+        "schema": 1, "package": "tyrell-zero-power-policy", "version": "0.1.1-1",
         "architecture": arch, "source_revision": args.source_revision,
         "source_date_epoch": int(epoch), "source_files_sha256": inputs,
         "power_contract_sha256": sha(args.contract), "plan_revision": contract["plan_revision"],
@@ -85,7 +85,7 @@ def main():
         stage = Path(directory) / "root"
         control = stage / "DEBIAN"; control.mkdir(parents=True)
         (control / "control").write_text(
-            "Package: tyrell-zero-power-policy\nVersion: 0.1.0-1\nArchitecture: arm64\n"
+            "Package: tyrell-zero-power-policy\nVersion: 0.1.1-1\nArchitecture: arm64\n"
             "Maintainer: Tyrell contributors <tyrell@localhost>\nSection: admin\nPriority: optional\n"
             "Depends: python3 (>= 3.11)\n"
             "Description: Inactive power-policy foundation for Tyrell Zero\n"

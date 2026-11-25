@@ -19,8 +19,8 @@ spec.loader.exec_module(native)
 spec = importlib.util.spec_from_file_location('zero_integration_safety', ROOT / 'builder/zero.py')
 safe = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(safe)
-BASELINE = '/Volumes/garage/tyrell-build/downloads/applaunch_0.6.105-m5stack1_arm64.deb'
-BASELINE_SHA = 'a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544'
+BASELINE = str(ROOT / 'build/zero-vendor/downloads/applaunch_0.6.111-m5stack1_arm64.deb')
+BASELINE_SHA = '8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2'
 CONFIG_SHA = '1df551d93c93925eeaa1050fb1bb71c7e82813464e0a27fe6be3dd201075344b'
 
 

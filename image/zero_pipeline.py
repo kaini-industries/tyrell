@@ -20,12 +20,39 @@ SHA = re.compile(r'[0-9a-f]{64}\Z')
 GUEST_BASE = '/var/tmp/tyrell-zero-image-jobs'
 LOCKS = ('tyrell-zero-build-inputs.json', 'tyrell-zero-session-source.json',
          'tyrell-zero-apt.json', 'tyrell-zero-apps.json', 'tyrell-zero-native-compat.json',
-         'tyrell-zero-greetd.json', 'tyrell-zero-vendor-inputs.json')
+         'tyrell-zero-greetd.json', 'tyrell-zero-vendor-inputs.json', 'tyrell-zero-seed-apt.json')
+LEGACY_BASELINE = '5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4'
+NOV19_BASELINE = '3b0e6f61520afb59598b188c803c1b9e8d63737f'
 
 
 def digest(path):
     with Path(path).open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+
+def vendor_source(target, commit):
+    """Keep each reviewed Zero recipe separate from the legacy source cache."""
+    if not isinstance(commit, str) or not re.fullmatch(r'[0-9a-f]{40}', commit):
+        raise ValueError('Zero vendor source requires a full pinned commit')
+    sources = Path(target) / 'sources'
+    vendor = sources / ('pi-gen-' + commit)
+    if sources.is_symlink() or vendor.is_symlink():
+        raise ValueError('Zero vendor source cache cannot be symlinked')
+    if not vendor.exists():
+        sources.mkdir(parents=True, exist_ok=True)
+        subprocess.run(['git', 'init', '--quiet', '--initial-branch=vendor', str(vendor)], check=True)
+        subprocess.run(['git', '-C', str(vendor), 'remote', 'add', 'origin',
+                        'https://github.com/CardputerZero/pi-gen.git'], check=True)
+        subprocess.run(['git', '-C', str(vendor), 'fetch', '--depth=1', 'origin', commit], check=True)
+        subprocess.run(['git', '-C', str(vendor), 'checkout', '--detach', 'FETCH_HEAD'], check=True)
+    git_dir = vendor / '.git'
+    if not git_dir.is_dir() or git_dir.is_symlink():
+        raise ValueError('Zero vendor cache requires its own regular Git directory')
+    head = subprocess.check_output(['git', '-C', str(vendor), 'rev-parse', 'HEAD'], text=True).strip()
+    dirty = subprocess.check_output(['git', '-C', str(vendor), 'status', '--porcelain'], text=True)
+    if head != commit or dirty:
+        raise ValueError('Zero requires the pristine pinned vendor source cache')
+    return vendor
 
 
 def read_json(value):
@@ -133,7 +160,7 @@ def prepare_inputs(target, directory, profile_path, repository, *, qualification
                 raise ValueError('Unsafe native source input')
             if path.is_file(): add(str(path.relative_to(ROOT)), path)
     add('scripts/builder', ROOT / 'scripts/builder')
-    add('locks/image-apt.json', ROOT / 'locks/image-apt.json')
+    add(profile['lock_paths']['seed_apt'], ROOT / profile['lock_paths']['seed_apt'])
     for record in apps['packages']:
         source = ROOT / relative(record['input_path'])
         if (digest(regular(source)) != record['sha256'] or source.stat().st_size != record['bytes']):
@@ -147,8 +174,8 @@ def prepare_inputs(target, directory, profile_path, repository, *, qualification
         if (Path(name).name!=name or digest(source)!=record['sha256'] or source.stat().st_size!=record['bytes']):
             raise ValueError('Native qualification evidence differs')
         add('assets/'+name,source)
-    baseline = read_json((ROOT / 'image/baseline-apps.json').read_text())
-    camera = read_json((ROOT / 'image/camera-packages.json').read_text())
+    baseline = read_json((ROOT / profile['vendor_inputs']['apps']['path']).read_text())
+    camera = read_json((ROOT / profile['vendor_inputs']['camera']['path']).read_text())
     specs = [baseline['launcher'], baseline['drivers'], *baseline['apps'], *camera['packages']]
     for spec in specs:
         name = spec['name']
@@ -156,11 +183,7 @@ def prepare_inputs(target, directory, profile_path, repository, *, qualification
         if digest(regular(source)) != spec['sha256']:
             raise ValueError('Vendor input missing or changed: ' + name)
         add('assets/' + name, source)
-    vendor = Path(target) / 'sources/pi-gen'
-    head = subprocess.check_output(['git', '-C', str(vendor), 'rev-parse', 'HEAD'], text=True).strip()
-    dirty = subprocess.check_output(['git', '-C', str(vendor), 'status', '--porcelain'], text=True)
-    if head != profile['pins']['pi_gen_commit'] or dirty:
-        raise ValueError('Zero requires the pristine pinned vendor source cache')
+    vendor = vendor_source(target, profile['pins']['pi_gen_commit'])
     names = subprocess.check_output(['git', '-C', str(vendor), 'ls-files', '-z']).decode().split('\0')
     for name in filter(None, names): add('vendor/pi-gen/' + relative(name), vendor / name)
     for path in sorted(repository.rglob('*')):
@@ -411,6 +434,19 @@ def wait(job, attempt, common):
         time.sleep(10)
 
 
+def publication_name(metadata):
+    """Select only fixed pointers for an already verified capture header."""
+    if (not isinstance(metadata, dict) or metadata.get('profile_id') != 'tyrell-zero'
+            or metadata.get('build_mode') != 'zero-native'):
+        raise ValueError('Zero publication requires its verified metadata header')
+    commit = metadata.get('pi_gen_commit')
+    if commit == NOV19_BASELINE:
+        return 'image-artifacts-zero-nov19'
+    if commit == LEGACY_BASELINE:
+        return 'image-artifacts-zero'
+    raise ValueError('Unsupported Zero publication baseline')
+
+
 def export(target, job, attempt, common):
     common['assert_idle']()
     state=outcome(job, attempt, common)
@@ -474,9 +510,13 @@ def export(target, job, attempt, common):
             root.rename(destination)
         finally:shutil.rmtree(staging)
     validate_host_export(destination,job,attempt,state['result']['manifest_sha256'],common,recorded=recorded)
-    link=ROOT/'image-artifacts-zero'
+    # Read the header from the guest manifest already bound to the durable
+    # success result. A new baseline cannot replace historical public pointers.
+    metadata=read_json((destination/'guest-image-manifest.json').read_text()).get('inputs')
+    name=publication_name(metadata)
+    link=ROOT/name
     if link.exists() and not link.is_symlink():raise ValueError('Preserve existing Zero artifact directory')
-    temp=ROOT/('.image-artifacts-zero-'+job['job_id'])
+    temp=ROOT/('.'+name+'-'+job['job_id'])
     if os.path.lexists(temp):raise ValueError('Preserve previous Zero publication temporary path')
     temp.symlink_to(destination,target_is_directory=True);temp.replace(link)
     print('Verified Zero artifacts: '+str(destination),flush=True)

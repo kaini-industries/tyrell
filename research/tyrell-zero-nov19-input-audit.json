@@ -1,0 +1,1390 @@
+{
+  "schema": 1,
+  "kind": "tyrell-zero-nov19-selected-input-audit",
+  "created_utc": "2026-11-25T05:40:13.892214+00:00",
+  "scope": "Official source/release/image/APT input audit, derived seed selection and fresh stage0-2 frozen source replay. This is not exported-image qualification, stock-image byte reproduction or hardware acceptance.",
+  "status": "selected-inputs-and-fresh-source-producer-verified",
+  "hardware_accessed": false,
+  "physical_testing": "pending",
+  "official_release": {
+    "repository": "CardputerZero/pi-gen",
+    "release_id": 451139772,
+    "tag": "20261119-094529-3b0e6f6",
+    "prerelease": false,
+    "published_at": "2026-11-19T09:46:35Z",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/tag/20261119-094529-3b0e6f6"
+  },
+  "official_image": {
+    "id": 767102551,
+    "name": "2026-11-19-cardputerzero-trixie-arm64.img.xz",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/download/20261119-094529-3b0e6f6/2026-11-19-cardputerzero-trixie-arm64.img.xz",
+    "bytes": 1796944316,
+    "sha256": "27e35401ccb8f46356f45c59f16a4cfaed8423bf61862a3fe449e55405e788b9",
+    "uncompressed_bytes": 15888023552,
+    "root_partition_offset": 545259520,
+    "root_partition_bytes": 15342764032,
+    "sparse_readonly_partition_sha256": "be2b3d9dd98423809c1069da6a239c0ae82fcc64d28b44450113f5c52eda3ab6",
+    "source_raw_preserved": true,
+    "inspection": "debugfs read-only against a separate regular sparse partition file; no block device or mount"
+  },
+  "official_build_info": {
+    "id": 767105488,
+    "name": "build-info.json",
+    "url": "https://github.com/CardputerZero/pi-gen/releases/download/20261119-094529-3b0e6f6/build-info.json",
+    "bytes": 235,
+    "sha256": "db70158253fd5cf2319b0ffeb0dd8d358ed6ab6932f56248ecba0e7c95f2eca0",
+    "fields": {
+      "pigen_commit": "3b0e6f61520afb59598b188c803c1b9e8d63737f",
+      "launcher_version": "0.6.111",
+      "launcher_release": "unknown",
+      "kernel_version": "1:6.18.39-1+rpt1",
+      "driver_commit": "a3fd3e8",
+      "config_cardputero_v0_5": true
+    }
+  },
+  "source_selection": {
+    "pi_gen_commit": "3b0e6f61520afb59598b188c803c1b9e8d63737f",
+    "previous_pi_gen_commit": "5f4c44f3431bf1dfb968c10f7228ad6fa0c66cf4",
+    "bsp_commit": "a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4",
+    "kernel_release": "6.18.39+rpt-rpi-v8",
+    "kernel_package_version": "1:6.18.39-1+rpt1",
+    "launcher": {
+      "repository": "https://github.com/CardputerZero/launcher.git",
+      "commit": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+      "tree": "3031a3ee9a5816726c5aa66ebf352cb3add1581f",
+      "applaunch_version": "0.6.111",
+      "original_deb_sha256": "8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2",
+      "original_main_sha256": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7",
+      "archive_sha256": "81a82e827b68669a1c1aa7f4f015c059629bbf977ff5f53865c1a4e02d05d135"
+    },
+    "sdk": {
+      "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+      "commit": "1846503d46fa74685b6df4735aad6391d1624a96",
+      "tree": "5e14d5852f4eadcef2c369ec1be2e65db3ba357f",
+      "archive_sha256": "9053c4eee1b72318e802cbf83eada4f6bf0272e28fc69cb7c4720fcb4c99e0b6",
+      "source_registry_entries": 32,
+      "source_registry_scope": "Registry has 32 active entries; unchanged native config enables LVGL 9.5, eventpp, Sigslot, SmoothUI and Spdlog, all exact cached archives in vendor-input lock. New native build pending."
+    },
+    "store_source": "1ceeaed715766d336b1a885f58d03d5e4c33d6fa",
+    "store_vendor_elf_sha256": "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa",
+    "source_archives": [
+      {
+        "id": "launcher",
+        "repository": "https://github.com/CardputerZero/launcher.git",
+        "commit": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+        "url": "https://codeload.github.com/CardputerZero/launcher/tar.gz/fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+        "filename": "launcher-fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8.tar.gz",
+        "sha256": "81a82e827b68669a1c1aa7f4f015c059629bbf977ff5f53865c1a4e02d05d135",
+        "bytes": 53064456
+      },
+      {
+        "id": "sdk",
+        "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+        "commit": "1846503d46fa74685b6df4735aad6391d1624a96",
+        "url": "https://codeload.github.com/m5stack/M5Stack_Linux_Libs/tar.gz/1846503d46fa74685b6df4735aad6391d1624a96",
+        "filename": "sdk-1846503d46fa74685b6df4735aad6391d1624a96.tar.gz",
+        "sha256": "9053c4eee1b72318e802cbf83eada4f6bf0272e28fc69cb7c4720fcb4c99e0b6",
+        "bytes": 48127013
+      },
+      {
+        "id": "lvgl",
+        "repository": "https://github.com/dianjixz/lvgl.git",
+        "commit": "85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+        "url": "https://codeload.github.com/dianjixz/lvgl/tar.gz/85aa60d18b3d5e5588d7b247abf90198f07c8a63",
+        "filename": "lvgl-85aa60d18b3d5e5588d7b247abf90198f07c8a63.tar.gz",
+        "sha256": "b32747cf6568d86a5cb9d30f53970bec1c7a322cb624c4158d4b0e348324146b",
+        "bytes": 101335560
+      },
+      {
+        "id": "eventpp",
+        "repository": "https://github.com/wqking/eventpp.git",
+        "commit": "c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+        "url": "https://codeload.github.com/wqking/eventpp/tar.gz/c472fb22e71ead0e58ff7df89e12c66b0bdfb533",
+        "filename": "eventpp-c472fb22e71ead0e58ff7df89e12c66b0bdfb533.tar.gz",
+        "sha256": "2d2bebea25cab8723525206c6d77c8a95f073992a8e8b880a11bb8823b05f179",
+        "bytes": 255636
+      },
+      {
+        "id": "sigslot",
+        "repository": "https://github.com/palacaze/sigslot.git",
+        "commit": "b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+        "url": "https://codeload.github.com/palacaze/sigslot/tar.gz/b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1",
+        "filename": "sigslot-b588b791b9cf7eb17ff0a74d8aebd4a61166c2e1.tar.gz",
+        "sha256": "140f0a2a731ed7d9ebff1bad4cb506ea2aa28fd57f42b3ec79031b1505dc6680",
+        "bytes": 33987
+      },
+      {
+        "id": "smooth_ui_toolkit",
+        "repository": "https://github.com/Forairaaaaa/smooth_ui_toolkit.git",
+        "commit": "5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+        "url": "https://codeload.github.com/Forairaaaaa/smooth_ui_toolkit/tar.gz/5328cfd14af9390b8d26a4daa0d7dbd237894d4b",
+        "filename": "smooth_ui_toolkit-5328cfd14af9390b8d26a4daa0d7dbd237894d4b.tar.gz",
+        "sha256": "b0600ac91f02c521ff9236cb312a9385062bde065687dc626868424eadd48215",
+        "bytes": 100289
+      },
+      {
+        "id": "spdlog",
+        "repository": "https://github.com/gabime/spdlog.git",
+        "commit": "79524ddd08a4ec981b7fea76afd08ee05f83755d",
+        "url": "https://codeload.github.com/gabime/spdlog/tar.gz/79524ddd08a4ec981b7fea76afd08ee05f83755d",
+        "filename": "spdlog-79524ddd08a4ec981b7fea76afd08ee05f83755d.tar.gz",
+        "sha256": "c6dee844e35a54cc80e3ab76aae2310763e0b49c7397549dfa4d4657d9737138",
+        "bytes": 281845
+      }
+    ]
+  },
+  "recipe_comparison": {
+    "git_commit_bytes_compared": true,
+    "stage0_1_tracked_files": 27,
+    "stage0_1_changed_files": [
+      "stage1/00-boot-files/files/cmdline.txt"
+    ],
+    "stage0_2_unchanged_apt_package_lists": [
+      "stage0/00-configure-apt/01-packages",
+      "stage0/01-locale/00-packages",
+      "stage0/02-firmware/01-packages",
+      "stage1/01-sys-tweaks/00-packages",
+      "stage1/02-net-tweaks/00-packages",
+      "stage1/03-install-packages/00-packages",
+      "stage2/01-sys-tweaks/00-packages",
+      "stage2/01-sys-tweaks/00-packages-nr",
+      "stage2/02-net-tweaks/00-packages",
+      "stage2/04-cloud-init/00-packages",
+      "stage2/05-cardputerzero/00-packages"
+    ],
+    "unchanged_kernel_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+    "changed_tracked_files": [
+      ".github/workflows/build.yml",
+      "README.md",
+      "build.sh",
+      "docs/CARDPUTERZERO-IMAGE-DESIGN.md",
+      "docs/fix-firstboot-partition-expand.md",
+      "docs/resize-investigation-2026-06-08.md",
+      "export-image/prerun.sh",
+      "scripts/update_os_list.py",
+      "stage1/00-boot-files/files/cmdline.txt",
+      "stage2/05-cardputerzero/02-run.sh",
+      "stage2/05-cardputerzero/05-run.sh",
+      "stage2/05-cardputerzero/files/cardputerzero-diskid.service",
+      "stage2/05-cardputerzero/files/cardputerzero-resize.service",
+      "stage2/05-cardputerzero/files/randomize-disk-id",
+      "stage2/05-cardputerzero/files/resize-root",
+      "tools/verify-image.sh"
+    ],
+    "stage3_4_5_changed_files": [],
+    "critical_nov19_file_sha256": {
+      "build.sh": "bbf9b1c72ee0858b08951483607f9a1ce05159b72f29277bef9c6713b10e5e81",
+      "stage1/00-boot-files/files/cmdline.txt": "ace45d14188d3a72288412018b9377a7f7160d5e0928b8bfb00f75f3f27b028c",
+      "stage2/05-cardputerzero/01-run.sh": "fd45585161d2208c838a6a37b476700b9e920478900dbcf9012764803f520edf",
+      "stage2/05-cardputerzero/02-run.sh": "cce5987bb38b8ec1b0daaebbf4dab98261d029ba38da80d53f4aca936ac15ef5",
+      "stage2/05-cardputerzero/03-run.sh": "c700ef1af64fc813406eafc7620bb3ae20582d98af217f986c5fb2e0053bbfbe",
+      "stage2/05-cardputerzero/05-run.sh": "a22d9cd7126b740e6ec46ad3b9317f6a433a8a69f1c2ca683c4361daadaf2b1e",
+      "stage2/05-cardputerzero/files/cardputerzero-diskid.service": "17fbcf83f49e5ee91d469e6374af9780deeb039cad28dbf9044c15617be3fbce",
+      "stage2/05-cardputerzero/files/randomize-disk-id": "4ca2b3dfc1de7c0b6c984e57ab4f0107a45c60099d19c77bec43b5efcf5fbd2a"
+    },
+    "interpretation": "Unchanged package requests do not imply unchanged resolved package versions or stock-image byte identity. Stage0-2 execute the new vendor first-boot/disk-ID configuration; no new M5 recipe changes occur in later desktop stages."
+  },
+  "application_selection": {
+    "policy": "Latest non-prerelease matching application assets released and uploaded before the November 19 official image release. Verified retained asset metadata/bytes; a frozen source build, not a byte-for-byte reproduction of the official image.",
+    "cutoff": "2026-11-19T09:46:35Z",
+    "launcher_deb": {
+      "id": "applaunch",
+      "repository": "CardputerZero/launcher",
+      "release": "launcher-v0.6.111",
+      "name": "applaunch_0.6.111-m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/launcher/releases/download/launcher-v0.6.111/applaunch_0.6.111-m5stack1_arm64.deb",
+      "sha256": "8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2",
+      "bytes": 47259868,
+      "package_version": "0.6.111"
+    },
+    "nonlauncher_apps": 14,
+    "changed_apps": [
+      {
+        "id": "compass",
+        "repository": "CardputerZero/Compass",
+        "release": "v1.0.1",
+        "published_at": "2026-11-16T05:38:58Z",
+        "name": "m5cardputerzero-compass_1.0.1_m5stack1_arm64.deb",
+        "url": "https://github.com/CardputerZero/Compass/releases/download/v1.0.1/m5cardputerzero-compass_1.0.1_m5stack1_arm64.deb",
+        "sha256": "6ce492bb00b23fff4c61839eb8cd18d968e127966f241a290ad48036d6963b7e",
+        "bytes": 726550
+      },
+      {
+        "id": "camera",
+        "repository": "CardputerZero/Camera",
+        "release": "v1.0.4",
+        "published_at": "2026-11-13T03:08:03Z",
+        "name": "Camera_1.0.4_m5stack1_arm64.deb",
+        "url": "https://github.com/CardputerZero/Camera/releases/download/v1.0.4/Camera_1.0.4_m5stack1_arm64.deb",
+        "sha256": "9fab11fb9a01a481e301bbe4213ef59bcd53386047ef9208683b1d57cab6b280",
+        "bytes": 1410438
+      },
+      {
+        "id": "factory-test",
+        "repository": "CardputerZero/FactoryTest",
+        "release": "1.0.3",
+        "published_at": "2026-11-13T03:15:15Z",
+        "name": "FactoryTest_1.0.3_m5stack1_arm64.deb",
+        "url": "https://github.com/CardputerZero/FactoryTest/releases/download/1.0.3/FactoryTest_1.0.3_m5stack1_arm64.deb",
+        "sha256": "04731e468da5032d52324dcc48d3c727f1cc37185af129d127ebdaaf420bcb62",
+        "bytes": 10500982
+      },
+      {
+        "id": "files",
+        "repository": "CardputerZero/Files",
+        "release": "v1.0.3",
+        "published_at": "2026-11-17T07:58:49Z",
+        "name": "m5cardputerzero-files_1.0.3_m5stack1_arm64.deb",
+        "url": "https://github.com/CardputerZero/Files/releases/download/v1.0.3/m5cardputerzero-files_1.0.3_m5stack1_arm64.deb",
+        "sha256": "2740052d98c536280d53d26d55c0a4c71a6e996bf75216c236098557a86c9e08",
+        "bytes": 2548734
+      }
+    ],
+    "unchanged_app_count": 10,
+    "release_lists_complete": true,
+    "release_metadata_repositories_audited": 14
+  },
+  "official_stock_inventory": {
+    "status_sha256": "1499b092465df8e9ac1ded414dbff0bfd7f3af1679962dc910888a4da3fa7c56",
+    "installed_or_held_installed_count": 1688,
+    "record_count": 1689,
+    "includes_hold_ok_installed": true,
+    "comparison": {
+      "zero_stage2": {
+        "retained_count": 955,
+        "common_identities": 950,
+        "same_version": 917,
+        "changed_common_version_count": 33,
+        "only_retained_count": 5,
+        "only_stock_count": 738
+      },
+      "seed_stage2": {
+        "retained_count": 950,
+        "common_identities": 946,
+        "same_version": 913,
+        "changed_common_version_count": 33,
+        "only_retained_count": 4,
+        "only_stock_count": 742
+      },
+      "seed_stage4": {
+        "retained_count": 1679,
+        "common_identities": 1675,
+        "same_version": 1633,
+        "changed_common_version_count": 42,
+        "only_retained_count": 4,
+        "only_stock_count": 13
+      }
+    },
+    "all_changed_common_seed_stage4_versions": [
+      {
+        "Package": "applaunch",
+        "Architecture": "arm64",
+        "old_version": "0.6.105",
+        "stock_version": "0.6.111"
+      },
+      {
+        "Package": "camera",
+        "Architecture": "arm64",
+        "old_version": "1.0.2-m5stack1",
+        "stock_version": "1.0.4-m5stack1"
+      },
+      {
+        "Package": "factorytest",
+        "Architecture": "arm64",
+        "old_version": "1.0.0-m5stack1",
+        "stock_version": "1.0.3-m5stack1"
+      },
+      {
+        "Package": "gui-pkinst",
+        "Architecture": "arm64",
+        "old_version": "0.24",
+        "stock_version": "0.25"
+      },
+      {
+        "Package": "gui-updater",
+        "Architecture": "arm64",
+        "old_version": "1.5",
+        "stock_version": "1.7"
+      },
+      {
+        "Package": "libcamera-ipa",
+        "Architecture": "arm64",
+        "old_version": "0.7.2+rpt20260817-1",
+        "stock_version": "0.8.0+rpt20261104-1"
+      },
+      {
+        "Package": "libcamera-tools",
+        "Architecture": "arm64",
+        "old_version": "0.7.2+rpt20260817-1",
+        "stock_version": "0.8.0+rpt20261104-1"
+      },
+      {
+        "Package": "libcamera-v4l2",
+        "Architecture": "arm64",
+        "old_version": "0.7.2+rpt20260817-1",
+        "stock_version": "0.8.0+rpt20261104-1"
+      },
+      {
+        "Package": "libegl-mesa0",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "libgbm1",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "libgl1-mesa-dri",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "libglx-mesa0",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "libopenexr-3-1-30",
+        "Architecture": "arm64",
+        "old_version": "3.2.12-1~deb13u1",
+        "stock_version": "3.2.12-1~deb13u2"
+      },
+      {
+        "Package": "libpipewire-0.3-0t64",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "libpipewire-0.3-modules",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "librpicam-app1",
+        "Architecture": "arm64",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "libspa-0.2-bluetooth",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "libspa-0.2-libcamera",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "libspa-0.2-modules",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "libwlroots-0.20",
+        "Architecture": "arm64",
+        "old_version": "0.20.2-1+rpt4",
+        "stock_version": "0.20.2-1+rpt5"
+      },
+      {
+        "Package": "m5cardputerzero-compass",
+        "Architecture": "arm64",
+        "old_version": "0.2.4",
+        "stock_version": "1.0.1"
+      },
+      {
+        "Package": "m5cardputerzero-files",
+        "Architecture": "arm64",
+        "old_version": "1.0.2",
+        "stock_version": "1.0.3"
+      },
+      {
+        "Package": "mesa-libgallium",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "mesa-vulkan-drivers",
+        "Architecture": "arm64",
+        "old_version": "26.2.6-1~bpo13+0~rpt2",
+        "stock_version": "26.2.7-1~bpo13+0~rpt1"
+      },
+      {
+        "Package": "pipewire",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "pipewire-bin",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "pipewire-libcamera",
+        "Architecture": "all",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "pipewire-pulse",
+        "Architecture": "arm64",
+        "old_version": "1.4.2-1+rpt3",
+        "stock_version": "1.4.2-1+rpt5"
+      },
+      {
+        "Package": "piwiz",
+        "Architecture": "arm64",
+        "old_version": "1.8",
+        "stock_version": "1.10"
+      },
+      {
+        "Package": "python3-libcamera",
+        "Architecture": "arm64",
+        "old_version": "0.7.2+rpt20260817-1",
+        "stock_version": "0.8.0+rpt20261104-1"
+      },
+      {
+        "Package": "python3-picamera2",
+        "Architecture": "all",
+        "old_version": "0.3.37-1",
+        "stock_version": "0.3.39-1"
+      },
+      {
+        "Package": "rp-prefapps",
+        "Architecture": "arm64",
+        "old_version": "1.17",
+        "stock_version": "1.20"
+      },
+      {
+        "Package": "rpi-chromium-mods",
+        "Architecture": "arm64",
+        "old_version": "20260211",
+        "stock_version": "20261111"
+      },
+      {
+        "Package": "rpi-eeprom",
+        "Architecture": "all",
+        "old_version": "28.36-1",
+        "stock_version": "28.37-1"
+      },
+      {
+        "Package": "rpicam-apps",
+        "Architecture": "all",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpicam-apps-core",
+        "Architecture": "arm64",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpicam-apps-encoder",
+        "Architecture": "arm64",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpicam-apps-lite",
+        "Architecture": "all",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpicam-apps-opencv-postprocess",
+        "Architecture": "arm64",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpicam-apps-preview",
+        "Architecture": "arm64",
+        "old_version": "1.13.0-1",
+        "stock_version": "1.15.0-1"
+      },
+      {
+        "Package": "rpinters",
+        "Architecture": "arm64",
+        "old_version": "1.11",
+        "stock_version": "1.12"
+      },
+      {
+        "Package": "wayvnc",
+        "Architecture": "arm64",
+        "old_version": "0.10.2-1+rpt1",
+        "stock_version": "0.10.2-1+rpt2"
+      }
+    ],
+    "stock_only_seed_stage4": [
+      {
+        "Package": "libcamera0.8",
+        "Architecture": "arm64",
+        "Version": "0.8.0+rpt20261104-1"
+      },
+      {
+        "Package": "libhwloc-plugins",
+        "Architecture": "arm64",
+        "Version": "2.12.0-4"
+      },
+      {
+        "Package": "python3-arrow",
+        "Architecture": "all",
+        "Version": "1.3.0-1.1"
+      },
+      {
+        "Package": "python3-dateutil",
+        "Architecture": "all",
+        "Version": "2.9.0-4"
+      },
+      {
+        "Package": "python3-fqdn",
+        "Architecture": "all",
+        "Version": "1.5.1-2"
+      },
+      {
+        "Package": "python3-isoduration",
+        "Architecture": "all",
+        "Version": "20.11.0+git20211126.ae0bd61-2"
+      },
+      {
+        "Package": "python3-olefile",
+        "Architecture": "all",
+        "Version": "0.47-1"
+      },
+      {
+        "Package": "python3-rfc3339-validator",
+        "Architecture": "all",
+        "Version": "0.1.4-2"
+      },
+      {
+        "Package": "python3-rfc3986-validator",
+        "Architecture": "all",
+        "Version": "0.1.1-2"
+      },
+      {
+        "Package": "python3-rfc3987",
+        "Architecture": "all",
+        "Version": "1.3.8-3"
+      },
+      {
+        "Package": "python3-uritemplate",
+        "Architecture": "all",
+        "Version": "4.1.1-3"
+      },
+      {
+        "Package": "python3-webcolors",
+        "Architecture": "all",
+        "Version": "1.13-1"
+      },
+      {
+        "Package": "usr-is-merged",
+        "Architecture": "all",
+        "Version": "39+nmu2"
+      }
+    ]
+  },
+  "apt_authentication": {
+    "trust_anchor": "Archive keyrings captured from the SHA-locked official image; public keyring digests and signer fingerprints below. Historical Release/Packages bytes are retained, not replaced by moving latest indices.",
+    "inrelease_signatures_verified": 4,
+    "packages_index_hashes_verified": 16,
+    "repositories": [
+      {
+        "repository": "https://deb.debian.org/debian",
+        "suite": "trixie",
+        "release_date": "Sat, 12 Sep 2026 07:55:41 UTC",
+        "valid_until": null,
+        "inrelease": "apt-lists/deb.debian.org_debian_dists_trixie_InRelease",
+        "inrelease_sha256": "0584fba32e13e0ab8285fb16c27adea1ec03a73669c18702821094fd6ca86675",
+        "keyring": "debian-archive-keyring.pgp",
+        "keyring_sha256": "506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017",
+        "signature_fingerprints": [
+          "4CB50190207B4758A3F73A796ED0E7B82643E131",
+          "B8E5F13176D2A7A75220028078DBA3BC47EF2265",
+          "41587F7DB8C774BCCF131416762F67A0B2C39DE4"
+        ],
+        "verified_indexes": [
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_contrib_binary-arm64_Packages",
+            "repository_path": "contrib/binary-arm64/Packages",
+            "sha256": "68fb17dfef7b203c2fe982e35fdf4d50a437f53e016321459b8ad7f8ca9f4dfe",
+            "bytes": 206915
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_contrib_binary-armhf_Packages",
+            "repository_path": "contrib/binary-armhf/Packages",
+            "sha256": "98f32b9771a07a3c57406b09eb270ce4500241b033271527d657b61c2acb0046",
+            "bytes": 179371
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_main_binary-arm64_Packages",
+            "repository_path": "main/binary-arm64/Packages",
+            "sha256": "f97011263173eaccb1a215a28a6ec7ba1f6e5cebd8bb68e8fa0475b1d4021161",
+            "bytes": 56162922
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_main_binary-armhf_Packages",
+            "repository_path": "main/binary-armhf/Packages",
+            "sha256": "46db817ecad11582118afb845036158414a2d4e372e164e94a9cd3b69944fddd",
+            "bytes": 53377762
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_non-free-firmware_binary-arm64_Packages",
+            "repository_path": "non-free-firmware/binary-arm64/Packages",
+            "sha256": "b84b3f3e247cdb9e804ec26f646929bd5cf4f300541cdc5f77919ab70de6e516",
+            "bytes": 29374
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_non-free-firmware_binary-armhf_Packages",
+            "repository_path": "non-free-firmware/binary-armhf/Packages",
+            "sha256": "ff3a4a948bc19438f5764a710dd72913ea685506378de6f688088521985b3dd5",
+            "bytes": 27796
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_non-free_binary-arm64_Packages",
+            "repository_path": "non-free/binary-arm64/Packages",
+            "sha256": "fb13f0e74e394402f6bde262950713f98396e765e1bb63a1ee71d22fd6b747e6",
+            "bytes": 405079
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie_non-free_binary-armhf_Packages",
+            "repository_path": "non-free/binary-armhf/Packages",
+            "sha256": "b5d4aff41bee4f6ec0b5cdcdfd1003bb9d7e0e6eef6bbe600afb63e9529ca37d",
+            "bytes": 291087
+          }
+        ]
+      },
+      {
+        "repository": "https://deb.debian.org/debian",
+        "suite": "trixie-updates",
+        "release_date": "Thu, 19 Nov 2026 08:27:03 UTC",
+        "valid_until": "Thu, 26 Nov 2026 08:27:03 UTC",
+        "inrelease": "apt-lists/deb.debian.org_debian_dists_trixie-updates_InRelease",
+        "inrelease_sha256": "112de1bb290815c783e8313222b525d6ef23e45d4a7205b5d3be7b2248b8c599",
+        "keyring": "debian-archive-keyring.pgp",
+        "keyring_sha256": "506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017",
+        "signature_fingerprints": [
+          "4CB50190207B4758A3F73A796ED0E7B82643E131",
+          "B8E5F13176D2A7A75220028078DBA3BC47EF2265"
+        ],
+        "verified_indexes": [
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie-updates_main_binary-arm64_Packages",
+            "repository_path": "main/binary-arm64/Packages",
+            "sha256": "7f1dd99bbd1a0416d39499892ec12ff38d80637029114d234c38972bba8ae041",
+            "bytes": 2351
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian_dists_trixie-updates_main_binary-armhf_Packages",
+            "repository_path": "main/binary-armhf/Packages",
+            "sha256": "7f1dd99bbd1a0416d39499892ec12ff38d80637029114d234c38972bba8ae041",
+            "bytes": 2351
+          }
+        ]
+      },
+      {
+        "repository": "https://deb.debian.org/debian-security",
+        "suite": "trixie-security",
+        "release_date": "Thu, 19 Nov 2026 05:45:40 UTC",
+        "valid_until": "Thu, 26 Nov 2026 05:45:40 UTC",
+        "inrelease": "apt-lists/deb.debian.org_debian-security_dists_trixie-security_InRelease",
+        "inrelease_sha256": "9b5b3b107b97b432c66698cc37ba8e52a4cb5085c73e8bb0e3ea6581034536ed",
+        "keyring": "debian-archive-keyring.pgp",
+        "keyring_sha256": "506b815cbb32d9b6066b4a2aa524071e071761e7e7f68c3ac74f3061ba852017",
+        "signature_fingerprints": [
+          "B0CAB9266E8C3929798B3EEEBDE6D2B9216EC7A8",
+          "89C87ACEA5DD6B8E6A7068808E9F831205B4BA95"
+        ],
+        "verified_indexes": [
+          {
+            "file": "apt-lists/deb.debian.org_debian-security_dists_trixie-security_contrib_binary-arm64_Packages",
+            "repository_path": "contrib/binary-arm64/Packages",
+            "sha256": "7ef1e13768c83e291bed293ec49c9e36b7572a75f3d0abfb577fe57bcacc5378",
+            "bytes": 12939
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian-security_dists_trixie-security_contrib_binary-armhf_Packages",
+            "repository_path": "contrib/binary-armhf/Packages",
+            "sha256": "5637e24487bb605fb56555022d36f6c18774a61e9090146f855fb851ecca0d99",
+            "bytes": 12938
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian-security_dists_trixie-security_main_binary-arm64_Packages",
+            "repository_path": "main/binary-arm64/Packages",
+            "sha256": "34a602d3819c6a55bf97ecc754538a2e5849aa4b304bfbf27d1e49ad677e4a10",
+            "bytes": 2668763
+          },
+          {
+            "file": "apt-lists/deb.debian.org_debian-security_dists_trixie-security_main_binary-armhf_Packages",
+            "repository_path": "main/binary-armhf/Packages",
+            "sha256": "b7e637106f18ce93a2c0537a44d28e3243b366313d5a480964e6a97fe1f053df",
+            "bytes": 2312270
+          }
+        ]
+      },
+      {
+        "repository": "https://archive.raspberrypi.com/debian",
+        "suite": "trixie",
+        "release_date": "Thu, 19 Nov 2026 07:48:12 UTC",
+        "valid_until": null,
+        "inrelease": "apt-lists/archive.raspberrypi.com_debian_dists_trixie_InRelease",
+        "inrelease_sha256": "5a03cb891c50b9fc7b8e35efdfdcbf69dd8e12b43ec8e124ccc8547d32f23ac0",
+        "keyring": "raspberrypi-archive-keyring.pgp",
+        "keyring_sha256": "3a29901549ae65a910de13a32551e6eea7f45ba1fd70f0cb67e5c70d98488071",
+        "signature_fingerprints": [
+          "CF8A1AF502A2AA2D763BAE7E82B129927FA3303E"
+        ],
+        "verified_indexes": [
+          {
+            "file": "apt-lists/archive.raspberrypi.com_debian_dists_trixie_main_binary-arm64_Packages",
+            "repository_path": "main/binary-arm64/Packages",
+            "sha256": "de9ac82f080bf14d087463d408e4d0e5b4e7610af0c581270294643826df8a8d",
+            "bytes": 1730860
+          },
+          {
+            "file": "apt-lists/archive.raspberrypi.com_debian_dists_trixie_main_binary-armhf_Packages",
+            "repository_path": "main/binary-armhf/Packages",
+            "sha256": "fe3c65a94251299c264ef6c30ecee20ebb2d7e4083e38f9ef8336e7db471e63e",
+            "bytes": 1653785
+          }
+        ]
+      }
+    ],
+    "authenticated_deb_inputs_verified": 67,
+    "authenticated_deb_input_bytes": 119709506,
+    "deb_verification": "Downloaded exact historical versions; each actual control identity, byte count and SHA-256 agrees with its authenticated retained Packages entry.",
+    "camera_family_entries": 39,
+    "camera_abi": "libcamera0.8",
+    "camera_version": "0.8.0+rpt20261104-1",
+    "old_camera_abi_selected": false
+  },
+  "same_version_byte_audit": {
+    "meaning": "Retained seed DEB hashes/sizes compared with matching-version authenticated stock indices; this does not claim the official image retained original DEB archives.",
+    "same_version_common_seed_stock": 1633,
+    "same_version_common_zero_stock": 917,
+    "signed_index_same_bytes": 1617,
+    "signed_index_changed_bytes": [],
+    "ambiguous_index_hashes": [],
+    "vendor_recipe_locked_kernel_exceptions": [
+      {
+        "Package": "linux-base-rpi-2712",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "bf1fe08b9cba34dca45918a5056cd1e11453d55ad195494c9146a258509de1ee",
+        "old_bytes": 1184,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-base-rpi-2712_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "linux-base-rpi-v8",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "cde690792efd906ce1c3fac9a2c4e82d79a654704ccce65da25db9688b25206f",
+        "old_bytes": 1184,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-base-rpi-v8_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "linux-headers-rpi-2712",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "c764a1e9f2b929cd71618924e58d39f8cf73ad8e839c7d7726f6850a333ae6a5",
+        "old_bytes": 1164,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-headers-rpi-2712_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "linux-headers-rpi-v8",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "9c2a7f10a09f24d4dd1fcacbf1e12d8eb00342a86d989e2d75090bd35f3cb149",
+        "old_bytes": 1164,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-headers-rpi-v8_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "linux-image-rpi-2712",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "332d84d6661bbd8077d7919087f09651a902894e99914468603987edfe152c3d",
+        "old_bytes": 1440,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-image-rpi-2712_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "linux-image-rpi-v8",
+        "Architecture": "arm64",
+        "Version": "1:6.18.39-1+rpt1",
+        "old_sha256": "b46b50c6167f5cef33a5ecf7f5555daaa25551fa032d4c2cab2525da7dcd8406",
+        "old_bytes": 1440,
+        "recipe_manifest": "stage0/02-firmware/files/kernel-packages.sha256",
+        "recipe_manifest_sha256": "d0173229989e90a037bf3737a9fc13b93f5d4e27f3cb86cb08d21366c620cf94",
+        "source": "https://archive.raspberrypi.com/debian/pool/main/l/linux/linux-image-rpi-v8_6.18.39-1+rpt1_arm64.deb",
+        "signed_index_claim": false
+      }
+    ],
+    "vendor_release_locked_app_exceptions": [
+      {
+        "Package": "m5cardputerzero-cap-cc1101-nfc",
+        "Architecture": "arm64",
+        "Version": "1.0.1",
+        "old_sha256": "d779d4949741a6fd6d5f005c7e29efd768996ceeb39c187c8008548d9fdd8095",
+        "old_bytes": 808856,
+        "source": "https://github.com/CardputerZero/Cap-CC1101-NFC/releases/download/v1.0.1/m5cardputerzero-cap-cc1101-nfc_1.0.1_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Cap-CC1101-NFC",
+        "vendor_release": "v1.0.1",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-cap-cc1101-subg-chat",
+        "Architecture": "arm64",
+        "Version": "1.0.1",
+        "old_sha256": "8ba26d9a513488673b5e8d9c3af5bc1ec6a04a4c3f859d256e420ee425e8c534",
+        "old_bytes": 813012,
+        "source": "https://github.com/CardputerZero/Cap-CC1101-SubG-Chat/releases/download/v1.0.1/m5cardputerzero-cap-cc1101-subg-chat_1.0.1_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Cap-CC1101-SubG-Chat",
+        "vendor_release": "v1.0.1",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-cap-lora-1262",
+        "Architecture": "arm64",
+        "Version": "1.0.1-m5stack1",
+        "old_sha256": "5238fa7e20a5c63e8eb4e3ff38d6ee730c797e2afdeebfd18da200584ef84f5c",
+        "old_bytes": 820524,
+        "source": "https://github.com/CardputerZero/Cap-LoRa-1262/releases/download/v1.0.1/m5cardputerzero-cap-lora-1262_1.0.1_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Cap-LoRa-1262",
+        "vendor_release": "v1.0.1",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-cap-lora-1262-gps",
+        "Architecture": "arm64",
+        "Version": "1.0.0",
+        "old_sha256": "4da7984c97effa75c36ee6d4fd93e0ee49f251781586d5dc4542b09b0b88eaa7",
+        "old_bytes": 721892,
+        "source": "https://github.com/CardputerZero/Cap-LoRa-1262-GPS/releases/download/v1.0.0/m5cardputerzero-cap-lora-1262-gps_1.0.0_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Cap-LoRa-1262-GPS",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-ir-chat",
+        "Architecture": "arm64",
+        "Version": "0.1.3",
+        "old_sha256": "aa1ed146b088f6c9bb52c9328614b01e018cb8d9014ee083651ed404c64210cd",
+        "old_bytes": 770038,
+        "source": "https://github.com/CardputerZero/IR-Chat/releases/download/v1.0.0/m5cardputerzero-ir-chat_0.1.3_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/IR-Chat",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-ir-remote",
+        "Architecture": "arm64",
+        "Version": "0.1.4",
+        "old_sha256": "10be7020d2f2e3cd7cf0c5ede98443f8940efbfffb4aba801b87329409d67137",
+        "old_bytes": 771128,
+        "source": "https://github.com/CardputerZero/IR-Remote/releases/download/v1.0.0/m5cardputerzero-ir-remote_0.1.4_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/IR-Remote",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-keyboard-guide",
+        "Architecture": "arm64",
+        "Version": "1.0.1",
+        "old_sha256": "d7fdc0aeb6b3a9b2c7c7450962ca1bf2211790fec488abc97235f052ded43c30",
+        "old_bytes": 1129196,
+        "source": "https://github.com/CardputerZero/Keyboard-Guide/releases/download/v1.0.1/m5cardputerzero-keyboard-guide_1.0.1_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Keyboard-Guide",
+        "vendor_release": "v1.0.1",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-music",
+        "Architecture": "arm64",
+        "Version": "0.1.7",
+        "old_sha256": "32f3a9e55ad9b3304d6cd64da0386b9cbc57cd2a318d32cf382e1187329b1146",
+        "old_bytes": 11964276,
+        "source": "https://github.com/CardputerZero/Music/releases/download/v1.0.0/m5cardputerzero-music_0.1.7_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Music",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-piano",
+        "Architecture": "arm64",
+        "Version": "0.1.1",
+        "old_sha256": "5d33167dda81648ca6e6b631fc5584b88e016f7b32dedb107adc1a193cb5f89f",
+        "old_bytes": 7196320,
+        "source": "https://github.com/CardputerZero/Piano/releases/download/v1.0.0/m5cardputerzero-piano_0.1.1_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Piano",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      },
+      {
+        "Package": "m5cardputerzero-recorder",
+        "Architecture": "arm64",
+        "Version": "0.1.8",
+        "old_sha256": "ed3fb90fbf84097138d0d30c11eaa132a4f8695ece4bec48ca2a1f8ea04727e7",
+        "old_bytes": 1112054,
+        "source": "https://github.com/CardputerZero/Recorder/releases/download/v1.0.0/m5cardputerzero-recorder_0.1.8_m5stack1_arm64.deb",
+        "vendor_release_digest_checked": true,
+        "vendor_repository": "CardputerZero/Recorder",
+        "vendor_release": "v1.0.0",
+        "signed_index_claim": false
+      }
+    ],
+    "zero_subset_counts": {
+      "seed_same_version": 1633,
+      "zero_same_version": 917,
+      "zero_signed_index_same_bytes": 901,
+      "zero_kernel_recipe_locked": 6,
+      "zero_vendor_release_locked": 10
+    },
+    "raspberrypi_sys_mods": {
+      "version": "1:20260914",
+      "bytes": 20798,
+      "sha256": "a6169bc9506b36ba92d72c88d3390b6eefc8eb616fd9a46100f9bbf3ac088211",
+      "authenticated_by_stock_nov19_index": true
+    }
+  },
+  "new_vendor_behavior": {
+    "first_boot": [
+      "cmdline legacy resize token removed",
+      "rpi-resize remains enabled with first-boot-complete ordering; expected enablement link removes itself after boot",
+      "fstrim.timer masked",
+      "default-on per-card disk-ID randomization",
+      "native Wizard performs one-shot root filesystem expansion before readiness"
+    ],
+    "vendor_maintenance": {
+      "unchanged_from_0_6_105": [
+        "usr/libexec/applaunch-updater",
+        "usr/lib/systemd/system/applaunch-updater.service",
+        "usr/lib/systemd/system/applaunch-apt-update.service"
+      ],
+      "new_mutation_path": "applaunch-apps-updater.service and helper plus expanded polkit service allowlist; helper can run dpkg --configure -a and install downloaded app DEBs outside guarded Store",
+      "zero_decision": "mask the new bulk apps-updater until separately qualified; preserve existing reviewed maintenance paths",
+      "file_identities": {
+        "usr/libexec/applaunch-updater": {
+          "path": "usr/libexec/applaunch-updater",
+          "sha256": "9ed383f601c11478d2b5c5a52787c9c8be9430401e52e6a128835e85e403001d",
+          "bytes": 9305
+        },
+        "usr/lib/systemd/system/applaunch-updater.service": {
+          "path": "usr/lib/systemd/system/applaunch-updater.service",
+          "sha256": "6d34c480fbafb2fc2cccf276cffcebba5a8e9b26cb183e2ed45a239ed3291c49",
+          "bytes": 277
+        },
+        "usr/lib/systemd/system/applaunch-apt-update.service": {
+          "path": "usr/lib/systemd/system/applaunch-apt-update.service",
+          "sha256": "e991ea9b6af382068f7446bb3d6b7400846c403d161fdf46fcc9a2dc18f2f82a",
+          "bytes": 198
+        },
+        "usr/libexec/applaunch-apps-updater": {
+          "path": "usr/libexec/applaunch-apps-updater",
+          "sha256": "dd6ed582580633d3017f29533d058a784237df167b0d812ad33f1b674894a1a6",
+          "bytes": 7622
+        },
+        "usr/lib/systemd/system/applaunch-apps-updater.service": {
+          "path": "usr/lib/systemd/system/applaunch-apps-updater.service",
+          "sha256": "3bffa49433d5a4df621bf904487460f8de3cab836fd3a7db181165bb9ad4fef1",
+          "bytes": 286
+        },
+        "usr/share/polkit-1/rules.d/60-applaunch-updater.rules": {
+          "path": "usr/share/polkit-1/rules.d/60-applaunch-updater.rules",
+          "sha256": "b29af60e6785b8b1283916371d112890ab30c4173192c7e891decf62ba736155",
+          "bytes": 898
+        }
+      }
+    },
+    "bsp_battery": "New BSP changes external NTC and FCC seeding/reporting. Earlier gauge/power/battery evidence does not qualify this BSP; baseline power policy remains selected."
+  },
+  "derived_seed_v2": {
+    "repository": "/Volumes/garage/tyrell-build/zero-nov19/seed-apt-repository-v2",
+    "selected_lock_sha256": "4016f27e11664a903559b80971f65a0cbe91699fcdffbe70daa65ccb751fad00",
+    "candidate_packages": 1706,
+    "candidate_counts": {
+      "stage0": 209,
+      "stage1": 239,
+      "stage2": 950,
+      "stage3": 1332,
+      "stage4": 1706
+    },
+    "installed_stage_counts": {
+      "stage0": 206,
+      "stage1": 239,
+      "stage2": 943
+    },
+    "candidate_bytes_indices_and_sets_identical_to_v1": true,
+    "source_authentication_archive": {
+      "filename": "source-authentication.tar.xz",
+      "sha256": "dd5ee2e9d48e9349b9af4c84a9b3822b123d5e610686f28f33cf45c300ecbf4d",
+      "bytes": 26900540,
+      "tree_sha256": "af8be7d5da63fce015fc54f21d8f4811050cf1316a6baa2601e6938e595ecd14",
+      "files": 43
+    },
+    "installed_inventory_basis": {
+      "basis_seed_lock_sha256": "6128edc20b6968526ffdd85fb606fde65c02afcaf520f70677fcc43e726f53c7",
+      "candidate_counts": {
+        "stage0": 209,
+        "stage1": 239,
+        "stage2": 950,
+        "stage3": 1332,
+        "stage4": 1706
+      },
+      "desktop_stages_executed": false,
+      "installed_counts": {
+        "stage0": 206,
+        "stage1": 239,
+        "stage2": 943
+      },
+      "installed_inventory_sha256": {
+        "stage0": "14b27ec5cbdc2f281964cc7ebf00b049ebd3cd65ab9ef57c493da409e402f639",
+        "stage1": "191c8f2f25c372ef5700f2866a9d5fe8e9babd2b32ea2774310d0cd4554864c1",
+        "stage2": "861d57fb8b3ef3b7a516541216e3e9edfb78fb796c63fb74b8ab658d389f8cb7"
+      },
+      "kind": "actual diagnostic stage inventories; independent fresh qualification still required",
+      "new_source_producer_pass_required": true,
+      "observation_archive": {
+        "bytes": 2390544,
+        "filename": "installed-inventories-source.tar.xz",
+        "sha256": "f5afd964a23b51c08f30d521c20fad15cb61305b6654283fafeaacf2183f1a26"
+      },
+      "physical_testing": "pending",
+      "source_bundle_sha256": "accedc5e954498271536ce8323b1c094401a7a0b911f7749321f138a40ba50ea",
+      "source_job_id": "20261125T052235866952Z-40a6e259",
+      "source_job_kept_failed": true,
+      "source_job_status": "failed",
+      "source_manifest_sha256": "3061f2f19102b2241e880ee6ab027a69ce2cc7a0cdc94ae7d161c4a94422a1b5",
+      "source_report_sha256": "d4108a356d8fdf6325bcdf36884fe65087452ea347c7a1b941daccf9e69585e3"
+    },
+    "provenance": {
+      "path": "/Volumes/garage/tyrell-build/zero-nov19/seed-evidence-v2/seed-v2-provenance.json",
+      "sha256": "0207adaeb8928d4d6318a8a6020daf508c3c3006f668832b4b0764599f9427d0",
+      "bytes": 1929
+    },
+    "source_authentication_archive_directory": "/Volumes/garage/tyrell-build/zero-nov19/seed-evidence-v2",
+    "qualification": "Only a new expected final-inventory contract, not acceptance. The first producer stays failed; a fresh independent producer must pass exact final inventories and candidate containment."
+  },
+  "source_producer": {
+    "previous_attempt": {
+      "job_id": "20261125T052235866952Z-40a6e259",
+      "status": "failed",
+      "error": "Actual inventories differ from candidate stage sets: stage0, stage2",
+      "stage_scripts_completed": true,
+      "live_builder_packages_unchanged": true,
+      "report": {
+        "path": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T052235866952Z-40a6e259/export/producer-report.json",
+        "sha256": "d4108a356d8fdf6325bcdf36884fe65087452ea347c7a1b941daccf9e69585e3",
+        "bytes": 3868
+      },
+      "final_vs_candidate": {
+        "stage0": {
+          "actual_installed": 206,
+          "candidates": 209,
+          "removed_candidate_only_identities": [
+            [
+              "libnewt0.52",
+              "0.52.25-1",
+              "arm64"
+            ],
+            [
+              "libslang2",
+              "2.3.3-5+b2",
+              "arm64"
+            ],
+            [
+              "whiptail",
+              "0.52.25-1",
+              "arm64"
+            ]
+          ],
+          "unexpected_installed": [],
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "actual_inventory_sha256": "14b27ec5cbdc2f281964cc7ebf00b049ebd3cd65ab9ef57c493da409e402f639"
+        },
+        "stage1": {
+          "actual_installed": 239,
+          "candidates": 239,
+          "removed_candidate_only_identities": [],
+          "unexpected_installed": [],
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "actual_inventory_sha256": "191c8f2f25c372ef5700f2866a9d5fe8e9babd2b32ea2774310d0cd4554864c1"
+        },
+        "stage2": {
+          "actual_installed": 943,
+          "candidates": 950,
+          "removed_candidate_only_identities": [
+            [
+              "libqt5core5t64",
+              "5.15.15+dfsg-6+deb13u1",
+              "arm64"
+            ],
+            [
+              "libqt5dbus5t64",
+              "5.15.15+dfsg-6+deb13u1",
+              "arm64"
+            ],
+            [
+              "libqt5gui5t64",
+              "5.15.15+dfsg-6+deb13u1",
+              "arm64"
+            ],
+            [
+              "libqt5network5t64",
+              "5.15.15+dfsg-6+deb13u1",
+              "arm64"
+            ],
+            [
+              "libqt5widgets5t64",
+              "5.15.15+dfsg-6+deb13u1",
+              "arm64"
+            ],
+            [
+              "libxcb-xinerama0",
+              "1.17.0-2+b1",
+              "arm64"
+            ],
+            [
+              "python3-prctl",
+              "1.8.1-1+b7",
+              "arm64"
+            ]
+          ],
+          "unexpected_installed": [],
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "actual_inventory_sha256": "861d57fb8b3ef3b7a516541216e3e9edfb78fb796c63fb74b8ab658d389f8cb7"
+        }
+      },
+      "qualification": false,
+      "receipt_preserved_failed": true
+    },
+    "fresh_attempt": {
+      "job_directory": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T053610349077Z-88d80b2d",
+      "job_id": "20261125T053610349077Z-88d80b2d",
+      "bundle_sha256": "b4837ac6cd82e3765af011a14903a693ba73fb9189a56424d389f6ee0da7ee49",
+      "manifest_sha256": "3cc52aff12a9892e4a389559e0317fb3a0826b0dd1d65ae1ae504bce9155e064",
+      "seed_lock_sha256": "4016f27e11664a903559b80971f65a0cbe91699fcdffbe70daa65ccb751fad00",
+      "archive_bytes": 1970257920,
+      "captured_host_helper_sha256": "2f6fe2710e07c376586e9e02b0bb1de8c04494d981977d24ad5e4c51269f958b",
+      "captured_guest_helper_sha256": "c0c6a762fc463303ad92f46b9394380bd4e2dbd14fb4c41188dd5a7f50a4082f",
+      "status_at_input_audit": "running, reported by coordinating agent; no result read or qualification inferred here",
+      "qualified": true,
+      "new_pass_required": false,
+      "image_exported": false,
+      "desktop_stages_requested": false,
+      "status": "passed",
+      "qualification_scope": "Fresh frozen stage0-2 source assembly, exact final inventories and clean APT/dpkg only; no exported image or physical acceptance.",
+      "stage_build_returned_successfully": true,
+      "live_builder_packages_unchanged": true,
+      "seconds": 211.405,
+      "reports": {
+        "producer-report.json": {
+          "path": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T053610349077Z-88d80b2d/export/producer-report.json",
+          "sha256": "2a0ea8b57b42c146ea3a647a5185be9eebbeb74292b6617f394f98dda5d08eb1",
+          "bytes": 4425
+        },
+        "inventory-comparison.json": {
+          "path": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T053610349077Z-88d80b2d/export/inventory-comparison.json",
+          "sha256": "7de469b4a374e0995b4e5ecaaa53394dd2599dbfbb75631e80cb7b90a7adac03",
+          "bytes": 2831
+        },
+        "SHA256SUMS": {
+          "path": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T053610349077Z-88d80b2d/export/SHA256SUMS",
+          "sha256": "48bda543eeae11368ad436c7719e14d4b79379813cde8f5b660fd8d549d00289",
+          "bytes": 1758
+        }
+      },
+      "stage_results": {
+        "stage0": {
+          "actual_count": 206,
+          "expected_installed_count": 206,
+          "candidate_count": 209,
+          "actual_inventory_sha256": "14b27ec5cbdc2f281964cc7ebf00b049ebd3cd65ab9ef57c493da409e402f639",
+          "exact_inventory_match": true,
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "validation_completed": true
+        },
+        "stage1": {
+          "actual_count": 239,
+          "expected_installed_count": 239,
+          "candidate_count": 239,
+          "actual_inventory_sha256": "191c8f2f25c372ef5700f2866a9d5fe8e9babd2b32ea2774310d0cd4554864c1",
+          "exact_inventory_match": true,
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "validation_completed": true
+        },
+        "stage2": {
+          "actual_count": 943,
+          "expected_installed_count": 943,
+          "candidate_count": 950,
+          "actual_inventory_sha256": "861d57fb8b3ef3b7a516541216e3e9edfb78fb796c63fb74b8ab658d389f8cb7",
+          "exact_inventory_match": true,
+          "apt_check": "passed",
+          "dpkg_audit": "clean",
+          "validation_completed": true
+        }
+      }
+    }
+  },
+  "preservation": {
+    "legacy_input_sha256": {
+      "image/baseline-apps.json": "a84e1404041594cc94236e7590effc7a655a49e64c18b2e8353f9fc63e7fc0de",
+      "image/camera-packages.json": "070cf852959bd4981827cf0ed79c143ecf29d73226c4f168e9831b4a1938b8ef",
+      "image/stock-image.json": "4f978b5ac927ca5daae7f94ee115cf9770ea0db73cf918125a97c6f9e47d7565",
+      "locks/image-apt.json": "7df91bba2940d04aaa56179ab7320d08107f4dd18dcb420364dc946d9dc5ea8e",
+      "image/contracts/tyrell-zero-hardware.json": "9251b81ea7d175600c2dec4565b2a9687e09a4a2c87c36e19ebb4d7d1c903491"
+    },
+    "all_legacy_input_hashes_rechecked_unchanged": true,
+    "legacy_artifact_pointers_before_refresh": {
+      "image-artifacts": {
+        "link": "/Volumes/garage/tyrell-build/images/20261114T182824879955Z-b309a99d",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261114T182824879955Z-b309a99d"
+      },
+      "image-artifacts-zero": {
+        "link": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261124T171522036978Z-f7c1a8bc-attempt-0002"
+      },
+      "image-artifacts-control": {
+        "link": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2",
+        "resolved": "/Volumes/garage/tyrell-build/images/20261124T172859067303Z-cfd88df2"
+      }
+    },
+    "old_nov19_seed_v1_lock_sha256": "6128edc20b6968526ffdd85fb606fde65c02afcaf520f70677fcc43e726f53c7",
+    "old_nov19_seed_v1_preserved": true,
+    "historical_qualification_transfer": false
+  },
+  "evidence_files": [
+    {
+      "path": "build/zero-nov19-audit/official-build-info.json",
+      "sha256": "db70158253fd5cf2319b0ffeb0dd8d358ed6ab6932f56248ecba0e7c95f2eca0",
+      "bytes": 235
+    },
+    {
+      "path": "build/zero-nov19-audit/rootfs-extraction.json",
+      "sha256": "a871550990e65243d4acf68c923d8455c410d00d2a92ac67987d8b2fee085d00",
+      "bytes": 843
+    },
+    {
+      "path": "build/zero-nov19-audit/app-release-selection-audit.json",
+      "sha256": "597a7f52ada2bc0296a73dff16a6f8f0c294c39771f453ef5fa96f096df94686",
+      "bytes": 84959
+    },
+    {
+      "path": "build/zero-nov19-audit/changed-apps-verified.json",
+      "sha256": "5d09550751e8f31bf4719f540b5a3f056b4992b3cfa318b54110fb4b572cec64",
+      "bytes": 2077
+    },
+    {
+      "path": "build/zero-nov19-audit/new-package-records.json",
+      "sha256": "6c2ea87d1928f1d04f7f42c36667fa938ddbf7142eb20560e0d55b2375435388",
+      "bytes": 166100
+    },
+    {
+      "path": "build/zero-nov19-audit/new-package-index-records.json",
+      "sha256": "33ffd1a11339a0ffe979dfd723d7bd5da291e129979d98f9783cfc43001755a5",
+      "bytes": 148610
+    },
+    {
+      "path": "build/zero-nov19-audit/official-stock/apt-authentication.json",
+      "sha256": "b11311e7dd6de88ecded3e1d61d46109efb13c769d108f05217b51ee782e5bab",
+      "bytes": 7787
+    },
+    {
+      "path": "build/zero-nov19-audit/official-stock/package-version-comparison.json",
+      "sha256": "b266526ae9e88146a86a3350fbfbc92cf8a7b4fc2251af6dda0b7f102e547f30",
+      "bytes": 222469
+    },
+    {
+      "path": "build/zero-nov19-audit/official-stock/same-version-byte-audit.json",
+      "sha256": "f0eadcdb770b2904e14d12523478c63a8c358f50c8e9f2f02ceb75c0d7b68edd",
+      "bytes": 1267541
+    },
+    {
+      "path": "build/zero-nov19-audit/official-stock/dpkg-records.json",
+      "sha256": "06e4b2f2cb4aea18b9621b361aa367be331e037a34d940d80078d97cabd57fc5",
+      "bytes": 1789842
+    }
+  ],
+  "selected_input_files": [
+    {
+      "path": "image/zero-baseline-apps.json",
+      "sha256": "5a41bd708c151b85898f619222b54d2bd671c25b9a0c1931a33687bf3a54a06d",
+      "bytes": 7860
+    },
+    {
+      "path": "image/zero-camera-packages.json",
+      "sha256": "3f31057a729b99e7d6049f10fdde8955e53e1f5ee4ba54d58bcc3e1fa9d86ed7",
+      "bytes": 24016
+    },
+    {
+      "path": "locks/tyrell-zero-vendor-inputs.json",
+      "sha256": "377e7624714dedf3a206150662b1a0ff85dbcdfa07dd1dc6c2039fd9284291d8",
+      "bytes": 13394
+    },
+    {
+      "path": "locks/tyrell-zero-session-source.json",
+      "sha256": "f2dfa6b919e011c7d330ad87b76d269ac927f637b007cae727a1153a454ab9c1",
+      "bytes": 22554
+    },
+    {
+      "path": "locks/tyrell-zero-seed-apt.json",
+      "sha256": "4016f27e11664a903559b80971f65a0cbe91699fcdffbe70daa65ccb751fad00",
+      "bytes": 4893059
+    }
+  ],
+  "remaining_acceptance": [
+    "identified-spare-card physical boot/setup/input/display/network/audio/camera/Store/expansion testing",
+    "new matched-baseline battery/power measurements before any benefit claim"
+  ],
+  "native_runtime_metadata_binding": {
+    "scope": "Source-selection snapshot retained below; current selected source lock now binds actual native/runtime qualification. Archive, patch and configuration selection is unchanged.",
+    "source_selection_snapshot": [
+      {
+        "path": "locks/tyrell-zero-session-source.json",
+        "sha256": "27fb2c7898a5284b7b732ac8eb6371b6ec6bd67d2709caf2170497b8c8c2edb4",
+        "bytes": 21039
+      }
+    ],
+    "qualified_source_commit": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda"
+  }
+}

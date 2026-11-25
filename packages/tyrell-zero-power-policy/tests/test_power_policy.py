@@ -95,6 +95,25 @@ class SelectionTests(unittest.TestCase):
             self.assertFalse(data["battery_qualified"])
             self.assertEqual(list(Path(directory).iterdir()), [])
 
+    def test_november_bsp_identity_matches_without_granting_hardware_eligibility(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for bsp, expected in [
+                ("a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4", True),
+                ("75518549a2640486f5d13ea72ca4935b198d7c20", False),
+            ]:
+                write(root, "etc/tyrell-image.json", json.dumps({
+                    "profile": "tyrell-zero", "drivers_commit": bsp,
+                    "kernel_release": "6.18.39+rpt-rpi-v8"}))
+                before = tree(root)
+                data = policy.inspect(root, policy.Selection("cpu"))
+                self.assertIs(data["read_only_identity_checks"]["image_identity"], expected)
+                self.assertFalse(data["optimized_activation_implemented"])
+                self.assertFalse(data["hardware_qualified"])
+                self.assertFalse(data["battery_qualified"])
+                self.assertEqual(data["hardware_writes"], 0)
+                self.assertEqual(tree(root), before)
+
     def test_root_paths_and_symlinks_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

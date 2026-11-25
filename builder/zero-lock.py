@@ -55,7 +55,7 @@ def verify_custom_inputs(integration, status_deb, power_deb):
     power = json.loads((power_deb.parent / 'manifest.json').read_text())
     selected = [(status_deb, 'tyrell-status', status['debian_version'], status['package_sha256']),
                 (power_deb, 'tyrell-zero-power-policy', power['version'], power['package_sha256'])]
-    for package, version in [('tyrell-zero-session', '0.3.0-1'), ('tyrell-zero-store', '0.1.0-1')]:
+    for package, version in [('tyrell-zero-session', '0.3.1-1'), ('tyrell-zero-store', '0.1.1-1')]:
         path = integration / (package + '_' + version + '_arm64.deb')
         selected.append((path, package, version, native['packages'].get(path.name)))
     if power.get('package') != 'tyrell-zero-power-policy' or power.get('architecture') != 'arm64':
@@ -80,8 +80,8 @@ def apps_lock(integration, status_deb, power_deb, output):
     if (native_manifest.get('milestone') != 'native-wizard-store-integration'
             or native_manifest.get('status') != 'passed' or native_manifest.get('architecture') != 'arm64'):
         raise ValueError('Passed native integration artifacts required')
-    session = integration / 'tyrell-zero-session_0.3.0-1_arm64.deb'
-    store = integration / 'tyrell-zero-store_0.1.0-1_arm64.deb'
+    session = integration / 'tyrell-zero-session_0.3.1-1_arm64.deb'
+    store = integration / 'tyrell-zero-store_0.1.1-1_arm64.deb'
     for path in [session, store]:
         if native_manifest['packages'].get(path.name) != sha(path):
             raise ValueError('Native integration package identity changed')
@@ -122,6 +122,12 @@ def qualify(args):
     job = '/var/tmp/tyrell-zero-lock-' + stamp
     integration = args.integration_artifacts.resolve()
     custom = verify_custom_inputs(integration, args.status_deb.resolve(), args.power_deb.resolve())
+    profile = runpy.run_path(str(ROOT / 'image/profiles.py'))['load_profile'](root=ROOT)
+    seed_lock = ROOT / profile['lock_paths']['seed_apt']
+    if sha(seed_lock) != profile['pins']['seed_apt_lock_sha256']:
+        raise ValueError('Selected seed lock differs from the reviewed Zero profile')
+    if sha(args.seed_repository / 'apt-lock.json') != sha(seed_lock):
+        raise ValueError('Selected seed repository differs from the reviewed Zero profile')
     # Validate the prior package build before any guest mutation.
     manifest = json.loads((integration / 'manifest.json').read_text())
     if manifest.get('status') != 'passed' or any(manifest.get('packages', {}).get(p.name) != sha(p) for p in custom[2:]):
@@ -135,7 +141,7 @@ def qualify(args):
             api['guest']('mkdir', '-m', '700', job)
             files = [(ROOT / 'image/apt-lock.py', 'apt-lock.py'),
                      (ROOT / 'builder/zero-lock-guest.py', 'zero-lock-guest.py'),
-                     (ROOT / 'locks/image-apt.json', 'seed-lock.json'),
+                     (ROOT / profile['lock_paths']['seed_apt'], 'seed-lock.json'),
                      (ROOT / 'locks/tyrell-zero-greetd.json', 'greetd-lock.json'),
                      (ROOT / 'image/profiles/tyrell-zero.json', 'profile.json'),
                      (args.greetd_deb.resolve(), 'greetd.deb'),
@@ -220,7 +226,7 @@ def qualify_root(args):
     (output / 'image-metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
     apps = json.loads((ROOT / 'locks/tyrell-zero-apps.json').read_text())
     files = ['image/zero_activation.py', 'image/verify-zero.py', 'image/profiles/tyrell-zero.json',
-             'image/contracts/tyrell-zero-hardware.json', 'image/contracts/tyrell-zero-power.json',
+             profile['contracts']['hardware']['path'], profile['contracts']['power']['path'],
              'packages/tyrell-zero-session/src/state.py', 'packages/tyrell-zero-store/activate-image.py',
              'packages/tyrell-zero-store/guard.py', 'locks/tyrell-zero-apt.json',
              'locks/tyrell-zero-apps.json', 'locks/tyrell-zero-native-compat.json']

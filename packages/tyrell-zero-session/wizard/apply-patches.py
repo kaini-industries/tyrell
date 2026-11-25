@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-"""Apply the reviewed private Wizard patch only to the exact .105 inputs."""
+"""Apply the reviewed private Wizard patch only to the exact .111 inputs."""
 import argparse
 import hashlib
 import json
@@ -10,11 +10,12 @@ import shutil
 import subprocess
 import tempfile
 
-REVISION = "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f"
-PATCH_SHA256 = "3d05a08131a374f35e35e81092dddb669bc85b9b7ee2353dee51cd02680435b8"
+REVISION = "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8"
+PATCH_SHA256 = "ef29aa2efc83f273b01af3f2975a8c0a7eb07f846048487ccc51f7f54381ca45"
 EXPECTED = {
-    "projects/LaunchWizard/main/ui/wizard_service.cpp": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7",
-    "projects/LaunchWizard/main/src/main.cpp": "a6a8be0768e0f5d52f351c3f880d2fa820836111340c34b35c78b778c81f9175",
+    "projects/LaunchWizard/main/src/main.cpp": "45c6d164d02a8c00407e782071c9253a72d011f332f9499aa4bfe8fad1d95fff",
+    "projects/LaunchWizard/main/ui/wizard_service.cpp": "6f33ac70069851617c5e48706ade6e55387e9682b9c06f601008e08096fd9b8c",
+    "projects/LaunchWizard/main/ui/wizard_service.h": "658a1c2df839171b6ea508e9f1689e39f0055c65ce67316acac754e0884c2ffd"
 }
 HERE = Path(__file__).resolve().parent
 
@@ -47,7 +48,7 @@ def apply(source):
     if found == after:
         return identity  # Safe idempotence; partial applications are rejected.
     if found != EXPECTED:
-        raise ValueError("private Wizard requires exact .105 source; restage unknown or partial inputs")
+        raise ValueError("private Wizard requires exact .111 source; restage unknown or partial inputs")
     with tempfile.TemporaryDirectory(prefix="tyrell-wizard-") as temporary:
         staging = Path(temporary)
         for relative in EXPECTED:

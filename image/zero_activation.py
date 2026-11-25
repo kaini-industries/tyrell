@@ -20,12 +20,19 @@ RECEIPT = "/usr/share/tyrell-zero/image-activation.json"
 SOURCE_RECEIPT = "/usr/share/tyrell-zero/source-pre-image-qualification.json"
 UPDATE_POLICY = "/etc/tyrell-zero/base-update-policy.json"
 UPDATER_STATUS = "/var/lib/applaunch-updater/status"
+APPS_UPDATER_STATUS = "/var/lib/applaunch-updater/apps-status"
 UPDATES_DESKTOP = "/usr/share/APPLaunch/applications/tyrell-zero-updates.desktop"
 UPDATES_TEXT = "/usr/share/tyrell-zero/updates.txt"
 SYSTEM_MASKS = ("greetd.service", "getty@tty1.service", "getty@tty7.service",
-                "LaunchWizard.service", "applaunch-updater.service", "userconfig.service")
+                "LaunchWizard.service", "applaunch-updater.service", "applaunch-apps-updater.service", "userconfig.service")
 SERVICE_FILES = ("tyrell-zero.target", "tyrell-zero-boot-state.service",
                  "tyrell-zero-session.service", "tyrell-zero-wizard.service")
+INITIAL_BOOT_LINKS = {
+    "/etc/systemd/system/sysinit.target.wants/rpi-resize.service": "/usr/lib/systemd/system/rpi-resize.service"}
+FRESH_BOOT_ABSENT = (
+    "/var/lib/cardputerzero/diskid-randomized", "/var/lib/cardputerzero/diskid-state",
+    "/var/lib/LaunchWizard/rootfs-expansion-attempted", "/etc/init.d/resize2fs_once",
+    "/etc/rc3.d/S01resize2fs_once")
 DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -221,6 +228,14 @@ class OfflineRoot:
         return result
 
 
+def validate_fresh_boot(root):
+    # These one-shot journals are legitimate on a running card, but retaining
+    # them in a fresh export can replay stale disk IDs or suppress card growth.
+    for name in FRESH_BOOT_ABSENT:
+        if root.files.exists(name):
+            raise ActivationError("fresh unprovisioned assembly contains first-boot state: " + name)
+
+
 def prepare_runtime(value, *, owner=0):
     """Remove static debootstrap runtime contents only from a detached build root.
 
@@ -228,6 +243,7 @@ def prepare_runtime(value, *, owner=0):
     an activated image. Preflight the entire tree before deleting any entry.
     """
     root = OfflineRoot(value, owner, detached_only=True)
+    validate_fresh_boot(root)
     for name in (RECEIPT, STATE.READY, STATE.ACCOUNT, STATE.CHECKPOINT, STATE.JOURNAL,
                  "/var/lib/LaunchWizard/apply.checkpoint"):
         if root.files.exists(name):
@@ -318,6 +334,9 @@ def validate(root, compat, qualification, execute):
             raise ActivationError("native dependency map exceeds supported size")
         for name, expected in records.items():
             absolute(name)
+            if name in INITIAL_BOOT_LINKS and (kind != "configuration_files"
+                    or expected != {"symlink": INITIAL_BOOT_LINKS[name]}):
+                raise ActivationError("initial boot link identity differs: " + name)
             record = root.snapshot(name)
             if isinstance(expected, dict):
                 matches = (record["type"] == "file" and expected == {"sha256": record["sha256"]}
@@ -332,6 +351,9 @@ def validate(root, compat, qualification, execute):
            "/etc/pam.d/common-account", "/etc/pam.d/common-password"}
     if not pam.issubset(compat["configuration_files"]):
         raise ActivationError("native PAM configuration closure is incomplete")
+    if any(compat["configuration_files"].get(name) != {"symlink": target}
+           for name, target in INITIAL_BOOT_LINKS.items()):
+        raise ActivationError("initial boot link closure is incomplete")
     if (type(qualification.get("schema")) is not int or qualification["schema"] != 1 or qualification.get("profile") != STATE.PROFILE
             or qualification.get("workflow") != STATE.WORKFLOW or qualification.get("scope") != "pre-image-integration"
             or qualification.get("status") != "passed" or qualification.get("physical_hardware_qualified") is not False
@@ -406,6 +428,7 @@ def activation_links():
 
 def activate(value, qualification_path, native_compat_path, *, owner=0, execute=STORE.command):
     root = OfflineRoot(value, owner=owner)
+    validate_fresh_boot(root)
     compat, compat_sha = document(native_compat_path)
     qualification, source_sha, qualification_bytes = document(qualification_path, raw=True)
     if compat.get("source_qualification_sha256") != source_sha:
@@ -430,7 +453,7 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
             raise ActivationError("an incompatible activation receipt already exists")
         entries = existing.get("files")
         mandatory = names | set(activation_links()) | {STORE.INVARIANTS, STATE.INTEGRATION, STATE.QUALIFICATION,
-            SOURCE_RECEIPT, UPDATE_POLICY, UPDATER_STATUS, UPDATES_DESKTOP, UPDATES_TEXT,
+            SOURCE_RECEIPT, UPDATE_POLICY, UPDATER_STATUS, APPS_UPDATER_STATUS, UPDATES_DESKTOP, UPDATES_TEXT,
             STATE.MARKERS[0], STATE.GUIDE, "/etc/group", "/etc/tyrell-image.json",
             "/etc/tyrell-zero/power-policy.json", "/usr/share/tyrell-zero/power-policy/contract.json",
             "/etc/systemd/logind.conf.d/90-tyrell-zero.conf"}
@@ -451,7 +474,7 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
         if root.files.exists(name): raise ActivationError("refusing to activate an already provisioned image")
     # Readiness is invalidated durably before the first profile mutation.
     root.write_json(STATE.INTEGRATION, {"schema": 1, "profile": STATE.PROFILE,
-        "workflow": STATE.WORKFLOW, "applaunch_version": "0.6.105", "complete": False,
+        "workflow": STATE.WORKFLOW, "applaunch_version": "0.6.111", "complete": False,
         "missing": ["Offline activation has not completed"]})
     # Bind the bytes as supplied, rather than a reformatted JSON identity.
     root.write(SOURCE_RECEIPT, qualification_bytes.decode("utf-8"))
@@ -470,13 +493,15 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
     root.write("/etc/systemd/logind.conf.d/90-tyrell-zero.conf",
                root.files.read("/usr/share/tyrell-zero/profile/logind.conf").decode())
     root.write(UPDATER_STATUS, "failed:incompatible\n")
+    root.write(APPS_UPDATER_STATUS, "failed:incompatible\n")
     root.write_json(UPDATE_POLICY, {"schema": 1, "profile": "tyrell-zero",
         "base_update_method": "reviewed-offline-image", "native_compat_sha256": compat_sha,
-        "launcher_updater": "masked-incompatible", "ordinary_apt_security_maintenance": "preserve",
+        "launcher_updater": "masked-incompatible", "vendor_app_updater": "masked-unqualified",
+        "ordinary_apt_security_maintenance": "preserve",
         "automatic_security_deferral": False, "application_updates": "qualified-store-catalog"})
     root.write(UPDATES_TEXT, "Tyrell Zero Updates\nUse a reviewed base image for OS/session updates.\n"
                "Keep the known reference card. The Store manages qualified applications.\n"
-               "The vendor launcher updater is incompatible; normal APT/security maintenance is preserved.\n")
+               "Vendor launcher/app auto-updaters are not qualified; normal APT/security maintenance is preserved.\n")
     root.write(UPDATES_DESKTOP, "[Desktop Entry]\nType=Application\nName=Tyrell Zero Updates\n"
                "Comment=Reviewed base images and qualified app updates\n"
                "Exec=/usr/libexec/tyrell-zero-session-recovery --updates\nTerminal=false\n"
@@ -484,11 +509,15 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
     recovery_groups(root)
     for name in (STATE.MARKERS[0], STATE.GUIDE): root.write(name, "")
     generated = set(links) | {"/etc/systemd/logind.conf.d/90-tyrell-zero.conf", UPDATE_POLICY,
-        UPDATER_STATUS, UPDATES_TEXT, UPDATES_DESKTOP, SOURCE_RECEIPT}
+        UPDATER_STATUS, APPS_UPDATER_STATUS, UPDATES_TEXT, UPDATES_DESKTOP, SOURCE_RECEIPT}
     # Capture only stable base state. Account/group and setup records change
     # legitimately during first boot and must not make ordinary Store work fail.
     protected = set()
     for name in names | generated:
+        # rpi-resize disables itself after its first-boot chain completes. Keep
+        # its fresh-image identity in the receipt, but protect its stable unit
+        # and drop-in rather than the enablement link at runtime.
+        if name in INITIAL_BOOT_LINKS: continue
         record = root.snapshot(name)
         if record["type"] == "directory": continue
         parent, _ = root.resolve(str(PurePosixPath(name).parent))
@@ -505,7 +534,7 @@ def activate(value, qualification_path, native_compat_path, *, owner=0, execute=
                    assembled_runtime_verified=True)
     root.write_json(STATE.QUALIFICATION, receipt)
     session = dict(schema=1, profile=STATE.PROFILE, workflow=STATE.WORKFLOW, complete=True,
-                   applaunch_version="0.6.105", assets=compat["assets"], runtime_files=runtime,
+                   applaunch_version="0.6.111", assets=compat["assets"], runtime_files=runtime,
                    qualification_sha256=root.files.digest(STATE.QUALIFICATION))
     root.write_json(STATE.INTEGRATION, session)
     integration_sha = STATE.integration(root.files)

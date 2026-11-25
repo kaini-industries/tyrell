@@ -36,7 +36,7 @@ class FrozenAptTests(unittest.TestCase):
                 self.rehash_metadata(root, lock, [name], refresh_release=False)
         (root / 'apt-lock.json').write_text(json.dumps(lock))
 
-    def repository(self, root):
+    def repository(self, root, extra_keys=()):
         root.mkdir()
         (root / 'pool').mkdir()
         package = root / 'pool/package.deb'
@@ -45,10 +45,17 @@ class FrozenAptTests(unittest.TestCase):
         record = {**dict(zip(apt.IDENTITY, key)), 'file': 'pool/package.deb',
                   'sha256': apt.digest(package), 'bytes': package.stat().st_size,
                   'source': 'local-build-input'}
-        stages = {stage: {key} for stage in apt.STAGES}
-        apt.write_indices(root, stages, {key: record}, {key: dict(zip(apt.IDENTITY, key))})
+        records = {key: record}
+        for number, extra in enumerate(extra_keys, 1):
+            package = root / ('pool/package-' + str(number) + '.deb')
+            package.write_bytes(('fixed candidate bytes ' + str(number)).encode())
+            records[extra] = {**dict(zip(apt.IDENTITY, extra)), 'file': str(package.relative_to(root)),
+                             'sha256': apt.digest(package), 'bytes': package.stat().st_size,
+                             'source': 'local-build-input'}
+        stages = {stage: set(records) for stage in apt.STAGES}
+        apt.write_indices(root, stages, records, {key: dict(zip(apt.IDENTITY, key)) for key in records})
         lock = {'schema': 1, 'architecture': 'arm64', 'stages': {k: list(v) for k, v in stages.items()},
-                'packages': [record],
+                'packages': list(records.values()),
                 'repository_metadata': {str(p.relative_to(root)): base64.b64encode(gzip.compress(p.read_bytes(), mtime=0)).decode()
                                         for p in (root / 'dists').rglob('*') if p.is_file()},
                 'files': {str(p.relative_to(root)): {'bytes': p.stat().st_size, 'sha256': apt.digest(p)}
@@ -61,6 +68,45 @@ class FrozenAptTests(unittest.TestCase):
             root = Path(directory) / 'repo'
             self.repository(root)
             self.assertEqual(len(apt.verify_repository(root)['packages']), 1)
+
+    def test_final_installed_inventory_may_be_smaller_than_stage_candidates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / 'repo'
+            lock = self.repository(root, [('build-only', '2.0', 'all')])
+            lock['installed_stages'] = {stage: [['example', '1.0', 'arm64']] for stage in ('stage0', 'stage2')}
+            (root / 'apt-lock.json').write_text(json.dumps(lock))
+            verified = apt.verify_repository(root)
+            self.assertEqual(len(verified['stages']['stage2']), 2)
+            self.assertEqual(verified['installed_stages'], lock['installed_stages'])
+
+    def test_installed_stage_metadata_rejects_unknown_stages_malformed_duplicates_and_non_candidates(self):
+        cases = [None, [], {'stage3': [['example', '1.0', 'arm64']]}, {'stage2': 'example'},
+                 {'stage2': ['example']}, {'stage2': [['example', '1.0']]},
+                 {'stage2': [['example', 1, 'arm64']]}, {'stage2': [['example', '', 'arm64']]},
+                 {'stage2': [['example', '1.0', 'arm64'], ['example', '1.0', 'arm64']]},
+                 {'stage2': [['example', '2.0', 'arm64']]}, {'stage2': [['example', '1.0', 'armhf']]},
+                 {'stage2': [['not-a-candidate', '1.0', 'arm64']]}]
+        for installed in cases:
+            with self.subTest(installed=installed), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory) / 'repo'
+                lock = self.repository(root)
+                lock['installed_stages'] = installed
+                (root / 'apt-lock.json').write_text(json.dumps(lock))
+                with self.assertRaisesRegex(ValueError, 'installed stage'):
+                    apt.verify_repository(root)
+
+    def test_materialize_preserves_separate_final_inventory_and_candidate_indices(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory);source = root / 'repo'
+            lock = self.repository(source, [('build-only', '2.0', 'all')])
+            lock['installed_stages'] = {'stage2': [['example', '1.0', 'arm64']]}
+            manifest = source / 'apt-lock.json';manifest.write_text(json.dumps(lock))
+            destination = root / 'restored'
+            apt.materialize(manifest, destination, [source / 'pool'])
+            self.assertEqual((destination / 'apt-lock.json').read_bytes(), manifest.read_bytes())
+            restored = apt.verify_repository(destination)
+            self.assertEqual(len(restored['stages']['stage2']), 2)
+            self.assertEqual(restored['installed_stages'], lock['installed_stages'])
 
     def test_custom_application_is_not_frozen_in_os_dependency_pool(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -1,5 +1,14 @@
 # Tyrell Zero implementation progress
 
+November 25: the separate [official November 19 baseline refresh](tyrell-zero-nov19-refresh.md)
+passed fresh source/native/runtime qualification, 24,402 read-only image checks
+and independent raw/XZ validation. The selected profile uses APPLaunch 0.6.111,
+the updated official BSP and libcamera 0.8, with session 0.3.1, Store 0.1.1 and
+power policy 0.1.1. Its exact 948 OS and four custom packages remain frozen.
+All nine hosted source-CI suites passed. The builder is stopped with normal
+update settings restored. Physical testing remains pending. The earlier
+baseline/control pair and the records below remain retained.
+
 November 24 file-image validation is complete: Zero passed 24,478 raw-image
 checks and its matched full-source control passed 134. Actual stage2 recovery
 passed. All 954 common package identities/input hashes and 6,949 hardware
@@ -13,9 +22,9 @@ runtime assembly and the pipeline's preparation and failure boundaries. The
 subsequent file-image build is recorded above; physical boot remains untested.
 No handheld, firmware or SD card was accessed.
 
-## Current pipeline increment
+## Retained September pipeline increment
 
-The current native inputs are build `20261123T161402256037Z-73a9f781`, with
+The retained native inputs are build `20261123T161402256037Z-73a9f781`, with
 `tyrell-zero-session 0.3.0-1` and `tyrell-zero-store 0.1.0-1`, plus the retained
 Status and baseline power-policy packages. The session adds fixed Updates
 guidance and retains the actual native Wizard, boot-latched readiness and

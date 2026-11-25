@@ -11,7 +11,14 @@ Video `0.1.6-1`/`0.1.7-1` archives. Their newer source versions are not included
 "Qualified" identifies the existing package/base boundary; it does not assert
 physical acceptance for a newer binary, another target, or this frontend.
 
-The seed's public key is pinned in this package. Its temporary bootstrap private
+Catalog 0.1.1 binds its offline seed to the November 19 Store source, vendor
+executable and reviewed policy/catalog bytes. This rotates the bootstrap signing
+key, advances the protected sequence floor to 2 and revokes the prior key. The
+three approved package/artwork entries and immutable URLs are unchanged. The old
+seed and public pin remain in Git history; their earlier base qualification does
+not apply to the new Store base.
+
+The seed's public key is pinned in this package. Its new temporary bootstrap private
 key was destroyed after signing; it is an offline snapshot, not a deployed
 publisher. `source.json` deliberately has no live metadata endpoint. Production
 refresh needs a separately managed signing key, reviewed public-key/source update
@@ -31,7 +38,7 @@ cmake --build build/catalog --parallel 4
 ctest --test-dir build/catalog --output-on-failure
 python3 -m unittest discover -s packages/tyrell-catalog/tests -p 'test*.py'
 cpack --config build/catalog/CPackConfig.cmake -G DEB -B build/catalog/packages
-python3 packages/tyrell-catalog/tools/check_package.py build/catalog/packages/tyrell-catalog_0.1.0-1_arm64.deb
+python3 packages/tyrell-catalog/tools/check_package.py build/catalog/packages/tyrell-catalog_0.1.1-1_arm64.deb
 ```
 
 The package adds its own APPLaunch entry. It does not enter the default image or

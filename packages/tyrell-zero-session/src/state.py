@@ -11,7 +11,7 @@ import re
 import stat
 import tempfile
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 PROFILE = "tyrell-zero"
 WORKFLOW = "native-setup-v1"
 INTEGRATION = "/usr/share/tyrell-zero/session-integration.json"
@@ -30,8 +30,8 @@ ASSETS = {
     "store_original": "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore.vendor",
     "store_backend": "/usr/libexec/tyrell-zero/appstore-package-helper",
 }
-LAUNCHER_SHA256 = "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c"
-STORE_SHA256 = "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e"
+LAUNCHER_SHA256 = "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7"
+STORE_SHA256 = "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa"
 REQUIRED_RUNTIME_FILES = frozenset({
     "/usr/lib/tyrell-zero/session/state.py",
     "/usr/lib/tyrell-zero/session/supervisor.py",
@@ -176,7 +176,7 @@ def integration(files):
     doc = files.json(INTEGRATION)
     if type(doc.get("schema")) is not int or doc["schema"] != 1 or doc.get("profile") != PROFILE or doc.get("complete") is not True:
         raise StateError("integration-incomplete")
-    if doc.get("workflow") != WORKFLOW or doc.get("applaunch_version") != "0.6.105":
+    if doc.get("workflow") != WORKFLOW or doc.get("applaunch_version") != "0.6.111":
         raise StateError("integration-incompatible")
     qualification = doc.get("qualification_sha256")
     if not isinstance(qualification, str) or not DIGEST.fullmatch(qualification):

@@ -53,7 +53,7 @@ def qualification(source, output, provenance):
                                     'No physical GUI/account-provisioning/boot or battery acceptance.'])
         files.write_json(state.QUALIFICATION, receipt)
         manifest = dict(schema=1, profile=state.PROFILE, workflow=state.WORKFLOW,
-                        complete=True, applaunch_version='0.6.105', assets=assets, runtime_files=hashes,
+                        complete=True, applaunch_version='0.6.111', assets=assets, runtime_files=hashes,
                         qualification_sha256=files.digest(state.QUALIFICATION))
         files.write_json(state.INTEGRATION, manifest)
         identity = state.integration(files)

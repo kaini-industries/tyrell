@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
-  "reviewed_date": "2026-11-24",
-  "reviewed_revision": "17e9f1eb2651f92156c8867b0cf5eba7f0863972",
+  "reviewed_date": "2026-11-25",
+  "reviewed_revision": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -89,7 +89,7 @@
     {
       "id": "catalog-design",
       "path": "docs/qualified-catalog.md",
-      "sha256": "6b521861a7d9289be74c0b2f8980222b94738a1a47d614a8e6c04843a80bf27f"
+      "sha256": "1bb144a3450714af26d5948e2e248b17a83c9a93b10e56a21f0b9ff6e225cc48"
     },
     {
       "id": "catalog-validation",
@@ -105,6 +105,11 @@
       "id": "a3-beacon-source",
       "path": "docs/beacon-offline-lifecycle.md",
       "sha256": "e04ccaea844e576af5441afd6ec4e6bca616042dcdbacd86d1ed4000a68f0454"
+    },
+    {
+      "id": "zero-nov19-image-report",
+      "path": "research/tyrell-zero-nov19-image-validation.json",
+      "sha256": "7a8fd974347969ed78c1c92a1c9c9161932283b525c96b87cc93f075bc13cd72"
     }
   ],
   "subjects": [
@@ -270,8 +275,8 @@
       "id": "catalog-source",
       "component": "catalog",
       "kind": "current-source",
-      "version": "0.1.0",
-      "source_identity": "C1 discovery-only app/dependency boundary at 4712994ced0afbb5b1d937ed6b1a97e1f175d7d0; digest must match the checkout",
+      "version": "0.1.1",
+      "source_identity": "November 19 baseline refresh: discovery-only Catalog with rotated offline bootstrap seed bound to refreshed Store base; device compatibility remains untested; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-catalog",
@@ -279,7 +284,16 @@
         "packages/tyrell-zero-store/config",
         "locks/build-inputs.json"
       ],
-      "sha256": "ceee2d4dd93d2ca628da34ae1f1b499f934e4340673a1c75ce8327bbed5016a6"
+      "sha256": "533fcbe85c592b6245c0548a58f6966d9489c5c4898ace0a53457bed9c1f24bf"
+    },
+    {
+      "id": "zero-nov19-image-reviewed",
+      "component": "image",
+      "kind": "file-image",
+      "version": "20261125T054827270121Z-dbd95ae2-attempt-1",
+      "source_identity": "9b2f09c9bdf8418558ca5e04d9f4dad0f8291fda; exact clean November 19 baseline refresh capture",
+      "availability": "external-not-revalidated",
+      "sha256": "167943270e90f2f5f8bf125362449181bfa31ce52f5ee91adfdde08284e59455"
     }
   ],
   "records": [
@@ -846,6 +860,44 @@
         "No physical acceptance of this frontend or transfer of historical app qualification. Signed entries identify only the existing exact approved package bytes.",
         "Bundled offline seed only: live publisher key/endpoint deployment and image/Store inclusion are not qualified.",
         "Native shell-linked launches are refused before backend/device acquisition until a separate lifecycle policy is qualified."
+      ]
+    },
+    {
+      "id": "tyrell-zero-nov19-file-verification",
+      "subject": "zero-nov19-image-reviewed",
+      "target": "tyrell-zero",
+      "scenario": "File-image construction, read-only verification and compressed payload/export binding",
+      "implementation": "implemented",
+      "result": "passed",
+      "evidence_scope": "automated-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Dedicated Debian 13 ARM64 Lima toolchain; captured job, exact inputs and verification in bound report",
+      "evidence": [
+        "zero-nov19-image-report"
+      ],
+      "limitations": [
+        "Historical capture only; external raw/compressed image bytes are not opened or revalidated by this ledger.",
+        "No physical boot, settled-memory, runtime peripheral or battery acceptance follows from file checks.",
+        "November BSP and battery-gauge behavior require fresh physical acceptance; previous hardware/power observations do not transfer."
+      ]
+    },
+    {
+      "id": "tyrell-zero-nov19-physical-pending",
+      "subject": "zero-nov19-image-reviewed",
+      "target": "tyrell-zero",
+      "scenario": "Spare-card cold boot, provisioning, native peripherals and normal-user application acceptance",
+      "implementation": "implemented",
+      "result": "not-tested",
+      "evidence_scope": "not-tested",
+      "binding": "historical-exact-artifact",
+      "toolchain": "Not run; physical CardputerZero and spare target required",
+      "evidence": [
+        "zero-nov19-image-report"
+      ],
+      "limitations": [
+        "Physical acceptance remains unexecuted; unavailable accessories remain not tested.",
+        "Requires an explicitly identified spare card/device and a concrete recovery procedure.",
+        "November BSP and battery-gauge behavior require fresh physical acceptance; previous hardware/power observations do not transfer."
       ]
     }
   ]

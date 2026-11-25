@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 import tarfile
@@ -101,8 +102,37 @@ class ReplayTest(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 namespace["check_component"]("eventpp")
         for function in ("sample_wget", "wget_tar_xz", "wget_tar_gz", "wget_zip", "wget_github",
-                         "wget_github_commit", "check_wget_down", "Export_conanenv"):
+                         "wget_github_commit", "check_wget_down", "Export_conanenv", "ensure_static_lib_version"):
             with self.subTest(function=function), self.assertRaises(RuntimeError):
+                namespace[function]("https://example.invalid/input")
+
+    def test_complete_locked_sdk_helper_executes_in_clean_component_globals(self):
+        lock = vendor.load_lock()
+        fixture = Path(__file__).with_name("fixtures") / "zero-sdk-SConstruct_tool.json"
+        upstream = json.loads(fixture.read_text())["source"]
+        self.assertEqual(hashlib.sha256(upstream.encode()).hexdigest(), lock["sdk_offline_patch"]["upstream_sha256"])
+        # SCons component globals do not promise pathlib.Path. Reproduce the
+        # actual upstream annotation failure before testing the full adapter.
+        with self.assertRaisesRegex(NameError, "Path"):
+            clean = {"env": {}}
+            exec(compile(upstream, str(fixture), "exec"), clean)
+            # Python 3.14 defers annotations; ARM64's Python 3.13 evaluates
+            # them while defining the function. Exercise both host versions.
+            clean["ensure_static_lib_version"].__annotations__
+        dependency = next(item for item in lock["archives"]
+                          if item["destination"] == "SDK/github_source/eventpp")
+        root = self.root / "github_source"
+        (root / "eventpp").mkdir(parents=True)
+        namespace = {"env": {"GIT_REPO_LISTS": {"eventpp": {
+            "path": str(root / "eventpp"), "url": dependency["repository"],
+            "commit": dependency["commit"]}}}}
+        self.assertNotIn("Path", namespace)
+        exec(compile(vendor.offline_helper(upstream, lock), str(fixture), "exec"), namespace)
+        with patch.dict(os.environ, {"GIT_REPO_PATH": str(root)}):
+            self.assertEqual(namespace["check_component"]("eventpp"), str(root / "eventpp"))
+        for function in ("sample_wget", "wget_tar_xz", "wget_tar_gz", "wget_zip", "wget_github",
+                         "wget_github_commit", "check_wget_down", "Export_conanenv", "ensure_static_lib_version"):
+            with self.subTest(function=function), self.assertRaisesRegex(RuntimeError, "forbids downloads/Conan"):
                 namespace[function]("https://example.invalid/input")
 
 

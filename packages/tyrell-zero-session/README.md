@@ -1,6 +1,7 @@
 # Tyrell Zero native session
 
-Version **0.3.0** supplies root-owned boot/readiness state,
+Version **0.3.1** targets the November 19 official M5 baseline (APPLaunch 0.6.111).
+It supplies root-owned boot/readiness state,
 a direct normal-user launcher supervisor in greetd's PAM session, a fixed native
 recovery display, native Wizard completion, and inactive systemd/profile configuration.
 The integrated build also includes the patched native Wizard GUI; the guarded
@@ -54,12 +55,15 @@ baseline. `/usr/share/tyrell-zero/image-activation.json` is published last.
 An interrupted operation leaves session integration incomplete; changed
 activated roots require a fresh assembly rather than silently accepting new
 identities. The private Wizard runs
-only in the root-latched setup mode. Native/recovery use the custom
+only in the root-latched setup mode. It requires and waits for the vendor's
+one-shot disk-ID service before either setup path can expand the root filesystem.
+A failed disk-ID job prevents Wizard startup; an already-stamped service skips
+normally under its unchanged vendor condition. Native/recovery use the custom
 `tyrell-zero-session.service`, never greetd's packaged shell configuration.
 
 Before a real image may set `complete: true` in
 `/usr/share/tyrell-zero/session-integration.json`, record schema `1`, profile
-`tyrell-zero`, workflow `native-setup-v1`, APPLaunch version `0.6.105`, a SHA-256
+`tyrell-zero`, workflow `native-setup-v1`, APPLaunch version `0.6.111`, a SHA-256
 of the actual pre-image qualification record, and an `assets` object containing
 `path`/`sha256` for all five exact components:
 
@@ -84,7 +88,7 @@ receipts retain its identity instead of inventing new suite results.
 
 ## Updates help
 
-Version 0.3.0 adds a fixed, read-only **Tyrell Zero Updates** screen to the
+Version 0.3.0 introduced a fixed, read-only **Tyrell Zero Updates** screen to the
 recovery executable. Offline activation creates its APPLaunch entry. It explains
 that base/session updates use reviewed images, the known reference card should
 be retained, and the guarded Store manages qualified applications. Enter,

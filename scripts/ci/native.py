@@ -21,17 +21,17 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 PACKAGES = {
     "tyrell-zero-session": {
-        "version": "0.3.0-1", "summary": "session-tests.txt",
+        "version": "0.3.1-1", "summary": "session-tests.txt",
         "detail": "session-test-detail.txt",
         "tests": ("session-state", "recovery-version", "recovery-render",
                   "updates-help-text", "updates-help-render", "native-wizard-transaction"),
     },
     "tyrell-zero-store": {
-        "version": "0.1.0-1", "summary": "store-tests.txt",
+        "version": "0.1.1-1", "summary": "store-tests.txt",
         "detail": "store-test-detail.txt", "tests": ("store-routing", "store-guard"),
     },
     "tyrell-zero-power-policy": {
-        "version": "0.1.0-1", "summary": "tests.txt", "detail": "tests.txt",
+        "version": "0.1.1-1", "summary": "tests.txt", "detail": "tests.txt",
         "tests": (),
     },
 }

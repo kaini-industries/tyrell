@@ -32,10 +32,10 @@ def main():
         detail=build/"Testing/Temporary/LastTest.log"
         if detail.exists():(output/"store-test-detail.txt").write_bytes(detail.read_bytes())
         run(["cpack","--config",str(build/"CPackConfig.cmake"),"-G","DEB","-B",str(output)])
-    deb=output/"tyrell-zero-store_0.1.0-1_arm64.deb"
-    manifest={"package":"tyrell-zero-store","version":"0.1.0-1","architecture":"arm64",
-              "source_date_epoch":int(epoch),"store_source":"b02db122396a7d33c41c66199ab443437975cfee",
-              "original_vendor_sha256":"e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e",
+    deb=output/"tyrell-zero-store_0.1.1-1_arm64.deb"
+    manifest={"package":"tyrell-zero-store","version":"0.1.1-1","architecture":"arm64",
+              "source_date_epoch":int(epoch),"store_source":"1ceeaed715766d336b1a885f58d03d5e4c33d6fa",
+              "original_vendor_sha256":"cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa",
               "deb_sha256":hashlib.sha256(deb.read_bytes()).hexdigest(),"service_activation_performed":False,
               "sources":{str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source.rglob("*"))
                          if p.is_file() and "__pycache__" not in p.parts and p.suffix!=".pyc"}}

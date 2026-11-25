@@ -65,13 +65,36 @@ class Fixture:
             'linux-image-' + V.KERNEL, 'raspberrypi-sys-mods'}
         self.packages = {name: {'Version': '1', 'Architecture': 'arm64'} for name in sorted(names)}
         self.packages['greetd']['Version'] = '0.10.3-4'
-        self.packages['applaunch']['Version'] = '0.6.105'
+        self.packages['applaunch']['Version'] = '0.6.111'
         self.packages['linux-image-' + V.KERNEL]['Version'] = self.profile['pins']['kernel_package']
         self.packages['raspberrypi-sys-mods']['Version'] = self.profile['pins']['raspberrypi_sys_mods_version']
         self.write_status()
         self.put('/etc/tyrell-zero/power-policy.json', {'schema': 1, 'preset': 'baseline'})
+        self.put(V.UPDATE_POLICY, {'vendor_app_updater': 'masked-unqualified',
+                 'launcher_updater': 'masked-incompatible', 'base_update_method': 'reviewed-offline-image',
+                 'application_updates': 'qualified-store-catalog', 'ordinary_apt_security_maintenance': 'preserve'})
+        self.put(V.APPS_UPDATER_STATUS, 'failed:incompatible\n')
+        apt_refresh = '/usr/lib/systemd/system/applaunch-apt-update.service'
+        self.put(apt_refresh, '[Unit]\nDescription=APPLaunch trusted package index refresh\n'
+                 'After=network-online.target\nWants=network-online.target\n\n[Service]\n'
+                 'Type=oneshot\nExecStart=/usr/bin/apt update\nTimeoutStartSec=5min\nNice=10\n')
         self.put('/usr/share/tyrell-zero/power-policy/contract.json', self.contracts['power'])
         self.put('/etc/cardputerzero-dtoverlays.commit', self.profile['pins']['bsp_commit'] + '\n')
+        self.first_boot_files = {}
+        for name in V.NOV19_FIRST_BOOT_FILES:
+            data = ('synthetic first-boot fixture: ' + name + '\n').encode()
+            self.put(name, data, 0o755 if name.endswith('randomize-disk-id') else 0o644)
+            self.first_boot_files[name] = sha(data)
+        self.link('/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service',
+                  '/usr/lib/systemd/system/cardputerzero-diskid.service')
+        self.link('/etc/systemd/system/fstrim.timer', '/dev/null')
+        self.put('/usr/lib/systemd/system/rpi-resize.service', '[Unit]\nDescription=First boot chain fixture\n')
+        self.link('/etc/systemd/system/sysinit.target.wants/rpi-resize.service',
+                  '/usr/lib/systemd/system/rpi-resize.service')
+        self.put('/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf',
+                 '[Unit]\nWants=\nWants=first-boot-complete.target\n')
+        self.put('/boot/firmware/cmdline.txt', 'root=ROOTDEV quiet\n')
+
         self.put('/etc/machine-id', '')
         self.put('/etc/passwd', 'root:x:0:0:root:/root:/bin/bash\npi:x:1000:1000:pi:/home/pi:/bin/bash\n'
                  '_greetd:x:110:110:greetd:/var/lib/greetd:/usr/sbin/nologin\n')
@@ -150,6 +173,16 @@ class Fixture:
         source = {'status': 'passed', 'scope': 'pre-image-integration',
                   'physical_hardware_qualified': False, 'assets': self.assets}
         self.put('/usr/share/tyrell-zero/source-pre-image-qualification.json', source)
+        self.compat['configuration_files'].update(self.first_boot_files)
+        self.compat['configuration_files']['/etc/systemd/system/fstrim.timer'] = {'symlink': '/dev/null'}
+        self.compat['configuration_files']['/etc/systemd/system/sysinit.target.wants/rpi-resize.service'] = {
+            'symlink': '/usr/lib/systemd/system/rpi-resize.service'}
+        self.compat['configuration_files']['/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service'] = {
+            'symlink': '/usr/lib/systemd/system/cardputerzero-diskid.service'}
+        for path in ('/usr/lib/systemd/system/rpi-resize.service',
+                     '/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf'):
+            self.compat['configuration_files'][path] = V.digest(self.root / path.lstrip('/'))
+        self.compat['configuration_files'][apt_refresh] = V.digest(self.root / apt_refresh.lstrip('/'))
         self.compat['source_qualification_sha256'] = V.digest(
             self.root / 'usr/share/tyrell-zero/source-pre-image-qualification.json')
         for path in self.compat['protected_roots']:self.compat['protected_files'].update(image.tree(path))
@@ -208,9 +241,12 @@ class Fixture:
             'hardware_contract_sha256': sha(self.contracts['hardware']), 'power_contract_sha256': sha(self.contracts['power'])}
         self.metadata.update(pi_gen_commit=self.profile['pins']['pi_gen_commit'],
             drivers_commit=self.profile['pins']['bsp_commit'], kernel_release=V.KERNEL,
-            applaunch_version='0.6.105', output=self.profile['output'],
+            applaunch_version='0.6.111', output=self.profile['output'],
             image_name=self.profile['output']['basename'], hardware_qualified=False, battery_qualified=False)
         self.put('/etc/tyrell-image.json', self.metadata)
+        update_policy = json.loads((self.root / V.UPDATE_POLICY.lstrip('/')).read_text())
+        update_policy['native_compat_sha256'] = hashes['tyrell-zero-native-compat.json']
+        self.put(V.UPDATE_POLICY, update_policy)
 
     def bind_receipts(self):
         ordinary = {'tyrell-status'}
@@ -225,6 +261,11 @@ class Fixture:
             identity = image.identity(path)
             baseline_files[path] = ({'symlink': identity['target']} if identity['type'] == 'symlink'
                                     else identity['sha256'])
+        for path in self.compat['configuration_files']:
+            if path == '/etc/systemd/system/sysinit.target.wants/rpi-resize.service':continue
+            identity = image.identity(path)
+            baseline_files[path] = ({'symlink': identity['target']} if identity['type'] == 'symlink'
+                                    else identity['sha256'])
         self.put(V.BASELINE, {'schema': 1, 'complete': True, 'packages': {
             name: item['Version'] for name, item in self.packages.items() if name not in ordinary},
             'files': baseline_files, 'triggers': {}})
@@ -235,10 +276,11 @@ class Fixture:
             'assets': self.assets, 'runtime_files': runtime}
         self.put(V.QUALIFICATION, qualification)
         self.put(V.INTEGRATION, {'schema': 1, 'profile': V.PROFILE, 'workflow': 'native-setup-v1',
-            'complete': True, 'applaunch_version': '0.6.105', 'assets': self.assets, 'runtime_files': runtime,
+            'complete': True, 'applaunch_version': '0.6.111', 'assets': self.assets, 'runtime_files': runtime,
             'qualification_sha256': V.digest(self.root / V.QUALIFICATION.lstrip('/'))})
         image = V.ImageRoot(self.root, os.getuid())
-        names = {V.BASELINE, V.QUALIFICATION, V.INTEGRATION, '/etc/tyrell-zero/power-policy.json',
+        names = {V.BASELINE, V.QUALIFICATION, V.INTEGRATION, V.UPDATE_POLICY, V.APPS_UPDATER_STATUS,
+                 '/etc/tyrell-zero/power-policy.json',
                  '/etc/pam.d/greetd', *V.MASKS}
         self.activation = {'schema': 1, 'profile_id': V.PROFILE, 'phase': 'assembled-root', 'complete': True,
             'physical_hardware_qualified': False, 'power_preset': 'baseline',
@@ -250,7 +292,8 @@ class Fixture:
     def verify(self):
         # Only vendor ELF bytes are synthetic here. No host fixture is promoted
         # to a hardware, ARM64 execution or genuine vendor-content qualification.
-        with patch.object(V, 'MAIN_SHA', sha(elf())), patch.object(V, 'STORE_SHA', sha(elf())):
+        with patch.object(V, 'MAIN_SHA', sha(elf())), patch.object(V, 'STORE_SHA', sha(elf())), \
+                patch.object(V, 'NOV19_FIRST_BOOT_FILES', self.first_boot_files):
             return V.verify_root(self.root, self.metadata, self.locks, owner=os.getuid())
 
 
@@ -269,6 +312,99 @@ class ZeroVerifierTests(unittest.TestCase):
         report = self.fixture.verify()
         self.assertEqual(report['status'], 'passed', report.get('error'))
         self.assertFalse(report['hardware_qualified']);self.assertFalse(report['battery_qualified'])
+
+    def test_captured_fstrim_mask_does_not_follow_missing_device_endpoint(self):
+        f = self.fixture
+        self.assertEqual(f.compat['configuration_files']['/etc/systemd/system/fstrim.timer'],
+                         {'symlink': '/dev/null'})
+        self.assertFalse((f.root / 'dev').exists())
+        self.assertEqual(f.verify()['status'], 'passed')
+
+    def test_captured_fstrim_mask_identity_and_parent_must_remain_trusted(self):
+        f = self.fixture
+        path = '/etc/systemd/system/fstrim.timer'
+        f.compat['configuration_files'][path]['extra'] = 'unreviewed identity'
+        f.bind_locks();f.bind_receipts()
+        self.fails('systemd_mask_' + path)
+        del f.compat['configuration_files'][path]['extra']
+        f.bind_locks();f.bind_receipts()
+        (f.root / 'etc/systemd/system').chmod(0o777)
+        self.fails('untrusted parent')
+
+    def test_null_endpoint_exception_does_not_apply_to_other_configuration_links(self):
+        f = self.fixture
+        path = '/etc/tyrell-zero/unqualified-null-link'
+        f.link(path, '/dev/null')
+        (f.root / 'dev/null').mkdir(parents=True)
+        f.compat['configuration_files'][path] = {'symlink': '/dev/null'}
+        f.bind_locks();f.bind_receipts()
+        self.fails('untrusted image file: /dev/null')
+
+    def test_november_first_boot_payload_and_fresh_state_are_required(self):
+        f = self.fixture
+        helper = '/usr/lib/cardputerzero/randomize-disk-id'
+        original = (f.root / helper.lstrip('/')).read_bytes()
+        f.put(helper, b'changed first-boot disk helper', 0o755)
+        self.fails('nov19_first_boot_file_')
+        f.put(helper, original, 0o755)
+        f.put('/var/lib/cardputerzero/diskid-randomized', 'already executed\n')
+        self.fails('nov19_diskid_not_preexecuted')
+
+    def test_partial_diskid_and_preexecuted_rootfs_expansion_cannot_be_exported(self):
+        f = self.fixture
+        for path in ('/var/lib/cardputerzero/diskid-state', '/var/lib/LaunchWizard/rootfs-expansion-attempted',
+                     '/etc/init.d/resize2fs_once', '/etc/rc3.d/S01resize2fs_once'):
+            with self.subTest(path=path):
+                f.put(path, 'retained first-boot state\n')
+                self.fails('no_initial_first_boot_state_' + path)
+                (f.root / path.lstrip('/')).unlink()
+
+    def test_november_fixed_size_boot_policy_cannot_regress_to_resize(self):
+        f = self.fixture
+        f.put('/boot/firmware/cmdline.txt', 'root=ROOTDEV init=/usr/lib/raspberrypi-sys-mods/firstboot quiet\nresize\n')
+        self.fails('nov19_no_resize_cmdline')
+        f.put('/boot/firmware/cmdline.txt', 'root=ROOTDEV quiet\n')
+        f.put('/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf',
+              '[Unit]\nWants=systemd-growfs-root.service\n')
+        self.fails('nov19_resize_ordering_without_growth')
+
+    def test_fresh_image_still_requires_captured_resize_chain(self):
+        f = self.fixture
+        link = '/etc/systemd/system/sysinit.target.wants/rpi-resize.service'
+        del f.compat['configuration_files'][link]
+        f.bind_locks();f.bind_receipts()
+        self.fails('nov19_resize_first_boot_configuration_locked')
+
+    def test_store_baseline_cannot_freeze_the_self_removing_resize_link(self):
+        f = self.fixture
+        baseline = V.load_json(f.root / V.BASELINE.lstrip('/'))
+        baseline['files']['/etc/systemd/system/sysinit.target.wants/rpi-resize.service'] = {
+            'symlink': '/usr/lib/systemd/system/rpi-resize.service'}
+        f.put(V.BASELINE, baseline)
+        self.fails('store_baseline_resize_initial_only')
+
+    def test_wizard_requires_completed_diskid_ordering(self):
+        f = self.fixture
+        unit = '/usr/lib/systemd/system/tyrell-zero-wizard.service'
+        text = (f.root / unit.lstrip('/')).read_text()
+        f.put(unit, text.replace('Requires=tyrell-zero-boot-state.service cardputerzero-diskid.service',
+                                 'Requires=tyrell-zero-boot-state.service'))
+        self.fails('native_unit_contract_tyrell-zero-wizard.service')
+        f.put(unit, text.replace(' systemd-user-sessions.service cardputerzero-diskid.service',
+                                 ' systemd-user-sessions.service'))
+        self.fails('native_unit_contract_tyrell-zero-wizard.service')
+
+    def test_new_application_updater_stays_masked_and_metadata_refresh_stays_metadata_only(self):
+        f = self.fixture
+        mask = f.root / 'etc/systemd/system/applaunch-apps-updater.service'
+        mask.unlink();mask.symlink_to('/usr/lib/systemd/system/applaunch-apps-updater.service')
+        self.fails('mask_/etc/systemd/system/applaunch-apps-updater.service')
+        mask.unlink();mask.symlink_to('/dev/null')
+        unit = '/usr/lib/systemd/system/applaunch-apt-update.service'
+        f.put(unit, (f.root / unit.lstrip('/')).read_text() + '\nExecStartPost=/usr/bin/apt upgrade\n')
+        f.compat['configuration_files'][unit] = V.digest(f.root / unit.lstrip('/'))
+        f.bind_locks();f.bind_receipts()
+        self.fails('vendor_apt_refresh_metadata_only')
 
     def test_changed_lock_and_duplicate_json_fail_closed(self):
         path = self.fixture.locks / 'tyrell-zero-apt.json'

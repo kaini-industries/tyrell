@@ -1,11 +1,19 @@
 # Tyrell Zero guarded native Store
 
 This package preserves the exact vendor AppStore UI from Store commit
-`b02db122396a7d33c41c66199ab443437975cfee`, as shipped in locked
-`applaunch 0.6.105`. A compiled dispatcher owns the public Store path and gives
+`1ceeaed715766d336b1a885f58d03d5e4c33d6fa`, as shipped in locked
+`applaunch 0.6.111`. A compiled dispatcher owns the public Store path and gives
 the original UI its fixed public `argv[0]`. The UI runs as the normal user; its
 existing `sudo --package-helper` protocol enters a separate Python package guard.
 Legacy root UI/backend installation modes fail closed.
+
+Version 0.1.1 selects the November 19 vendor UI and keeps the same exact Status
+and Video package approvals. The vendor Settings bulk-app updater is outside
+this helper protocol: it runs global dpkg configuration and installs unpinned
+latest vendor packages/dependencies. Zero's offline activation must mask that
+service as well as the base launcher updater. The vendor bytes remain intact;
+that Settings update path is unsupported until separately qualified. Its
+metadata-only APT index refresh is separate from package mutation.
 
 The catalog qualifies exact Status `0.1.0-1` and Video `0.1.6-1`/`0.1.7-1`
 archives, payloads, control metadata and maintainer scripts. It does not approve
@@ -40,14 +48,14 @@ on the handheld or the live build toolchain.** Assemble an isolated image root:
 
 ```sh
 python3 packages/tyrell-zero-store/activate-image.py prepare --root /build/image-root
-dpkg --root=/build/image-root --install /build/output/tyrell-zero-store_0.1.0-1_arm64.deb
+dpkg --root=/build/image-root --install /build/output/tyrell-zero-store_0.1.1-1_arm64.deb
 python3 packages/tyrell-zero-store/activate-image.py capture --root /build/image-root \
   --protect-file /etc/systemd/system/tyrell-zero-session.service
 ```
 
 `prepare` registers a real package-specific `dpkg-divert` before installation,
 preserving the original at `M5CardputerZero-AppStore.vendor` with SHA256
-`e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e`.
+`cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa`.
 The Store package owns the public dispatcher, so its upgrades replace that file;
 future `applaunch` updates use the diverted vendor path. `capture` freezes all
 installed base package versions, shipped Tyrell runtime modules/policies and

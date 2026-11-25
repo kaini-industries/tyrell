@@ -51,6 +51,8 @@ validation of captured Zero inputs; automatic upstream-to-Zero lock refresh and
 an on-device base-update service are not implemented. Tracking vendor releases
 remains compatible with Tyrell's apps and M5 support, with a new reviewed
 candidate for each adopted baseline. Physical testing remains a separate gate.
+The [November 19 refresh](tyrell-zero-nov19-refresh.md) has completed this path
+through file-image validation; its physical acceptance remains pending.
 
 ## Check and select an upstream release
 

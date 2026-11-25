@@ -2,47 +2,47 @@
   "schema_version": 1,
   "kind": "selected-native-source-and-runtime-lock",
   "complete": true,
-  "state": "frozen-native-inputs-qualified-in-offline-root",
+  "state": "nov19-native-source-and-offline-runtime-qualified",
   "plan_revision": 3,
-  "scope": "Selected native Wizard source closure, own Store guard sources, exact vendor executable/resource imports, and complete pinned OS/custom-package runtime inputs. Unused launcher monorepo gitlinks are audit references, not source inputs compiled by this profile. No exported-image or physical acceptance is asserted.",
+  "scope": "Selected November 19 native source, exact original vendor imports, actual offline ARM64 native integration and fresh detached runtime activation independently qualified. Pre-image scope only; no exported image, physical boot, hardware or battery acceptance.",
   "launcher": {
     "repository": "https://github.com/CardputerZero/launcher.git",
-    "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
-    "tree": "f1e891dd71fe7c2d487fa5a1db64f9a75177cff4",
-    "applaunch_version": "0.6.105",
-    "original_deb_sha256": "a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544",
-    "original_main_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
-    "archive_sha256": "f75545a999800bbaa8d6215a03c2b56d8639d75708c9df11aa57d89437a40436"
+    "commit": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+    "tree": "3031a3ee9a5816726c5aa66ebf352cb3add1581f",
+    "applaunch_version": "0.6.111",
+    "original_deb_sha256": "8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2",
+    "original_main_sha256": "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7",
+    "archive_sha256": "81a82e827b68669a1c1aa7f4f015c059629bbf977ff5f53865c1a4e02d05d135"
   },
   "sdk": {
     "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
-    "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
-    "tree": "097845dea400db7704927633509ae7656a6538e4",
-    "archive_sha256": "eeab5e58ba9aa39992ad4260a081e89d87b2177fe595d04692f8e52cc310a2a3",
+    "commit": "1846503d46fa74685b6df4735aad6391d1624a96",
+    "tree": "5e14d5852f4eadcef2c369ec1be2e65db3ba357f",
+    "archive_sha256": "9053c4eee1b72318e802cbf83eada4f6bf0272e28fc69cb7c4720fcb4c99e0b6",
     "source_registry_entries": 32,
-    "source_registry_scope": "Registry has 32 entries; native config_defaults.mk enables LVGL 9.5, eventpp, Sigslot, SmoothUI and Spdlog, all materialized by the vendor-input lock."
+    "source_registry_scope": "Selected native SDK archive closure was replayed offline and built for ARM64; unselected registry entries remain audit references."
   },
   "top_level_gitlinks": [
     {
       "path": "SDK",
       "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
-      "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
-      "closure_status": "Exact SDK and five selected third-party archives materialized; real offline ARM64 Wizard build completed and its resulting binary passed the final locked runtime dependency/resource checks.",
+      "commit": "1846503d46fa74685b6df4735aad6391d1624a96",
+      "closure_status": "Selected archive closure replayed offline and built for ARM64; native package and detached runtime qualifications are bound below.",
       "native_wizard_dependency": true,
       "guard_source_dependency": false
     },
     {
       "path": "projects/AppStore",
       "repository": "https://github.com/CardputerZero/Store.git",
-      "commit": "b02db122396a7d33c41c66199ab443437975cfee",
-      "closure_status": "Pinned audit reference; not compiled or recursively materialized. The guard compiles only project-owned sources and preserves the exact original Store binary/resources from the locked applaunch 0.6.105 package.",
+      "commit": "1ceeaed715766d336b1a885f58d03d5e4c33d6fa",
+      "closure_status": "Pinned audit reference, not recursively compiled by the guard. Exact selected vendor executable imports and guarded diversion/lifecycle passed native and detached-runtime qualification; physical UI acceptance pending.",
       "native_wizard_dependency": false,
       "guard_source_dependency": false
     },
     {
       "path": "projects/Calculator",
       "repository": "https://github.com/CardputerZero/Calculator.git",
-      "commit": "6b781200692a47200a0293b9e2731e9c7ff60180",
+      "commit": "946c778e02b2b387ac624e332df6a1b43a982cc7",
       "closure_status": "Not recursively materialized or build-qualified",
       "native_wizard_dependency": false,
       "guard_source_dependency": false
@@ -50,7 +50,7 @@
     {
       "path": "projects/CameraApp/main_CameraApp",
       "repository": "https://github.com/CardputerZero/CameraApp.git",
-      "commit": "c4c37e6129cfb25489e2161c93bf35b010a0ec6e",
+      "commit": "9e6b5c0be0ee0e1be54d21f1cb964df30ae0b931",
       "closure_status": "Not recursively materialized or build-qualified",
       "native_wizard_dependency": false,
       "guard_source_dependency": false
@@ -85,9 +85,9 @@
         "bytes": 1916
       },
       "projects/LaunchWizard/SConstruct": {
-        "git_blob": "5977bb571803304cc625d6a08e68275e4a82163e",
-        "sha256": "75fdbe06486511b6ffa46b9a97a8032765c728c72b5123f9e9fdbd4b655df357",
-        "bytes": 4079
+        "git_blob": "6139ab40bf941c8a1a4d68195d2342fac301a00e",
+        "sha256": "42c36332cdb2ded948d7e85983d0241718d0b8da7d44b70f8757bd7780a2797c",
+        "bytes": 3570
       },
       "projects/LaunchWizard/main/SConstruct": {
         "git_blob": "e4c1da71a2e80d559d1c35e77caeb56100bd1291",
@@ -100,9 +100,9 @@
         "bytes": 1086
       },
       "projects/LaunchWizard/main/ui/wizard_service.cpp": {
-        "git_blob": "418dcdc0b61aa78036291bd43bcf21bd13206bc6",
-        "sha256": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7",
-        "bytes": 48620
+        "git_blob": "cd1fd53d59fcf7f38421d0f124ca057031c9e28d",
+        "sha256": "6f33ac70069851617c5e48706ade6e55387e9682b9c06f601008e08096fd9b8c",
+        "bytes": 58819
       },
       "ext_components/cp0_lvgl/SConstruct": {
         "git_blob": "cc0ded7b4f425f56959410e8db6d0c701a0f527f",
@@ -118,6 +118,26 @@
         "git_blob": "de3f1fe67212b5cd34373d88c16f934868a856d5",
         "sha256": "0a81a580a2e8c6d2d335ed04932a6bd0ce4de7ce0bd5a0bae91129fbfbbc35b3",
         "bytes": 1307
+      },
+      "projects/LaunchWizard/main/src/main.cpp": {
+        "git_blob": "a1ab00db0cae8ffb7968391e6c93d856f8ec642e",
+        "sha256": "45c6d164d02a8c00407e782071c9253a72d011f332f9499aa4bfe8fad1d95fff",
+        "bytes": 2441
+      },
+      "projects/LaunchWizard/main/ui/wizard_service.h": {
+        "git_blob": "9e12a6296427d7057258635173f15658a565de61",
+        "sha256": "658a1c2df839171b6ea508e9f1689e39f0055c65ce67316acac754e0884c2ffd",
+        "bytes": 2187
+      },
+      "projects/LaunchWizard/main/ui/first_boot_policy.cpp": {
+        "git_blob": "0f025690ea0d093f3e60250109ef61b8a3a821c2",
+        "sha256": "e8cd6f171becbbf9a8edd31d7e944290a3ce8208b5aaa9ad0e1afd0515fa52c8",
+        "bytes": 959
+      },
+      "projects/LaunchWizard/main/ui/first_boot_policy.h": {
+        "git_blob": "c906bee15a6f8a48cd3dbbdf33d9b6a519ddcc9a",
+        "sha256": "4e5cf9cd29320283ddec1905b47603dbeb0834173a3b23906aa55cacfdee7c56",
+        "bytes": 3684
       }
     },
     "sdk": {
@@ -137,9 +157,9 @@
         "bytes": 1129
       },
       "tools/scons/SConstruct_tool.py": {
-        "git_blob": "242a5376f75b6c4909e91f7ad98436481ed8e755",
-        "sha256": "b51b270e754ebe6c6107513692342cdc405ec803526a0ccad8c63022b4b628bd",
-        "bytes": 14544
+        "git_blob": "03cf9bccbd6d7f5c1f415cb885ebf12b3bc215f2",
+        "sha256": "cddfe364f33f99c5d28083f06a1ab8b9d1651868d14f3aaa5156d8fae87fa1b4",
+        "bytes": 15176
       }
     }
   },
@@ -193,7 +213,8 @@
     "reason": "Generic native defaults omit fbdev/evdev/pthread choices. Derive exact pinned Cardputer runtime defaults with only cross compiler prefix removed; avoid SConstruct cross filename branch.",
     "cross_sdk_policy": "Do not use the cross-config sdk_bsp.tar.gz download as an implicit native source/sysroot. Its versioned release URL and existing-directory/version-file checks are not locked archive bytes.",
     "builder_isolation": "Compile only in existing ARM64 toolchain. Never install or enable this base integration in its live root.",
-    "configuration": "packages/tyrell-zero-session/wizard/native_config.py"
+    "configuration": "packages/tyrell-zero-session/wizard/native_config.py",
+    "root_expansion_policy": "Retain vendor one-shot expansion in normal apply and Imager skip before native readiness commit. Native completion exclusively owns OOBE marker cleanup and controlled reboot; no standalone vendor skip handoff. Physical expansion unqualified."
   },
   "fetch_behavior_findings": [
     {
@@ -215,33 +236,37 @@
       "files": {
         "projects/LaunchWizard/main/src/main.cpp": {
           "after": "2cf69fd4205f05c6bf1de49c6dc5cd219fc8a43914ddde4f6c911f23369cb68a",
-          "before": "a6a8be0768e0f5d52f351c3f880d2fa820836111340c34b35c78b778c81f9175"
+          "before": "45c6d164d02a8c00407e782071c9253a72d011f332f9499aa4bfe8fad1d95fff"
         },
         "projects/LaunchWizard/main/ui/wizard_service.cpp": {
-          "after": "fc67d135922a80e8a8e661f8753095c93a091b63619e4f3f41dfe30d2bc844a6",
-          "before": "324021773ef5aac20591180ff08e4dddca6fa88e92b0816e657bb6d0045438b7"
+          "after": "45241ef6143e9eb3df125b0ed10853cc72599f3d11517a54b4bfbd72251d4e40",
+          "before": "6f33ac70069851617c5e48706ade6e55387e9682b9c06f601008e08096fd9b8c"
+        },
+        "projects/LaunchWizard/main/ui/wizard_service.h": {
+          "after": "fa33c929acdbec772275d15042c081c9543c3feea0507940a9b4aaf4c88bbe1b",
+          "before": "658a1c2df839171b6ea508e9f1689e39f0055c65ce67316acac754e0884c2ffd"
         }
       },
-      "patch_sha256": "3d05a08131a374f35e35e81092dddb669bc85b9b7ee2353dee51cd02680435b8",
-      "revision": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "patch_sha256": "ef29aa2efc83f273b01af3f2975a8c0a7eb07f846048487ccc51f7f54381ca45",
+      "revision": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
       "schema": 1
     }
   ],
-  "wizard_assets_status": "Exact native Wizard ELF, all original APPLaunch resources and selected native/service/plugin ELF closure passed verification in the 959-package detached runtime. Physical GUI, provisioning, boot and hardware behavior remain unqualified.",
-  "store_guard_status": "Files-only dispatcher/helper packaging and isolated real-dpkg lifecycle passed; the actual 959-package runtime received the registered diversion, final protected base snapshot and bound native session receipts, then passed independent offline verification. Physical Store behavior remains a spare-card acceptance gate.",
+  "wizard_assets_status": "Actual offline ARM64 Wizard build and integration passed; exact ELF/resource/helper identities are bound by native and detached-runtime receipts.",
+  "store_guard_status": "Actual selected vendor Store/diversion/lifecycle and guarded package integration passed in disposable roots. Unqualified vendor bulk updaters remain masked; physical UI acceptance is pending.",
   "device_access": false,
   "cache_handling": "Explicit immutable fetch into ignored build/zero-vendor/downloads; offline replay into a fresh ignored source tree. No vendor checkout/branch edits or hardware access.",
   "native_source_replay": {
     "lock": "locks/tyrell-zero-vendor-inputs.json",
-    "lock_sha256": "50777c8c1cf08d6832b09b793f3f1e71b7f0940026967d3b22c77247d213c7e3",
+    "lock_sha256": "377e7624714dedf3a206150662b1a0ff85dbcdfa07dd1dc6c2039fd9284291d8",
     "implementation": "builder/zero-vendor.py",
     "archive_count": 7,
-    "compressed_bytes": 203114855,
-    "uncompressed_bytes": 438413627,
+    "compressed_bytes": 203198786,
+    "uncompressed_bytes": 438738965,
     "archive_extraction": "Regular files/directories only; checked root, paths, duplicate names, ancestor collisions, member counts and expanded size; no links/devices/owner/set-ID replay; refuses nonempty stage.",
-    "offline_source_policy": "Upstream SDK helper appended only after its original SHA256 matches; download and Conan helpers fail closed; check_component accepts only locked commit/URL/path identity.",
+    "offline_source_policy": "Original SDK helper SHA256 must match before adding its required Path import and appending offline overrides; download, release static-library and Conan helpers fail closed; check_component accepts only locked commit/URL/path identity.",
     "licenses": "Per-archive license-file path/SHA256 inventory retained in the vendor-input lock.",
-    "kconfig_verification": "Pinned Cardputer defaults generated as tyrell_native_config.mk; real ARM64 compile completed with network namespace disabling external connectivity. Exact generated config hash and archive identities in native build receipt."
+    "kconfig_verification": "Actual offline ARM64 native build and current configuration/patch identities are bound by the native integration source manifest and qualification receipt."
   },
   "history": [
     {
@@ -280,48 +305,110 @@
         "battery_qualified": false
       },
       "note": "Historical detached-root qualification retained unchanged. Superseded by the 2026-11-24 fresh-root qualification covering suppression of the competing vendor userconfig service."
+    },
+    {
+      "date_local": "2026-11-24",
+      "timezone": "America/Chicago",
+      "kind": "historical-offline-runtime-qualification-before-nov19-refresh",
+      "launcher": {
+        "repository": "https://github.com/CardputerZero/launcher.git",
+        "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+        "tree": "f1e891dd71fe7c2d487fa5a1db64f9a75177cff4",
+        "applaunch_version": "0.6.105",
+        "original_deb_sha256": "a38cffde9cb4d60f4ff2d6c95323c64f66cc705fdf315b0550e123ca7b5a9544",
+        "original_main_sha256": "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c",
+        "archive_sha256": "f75545a999800bbaa8d6215a03c2b56d8639d75708c9df11aa57d89437a40436"
+      },
+      "sdk": {
+        "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
+        "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
+        "tree": "097845dea400db7704927633509ae7656a6538e4",
+        "archive_sha256": "eeab5e58ba9aa39992ad4260a081e89d87b2177fe595d04692f8e52cc310a2a3",
+        "source_registry_entries": 32,
+        "source_registry_scope": "Registry has 32 entries; native config_defaults.mk enables LVGL 9.5, eventpp, Sigslot, SmoothUI and Spdlog, all materialized by the vendor-input lock."
+      },
+      "runtime_qualification": {
+        "date_local": "2026-11-24",
+        "scope": "offline-assembled-root",
+        "report": {
+          "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
+          "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae",
+          "bytes": 3710616
+        },
+        "metadata": {
+          "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-metadata.json",
+          "sha256": "6f8e3b5e10396edcf069a6f514014af12c1de3e69440a6a1202c1c3bc76ad271",
+          "bytes": 1389
+        },
+        "checks_passed": 24461,
+        "installed_system_packages": 955,
+        "installed_total_packages": 959,
+        "native_elf_roots": 182,
+        "protected_hardware_entries": 6949,
+        "image_file_built": false,
+        "physical_boot_qualified": false,
+        "hardware_qualified": false,
+        "battery_qualified": false,
+        "recapture_comparison": {
+          "input_path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
+          "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32",
+          "bytes": 1516
+        },
+        "native_linux_activation_tests": {
+          "input_path": "artifacts/tyrell-zero-locks/activation-fixtures-20261124T164844Z/report.json",
+          "sha256": "5074370393ac81fc4c850f122d45fe791ea59ca76a91894f011e879fa54e75b2",
+          "bytes": 947
+        },
+        "requalification_reason": "The image first-boot policy now suppresses the competing vendor userconfig service while preserving native Wizard setup. A fresh retained-stage2 copy with identical selected OS/custom bytes passed final activation and independent offline verification."
+      },
+      "native_qualification_sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
+      "runtime_closure_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
+      "note": "Retained September-baseline qualification remains historical. It does not qualify refreshed November 19 inputs."
     }
   ],
-  "native_qualification_sha256": "79f5a3025b6c09cbe6ccb6e79abee1ac219163d9cd44d4d8085642ad58032e16",
-  "runtime_closure_sha256": "1cc316f5983be16db89adba9e7464c98fc819276beca2341d4a5ed10a2bd0bc9",
   "image_build_readiness": "Evaluated dynamically by image/profiles.py using the bound pipeline qualification; this source lock does not assert image export or physical acceptance.",
   "remaining_acceptance": [
-    "Build and independently qualify the first complete exported Zero image file.",
-    "Verify native setup, graphical behavior, peripherals and Store lifecycle on a spare card.",
-    "Complete baseline and candidate battery/power qualification before any tuning or battery-life claim."
+    "Build and independently qualify a separate new Zero exported file image, retaining prior baseline/control artifacts.",
+    "Verify native setup, expansion, graphical behavior, peripherals and Store/update-unit policy on an identified spare card.",
+    "Complete candidate battery/power qualification before tuning or battery-life claims."
   ],
+  "qualified_date_local": "2026-11-24",
+  "native_qualification_sha256": "c938a5ab642aab3872dac550ac73b48e5382dd0523e3ac59c0e7da515b67c20e",
+  "native_qualification": {
+    "input_path": "artifacts/tyrell-zero-native/20261125T053236770376Z-c7e13032/pre-image-qualification.json",
+    "sha256": "c938a5ab642aab3872dac550ac73b48e5382dd0523e3ac59c0e7da515b67c20e",
+    "bytes": 3209
+  },
+  "runtime_closure_sha256": "a5cbced79ace5b35cbf38f80e8700d028b47cc08fcd8a190d2e3da9123e69257",
   "runtime_qualification": {
     "date_local": "2026-11-24",
     "scope": "offline-assembled-root",
     "report": {
-      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-verification.json",
-      "sha256": "ecf15e24908f95f85d6ea487c43e0d0d9899526c5d610ea277f8f19fd1b742ae",
-      "bytes": 3710616
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261125T054307916854Z-05519acf/image-verification.json",
+      "sha256": "6025d2804b9525640d2c40a76a1f0a5c515316c121de08c3674337f73f3c7bb2",
+      "bytes": 3696721
     },
     "metadata": {
-      "input_path": "artifacts/tyrell-zero-root-qualification/20261124T165201008829Z-082915c9/image-metadata.json",
-      "sha256": "6f8e3b5e10396edcf069a6f514014af12c1de3e69440a6a1202c1c3bc76ad271",
+      "input_path": "artifacts/tyrell-zero-root-qualification/20261125T054307916854Z-05519acf/image-metadata.json",
+      "sha256": "2d72c03f944b5568b7299f72b1799294be3dbda49bbbe2abc4320228616e3ef7",
       "bytes": 1389
     },
-    "checks_passed": 24461,
-    "installed_system_packages": 955,
-    "installed_total_packages": 959,
+    "checks_passed": 24383,
+    "installed_system_packages": 948,
+    "installed_total_packages": 952,
     "native_elf_roots": 182,
-    "protected_hardware_entries": 6949,
+    "protected_hardware_entries": 6950,
     "image_file_built": false,
     "physical_boot_qualified": false,
     "hardware_qualified": false,
     "battery_qualified": false,
-    "recapture_comparison": {
-      "input_path": "artifacts/tyrell-zero-locks/20261124T164953043676Z-7a9be230/selected-lock-comparison.json",
-      "sha256": "6c9e6b1e42f5df8f5e964dcbb8431babaacadb7375d8b97601bd3c5adb0cee32",
-      "bytes": 1516
-    },
-    "native_linux_activation_tests": {
-      "input_path": "artifacts/tyrell-zero-locks/activation-fixtures-20261124T164844Z/report.json",
-      "sha256": "5074370393ac81fc4c850f122d45fe791ea59ca76a91894f011e879fa54e75b2",
-      "bytes": 947
-    },
-    "requalification_reason": "The image first-boot policy now suppresses the competing vendor userconfig service while preserving native Wizard setup. A fresh retained-stage2 copy with identical selected OS/custom bytes passed final activation and independent offline verification."
-  }
+    "fresh_source_producer": {
+      "input_path": "/Volumes/garage/tyrell-build/zero-nov19/seed-assemblies/20261125T053610349077Z-88d80b2d/export/producer-report.json",
+      "sha256": "2a0ea8b57b42c146ea3a647a5185be9eebbeb74292b6617f394f98dda5d08eb1",
+      "bytes": 4425
+    }
+  },
+  "full_image_built": false,
+  "hardware_qualified": false,
+  "battery_qualified": false
 }

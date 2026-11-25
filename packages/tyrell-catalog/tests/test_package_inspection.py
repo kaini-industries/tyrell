@@ -25,7 +25,7 @@ def archive(name, directory=False):
 
 class PackageInspectionTests(unittest.TestCase):
     def test_unsafe_data_directory_rejected_before_inventory_checks(self):
-        fields = (b"Package: tyrell-catalog\nVersion: 0.1.0-1\nArchitecture: arm64\n"
+        fields = (b"Package: tyrell-catalog\nVersion: 0.1.1-1\nArchitecture: arm64\n"
                   b"Depends: python3, openssl, ca-certificates, libc6, libstdc++6, libssl3t64\n")
         with tempfile.TemporaryDirectory() as temporary:
             package = Path(temporary) / "test.deb"; package.write_bytes(b"mock archive")

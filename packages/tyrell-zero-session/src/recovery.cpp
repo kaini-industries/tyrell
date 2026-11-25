@@ -193,7 +193,7 @@ int updates_wait() {
 }
 
 int main(int argc, char **argv) {
-    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "0.3.0\n"; return 0; }
+    if (argc == 2 && std::string(argv[1]) == "--version") { std::cout << "0.3.1\n"; return 0; }
     const bool updates = argc >= 2 && std::string(argv[1]) == "--updates";
     if (updates && argc == 3 && std::string(argv[2]) == "--text") {
         std::cout << "Tyrell Zero Updates\nUse a reviewed base image for OS/session updates.\n"

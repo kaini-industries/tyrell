@@ -2,7 +2,7 @@
   "schema": 1,
   "profile": "tyrell-zero",
   "workflow": "native-setup-v1",
-  "applaunch_version": "0.6.105",
+  "applaunch_version": "0.6.111",
   "complete": false,
   "missing": [
     "Pinned, native-patched Wizard and its resource/dependency proof",

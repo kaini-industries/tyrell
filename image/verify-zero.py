@@ -29,15 +29,21 @@ KERNEL = '6.18.39+rpt-rpi-v8'
 MAIN = '/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch'
 STORE = '/usr/share/APPLaunch/bin/M5CardputerZero-AppStore'
 ORIGINAL = STORE + '.vendor'
-MAIN_SHA = '9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c'
-STORE_SHA = 'e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e'
+MAIN_SHA = 'e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7'
+STORE_SHA = 'cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa'
+NOV19_FIRST_BOOT_FILES = {
+    '/usr/lib/cardputerzero/randomize-disk-id': '4ca2b3dfc1de7c0b6c984e57ab4f0107a45c60099d19c77bec43b5efcf5fbd2a',
+    '/usr/lib/systemd/system/cardputerzero-diskid.service': '17fbcf83f49e5ee91d469e6374af9780deeb039cad28dbf9044c15617be3fbce',
+}
 INTEGRATION = '/usr/share/tyrell-zero/session-integration.json'
 QUALIFICATION = '/usr/share/tyrell-zero/pre-image-qualification.json'
 ACTIVATION = '/usr/share/tyrell-zero/image-activation.json'
 BASELINE = '/usr/share/tyrell-zero/base-invariants.json'
+UPDATE_POLICY = '/etc/tyrell-zero/base-update-policy.json'
+APPS_UPDATER_STATUS = '/var/lib/applaunch-updater/apps-status'
 MASKS = tuple('/etc/systemd/system/' + name for name in (
     'greetd.service', 'getty@tty1.service', 'getty@tty7.service',
-    'LaunchWizard.service', 'applaunch-updater.service', 'userconfig.service', 'lightdm.service',
+    'LaunchWizard.service', 'applaunch-updater.service', 'applaunch-apps-updater.service', 'userconfig.service', 'lightdm.service',
     'display-manager.service')) + ('/etc/systemd/user/APPLaunch.service',)
 DIGEST = re.compile(r'[0-9a-f]{64}\Z')
 PACKAGE = re.compile(r'[a-z0-9][a-z0-9+.-]*(?::(?:arm64|all))?\Z')
@@ -465,7 +471,7 @@ def verify_root(root, metadata, locks, owner=0):
         profile_path = input_root / 'image/profiles/tyrell-zero.json'
         profile = load_json(profile_path)
         check('profile_identity', profile.get('id') == PROFILE and profile.get('architecture') == 'arm64'
-              and profile.get('release') == 'trixie' and profile.get('stages') == STAGES
+              and profile.get('profile_version') == 2 and profile.get('release') == 'trixie' and profile.get('stages') == STAGES
               and profile.get('integration_stage') == 'stage2/99-tyrell')
         check('stage2_lite_output_identity', profile.get('output', {}).get('raw')
               == 'tyrell-zero-trixie-arm64-lite.img' and profile['output'].get('compressed')
@@ -476,7 +482,7 @@ def verify_root(root, metadata, locks, owner=0):
             check('metadata_' + key, expected.get(key) == value)
         for key, value in {'pi_gen_commit': profile['pins']['pi_gen_commit'],
                            'drivers_commit': profile['pins']['bsp_commit'],
-                           'kernel_release': KERNEL, 'applaunch_version': '0.6.105',
+                           'kernel_release': KERNEL, 'applaunch_version': '0.6.111',
                            'output': profile['output'], 'image_name': profile['output']['basename'],
                            'hardware_qualified': False, 'battery_qualified': False}.items():
             check('metadata_' + key, expected.get(key) == value)
@@ -520,7 +526,28 @@ def verify_root(root, metadata, locks, owner=0):
         for name, version in compat.get('required_packages', {}).items():
             check('native_package_' + name, actual.get(name, {}).get('Version') == version)
         check('greetd_version', actual.get('greetd', {}).get('Version') == '0.10.3-4')
-        check('original_applaunch_version', actual.get('applaunch', {}).get('Version') == '0.6.105')
+        check('original_applaunch_version', actual.get('applaunch', {}).get('Version') == '0.6.111')
+        for name, checksum in NOV19_FIRST_BOOT_FILES.items():
+            check('nov19_first_boot_file_' + name, digest(image.secure(name, executable=name.endswith('/randomize-disk-id'))) == checksum)
+            check('nov19_first_boot_file_locked_' + name, compat.get('configuration_files', {}).get(name) == checksum)
+        check('nov19_diskid_enabled', os.readlink(image.path(
+              '/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service', False))
+              == '/usr/lib/systemd/system/cardputerzero-diskid.service')
+        check('nov19_diskid_not_preexecuted', not image.exists('/var/lib/cardputerzero/diskid-randomized'))
+        check('nov19_fstrim_timer_masked', os.readlink(image.path('/etc/systemd/system/fstrim.timer', False)) == '/dev/null')
+        check('nov19_fstrim_timer_not_enabled', not image.exists(
+              '/etc/systemd/system/timers.target.wants/fstrim.timer'))
+        resize_link = '/etc/systemd/system/sysinit.target.wants/rpi-resize.service'
+        resize_unit = '/usr/lib/systemd/system/rpi-resize.service'
+        resize_dropin = '/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf'
+        check('nov19_resize_first_boot_chain_enabled', image.path(resize_link, False).is_symlink()
+              and image.path(resize_link) == image.path(resize_unit))
+        check('nov19_resize_first_boot_configuration_locked', compat.get('configuration_files', {}).get(resize_link)
+              == {'symlink': resize_unit} and {resize_unit, resize_dropin}.issubset(compat['configuration_files']))
+        check('nov19_resize_ordering_without_growth', image.text(resize_dropin)
+              == '[Unit]\nWants=\nWants=first-boot-complete.target\n')
+        check('nov19_no_resize_cmdline', not any('resize' in token for token in
+              image.text('/boot/firmware/cmdline.txt').split()))
         check('kernel_package_pin', actual.get('linux-image-' + KERNEL, {}).get('Version')
               == profile['pins']['kernel_package'])
         check('system_power_baseline_package_pin', actual.get('raspberrypi-sys-mods', {}).get('Version')
@@ -553,9 +580,15 @@ def verify_root(root, metadata, locks, owner=0):
             for path, identity in records.items():
                 absolute(path)
                 if isinstance(identity, dict) and 'symlink' in identity:
-                    check('link_' + path, map_name != 'runtime_files' and image.path(path, False).is_symlink()
-                          and image.path(path, False).lstat().st_uid == owner
-                          and os.readlink(image.path(path, False)) == identity['symlink'])
+                    link = image.path(path, False, trusted=True)
+                    check('link_' + path, map_name != 'runtime_files' and link.is_symlink()
+                          and link.lstat().st_uid == owner
+                          and os.readlink(link) == identity['symlink'])
+                    if map_name == 'configuration_files' and path == '/etc/systemd/system/fstrim.timer':
+                        # A systemd mask pins the link itself; /dev/null need not
+                        # exist in an offline root and must not be read as a file.
+                        check('systemd_mask_' + path, identity == {'symlink': '/dev/null'})
+                        continue
                     resolved = image.path(path, trusted=True)
                     image.secure('/' + str(resolved.relative_to(image.root)))
                 else:
@@ -688,6 +721,28 @@ def verify_activation(image, compat, metadata, actual, check):
     for path in MASKS:
         check('mask_' + path, image.path(path, False).is_symlink()
               and os.readlink(image.path(path, False)) == '/dev/null')
+    update_policy = image.json(UPDATE_POLICY)
+    check('vendor_app_updater_policy', update_policy.get('vendor_app_updater') == 'masked-unqualified'
+          and update_policy.get('launcher_updater') == 'masked-incompatible'
+          and update_policy.get('base_update_method') == 'reviewed-offline-image'
+          and update_policy.get('native_compat_sha256') == metadata['locks_sha256']['tyrell-zero-native-compat.json']
+          and update_policy.get('application_updates') == 'qualified-store-catalog'
+          and update_policy.get('ordinary_apt_security_maintenance') == 'preserve')
+    check('vendor_app_updater_visible_status', image.text(APPS_UPDATER_STATUS) == 'failed:incompatible\n')
+    apt_unit = '/usr/lib/systemd/system/applaunch-apt-update.service'
+    apt_config = configparser.ConfigParser(interpolation=None, strict=True)
+    apt_config.read_string(image.text(apt_unit))
+    check('vendor_apt_refresh_metadata_only', set(apt_config.sections()) == {'Unit', 'Service'}
+          and dict(apt_config['Unit']) == {'description': 'APPLaunch trusted package index refresh',
+              'after': 'network-online.target', 'wants': 'network-online.target'}
+          and dict(apt_config['Service']) == {'type': 'oneshot', 'execstart': '/usr/bin/apt update',
+              'timeoutstartsec': '5min', 'nice': '10'})
+    check('vendor_apt_refresh_unit_locked', compat.get('configuration_files', {}).get(apt_unit)
+          == digest(image.secure(apt_unit)))
+    for path in ('/etc/systemd/system/applaunch-apt-update.service',
+                 '/etc/systemd/system/applaunch-apt-update.service.d',
+                 '/usr/lib/systemd/system/applaunch-apt-update.service.d'):
+        check('vendor_apt_refresh_no_override_' + path, not image.exists(path))
     check('native_default_target', os.readlink(image.path('/etc/systemd/system/default.target', False))
           in {'/lib/systemd/system/multi-user.target', '/usr/lib/systemd/system/multi-user.target'})
     link = '/etc/systemd/system/multi-user.target.wants/tyrell-zero.target'
@@ -719,8 +774,8 @@ def verify_activation(image, compat, metadata, actual, check):
             'Service': {'Type': 'simple', 'ExecStart': '/usr/sbin/greetd --config /run/tyrell-zero/greetd.config',
                         'Restart': 'on-failure', 'RestartSec': '5', 'KillMode': 'mixed', 'TimeoutStopSec': '10'}},
         'tyrell-zero-wizard.service': {
-            'Unit': {'Requires': 'tyrell-zero-boot-state.service',
-                     'After': 'tyrell-zero-boot-state.service systemd-user-sessions.service',
+            'Unit': {'Requires': 'tyrell-zero-boot-state.service cardputerzero-diskid.service',
+                     'After': 'tyrell-zero-boot-state.service systemd-user-sessions.service cardputerzero-diskid.service',
                      'ConditionPathExists': '/run/tyrell-zero/setup'},
             'Service': {'Type': 'simple', 'WorkingDirectory': '/usr/share/APPLaunch',
                         'ExecStart': '/usr/libexec/tyrell-zero/LaunchWizard', 'Restart': 'no', 'TimeoutStopSec': '10'}},
@@ -750,6 +805,10 @@ def verify_activation(image, compat, metadata, actual, check):
     check('store_baseline_exact_packages', baseline.get('packages')
           == {name: value['Version'] for name, value in actual.items() if name not in ordinary})
     files = baseline.get('files', {})
+    check('store_baseline_resize_initial_only',
+          '/etc/systemd/system/sysinit.target.wants/rpi-resize.service' not in files)
+    check('store_baseline_resize_payload_protected', {'/usr/lib/systemd/system/rpi-resize.service',
+          '/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf'}.issubset(files))
     check('store_baseline_required_files', {STORE, ORIGINAL, '/var/lib/dpkg/diversions',
           '/usr/lib/tyrell-zero/store/guard.py', '/usr/libexec/tyrell-zero/appstore-package-helper',
           '/etc/systemd/system/default.target',
@@ -774,7 +833,7 @@ def verify_activation(image, compat, metadata, actual, check):
     integration, qualification = image.json(INTEGRATION), image.json(QUALIFICATION)
     check('session_receipt_identity', integration.get('schema') == 1 and integration.get('profile') == PROFILE
           and integration.get('complete') is True and integration.get('workflow') == 'native-setup-v1'
-          and integration.get('applaunch_version') == '0.6.105')
+          and integration.get('applaunch_version') == '0.6.111')
     check('session_qualification_bound', integration.get('qualification_sha256') == digest(image.secure(QUALIFICATION)))
     check('session_qualification_identity', qualification.get('schema') == 1 and qualification.get('profile') == PROFILE
           and qualification.get('scope') == 'pre-image-integration' and qualification.get('workflow') == 'native-setup-v1'
@@ -807,6 +866,7 @@ def verify_activation(image, compat, metadata, actual, check):
           == compat['source_qualification_sha256'])
     entries = activation.get('files', {})
     check('activation_required_files', isinstance(entries, dict) and {BASELINE, INTEGRATION, QUALIFICATION,
+          UPDATE_POLICY, APPS_UPDATER_STATUS,
           '/etc/tyrell-zero/power-policy.json', '/etc/pam.d/greetd', *MASKS}.issubset(entries)
           and ACTIVATION not in entries)
     for path, identity in entries.items():
@@ -823,6 +883,9 @@ def verify_activation(image, compat, metadata, actual, check):
 
 
 def verify_firstboot(image, check):
+    for path in ('/var/lib/cardputerzero/diskid-state', '/var/lib/LaunchWizard/rootfs-expansion-attempted',
+                 '/etc/init.d/resize2fs_once', '/etc/rc3.d/S01resize2fs_once'):
+        check('no_initial_first_boot_state_' + path, not image.exists(path))
     if image.exists('/run'):
         check('no_live_runtime_state', not any(not p.is_dir() or p.is_symlink()
               for p in image.path('/run').rglob('*')))

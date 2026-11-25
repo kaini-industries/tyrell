@@ -181,7 +181,7 @@ class ZeroLocks(unittest.TestCase):
                 function = host['qualify_root']; namespace = function.__globals__
                 root = Path(name); namespace['ROOT'] = root
                 files = ['image/zero_activation.py', 'image/verify-zero.py', 'image/profiles/tyrell-zero.json',
-                         'image/contracts/tyrell-zero-hardware.json', 'image/contracts/tyrell-zero-power.json',
+                         'image/contracts/tyrell-zero-hardware-nov19.json', 'image/contracts/tyrell-zero-power.json',
                          'packages/tyrell-zero-session/src/state.py', 'packages/tyrell-zero-store/activate-image.py',
                          'packages/tyrell-zero-store/guard.py', 'locks/tyrell-zero-apt.json',
                          'locks/tyrell-zero-apps.json', 'locks/tyrell-zero-native-compat.json']

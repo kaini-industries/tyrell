@@ -8,14 +8,14 @@
     {
       "id": "launcher",
       "repository": "https://github.com/CardputerZero/launcher.git",
-      "commit": "e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
-      "url": "https://codeload.github.com/CardputerZero/launcher/tar.gz/e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
-      "filename": "launcher-e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f.tar.gz",
-      "sha256": "f75545a999800bbaa8d6215a03c2b56d8639d75708c9df11aa57d89437a40436",
-      "bytes": 52982318,
-      "unpacked_bytes": 78513203,
-      "members": 1329,
-      "archive_root": "launcher-e7f60859fcc8bd867f3b8c4b3acd45dfa82ca39f",
+      "commit": "fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+      "url": "https://codeload.github.com/CardputerZero/launcher/tar.gz/fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
+      "filename": "launcher-fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8.tar.gz",
+      "sha256": "81a82e827b68669a1c1aa7f4f015c059629bbf977ff5f53865c1a4e02d05d135",
+      "bytes": 53064456,
+      "unpacked_bytes": 78835238,
+      "members": 1346,
+      "archive_root": "launcher-fd71a2dc2e30737cadebd47fb0a2ba68406ecfb8",
       "destination": ".",
       "license_files": [
         {
@@ -59,14 +59,14 @@
     {
       "id": "sdk",
       "repository": "https://github.com/m5stack/M5Stack_Linux_Libs.git",
-      "commit": "730634b0fec605c2087836fd35b37d3cf21b1a4c",
-      "url": "https://codeload.github.com/m5stack/M5Stack_Linux_Libs/tar.gz/730634b0fec605c2087836fd35b37d3cf21b1a4c",
-      "filename": "sdk-730634b0fec605c2087836fd35b37d3cf21b1a4c.tar.gz",
-      "sha256": "eeab5e58ba9aa39992ad4260a081e89d87b2177fe595d04692f8e52cc310a2a3",
-      "bytes": 48125220,
-      "unpacked_bytes": 179290661,
+      "commit": "1846503d46fa74685b6df4735aad6391d1624a96",
+      "url": "https://codeload.github.com/m5stack/M5Stack_Linux_Libs/tar.gz/1846503d46fa74685b6df4735aad6391d1624a96",
+      "filename": "sdk-1846503d46fa74685b6df4735aad6391d1624a96.tar.gz",
+      "sha256": "9053c4eee1b72318e802cbf83eada4f6bf0272e28fc69cb7c4720fcb4c99e0b6",
+      "bytes": 48127013,
+      "unpacked_bytes": 179293964,
       "members": 3349,
-      "archive_root": "M5Stack_Linux_Libs-730634b0fec605c2087836fd35b37d3cf21b1a4c",
+      "archive_root": "M5Stack_Linux_Libs-1846503d46fa74685b6df4735aad6391d1624a96",
       "destination": "SDK",
       "license_files": [
         {
@@ -313,8 +313,8 @@
   },
   "sdk_offline_patch": {
     "path": "SDK/tools/scons/SConstruct_tool.py",
-    "upstream_sha256": "b51b270e754ebe6c6107513692342cdc405ec803526a0ccad8c63022b4b628bd",
-    "implementation": "builder/zero-vendor.py:offline_guard",
-    "purpose": "Only the five staged commit identities may satisfy check_component; all downloader and Conan entry points are disabled."
+    "upstream_sha256": "cddfe364f33f99c5d28083f06a1ab8b9d1651868d14f3aaa5156d8fae87fa1b4",
+    "implementation": "builder/zero-vendor.py:offline_helper",
+    "purpose": "Import Path before the unchanged SDK helper evaluates its annotations; only the five staged commit identities may satisfy check_component, and downloader, release static-library and Conan entry points are disabled."
   }
 }
