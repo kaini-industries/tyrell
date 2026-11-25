@@ -9,7 +9,10 @@ the approved Store catalog or a Zero image.
 The later [Sandline 0.1.1 offline policy](sandline-offline-lifecycle.md) reuses
 those ownership hooks in a separate default-off native pilot. Its controlled
 checks and pending physical acceptance are independent of the Chess evidence
-below. Beacon and linked LAN policies remain pending.
+below. [Beacon's offline policy](beacon-offline-lifecycle.md) is also implemented.
+The [separate LAN design](game-lan-lifecycle-design.md) selects local termination
+on shell suspension; its runtime implementation and qualification remain pending.
+All linked-LAN admission gates stay closed.
 
 The interoperability target remains Gh0st source revision
 [`a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5`](https://github.com/therezor/CardPuterZeroOS/tree/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5),
