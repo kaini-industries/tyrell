@@ -71,7 +71,7 @@ def validate_state(state):
         require(isinstance(state, dict) and set(state) == {
             "schema", "kind", "mode", "incarnation", "next_epoch", "next_request", "apps", "leases", "active_lease", "participants"},
             "invalid authority state fields")
-        require(type(state["schema"]) is int and state["schema"] == 2 and
+        require(type(state["schema"]) is int and state["schema"] == 3 and
                 state["kind"] == "tyrell-handoff-authority" and state["mode"] in ("inert", "disposable-v2"), "unsupported authority state")
         require(identifier(state["incarnation"]), "invalid authority incarnation")
         require(integer(state["next_epoch"]) and integer(state["next_request"]), "exhausted or invalid authority counters")
@@ -138,7 +138,7 @@ class Authority:
     @classmethod
     def create(cls, directory, *, clock=time.monotonic_ns, disposable=False):
         require(type(disposable) is bool, "explicit disposable profile required")
-        initial = {"schema": 2, "kind": "tyrell-handoff-authority", "mode": "disposable-v2" if disposable else "inert",
+        initial = {"schema": 3, "kind": "tyrell-handoff-authority", "mode": "disposable-v2" if disposable else "inert",
                    "incarnation": fresh_id(set()), "next_epoch": 1, "next_request": 1,
                    "apps": {}, "leases": {}, "active_lease": None, "participants": {}}
         return cls(Ledger.create(directory, initial), clock)
@@ -154,6 +154,10 @@ class Authority:
             for participant in state["participants"].values():
                 if participant["phase"] != "fenced":
                     participant["phase"] = "unknown"
+                if participant["display"] is not None:
+                    for borrower in participant["display"]["borrowers"].values():
+                        if borrower["state"] == "PENDING":
+                            borrower["state"] = "UNKNOWN"
             for lease in state["leases"].values():
                 if lease["state"] == "RELEASED":
                     continue

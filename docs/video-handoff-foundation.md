@@ -9,6 +9,8 @@ or connected to Video by this increment, and physical testing remains pending.
 The later [D2 participant implementation](video-handoff-participants.md) adds
 standalone VT/libpulse backends and a disposable worker harness. Its required
 profile, schema and recovery boundaries are separate from D1's inert grants.
+The [D3 display implementation](video-managed-display.md) adds separate native
+managed APIs and independent graph/flush barriers while preserving the live guard.
 
 ## Deployment and trust boundary
 
@@ -97,8 +99,8 @@ capabilities, quarantines outstanding leases and changes pending operations to
 poison the running authority, including cached receipt queries; an uncertain
 commit cannot return a new permit or successful release.
 
-Current authority snapshots use schema 2 for D2 participant state. Earlier D1
-schema-1 snapshots are refused without rewriting or automatic upgrade. The D1
+Current authority snapshots use schema 3 for display borrowers and VT dependencies.
+Earlier schema-1/schema-2 snapshots are refused without rewriting or automatic upgrade. The D1
 test results below are historical evidence for that source increment, not a
 live migration or approval to discard an old ledger.
 
@@ -159,9 +161,10 @@ legacy coexistence, shell integration or target storage power loss.
 
 D2 now supplies separately versioned VT and normal-user audio backends,
 disposable completion/cancellation checks and durable worker/stop-post fencing;
-see its [implementation boundary](video-handoff-participants.md). D3 managed
-display policies, the single-owner media actor and shell integration
-follow before admission. Current Video, legacy helper privileges/endpoints,
-M5 compatibility, image inputs and package approvals are unchanged. Physical
+see its [implementation boundary](video-handoff-participants.md). D3 now adds
+[managed display policies](video-managed-display.md); the single-owner media
+actor and shell integration follow before admission. Default M5 behavior,
+legacy helper privileges/endpoints, image inputs and package approvals remain
+independent of these managed APIs. Physical
 playing/paused, LCD/HDMI, audio/VT restoration and launch/return testing remain
 pending.

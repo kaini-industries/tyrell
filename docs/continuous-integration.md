@@ -115,9 +115,9 @@ checks for the actual packet parser, Linux channel, authority, SQLite ledger and
 trusted-launcher session. Linux tests use real child processes, per-message
 credentials, pidfds, descriptor passing and subprocess death; no device adapter
 is active. A local macOS run skips Linux-only cases and is incomplete evidence.
-Standalone handoff package changes select docs and Python. Its modules are not
-installed or linked into Video, so native package suites remain separate; CI
-infrastructure changes still select all eight suites. Device/helper completion,
+At D1, standalone handoff changes selected docs and Python; D3 now also selects
+Video because its native display checks consume the authority. The modules
+remain uninstalled. CI infrastructure changes still select all eight suites. Device/helper completion,
 power-cut durability and physical acceptance remain pending.
 
 A2-D2 adds required [participant checks](video-handoff-participants.md) to the
@@ -129,6 +129,18 @@ process/callback tests retain permits through pending loads, drain, worker
 fencing and stop-post suppression. Missing Linux/Pulse prerequisites cause
 required skips and fail the suite. D2 remains a disposable profile with live
 admission closed; crash tests establish containment, not automatic recovery.
+
+A2-D3 adds required `video-managed-hdmi`, `video-managed-lcd` and
+`video-managed-display-authority` groups to the Video suite. They exercise the
+[managed display paths](video-managed-display.md) through wrapped DRM calls,
+actual LVGL partial flushes, controlled framebuffer completion and native child
+processes tied to the real SQLite authority. The native container builds as
+root; the integration trial copies its fixed fixture executable to a private
+temporary root and drops to a normal user. No app package or helper is installed.
+The current Video source boundary includes the handoff modules consumed by these
+checks; retained package/device evidence is unchanged. Native facts and the
+display-to-VT dependency results are retained in `a2-d3-managed-display.json`.
+Physical driver finality and GStreamer graph integration remain pending.
 
 ## Workflow selection and evidence
 

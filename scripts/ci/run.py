@@ -291,7 +291,8 @@ def run_app(work, app, revision):
         "video-media-fixture", "video-media-controls", "video-caption-clock", "video-lcd-geometry",
         "video-startup", "video-track-switch", "video-playback", "video-hdmi-lease", "video-hdmi-audio",
         "video-render-browser", "video-render-player", "video-cli-report-write-error",
-        "tyrell-app-commands", "video-ui-commands", "video-checkpoint", "video-lifecycle-blocking-spike"}
+        "tyrell-app-commands", "video-ui-commands", "video-checkpoint", "video-lifecycle-blocking-spike",
+        "video-managed-hdmi", "video-managed-lcd", "video-managed-display-authority"}
     results = [ctest(build, work, required)]
     packages = work / "packages"
     packages.mkdir()

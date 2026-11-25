@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "managed_hdmi.h"
+
 namespace tyrell::video {
 
 struct DisplayMode {

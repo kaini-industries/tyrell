@@ -27,6 +27,9 @@ struct FramebufferCommitStats {
 // for the kernel's deferred framebuffer update. Commit once, after the final
 // partial flush of a redraw, rather than committing each draw-buffer strip.
 // All methods and callbacks run on the LVGL/UI thread.
+// This legacy cadence helper does not certify managed resource release. The
+// separate ManagedLcd path gates writes before submission and retains driver
+// work until qualified completion; fsync alone is not that completion.
 class FramebufferCommit {
 public:
     using Stats = FramebufferCommitStats;
