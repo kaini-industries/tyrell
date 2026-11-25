@@ -9,8 +9,9 @@ The [decision record](../research/game-lan-lifecycle-design.json) binds the
 November 24 inspected source and future acceptance cases. That increment was
 design only. The separate [A3-LAN-1 controller increment](chess-lan-terminal.md)
 now implements Chess terminal-state APIs and controlled App/TCP acceptance
-checks. Production lifecycle-loop/native integration, protocol changes and
-physical acceptance remain pending. The original decision record's future
+checks. The separate [A3-LAN-2 loop/native integration](chess-lan-loop.md) now
+connects those controllers for controlled callers. Public enablement, protocol
+changes and physical acceptance remain pending. The original decision record's future
 cases are historical requirements, not updated runtime qualification. All
 current linked-LAN admission gates stay closed.
 Existing [Chess](game-chess-lifecycle.md), [Sandline](sandline-offline-lifecycle.md)
@@ -25,12 +26,12 @@ instance, including during pairing, connect, already-finished play or a repeated
 pause/resume sequence. Shell loss or linked termination seals it too, then exits
 without acquiring foreground ownership.
 
-The future production loop must drain lifecycle traffic after potentially
+The production integration must drain lifecycle traffic after potentially
 blocking input/network polls and before admitting packets, commands or rendering.
 A pause found behind a full bounded receive batch wins before progress resumes.
-Chess currently drains before input polling; copying that loop unchanged would
-leave a post-poll race. Sandline and Beacon's offline loop checks provide useful
-ordering examples, without supplying a LAN terminal primitive.
+A3-LAN-2 adds the missing post-input/network-poll boundaries for Chess.
+Sandline and Beacon's offline loop checks provide useful ordering examples,
+without supplying a LAN terminal primitive.
 
 Local input/render release takes priority over network cleanup and persistence:
 
@@ -150,13 +151,14 @@ to LAN liveness, reset peer clocks or treat a post-stop backlog as fresh input.
 | Increment | Deliverable | Required before advancing |
 | --- | --- | --- |
 | A3-LAN-1 | Implemented: Chess terminal/controller primitives, role-aware clocks and interruption state; reviewed gap/stale-authority policy | Controlled actual App/TCP and read-only render checks; linked LAN stays closed; see the separate validation record |
-| A3-LAN-2 | Chess production loop and optional native adapter | Post-poll admission checks, real TCP peers, backpressure, hidden/lost exits and native I/O fixtures; default M5 regression |
+| A3-LAN-2 | Implemented: Chess production loop and optional native adapter for controlled callers | Post-poll admission checks, real TCP peers, backpressure, hidden/lost exits and native I/O fixtures; default M5 regression; public linked admission stays closed |
 | A3-LAN-3 | Sandline terminal transport/world policy and loop; decide its service-gap limit | Actual ENet host/client and surviving-player cases, immutable ended view, honest status and native ownership checks |
 | A3-LAN-4 | Independent Beacon terminal Session policy and loop; decide its service-gap limit | Actual TYBC host/client, actor/pulse state, slot reuse and native ownership checks |
 | A3-LAN-5 | Exact-artifact per-app qualification and reviewed enablement | Retained native/default packages as applicable, M5 first then pinned-Gh0st scenario acceptance; physical phase pending |
 
-LAN-2 through LAN-5 remain future increments. LAN-1 exposes controller methods
-for controlled callers, without a native adapter or new runtime enable option.
+LAN-3 through LAN-5 remain future increments. LAN-1 exposes controller methods
+and LAN-2 integrates the real loop/native hooks for controlled callers, without
+a new runtime enable option.
 Do not expose linked LAN simply because a helper or one test exists. Keep
 ordinary unlinked LAN coverage and default-off shell builds throughout. A
 controlled opt-in fixture is separate from permission to advertise live support.
@@ -165,9 +167,11 @@ The decision record lists future cases for both roles: setup/active/finished
 states, pause racing polls/packets/moves, repeated lifecycle events, backpressure,
 lost notification, silent gaps/full wrap, authoritative expiry, pending requests,
 save failure, foreign framebuffer pixels, failed reopen, explicit fresh sessions
-and mixed/ordinary peer behavior. Every case remains not run for this design.
-Future tests must exercise actual App/Session and transport paths; a policy-only
-model cannot establish integrated behavior.
+and mixed/ordinary peer behavior. Those original future-case rows remain
+historical requirements. Separate LAN-1/2 validation records bind the software
+cases actually exercised; no physical case is promoted. Tests must exercise
+actual App/Session and transport paths; a policy-only model cannot establish
+integrated behavior.
 
 Physical M5 launch/input/exit and pinned-Gh0st pause/resume, termination, prolonged
 stop and responsiveness remain pending for each exact new artifact. This design

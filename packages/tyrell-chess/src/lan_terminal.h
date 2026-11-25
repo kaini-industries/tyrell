@@ -26,8 +26,8 @@ struct LanInterruption {
     std::string confirmedResult="*",confirmedReason;
 };
 
-// Opt-in controller primitive. Production shell/loop integration is deferred;
-// constructing an App does not enable this policy or admit linked LAN play.
+// Opt-in controller primitive. Constructing an App does not enable this policy
+// or admit linked LAN play; the adapter accepts explicitly armed controllers.
 class LanTerminal {
 public:
     static constexpr uint64_t service_gap_limit_ms=10000;
@@ -48,6 +48,19 @@ public:
         if(!active())return false;
         sealed_=teardownPending_=true;interruption_=std::move(interruption);
         return true;
+    }
+    // Admission closes before ownership release. Retaining strings, clocks and
+    // the visible ended state happens separately after that release.
+    bool latch(LanEndReason reason,uint64_t observedAtMs,bool hadMatch) noexcept {
+        if(!active())return false;
+        sealed_=teardownPending_=true;
+        interruption_.reason=reason;interruption_.observedAtMs=observedAtMs;
+        interruption_.hadMatch=hadMatch;
+        return true;
+    }
+    void retain_request(bool pending,std::string move,size_t ply,uint64_t queuedAtMs) {
+        interruption_.pendingMoveRequest=pending;interruption_.pendingMove=std::move(move);
+        interruption_.pendingPly=ply;interruption_.pendingQueuedAtMs=queuedAtMs;
     }
     void retain(const ChessClockSnapshot& clock,const std::string& result,const std::string& reason) {
         interruption_.clock=clock;interruption_.confirmedResult=result;interruption_.confirmedReason=reason;

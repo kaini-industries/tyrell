@@ -6,10 +6,11 @@ An interruption ends one local session instance. It does not pause a shared
 match, decide an unresolved winner or establish that a remote player received
 a notification.
 
-The native shell adapter does not call these primitives yet. Ordinary M5 LAN
-play retains its existing behavior, shell support defaults off, and all linked
-Host/Join admission gates remain closed. A3-LAN-2 owns the production lifecycle
-loop and native adapter. Physical testing remains pending.
+This original increment did not connect the native shell adapter. The separate
+[A3-LAN-2 integration](chess-lan-loop.md) now wires the production loop and native
+ownership hooks for controlled pre-armed callers. Ordinary M5 LAN play retains
+its existing behavior, shell support defaults off, and all public linked
+Host/Join admission gates remain closed. Physical testing remains pending.
 
 ## Session and admission
 
@@ -33,10 +34,10 @@ and an explicit caller action. Repeated seal, cleanup or resume cannot revive
 the old session.
 
 Application admission checks guard network processing, move/command entry and
-outbound work for an explicitly opted-in controller. The production shell loop
-still needs its separate post-poll lifecycle drains and ownership-release
-integration. These primitives alone do not establish a pause acknowledgment or
-a scheduling/teardown deadline.
+outbound work for an explicitly opted-in controller. The later loop integration
+supplies separate post-poll lifecycle drains and ownership-release ordering.
+These primitives alone do not establish a pause acknowledgment or a
+scheduling/teardown deadline.
 
 ## Clock and result authority
 
@@ -87,7 +88,7 @@ An explicitly sealed controller exposes a read-only ended view. Essential text
 fits the existing 320×170 renderer: connection ended, local reason, remote state
 unconfirmed and read-only status. Both clock rows remain inactive, including
 untimed games. No play, resume, menu or next-move prompt advertises an unavailable
-action. Native ended-view navigation remains part of A3-LAN-2.
+action in this original increment. A3-LAN-2 adds foreground exit from that view.
 
 The seal does no filesystem work or AI join. It invalidates pending command/AI
 generations and ordinary archive/save work for the interrupted LAN instance.
