@@ -146,7 +146,9 @@ The raw record retains separate capture, suspend, resume-call and ready samples.
 
 The follow-up [A2 design](video-async-handoff-design.md) specifies a separate
 negotiated protocol, a shared ownership barrier, observable helper completion
-and conservative quarantine. It requires a future shell implementation; no
-protocol, broker or managed helper is introduced by that design. Its five
-implementation increments and unrun acceptance cases keep the current guard
-and normal M5 behavior intact. Physical testing remains pending.
+and conservative quarantine. The separate
+[A2-D1 foundation](video-handoff-foundation.md) now implements the channel,
+authority and durable ledger with inert resource adapters. It still requires
+the future helper, display, media and shell integration increments. Its software
+checks do not qualify device completion or live playback; the current guard
+and normal M5 behavior remain intact. Physical testing remains pending.

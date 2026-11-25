@@ -1,10 +1,16 @@
 # Asynchronous Video handoff and helper ownership
 
-A2 design, revision 1, November 24, 2026. Status: **proposed architecture;
-runtime implementation and qualification pending**. The
+A2 design, revision 1, November 24, 2026. Status: **D1 foundation implemented;
+resource integration and qualification pending**. The
 [decision record](../research/video-async-handoff-design.json) binds the inspected
 source, design invariants and future acceptance cases. It is not a runnable
 protocol, a release approval or a claim that those cases passed.
+
+The separate [D1 implementation](video-handoff-foundation.md) supplies the
+channel, trusted-launcher session, authority and durable ledger. Its adapters
+are inert and it is not installed into Video. The historical decision record's
+19 full integration cases remain unrun; D1 software coverage is recorded
+separately and does not open live admission.
 
 ## Decision and compatibility boundary
 
@@ -272,10 +278,11 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
 
 ## Implementation and acceptance sequence
 
-1. Specify and implement the separate shell/authority channel, parser,
+1. **D1 implemented with inert adapters:** the separate shell/authority channel, parser,
    authenticated bootstrap, durable ledger and operation barrier. Keep all
-   device adapters inert. Exercise adversarial ordering with real sockets and
-   processes plus controllable backend calls.
+   device adapters inert. The [foundation checks](video-handoff-foundation.md)
+   exercise adversarial ordering with real sockets, processes and held inert
+   backend work. Actual device completion still requires the following steps.
 2. Implement separate v2 VT and normal-user audio participants. Prove observable
    completion, pending-load finality, cancellation, stop-post fencing and crash
    recovery with disposable backends. Preserve legacy endpoints and privileges.
@@ -289,9 +296,9 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
    idle-loop work only after its ownership and wake-source design is qualified.
 
 The [decision record](../research/video-async-handoff-design.json) lists concrete
-future cases and expected refusals. They remain **not run for this design**.
-Existing legacy-helper/socket tests can confirm current behavior and source
-inspection, but cannot validate a protocol or broker that has not been built.
+future integrated cases and expected refusals. They remain **not run for the
+complete design**. D1 tests exercise its actual modules; existing legacy-helper
+checks and inert actors cannot validate the future managed resource paths.
 
 Before admission, require delayed/blocked graph teardown, input/render drain,
 late helper creation, acquisition cancellation, pending audio load, cleanup
@@ -303,4 +310,4 @@ production call paths; a toy state model is insufficient.
 Physical playing/paused LCD/HDMI, preroll/seek/track/caption/output transitions,
 missing HDMI, audio/VT restoration, native launch/return and responsiveness
 remain pending. Current Video 0.1.9, package approvals, image inputs and their
-historical evidence remain unchanged by this design-only increment.
+historical evidence remain unchanged by the separate D1 foundation.

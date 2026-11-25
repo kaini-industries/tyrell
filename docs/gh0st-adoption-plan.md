@@ -241,12 +241,15 @@ optimization remain gated by a revised completion/ownership design.
 
 The follow-up [asynchronous handoff design](video-async-handoff-design.md)
 specifies a separate opt-in protocol, shared operation barrier and observable
-helper completion. It preserves the closed guard. Continue its implementation
-in order: **A2-D1** channel/authority/ledger, **A2-D2** v2 VT/audio participants,
+helper completion. It preserves the closed guard. The separate
+[A2-D1 channel/authority/ledger foundation](video-handoff-foundation.md) is
+implemented and tested with inert device adapters; it is not installed into
+Video. Continue its implementation in order: **A2-D2** v2 VT/audio participants,
 **A2-D3** managed KMS/LCD ownership, **A2-D4** media actor/control integration,
 then **A2-D5** qualified shell/package/device integration and idle work.
-These are future increments, not completed runtime support; physical acceptance
-remains pending. The design's acceptance cases must exercise production paths.
+The remaining increments are future runtime support; physical acceptance stays
+pending. D1's software checks do not complete the design's integrated acceptance
+cases, which must exercise the eventual production resource paths.
 
 Split this into a Status idle-loop PR, a Video checkpoint/timing PR and a Video
 integration/idle-loop PR. Status waits on keyboard, link, shutdown and its real

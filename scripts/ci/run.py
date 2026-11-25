@@ -33,6 +33,7 @@ PYTHON_GROUPS = (
     ("scripts/observe/tests", "test*.py"),
     ("scripts/power/tests", "test*.py"),
     ("scripts/panel/tests", "test*.py"),
+    ("packages/tyrell-video-handoff/tests", "test*.py"),
 )
 
 
