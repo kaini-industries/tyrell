@@ -32,7 +32,7 @@ struct Gate {
     void release(){std::lock_guard<std::mutex> lock(mutex);released=true;condition.notify_all();}
 };
 struct BackendState {
-    Gate old_load,stop;
+    Gate old_load,stop,regrant;
     std::mutex mutex;
     std::vector<MediaCommand> executed;
     std::thread::id owner;
@@ -41,7 +41,7 @@ struct BackendState {
     void on_owner(){std::lock_guard<std::mutex> lock(mutex);if(owner==std::thread::id{})owner=std::this_thread::get_id();require(owner==std::this_thread::get_id()&&owner!=ui_owner,"UI called a graph backend");}
     void record(const MediaCommand& command){on_owner();std::lock_guard<std::mutex> lock(mutex);executed.push_back(command);}
     std::size_t count(MediaCommandKind kind){std::lock_guard<std::mutex> lock(mutex);return std::count_if(executed.begin(),executed.end(),[&](const auto& c){return c.kind==kind;});}
-    void release(){old_load.release();stop.release();}
+    void release(){old_load.release();stop.release();regrant.release();}
 };
 class Backend final:public MediaActorBackend {
 public:
@@ -76,7 +76,7 @@ public:
         return result;
     }
     bool regrant(const MediaActorBinding& binding,std::string&)override {
-        state_->on_owner();binding_=binding;media_.status.suspended=false;media_.status.loaded=media_.status.playing=true;
+        state_->on_owner();state_->regrant.wait();binding_=binding;media_.status.suspended=false;media_.status.loaded=media_.status.playing=true;
         media_.status.path=saved_path_;media_.status.error.clear();publish_frame();return true;
     }
     void stop()override{state_->on_owner();media_.resources={};media_.frame.reset();}
@@ -213,6 +213,46 @@ void durable_ack_before_ui_and_fresh_request_sequence(const fs::path& directory)
     dispose(app);app.playback.reset();require(fixture.state->destroyed==0,"UI destruction joined live graph owner");finish(*fixture.actor);
 }
 
+void late_regrant_completion_cannot_undo_revocation(const fs::path& directory) {
+    for(bool seal_while_held:{false,true}) {
+        Fixture fixture;
+        Options options;options.media_root=directory;App app(options,ui_tick);
+        auto control=fixture.control();auto* actor_control=control.get();app.playback=std::move(control);
+        app.start_file(directory/"new.mp4");fixture.mailbox.grant_all(*actor_control);app.poll();
+        wait([&]{app.poll();return app.status.loaded&&!app.status.buffering;},"Revocation fixture did not load");
+        fixture.mailbox.acknowledge(*actor_control);render(app);
+        require(actor_control->seal(8000,operation(8000)),"First epoch seal refused");
+        wait([&]{return fixture.actor->snapshot()->phase==MediaActorPhase::Drained;},"First epoch did not drain");
+        fixture.mailbox.acknowledge(*actor_control);require(fixture.actor->epoch_fenced(scope()),"First epoch was not fenced");
+        fixture.state->regrant.enabled=true;
+        require(actor_control->regrant(scope(2),operation(8100),100,operation(8101)),"Held fresh regrant refused");
+        wait([&]{return fixture.state->regrant.started();},"Fresh rebuild did not remain in flight");
+        actor_control->revoke_admission();
+        if(seal_while_held)require(actor_control->seal(8200,operation(8200)),"Fresh epoch seal during rebuild refused");
+        const auto flush_before=ui_flushes;const auto input_before=app.input_epoch;
+        fixture.state->regrant.release();
+        wait([&]{return fixture.actor->snapshot()->phase==(seal_while_held?MediaActorPhase::Drained:MediaActorPhase::Foreground);},"Held rebuild did not finish under revoked admission");
+        // Commit/ack may precede the next App tick. A late successful resume
+        // event must not clear the newer revocation of that same fresh epoch.
+        fixture.mailbox.acknowledge(*actor_control);app.poll();app.key(' ');app.render();lv_refr_now(ui_display);
+        require(!actor_control->input_allowed()&&!actor_control->render_allowed()&&!actor_control->latest_frame()&&
+            actor_control->awaiting_permits().empty()&&ui_flushes==flush_before&&app.input_epoch==input_before,
+            "Late RegrantCompleted reopened revoked input/render or dispatched UI work");
+        if(!seal_while_held) {
+            require(actor_control->seal(8200,operation(8200)),"Revoked fresh epoch could not receive its durable drain");
+            wait([&]{return fixture.actor->snapshot()->phase==MediaActorPhase::Drained;},"Revoked fresh epoch did not drain");
+            fixture.mailbox.acknowledge(*actor_control);
+        }
+        require(fixture.actor->epoch_fenced(scope(2)),"Revoked fresh epoch lost its terminal evidence");
+        require(actor_control->regrant(scope(3),operation(8300),200,operation(8301)),"Genuinely fresh third grant refused");
+        wait([&]{return fixture.actor->snapshot()->phase==MediaActorPhase::Foreground;},"Third epoch rebuild did not complete");
+        fixture.mailbox.acknowledge(*actor_control);app.poll();render(app);
+        require(actor_control->input_allowed()&&actor_control->render_allowed()&&app.input_epoch>input_before,
+            "A distinct fresh authority binding did not reset prior revocation");
+        dispose(app);app.playback.reset();finish(*fixture.actor);
+    }
+}
+
 void current_failure_and_borrowed_destruction(const fs::path& directory) {
     {
         Fixture fixture(false,true);
@@ -255,9 +295,9 @@ int main(int argc,char** argv) {
         lv_display_set_color_format(ui_display,LV_COLOR_FORMAT_XRGB8888);
         lv_display_set_buffers(ui_display,ui_pixels.data(),nullptr,ui_pixels.size()*sizeof(ui_pixels[0]),LV_DISPLAY_RENDER_MODE_DIRECT);
         lv_display_set_flush_cb(ui_display,[](lv_display_t* display,const lv_area_t*,std::uint8_t*){require(std::this_thread::get_id()==ui_owner,"Media worker entered LVGL");++ui_flushes;lv_display_flush_ready(display);});
-        late_load_does_not_replace_new_intent(directory);bounds_and_no_dispatch_on_seal(directory);durable_ack_before_ui_and_fresh_request_sequence(directory);current_failure_and_borrowed_destruction(directory);
+        late_load_does_not_replace_new_intent(directory);bounds_and_no_dispatch_on_seal(directory);durable_ack_before_ui_and_fresh_request_sequence(directory);late_regrant_completion_cannot_undo_revocation(directory);current_failure_and_borrowed_destruction(directory);
         lv_display_delete(ui_display);ui_display=nullptr;lv_deinit();fs::remove_all(directory);
-        if(!report.empty()){std::ofstream out(report);require(bool(out<<"{\"schema\":1,\"kind\":\"a2-d4-media-ui\",\"status\":\"passed\",\"hardware_qualified\":false,\"live_admission\":false,\"actual_app\":true,\"memory_lvgl\":true,\"mailbox_before_effects\":true,\"late_intent_filtered\":true,\"no_dispatch_accounted\":true,\"seal_gates_render_input\":true,\"ack_before_ui\":true,\"fresh_request_101\":true,\"ui_does_not_own_actor\":true}\n"),"Cannot write UI actor evidence");}
+        if(!report.empty()){std::ofstream out(report);require(bool(out<<"{\"schema\":1,\"kind\":\"a2-d4-media-ui\",\"status\":\"passed\",\"hardware_qualified\":false,\"live_admission\":false,\"actual_app\":true,\"memory_lvgl\":true,\"mailbox_before_effects\":true,\"late_intent_filtered\":true,\"no_dispatch_accounted\":true,\"seal_gates_render_input\":true,\"ack_before_ui\":true,\"fresh_request_101\":true,\"late_regrant_cannot_undo_revocation\":true,\"ui_does_not_own_actor\":true}\n"),"Cannot write UI actor evidence");}
         std::cout<<"PASS: actual App/LVGL, borrowed actor, exact permit mailbox, stale-intent filtering, seal gates and fresh request sequence\n";return 0;
     }catch(const std::exception& error){std::cerr<<"Media UI: "<<error.what()<<'\n';if(ui_display)lv_display_delete(ui_display);lv_deinit();fs::remove_all(directory);return 1;}
 }

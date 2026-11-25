@@ -18,7 +18,7 @@ import time
 
 HERE=Path(__file__).resolve().parent
 ROOT=HERE.parents[2]
-sys.path.insert(0,str(HERE));sys.path.insert(0,str(ROOT/"packages/tyrell-video-handoff"))
+sys.path.insert(0,str(HERE));sys.path.insert(0,os.environ.get("TYRELL_D5_TEST_MODULE_ROOT",str(ROOT/"packages/tyrell-video-handoff")))
 import managed_display_integration as display_fixture
 from handoff_authority import AuthorityError
 from handoff_media_state import MediaJournal,sha

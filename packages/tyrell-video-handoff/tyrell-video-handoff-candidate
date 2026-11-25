@@ -1,0 +1,7 @@
+#!/usr/bin/python3 -I
+"""Read-only package inspection. No launcher, daemon, resource grant or device IO."""
+import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, "/usr/lib/tyrell-video-handoff")
+from handoff_candidate import main
+raise SystemExit(main())

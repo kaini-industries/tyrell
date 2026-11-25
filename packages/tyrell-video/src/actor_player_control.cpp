@@ -91,8 +91,8 @@ void ActorPlayerControl::observe(const std::vector<MediaActorEvent>& events) {
         if(!observed_.insert(event.operation).second) continue;
         if(event.kind==MediaCommandKind::Regrant&&same(event.binding,binding_)&&event.request==presentation_request_) {
             presentation_pending_=false;
-            frozen_=event.outcome!=MediaEventOutcome::Completed;
-            if(frozen_)notice_=event.error.empty()?"Playback could not resume":event.error;
+            frozen_=revoked_||event.outcome!=MediaEventOutcome::Completed;
+            if(event.outcome!=MediaEventOutcome::Completed)notice_=event.error.empty()?"Playback could not resume":event.error;
         }
         const auto found=pending_.find(event.operation);
         if(found==pending_.end()||found->second.intent!=intent_||!same(event.binding,binding_)) continue;
@@ -113,9 +113,10 @@ void ActorPlayerControl::refresh_presentation() {
     if(status_.error.empty()&&!load_error.empty())status_.error=load_error;
     frame_=snapshot->media.frame;
 }
+void ActorPlayerControl::revoke_admission() noexcept { revoked_=frozen_=true;frame_.reset(); }
 bool ActorPlayerControl::seal(std::uint64_t request,const std::string& operation) {
     if(!actor_.seal(binding_,request,operation))return false;
-    frozen_=true;frame_.reset();
+    revoke_admission();
     // Ready reservations get an explicit no-dispatch result. Unreserved UI
     // intents have no backend/authority operation to retire.
     for(auto& value:awaiting_)if(const auto permit=permits_(value.command)) {
@@ -127,7 +128,7 @@ bool ActorPlayerControl::cancel(std::uint64_t request) { return actor_.cancel(bi
 bool ActorPlayerControl::regrant(MediaActorBinding binding,std::string lifetime,std::uint64_t request,const std::string& operation) {
     if(!pending_.empty()||!awaiting_.empty()||intent_==std::numeric_limits<std::uint64_t>::max()||
        !actor_.regrant(binding,std::move(lifetime),request,operation))return false;
-    binding_=std::move(binding);frozen_=true;presentation_pending_=true;presentation_request_=request;
+    binding_=std::move(binding);revoked_=false;frozen_=true;presentation_pending_=true;presentation_request_=request;
     request_=request;++intent_;
     auto resume=command(MediaCommandKind::Regrant);resume.request=request;resume.operation=operation;
     pending_[operation]={intent_,std::move(resume)};

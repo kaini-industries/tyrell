@@ -1,8 +1,8 @@
 # Asynchronous Video handoff and helper ownership
 
 A2 design, revision 1, November 24, 2026. Status: **D1 foundation, D2 participants,
-D3 managed display APIs and D4 media actor/control pilot implemented; live
-integration and qualification pending**. The
+D3 managed display APIs and D4 media actor/control pilot implemented; D5 software
+shell/package candidate added, live/device qualification pending**. The
 [decision record](../research/video-async-handoff-design.json) binds the inspected
 source, design invariants and future acceptance cases. It is not a runnable
 protocol, a release approval or a claim that those cases passed.
@@ -17,9 +17,11 @@ hardware or install a service. The separate
 policies and independent producer barriers, without selecting a managed app
 launch path. The [D4 media implementation](video-media-actor.md) adds the actual
 single-owner graph, borrowed UI adapter and durable native-producer accounting
-for LCD/fake-audio fixtures. The historical decision record's 19 complete
+for LCD/fake-audio fixtures. The [D5 software candidate](video-qualified-integration.md)
+connects the actual App and asynchronous shell controller and packages their
+fixed non-device qualification profile separately. The historical decision record's 19 complete
 integration cases have not all passed; per-increment software coverage is
-recorded separately. D1–D4 software checks do not open live admission.
+recorded separately. D1–D5 software checks do not open live admission.
 
 ## Decision and compatibility boundary
 
@@ -312,13 +314,19 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
    LCD/fake-audio graph fixtures exercise callback drain, finality refusal and
    fresh-grant checkpoint rebuild. Command completion alone does not retire a
    permit. This adds no universal teardown deadline or live HDMI qualification.
-5. Integrate only with a shell that honors this asynchronous contract. Qualify
-   exact new packages on M5 first, then each managed scenario. Enable Video's
-   idle-loop work only after its ownership and wake-source design is qualified.
+5. **D5 software candidate, device qualification pending:** the
+   [App/shell/package candidate](video-qualified-integration.md) connects the
+   credential-bound `TVH2` shell to the actual App and produces a separate
+   inactive ARM64 qualification kit. This does not qualify the pinned protocol-1
+   shell, a live service deployment or device finality. Integrate only with a
+   deployed shell that honors this asynchronous contract, exclude legacy
+   writers, and qualify exact new packages on M5 first, then each managed
+   scenario. Enable Video's idle-loop work only after its ownership and
+   wake-source design is qualified.
 
 The [decision record](../research/video-async-handoff-design.json) lists concrete
 future integrated cases and expected refusals. They remain **not run for the
-complete design**. D1–D4 tests exercise their actual modules and disposable
+complete design**. D1–D5 tests exercise their actual modules and disposable
 backends; legacy checks and disposable fixtures cannot validate the future
 integrated managed resource paths.
 
@@ -333,4 +341,4 @@ Physical playing/paused LCD/HDMI, preroll/seek/track/caption/output transitions,
 missing HDMI, audio/VT restoration, native launch/return and responsiveness
 remain pending. The default Video path preserves M5 behavior; retained package
 approvals, image inputs and historical evidence remain unchanged by the separate
-D1–D4 implementation and do not qualify the new source additions on hardware.
+D1–D5 implementation and do not qualify the new source additions on hardware.

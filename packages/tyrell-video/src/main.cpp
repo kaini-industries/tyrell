@@ -152,6 +152,10 @@ struct App {
     Options options;
     Browser browser;
     std::function<std::uint32_t()> ui_clock;
+    // Optional trusted draft-2 pilot gate. The ordinary M5 adapter leaves it
+    // empty; a borrowed lifecycle peer may revoke presentation before a
+    // separately journaled actor-drain permit arrives.
+    std::function<bool()> foreground_allowed;
     std::uint64_t input_epoch = 1;
     std::uint64_t playback_epoch = 0;
     std::unique_ptr<PlayerControl> playback;
@@ -261,6 +265,7 @@ struct App {
         if(!ok) notice(status.error.empty() ? "Selection unavailable" : status.error);
     }
     void key(std::uint32_t code, bool repeated = false) {
+        if(foreground_allowed && !foreground_allowed()) return;
         if(playback && !playback->input_allowed()) return;
         const auto available = commands();
         const auto* command = tyrell::app::find_command(available, static_cast<int>(code), repeated);
@@ -384,6 +389,7 @@ struct App {
         lv_obj_move_foreground(top); lv_obj_move_foreground(bottom);
     }
     void render() {
+        if(foreground_allowed && !foreground_allowed()) return;
         if(playback && !playback->render_allowed()) return;
         if(rebuild) { build(); if(preview && page == Page::Player && image) draw_preview_video(); }
         if(page == Page::Browser) {
@@ -433,7 +439,7 @@ struct App {
     void poll() {
         if(playback) {
             playback->poll();
-            if(playback->render_allowed() && playback_epoch != playback->control_epoch()) {
+            if((!foreground_allowed || foreground_allowed()) && playback->render_allowed() && playback_epoch != playback->control_epoch()) {
                 playback_epoch = playback->control_epoch(); ++input_epoch;
                 frame_image.clear(image); rebuild = true;
             }

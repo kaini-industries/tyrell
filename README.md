@@ -96,9 +96,11 @@ add explicit KMS/LCD ownership, independent producer barriers and completion
 checks. The normal M5 path keeps its existing policy; the managed launch path
 and existing admission guard remain closed. [A2-D4's media actor](docs/video-media-actor.md)
 now owns the real graph lifecycle, with a borrowed UI control pilot and durable
-media permits. Its LCD/fake-audio software fixtures do not qualify live device
-handoff. Qualified shell/package/device integration is next; physical testing
-remains pending.
+media permits. [A2-D5's software integration candidate](docs/video-qualified-integration.md)
+connects the actual App and asynchronous shell controller and builds a separate
+inactive ARM64 qualification kit. Its memory-LVGL/LCD-fake-audio checks do not
+qualify live device handoff. Qualified shell/service deployment, driver finality
+and physical acceptance remain pending; Video idle optimization stays gated.
 
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
 source provenance and test results. Video 0.1.7 is qualified for the tested

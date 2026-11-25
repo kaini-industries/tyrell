@@ -13,6 +13,9 @@ The [D3 display implementation](video-managed-display.md) adds separate native
 managed APIs and independent graph/flush barriers while preserving the live guard.
 The [D4 media increment](video-media-actor.md) adds the actual graph owner,
 borrowed control pilot and durable media-producer accounting.
+The [D5 software candidate](video-qualified-integration.md) connects the actual
+App and asynchronous shell controller, then packages their fixed non-device
+qualification profile separately. It adds no live/device approval or activation.
 
 ## Deployment and trust boundary
 

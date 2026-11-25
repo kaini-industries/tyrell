@@ -18,7 +18,7 @@ DEFAULT_LEDGER = 'research/compatibility-ledger.json'
 APP_ROOTS = {
     'status': ['packages/tyrell-status', 'packages/tyrell-app-common', 'locks/build-inputs.json'],
     'video': ['packages/tyrell-video', 'packages/tyrell-app-common', 'packages/tyrell-video-handoff',
-              'locks/build-inputs.json', 'locks/video-build-inputs.json'],
+              'locks/build-inputs.json', 'locks/video-build-inputs.json', 'LICENSE'],
     'chess': ['packages/tyrell-chess', 'packages/tyrell-app-common', 'packages/tyrell-game', 'scripts/chess',
               'scripts/game', 'locks/game-build-inputs.json'],
     'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'scripts/tanks',

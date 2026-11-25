@@ -22,7 +22,7 @@ from unittest.mock import patch
 import stat
 
 ROOT=Path(__file__).resolve().parents[3]
-sys.path.insert(0,str(ROOT/"packages/tyrell-video-handoff"))
+sys.path.insert(0,os.environ.get("TYRELL_D5_TEST_MODULE_ROOT",str(ROOT/"packages/tyrell-video-handoff")))
 from handoff_authority import Authority, AuthorityError, identifier
 from handoff_display_state import Displays,SCOPES
 from handoff_participant_state import Participants

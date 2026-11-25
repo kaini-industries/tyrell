@@ -293,7 +293,8 @@ def run_app(work, app, revision):
         "video-render-browser", "video-render-player", "video-cli-report-write-error",
         "tyrell-app-commands", "video-ui-commands", "video-checkpoint", "video-lifecycle-blocking-spike",
         "video-managed-hdmi", "video-managed-lcd", "video-managed-display-authority",
-        "video-media-graph", "video-media-actor", "video-media-ui", "video-media-authority"}
+        "video-media-graph", "video-media-actor", "video-media-ui", "video-media-authority",
+        "video-draft2-link", "video-draft2-integration"}
     results = [ctest(build, work, required)]
     packages = work / "packages"
     packages.mkdir()
@@ -336,7 +337,48 @@ def run_app(work, app, revision):
         results.append(ctest(sdl, work, {"video-ui-commands", "tyrell-app-commands"},
                              pattern="^(video-ui-commands|tyrell-app-commands)$",
                              env=dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")))
+        results.append(run_video_candidate(build, work, revision))
     return results
+
+
+def run_video_candidate(build, work, revision):
+    """Test the exact inactive archive, with no system install or live grant."""
+    peer = build / "video-draft2-app-peer"
+    trial = json.loads((build / "a2-d5-draft2-integration.json").read_text())
+    if trial.get("status") != "passed" or trial.get("native_peer_sha256") != digest(peer):
+        raise RuntimeError("Candidate peer differs from the executed native integration")
+    epoch = command("git", "show", "-s", "--format=%ct", revision, capture=True).stdout.strip()
+    output = work / "candidate-packages"
+    command(sys.executable, ROOT / "packages/tyrell-video-handoff/build-package.py",
+            "--native-peer", peer, "--source-revision", revision, "--output-dir", output,
+            env=dict(os.environ, SOURCE_DATE_EPOCH=epoch))
+    report = json.loads((output / "a2-d5-candidate-package.json").read_text())
+    if report["native_peer_sha256"] != trial["native_peer_sha256"] or report["source_revision"] != revision:
+        raise RuntimeError("Packaged native candidate is not the exact tested source/binary")
+    packages = list(output.glob("*.deb"))
+    if len(packages) != 1 or report["package_sha256"] != digest(packages[0]):
+        raise RuntimeError("Candidate archive binding is incomplete")
+    # A normal-user subprocess must reach the actual extracted Python modules,
+    # even when the build directory and its parents are root-only in CI.
+    with tempfile.TemporaryDirectory(prefix="tyrell-d5-extracted-") as directory:
+        temporary = Path(directory)
+        temporary.chmod(0o755)
+        extracted = temporary / "root"
+        command("dpkg-deb", "--extract", packages[0], extracted)
+        modules = extracted / "usr/lib/tyrell-video-handoff"
+        installed_trial = work / "a2-d5-extracted-integration.json"
+        command(sys.executable, ROOT / "packages/tyrell-video/tests/draft2_integration.py",
+                modules / "qualification/native-peer", build / "video-managed-display-worker",
+                build / "media-clock.mp4", "--report", installed_trial,
+                env=dict(os.environ, TYRELL_D5_TEST_MODULE_ROOT=str(modules), PYTHONDONTWRITEBYTECODE="1"))
+        installed = json.loads(installed_trial.read_text())
+        if installed["status"] != "passed" or installed["native_peer_sha256"] != trial["native_peer_sha256"]:
+            raise RuntimeError("Extracted candidate did not execute the exact tested peer")
+    shutil.copyfile(output / "a2-d5-candidate-package.json", work / "a2-d5-candidate-package.json")
+    return {"kind": "handoff-candidate-package", "status": "passed", "source_revision": revision,
+            "package_sha256": report["package_sha256"], "native_peer_sha256": trial["native_peer_sha256"],
+            "extracted_integration_cases": len(installed["cases"]), "installed": False,
+            "hardware_qualified": False, "live_admission": False, "physical_testing": "pending"}
 
 
 def run_catalog(work, revision):
@@ -424,6 +466,7 @@ def export_evidence(work, suite):
     selected.update(work.glob("*.tsv"))
     selected.update(work.glob("*/Testing/Temporary/LastTest.log"))
     selected.update(work.glob("packages/*.deb"))
+    selected.update(work.glob("candidate-packages/*.deb"))
     foundations = work / "foundations"
     for path in foundations.rglob("*"):
         if path.name in {"native-foundation.json", "build.log", "tests.txt", "session-tests.txt",

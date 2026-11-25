@@ -114,6 +114,31 @@ class RunnerIdentityTests(unittest.TestCase):
         self.assertEqual(exported.read_bytes(), b'{"within_shell_100ms": false}')
         self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
 
+    def test_separate_candidate_archive_and_extracted_trial_survive_export(self):
+        work = self.root / "build/ci/example"
+        package = work / "candidate-packages/tyrell-video-handoff-candidate_0.1.0-1_arm64.deb"
+        package.parent.mkdir(parents=True)
+        package.write_bytes(b"separate inactive candidate archive")
+        report = work / "a2-d5-extracted-integration.json"
+        report.write_bytes(b'{"status":"passed","live_admission":false}')
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "video")
+        self.assertEqual(len(bindings), 2)
+        shutil.rmtree(work)
+        for binding in bindings:
+            path = self.root / "build/ci" / binding["artifact_path"]
+            self.assertEqual(runner.digest(path), binding["sha256"])
+
+    def test_untested_candidate_binary_is_refused_before_packaging(self):
+        work = self.root / "build/ci/example"
+        build = work / "video"; build.mkdir(parents=True)
+        (build / "video-draft2-app-peer").write_bytes(b"different executable")
+        (build / "a2-d5-draft2-integration.json").write_text(json.dumps({"status": "passed", "native_peer_sha256": "a" * 64}))
+        with patch.object(runner, "command") as command:
+            with self.assertRaisesRegex(RuntimeError, "differs from the executed"):
+                runner.run_video_candidate(build, work, "b" * 40)
+            command.assert_not_called()
+
     def test_nested_ai_lifecycle_evidence_survives_without_dependency_cache(self):
         work = self.root / "build/ci/example"
         report = work / "chess-native-shell/engine/a3-ai-cancellation.json"
