@@ -1,0 +1,234 @@
+{
+  "schema": 1,
+  "kind": "game-lan-lifecycle-design",
+  "revision": 1,
+  "reviewed_date": "2026-11-24",
+  "status": "selected-policy-design-only",
+  "basis_commit": "e6eb61cc762f957d34e3c3c0786cdf373a508cf3",
+  "source_bindings_scope": "inspected-baseline-only; historical design inputs, not moving qualification",
+  "source_bindings": {
+    "packages/tyrell-chess/src/main.cpp": "27504714b53f17225891d70ce6e304563fdd46b252d7abe38c09c1460bfdca59",
+    "packages/tyrell-chess/src/game.cpp": "f1806aafb843422e471512f1b37ea5569b894d883aecc429f0f030879be3c14f",
+    "packages/tyrell-chess/src/game.hpp": "ec37a43b0237b627971386a2f0f1d9983754baa12faf2cbb35ac4b4c43ef02ec",
+    "packages/tyrell-chess/src/lan.cpp": "5a0c2258b6ce7085eb3087229f8721ee5784849d9ddad68f349093aa87f9daa4",
+    "packages/tyrell-chess/src/lan.hpp": "40022c5fe8d04e00ffcf605fece2259b9a59e497552191db43953ed3596f8753",
+    "packages/tyrell-chess/src/offline_lifecycle.h": "3ab6bd6d65b92b3a34d8b1185fd64b764f70e9eba41a4241b2bdcf0ac7c6bfe8",
+    "packages/tyrell-chess/engine/chess_clock.cpp": "f5f842b303b02141eb4ae3f1ebab4f61cf078fcac3adc28bea6c9685f5911980",
+    "packages/tyrell-chess/engine/chess_clock.h": "9e9fb0e03887e8aaa47e3bc1a05f08fde200010901d7a61713f4ecfb144e7549",
+    "packages/tyrell-tanks/src/main.cpp": "0dcf5576ef98e4353e2f11fa9d4aeafe60df78955ba9b451448a47c4a9890493",
+    "packages/tyrell-tanks/src/network.cpp": "39df5abd460be1deb8c14a855ed87be4a0582b2242e8848d9050417157853836",
+    "packages/tyrell-tanks/src/network.hpp": "5a6fc61e68f9176b281ae139c50da4936aac1da9f8f45dc8f32c5c3c3a792644",
+    "packages/tyrell-tanks/src/world.cpp": "1f9b0d3cd48e2783acc72127b983049d10b5df66aaea1a3658688491eb3052a4",
+    "packages/tyrell-tanks/src/offline_lifecycle.h": "c471d42dc83a147189c8ebc2a63e063cdec3d6aaa82dacb189810a22c7bfd468",
+    "packages/tyrell-game/examples/beacon_arena.cpp": "f85d77cf2ff2f89fabf8b925e91ef6c9758d1fa7334ac31d33ae75f8cc0b8233",
+    "packages/tyrell-game/examples/beacon_session.cpp": "d67b5486b699c051196b86ca7df76fb69ecfd23347eeefe40ee3f8c42f7f80c2",
+    "packages/tyrell-game/examples/beacon_session.hpp": "f409ded54c8fbb096f0d9d2da1e10df59fe1ca48b8bc598df1157ed3dfd3727c",
+    "packages/tyrell-game/examples/beacon_lifecycle.hpp": "a6cb7218e6e02d3db5717db022cc24a89859c2dc1b31b55508cd807fd46d83fe",
+    "packages/tyrell-game/src/net/transport.cpp": "eb2d0cbc7165b4f89df4783b79d5630bb376868a5058f2108d508d715fcd296a",
+    "packages/tyrell-game/src/runtime.cpp": "8ee1b3ee1d572b301dcda9d8f58c2e60cbf87fd0ee209eb3af9fac020c0e60be",
+    "packages/tyrell-game/src/native.cpp": "677e2b33003a98dd40b6b5e3cb771e8321feccdb97c1a0d3d15a2cd727542a03",
+    "packages/tyrell-app-common/src/shell_link.cpp": "c8fcbcae788985af0e569e9580d21486d2108befb77db78a1ef42bccad44b6e2",
+    "docs/shell-link-status.md": "9c7f0874293f784ec6f37223ba7140873a8b98a93ac2e77cdb2abf097fbd2010"
+  },
+  "scope": "policy-decision-and-future-acceptance-cases-only",
+  "runtime_implemented": false,
+  "linked_lan_admission": "closed",
+  "live_linked_lan_supported": false,
+  "physical_testing": "pending",
+  "hardware_qualified": false,
+  "grants_release_approval": false,
+  "changes_vendor_inputs": false,
+  "policy": {
+    "observed_pause": "irreversibly end the local session instance before another application packet, command, move or simulation update",
+    "loss_or_linked_termination": "seal local session, abandon foreground and exit without ownership restoration",
+    "paused_acknowledgement": "local input/render release only; no socket-close, remote-delivery, result or durability proof",
+    "clock_boundary": "host settles through Game result path at latched monotonic terminal observation timestamp; clients preserve confirmed state and uncertainty",
+    "transport_cleanup": "audit actual local close semantics; no round-trip/flush/save prerequisite for local release; pending cleanup must complete before fresh connection",
+    "resume": "ended readonly UI only after successful input reacquisition; no old-session resume, automatic reconnect or offline continuation",
+    "new_session": "explicit user action, completed old teardown and fresh instance identity",
+    "persistence": "retain RAM/last successful save; separate deferred non-resumable diagnostics with confirmed-or-unresolved result authority; no hidden-write guarantee",
+    "wire_protocol": "unchanged by this design; no terminal-result delivery or agreement inferred",
+    "shared_runtime_elapsed": "truthful monotonic time; no global reset/clamp or offline simulation-discard policy applied to LAN liveness"
+  },
+  "open_prerequisites": [
+    {
+      "id": "per-app-service-gap",
+      "status": "unresolved",
+      "requirement": "Choose and test per-app monotonic service-gap limits before buffered work admission and enablement; no arbitrary shared timeout."
+    },
+    {
+      "id": "chess-stale-authority",
+      "status": "unresolved",
+      "requirement": "Specify silent-host and stale-authority behavior; existing pairing/pending-move timers are not an active-play heartbeat. Version/review any wire extension."
+    },
+    {
+      "id": "terminal-state-primitives",
+      "status": "unimplemented",
+      "requirement": "Add non-resetting terminal state/transport cleanup with honest host/connected predicates and readonly retained views."
+    }
+  ],
+  "implementation_increments": [
+    {
+      "id": "A3-LAN-1",
+      "deliverable": "Chess terminal/controller primitives, role-aware clocks and interruption state; settle service-gap/stale-authority policy.",
+      "status": "planned"
+    },
+    {
+      "id": "A3-LAN-2",
+      "deliverable": "Chess production loop and optional native adapter, real peers and post-poll ownership fixtures.",
+      "status": "planned"
+    },
+    {
+      "id": "A3-LAN-3",
+      "deliverable": "Independent Sandline terminal transport/world policy, service-gap limit and actual loop/peer checks.",
+      "status": "planned"
+    },
+    {
+      "id": "A3-LAN-4",
+      "deliverable": "Independent Beacon terminal Session policy, service-gap limit and actual loop/peer checks.",
+      "status": "planned"
+    },
+    {
+      "id": "A3-LAN-5",
+      "deliverable": "Exact-artifact qualification and reviewed per-app enablement; physical phase pending.",
+      "status": "planned"
+    }
+  ],
+  "future_acceptance_cases": [
+    {
+      "id": "setup-host-client",
+      "trigger": "Pause or shell loss while connecting, listening or pairing",
+      "expected": "Seal pending attempt without inventing a match or accepted player slot.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "active-role-outcomes",
+      "trigger": "Host versus client pauses during active Chess/Sandline/Beacon play",
+      "expected": "End local session; distinguish host termination from one departing client and label remote state unconfirmed.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "post-poll-pause",
+      "trigger": "Pause arrives during input or network polling",
+      "expected": "Drain control and seal admission before any subsequent packet, move, simulation update or frame.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "queued-old-work",
+      "trigger": "Queued REQ/PLY/SYNC/END, movement, firing or snapshot races terminal intent",
+      "expected": "Reject old application work after the terminal observation boundary; do not infer fresh authority from backlog.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "host-clock-expiry",
+      "trigger": "Host clock expires at or before terminal observation with a move queued",
+      "expected": "Settle through Game result path at the latched timestamp; expiry wins over the move.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "existing-result",
+      "trigger": "An authoritative result already exists before interruption",
+      "expected": "Preserve the result and distinguish it from the local interruption reason.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "pending-client-request",
+      "trigger": "Client interruption with a sent move awaiting host confirmation",
+      "expected": "Retain confirmed board/history and request uncertainty; no invented accepted move or winner.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "no-hidden-persistence",
+      "trigger": "Slow/failed diagnostic or PGN output, hidden loss or termination",
+      "expected": "Release local ownership without filesystem prerequisite; preserve last successful file and show foreground failures.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "frozen-game-view",
+      "trigger": "Moving/firing/pulsing world ends and the UI later resumes",
+      "expected": "Preserve readonly last-local/host-confirmed world without reset, simulation catch-up or conversion to offline authority.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "lifecycle-idempotence",
+      "trigger": "Repeated pause, resume, redraw, loss and failed resume",
+      "expected": "No session resurrection, stale input or old foreground restoration; failed reopening remains closed.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "ack-backpressure",
+      "trigger": "Shell output is full or unknown packets fill a receive batch",
+      "expected": "Retain nonblocking local acknowledgement semantics; drain control before app work without network/disk wait.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "lost-remote-notice",
+      "trigger": "Local close or notification is delayed/lost; process stops before transport cleanup",
+      "expected": "Local terminal state stays sealed; remote delivery/result and teardown deadline remain unconfirmed.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "silent-service-gap",
+      "trigger": "Unobserved stop, queued packets, uint32 clock wrap or longer gap",
+      "expected": "Use reviewed per-app uint64 gap/stale-authority policy before admission; do not reset liveness or claim universal stop detection.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "foreign-framebuffer",
+      "trigger": "Hidden EOF, SIGTERM, exception or failed construction after another owner draws",
+      "expected": "Abandon without old saved-frame restoration, input reopening or hidden report output.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "explicit-new-session",
+      "trigger": "User explicitly starts a fresh match after resuming the ended view",
+      "expected": "Require completed old teardown and fresh session identity; no reused commands, peers, requests or automatic reconnect.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "remaining-players",
+      "trigger": "One ENet client leaves while host and other clients remain",
+      "expected": "Ordinary host cleanup preserves remaining players and fresh slot reuse; local view is not a shared final score.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "default-and-mixed-peers",
+      "trigger": "Default M5/unlinked LAN and ordinary older peers",
+      "expected": "Retain existing behavior and wire compatibility; any future heartbeat/protocol extension needs separate version/capability review.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "physical-acceptance",
+      "trigger": "Exact new per-app package and pinned Gh0st build on an identified spare target",
+      "expected": "Qualify M5 launch/input/exit first, then advertised linked scenarios and responsiveness without promoting software fixtures to device evidence.",
+      "status": "not-run",
+      "scope": "future-exact-artifact-device-acceptance"
+    }
+  ],
+  "existing_offline_tests": "Historical offline pilot and ordinary network tests do not establish the proposed LAN lifecycle behavior.",
+  "unchanged_gates": [
+    "default-off shell support",
+    "all current linked-LAN admission gates",
+    "physical M5/Gh0st qualification",
+    "Video D5 live/device qualification and idle optimization",
+    "retained baseline/control and exact-artifact release promotion"
+  ],
+  "upstream_update_boundary": "Official M5 updates remain reviewed inputs to new Zero candidates. Stock-image refresh does not automatically refresh Zero locks or authorize an in-place base update."
+}

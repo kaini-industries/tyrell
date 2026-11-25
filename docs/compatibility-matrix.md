@@ -40,6 +40,12 @@ build-helper changes also update the declared Chess and Sandline snapshots;
 their app policies and historical results are unchanged. Current-source runtime
 rows still require new exact-artifact physical acceptance.
 
+The [LAN policy decision](game-lan-lifecycle-design.md) selects local termination
+on observed shell suspension. It adds no runtime implementation or qualified
+LAN scenario; all linked-LAN admission gates and current device results remain
+unchanged. Its inspected-source hashes and future, unexecuted acceptance cases
+are recorded separately from this ledger's historical evidence.
+
 References: [Status device report](device-validation.md),
 [retained Status provenance](../dist/tyrell-status/0.1.0/provenance.json),
 [Video report](video-hdmi-017-validation.md),

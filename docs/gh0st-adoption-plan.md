@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline/Beacon source increments implemented with physical gates pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1 and A3 offline Chess/Sandline/Beacon source increments implemented with physical gates pending; A3 LAN policy selected with integration pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -51,6 +51,10 @@ Compatibility rules apply to every work package:
 7. Pin upstream references and record attribution/licenses for reused code.
    Panel-driver ports require their GPL source/distribution obligations; the
    Rust SDK's license does not cover every upstream asset or driver.
+8. Continue integrating official M5 updates through reviewed baseline refreshes.
+   Zero's source/BSP/launcher/package locks must move coherently; the existing
+   stock-image refresh does not update Zero automatically. Preserve old inputs
+   and qualify a new candidate through the [Zero update path](stock-image-updates.md#tyrell-zero-base-updates).
 
 ## Starting evidence
 
@@ -299,7 +303,12 @@ ownership checks. Framework/example 0.1.2 adds Beacon's independent
 fixed-step remainder across suspension without resetting its Session. Normal
 builds disable shell support. Controlled checks cover pause/resume and failure
 paths; physical M5/Gh0st acceptance remains pending. Linked LAN is gated in all
-three app pilots; live-LAN policy remains separate. The A3 offline source
+three app pilots. The [LAN policy design](game-lan-lifecycle-design.md) now selects
+local session termination on observed shell suspension, with separate host/client
+authority and future acceptance cases. It implements no runtime LAN integration
+and keeps physical qualification pending. The next source increment is
+**A3-LAN-1: Chess terminal/controller primitives and stale-authority policy**, with
+linked admission still closed. The A3 offline source
 increments are implemented, with the full device gate below still open.
 Video D5 and idle gates are unchanged.
 

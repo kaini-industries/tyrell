@@ -280,7 +280,11 @@ with native ownership, clock, AI and save-failure checks. The follow-up
 state through suspension without simulation catch-up or stale input. Experimental
 shell builds remain separate from normal M5 packages. Beacon now has its own
 [offline lifecycle policy](docs/beacon-offline-lifecycle.md) using the same
-ownership hooks. Physical acceptance and live-LAN policy remain pending.
+ownership hooks. Physical acceptance and linked-LAN integration remain pending.
+The next [LAN lifecycle design](docs/game-lan-lifecycle-design.md) selects an
+ended local session on shell suspension; linked-LAN implementation and physical
+qualification remain pending. Official M5 changes can still feed Zero through
+the [reviewed baseline-update path](docs/stock-image-updates.md#tyrell-zero-base-updates).
 R1 adds [immutable candidate packaging and explicit promotion](docs/immutable-candidates.md).
 It seals exact binaries, inputs and evidence; publication requires a separate
 reviewed request and passing checks for those bytes. Missing device acceptance

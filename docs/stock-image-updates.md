@@ -16,6 +16,42 @@ checks**. It includes strict ownership and firmware-routing preservation. The
 [adversarial review](stock-image-adversarial-review.md) documents the guards and
 regressions; the original 580-check pre-review artifact remains historical.
 
+## Tyrell Zero base updates
+
+Official M5 updates remain inputs to future Tyrell Zero releases. Zero uses the
+vendor pi-gen recipe and pinned BSP, launcher and native packages, with its own
+session/Store integration. Its source profile is not assembled by overlaying
+Zero onto the latest complete stock image. `make stock-check` discovers stock
+releases; refreshing `image/stock-image.json` does **not** update Zero's profile
+or its separate source, dependency and compatibility locks.
+
+Adopting an official release into Zero is a reviewed baseline refresh:
+
+1. Identify the exact vendor release/recipe and compare its launcher, BSP,
+   kernel/firmware, native applications and dependency changes with the retained
+   Zero baseline. Preserve the old inputs and image for comparison/recovery.
+2. Refresh the coherent profile and lock set, including native Wizard source
+   adaptations, offline source archives, frozen APT closure, native compatibility
+   identities and Store protected-base policy. Review integration assumptions;
+   changing a hash alone does not qualify the new component.
+3. Build a new immutable candidate through the frozen Zero pipeline. Run source,
+   package, image and activation checks against those exact inputs. Do not reuse
+   old receipts or silently change retained baseline/control artifacts.
+4. Qualify the new exact image on a spare target before hardware-supported
+   promotion. Repeat affected peripheral, launcher/session, app/Store and
+   recovery checks; redo comparisons when claiming memory or power benefits.
+
+The pinned base intentionally prevents the vendor launcher updater or an app
+transaction from independently replacing these integrated components. Ordinary
+authenticated security maintenance retains its supported path. A future
+in-place base updater would require a separate design and qualification.
+
+The [current pipeline](tyrell-zero-pipeline.md) supports construction and
+validation of captured Zero inputs; automatic upstream-to-Zero lock refresh and
+an on-device base-update service are not implemented. Tracking vendor releases
+remains compatible with Tyrell's apps and M5 support, with a new reviewed
+candidate for each adopted baseline. Physical testing remains a separate gate.
+
 ## Check and select an upstream release
 
 ```sh
