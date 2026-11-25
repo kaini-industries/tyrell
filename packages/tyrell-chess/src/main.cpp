@@ -60,8 +60,8 @@ struct Args {
 Args arguments(int argc,char** argv) {
  Args a;
  for(int i=1;i<argc;++i){std::string s=argv[i];auto val=[&](){if(++i>=argc)throw std::runtime_error("Missing value for "+s);return std::string(argv[i]);};
- if(s=="--help"){std::cout<<"Tyrell Chess 0.1.5 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
- else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.5 (upstream 64419e29c828)\n";std::exit(0);}
+ if(s=="--help"){std::cout<<"Tyrell Chess 0.1.6 for Cardputer Zero\nUsage: tyrell-chess [--headless] [--frames N] [--demo] [--quick] [--moves e2e4,e7e5] [--script key,key] [--screenshot PATH] [--report PATH] [--state-dir PATH] [--ui-time SECONDS]\nAutomation requires --state-dir; headless mode also requires --frames. Normal launch opens the menu; Q saves and exits.\n";std::exit(0);}
+ else if(s=="--version"){std::cout<<"Tyrell Chess 0.1.6 (upstream 64419e29c828)\n";std::exit(0);}
  else if(s=="--headless")a.headless=true;else if(s=="--demo")a.demo=true;else if(s=="--quick")a.quick=true;
  else if(s=="--ui-time"){auto value=val();size_t n; a.uiTime=std::stod(value,&n);if(n!=value.size()||!std::isfinite(a.uiTime)||a.uiTime<0||a.uiTime>86400)throw std::runtime_error("UI time must be 0..86400 seconds");}
  else if(s=="--frames"){auto text=val();size_t n;long count=std::stol(text,&n);if(n!=text.size()||count<1||count>100000)throw std::runtime_error("Frames must be 1..100000");a.frames=int(count);}
@@ -98,6 +98,11 @@ public:
  std::shared_ptr<std::atomic_bool> workerCancel;
  std::function<uint64_t()> monotonicClock;
  bool linkedSession=false,lifecyclePaused=false,lifecycleSavePending=false,lifecycleSaveAttempted=false;
+ bool lanForegroundAllowed=true,lanLifecycleAttached=false,lanSealPending=false;
+ // The loop owns this synchronous admission hook. The post-poll observer is a
+ // controlled fixture seam; neither callback enables linked LAN in main().
+ std::function<bool()> lifecycleAdmission;
+ std::function<void()> afterLanPoll;
  uint64_t suspendedAt=0;uint32_t suspendedStamp=0,suspendedRemaining=0;bool suspendedClockRunning=false;
  uint32_t workerHash=0;
  bool workerHint=false;
@@ -143,10 +148,13 @@ public:
  // Explicit opt-in only. Call before opening the transport; a sealed session
  // cannot be recycled until its actual socket/buffer cleanup has completed.
  bool beginLanSession(chess::LanRole role){
-   if(linkedSession||lanTerminal.active()||lanTerminal.teardown_pending()||
+   if(linkedSession||lifecyclePaused||!lanForegroundAllowed||lanTerminal.active()||lanTerminal.teardown_pending()||
       lanTerminal.session_id()==UINT64_MAX||(role!=chess::LanRole::Host&&role!=chess::LanRole::Joiner))return false;
+   const auto requestGeneration=generation;
+   if(lifecycleAdmission&&!lifecycleAdmission())return false;
+   if(generation!=requestGeneration||lifecyclePaused||!lanForegroundAllowed)return false;
    if(!lan.begin_session()||!lanTerminal.begin(role))return false;
-   const auto now=monotonicClock();lastLanServiceAt=lastLanAuthorityAt=now;
+   const auto now=monotonicClock();lastLanServiceAt=lastLanAuthorityAt=now;lanSealPending=false;
    networkHost=role==chess::LanRole::Host;networkPlaying=false;
    helloSent=localReady=remoteReady=networkEndSent=false;pairCode=0;
    awaitingMove=drawOffered=incomingDrawOffer=false;
@@ -176,14 +184,20 @@ public:
    freezeClock(lastHostConfirmedGame,lastHostConfirmedClock,uint32_t(now));
    haveHostConfirmation=true;lastLanAuthorityAt=now;
  }
- bool sealLanSession(chess::LanEndReason reason,uint64_t observedAtMs){
-   if(!lanTerminal.active())return false;
-   chess::LanInterruption interrupted;interrupted.reason=reason;interrupted.observedAtMs=observedAtMs;
-   interrupted.hadMatch=networkPlaying&&online();interrupted.pendingMoveRequest=awaitingMove||!pendingLanMove.empty();
-   interrupted.pendingMove=pendingLanMove;interrupted.pendingPly=pendingLanPly;
-   interrupted.pendingQueuedAtMs=pendingLanQueuedAt;
-   // Latch admission before clock settlement, UI changes, socket I/O or writes.
-   lanTerminal.latch(std::move(interrupted));lan.seal();
+ bool latchLanSession(chess::LanEndReason reason,uint64_t observedAtMs) noexcept {
+   if(!lanTerminal.latch(reason,observedAtMs,networkPlaying&&online()))return false;
+   lan.seal();lanSealPending=true;
+   return true;
+ }
+ void finishLanSeal(){
+   if(!lanSealPending)return;
+   // The shell adapter calls this only after releasing local input/rendering.
+   // No persistence, transport close, flush or AI join belongs in this step.
+   lanSealPending=false;
+   const auto observedAtMs=lanTerminal.interruption().observedAtMs;
+   const auto reason=lanTerminal.interruption().reason;
+   const bool pending=awaitingMove||!pendingLanMove.empty();
+   lanTerminal.retain_request(pending,std::move(pendingLanMove),pendingLanPly,pendingLanQueuedAt);
    const auto boundary=observedAtMs<lastLanServiceAt?lastLanServiceAt:observedAtMs;
    if(lanTerminal.interruption().hadMatch){
      if(networkHost){
@@ -220,7 +234,10 @@ public:
    status=reason==chess::LanEndReason::ShellPause?"Connection ended on shell suspension":
           reason==chess::LanEndReason::ServiceGap?"Connection ended after a service gap":
           reason==chess::LanEndReason::StaleAuthority?"Host state is no longer current":"Local connection ended";
-   return true;
+ }
+ bool sealLanSession(chess::LanEndReason reason,uint64_t observedAtMs){
+   if(!latchLanSession(reason,observedAtMs))return false;
+   finishLanSeal();return true;
  }
  void completeLanTeardown(){
    if(!lanTerminal.teardown_pending())return;
@@ -229,6 +246,11 @@ public:
    lan.close();lanTerminal.teardown_complete();
  }
  bool admitLanWork(){
+   const auto admissionGeneration=generation;
+   if(lifecycleAdmission&&!lifecycleAdmission())return false;
+   // This guard also serves ordinary offline linked callers. A pause+resume
+   // may finish foreground in one drain, but work popped before it is stale.
+   if(generation!=admissionGeneration)return false;
    if(!lanTerminal.begun())return true;
    if(lanTerminal.sealed())return false;
    const auto now=monotonicClock();
@@ -287,6 +309,9 @@ public:
  bool settings(){pendingSettings=true;std::ostringstream out;out<<contrast<<' '<<motion<<'\n';if(writeState("settings",out.str(),"Settings")){pendingSettings=false;return true;}return false;}
  bool persist(){
    if(lanTerminal.sealed())return true;
+   // Hidden offline work remains deferred. A normal foreground Q may still
+   // finish its existing final save after Runtime has released device ownership.
+   if(lifecyclePaused)return false;
    lastSave=clockNow();bool sideSaved=true;
    if(pendingProgress&&!saveProgress())sideSaved=false;
    if(pendingSettings&&!settings())sideSaved=false;
@@ -375,7 +400,11 @@ public:
  }
  InputContext inputContext() const {return {screen,page,review,selected.valid(),generation,game.history.size()};}
  std::vector<Command> commands(Screen context) const {
-   if(lanTerminal.sealed())return {};
+   if(lanTerminal.sealed()){
+     if(lanLifecycleAttached&&lanForegroundAllowed&&!lifecyclePaused)
+       return {{Action::Exit,{KEY_Q},"Q","Exit","Exit ended session without saving",true,Repeat::PressOnly,Confirmation::None,{}}};
+     return {};
+   }
    std::vector<Command> result;
    auto add=[&](Action id,std::initializer_list<int> keys,const std::string& keyLabel,
                 const std::string& label,const std::string& help,Repeat repeat=Repeat::PressOnly,
@@ -453,7 +482,7 @@ public:
    return found==table.end()||!found->enabled?std::string{}:tyrell::app::help_line(*found);
  }
  std::string commandFooter() const {
-   if(lanTerminal.sealed())return "Read-only ended session";
+   if(lanTerminal.sealed())return lanLifecycleAttached&&lanForegroundAllowed&&!lifecyclePaused?"Read-only  Q Exit":"Read-only ended session";
    auto table=commands();
    // The full aliases live in help. Keep the first key in compact footer hints.
    if(screen!=Screen::Help)for(auto& command:table){const auto at=command.key_label.find('/');if(at!=std::string::npos)command.key_label.resize(at);}
@@ -607,7 +636,18 @@ public:
    if(page=="waiting"||page=="disconnected"){lan.close();home();}
  }
  void key(int k,bool repeated=false){
-   if(lifecyclePaused||!admitLanWork())return;
+   const auto inputGeneration=generation;
+   if(lifecyclePaused||!lanForegroundAllowed||(lifecycleAdmission&&!lifecycleAdmission()))return;
+   // A pause+resume drained here baselines Runtime input, but this key was
+   // already popped by the caller. It belongs to the old ownership interval.
+   if(generation!=inputGeneration)return;
+   if(lanTerminal.sealed()){
+     // Only explicit foreground exit is offered by the controlled adapter.
+     // It neither persists nor changes the retained match or peer identity.
+     if(lanLifecycleAttached&&k==KEY_Q&&!repeated)quit=true;
+     return;
+   }
+   if(!admitLanWork())return;
    const auto table=commands();const auto* command=tyrell::app::find_command(table,k,repeated);
    if(!command)return;
    const auto action=command->id;
@@ -666,6 +706,7 @@ public:
  void network(){
    if(!admitLanWork())return;
    lan.poll();
+   if(afterLanPoll)afterLanPoll();
    if(!admitLanWork())return;
    if(awaitingMove&&time-pendingSince>10){disconnect("Host did not acknowledge move");return;}
    if(!networkPlaying&&(page=="waiting"||page=="pair")&&time-networkStartedAt>90){disconnect("Pairing timed out");return;}
@@ -715,7 +756,7 @@ public:
      }
      else {disconnect("Unexpected peer message");break;}
    }
-   if(lanTerminal.sealed())return;
+   if(lifecyclePaused||!admitLanWork())return;
    if(!lan.error().empty()&&(networkPlaying||page=="pair"||page=="waiting")){if(networkPlaying&&game.over()&&!lanTerminal.active()){networkPlaying=false;lan.close();status.clear();}else disconnect(lan.error());return;}
    if(networkHost&&localReady&&remoteReady&&!networkPlaying&&page=="pair"){setup.mode=Mode::Host;++generation;pendingArchive=false;archiveMode=false;status.clear();game.start(setup,actionClockNow());haveGame=true;networkPlaying=true;checkpointLanHost(lastLanServiceAt);screen=Screen::Board;page.clear();flipped=false;review=false;cursor={4,1};if(!sendLan("START")&&lanTerminal.sealed())return;clearSelection();}
    if(networkHost&&networkPlaying&&clockNow()-lastSync>=500){auto c=game.clock.snapshot(clockNow());if(!sendLan("SYNC "+std::to_string(game.history.size())+" "+std::to_string(c.whiteRemainingMs)+" "+std::to_string(c.blackRemainingMs))&&lanTerminal.sealed())return;lastSync=clockNow();}
@@ -724,11 +765,15 @@ public:
  void update(double t){
    if(lifecyclePaused||!admitLanWork())return;
    time=t;if(linkedSession){lan.close();if(online()){quit=true;return;}}else network();
-   if(lanTerminal.sealed())return;
+   if(lifecyclePaused||!admitLanWork())return;
    if(lifecycleSavePending&&(!lifecycleSaveAttempted||clockNow()-lastSave>=5000)){lifecycleSaveAttempted=true;lifecycleSavePending=!persist();}
    if(!admitLanWork())return;
    if(haveGame&&screen!=Screen::Home&&page!="library"&&!archiveMode&&(!online()||(networkHost&&networkPlaying))) {bool was=game.over();game.update(actionClockNow());if(!was&&game.over())finished();}
+   const auto workGeneration=generation;
    if(worker.valid()&&worker.wait_for(std::chrono::seconds(0))==std::future_status::ready){auto move=worker.get();if(haveGame&&workerGeneration==generation&&((workerHint&&screen==Screen::Board)||(!workerHint&&activeComputer()))&&!review&&!archiveMode&&ChessZobrist::hash(game.board)==workerHash&&!game.over()){if(workerHint){hintFrom=move.from;hintTo=move.to;notify("Try "+chess::uci(move));}else apply(move);}workerHint=false;}
+   // A nested move admission may observe pause/loss after harvesting a worker.
+   // Do not continue that old ownership interval by launching more work.
+   if(lifecyclePaused||generation!=workGeneration||!admitLanWork())return;
    if(((screen==Screen::Board&&!review&&!archiveMode)||activeComputer())&&!worker.valid()&&!game.over()){
      if(game.options.mode==Mode::Computer&&!game.humanTurn()){
        workerGeneration=generation;workerHash=ChessZobrist::hash(game.board);workerHint=false;auto b=game.board;auto d=game.options.difficulty;uint32_t budget=game.clock.enabled()?std::max(1u,std::min(3000u,game.clock.remainingMsAt(game.board.sideToMove(),clockNow())/10)):0;
@@ -736,6 +781,9 @@ public:
      }
      if(game.options.mode==Mode::Puzzle&&game.board.sideToMove()!=game.options.human&&time>=puzzleReplyAt&&game.puzzleStep<game.solutionLength)apply(game.solution[game.puzzleStep],true);
    }
+   // The puzzle reply has its own nested admission. Pause+resume in that drain
+   // can return foreground while still invalidating this tick's persistence.
+   if(lifecyclePaused||generation!=workGeneration||!admitLanWork())return;
    if(((haveGame&&!online()&&!review&&!archiveMode)||pendingProgress||pendingSettings)&&clockNow()-lastSave>=5000)persist();
    if(lanTerminal.active())checkpointLanHost(monotonicClock());
  }
@@ -792,9 +840,11 @@ struct SessionHooks {
  App* app=nullptr;
  tyrell::game::Runtime* runtime=nullptr;
  void pause(){
-   if(app)app->cancelAI();
+   // Capture terminal intent before any ownership syscall. Clock settlement
+   // uses this observation even if releasing native input takes time.
+   if(app){app->lanForegroundAllowed=false;app->latchLanSession(chess::LanEndReason::ShellPause,app->monotonicClock());}
    if(runtime)runtime->suspend();
-   if(app)app->suspendSession();
+   if(app){app->finishLanSeal();app->cancelAI();app->suspendSession();}
  }
  bool resume(){
    // Resolve clock expiry before reopening input or accepting a move.
@@ -804,13 +854,17 @@ struct SessionHooks {
      if(app)app->suspendSession();
      return false;
    }runtime->request_redraw();}
+   if(app)app->lanForegroundAllowed=true;
    return true;
  }
  void redraw(){if(runtime)runtime->request_redraw();}
- void abandon(){
+ void end(chess::LanEndReason reason){
+   if(app){app->lanForegroundAllowed=false;app->latchLanSession(reason,app->monotonicClock());}
    if(runtime)runtime->abandon_foreground();
-   if(app){app->cancelAI();app->suspendSession();}
+   if(app){app->finishLanSeal();app->cancelAI();app->suspendSession();}
  }
+ void abandon(){end(chess::LanEndReason::ShellLost);}
+ void terminate(){end(chess::LanEndReason::LinkedTermination);}
 };
 
 #if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
@@ -839,28 +893,68 @@ int awaitShell(tyrell::app::ShellLink& link,chess::OfflineLifecycle& lifecycle,
 
 struct SessionResult {int frames=0;bool saveAllowed=true;};
 struct LinkedExitGuard {
- tyrell::game::Runtime& runtime;bool linked;
- ~LinkedExitGuard(){if(linked)runtime.abandon_foreground();}
+ App& app;tyrell::game::Runtime& runtime;bool linked;
+ std::function<bool()> previousAdmission;
+ ~LinkedExitGuard(){
+   app.lifecycleAdmission=std::move(previousAdmission);
+   if(!linked)return;
+   app.lanForegroundAllowed=false;
+   uint64_t observedAt=app.lastLanServiceAt;
+   try{observedAt=app.monotonicClock();}catch(...){}
+   app.latchLanSession(chess::LanEndReason::LinkedTermination,observedAt);
+   runtime.abandon_foreground();
+   // Exceptions and signals must still close descriptors without replaying
+   // saved pixels, persistence or a wait for the AI worker/remote peer.
+   try{app.finishLanSeal();}catch(...){}
+   app.completeLanTeardown();
+ }
 };
 SessionResult runSession(App& app,const Args& args,tyrell::game::Runtime& runtime,
                         tyrell::app::ShellLink* link=nullptr,
                         chess::OfflineLifecycle* initialLifecycle=nullptr,
                         const std::function<void()>& wait={},
-                        const std::function<void(int)>& afterFrame={}){
- LinkedExitGuard exitOwnership{runtime,link!=nullptr};
+                        const std::function<void(int)>& afterFrame={},
+                        const std::function<void()>& beforeCommit={}){
+ LinkedExitGuard exitOwnership{app,runtime,link!=nullptr,std::move(app.lifecycleAdmission)};
  SessionResult result;
  chess::OfflineLifecycle localLifecycle;
  auto& lifecycle=initialLifecycle?*initialLifecycle:localLifecycle;
  SessionHooks hooks{&app,&runtime};
+ if(link&&app.lanTerminal.begun())app.lanLifecycleAttached=true;
+ const auto observeClosed=[&]{
+   if(!runtime.closed())return false;
+   // A nested admission check can observe termination while its App caller
+   // still has trailing completion/persistence work. Seal and release now so
+   // that work sees the terminal boundary, rather than waiting for loop exit.
+   if(link){hooks.terminate();app.completeLanTeardown();}
+   return true;
+ };
+ const auto foreground=[&]{
+   if(observeClosed())return false;
+#if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
+   if(link){
+     // Each receive batch is bounded. A full batch is followed immediately by
+     // another drain, before taking a LAN message vector or returning to work.
+     // This preserves queued packets when unknown shell traffic has no pause.
+     for(;;){
+       const bool drained=chess::pump_lifecycle(*link,lifecycle,hooks);
+       // pump_lifecycle has queued/serviced the local release acknowledgment.
+       // Cleanup discards sockets/buffers; it does not flush or await a peer.
+       app.completeLanTeardown();
+       if(lifecycle.exiting()||observeClosed())return false;
+       if(drained)return lifecycle.foreground()&&runtime.foreground();
+     }
+   }
+#endif
+   return runtime.foreground();
+ };
+ if(link)app.lifecycleAdmission=foreground;
  auto scripted=split(args.script);size_t scriptIndex=0;
  while(!runtime.closed()&&!app.quit){
 #if TYRELL_ENABLE_SHELL_LINK && defined(__linux__)
    if(link){
-     const bool drained=chess::pump_lifecycle(*link,lifecycle,hooks);
-     if(lifecycle.exiting()){result.saveAllowed=false;break;}
-     if(runtime.closed())break;
-     if(!drained)continue;
-     if(!lifecycle.foreground()){
+     if(!foreground()){
+       if(lifecycle.exiting()||runtime.closed()){result.saveAllowed=false;break;}
        if(wait)wait();else waitShell(*link);
        continue;
      }
@@ -871,21 +965,30 @@ SessionResult runSession(App& app,const Args& args,tyrell::game::Runtime& runtim
    // A signal can arrive during polling or application work. Observe it before
    // applying another command or beginning a new native frame.
    runtime.poll();
-   if(runtime.closed())break;
+   if(!foreground())continue;
    app.update(runtime.time());
-   if(runtime.closed())break;
+   if(!foreground())continue;
    if(scriptIndex<scripted.size())app.key(scriptKey(scripted[scriptIndex++]));
-   if(runtime.closed())break;
+   if(!foreground())continue;
    app.input(runtime,runtime.time());
    while(runtime.character()!=0){} // Numeric IP input uses the ordered key stream.
-   if(runtime.closed())break;
-   runtime.begin_frame();app.draw(args.uiTime);runtime.end_frame();++result.frames;
+   if(!foreground())continue;
+   if(app.quit&&app.lanTerminal.sealed())break;
+   const auto frameGeneration=app.generation;
+   runtime.begin_frame();app.draw(args.uiTime);
+   if(beforeCommit)beforeCommit();
+   // A newly observed pause cancels the open frame through Runtime::suspend.
+   // Pause+resume can end in foreground in this same drain; its canceled frame
+   // still belongs to the prior ownership interval and must never be committed.
+   if(!foreground()||frameGeneration!=app.generation)continue;
+   runtime.end_frame();++result.frames;
    if(afterFrame)afterFrame(result.frames);
    if(args.frames&&result.frames>=args.frames)break;
  }
  app.cancelAI();
  if(app.lifecyclePaused||runtime.suspended()||!runtime.foreground())result.saveAllowed=false;
  if(link&&runtime.closed())result.saveAllowed=false;
+ if(link&&app.lanTerminal.begun())result.saveAllowed=false;
  return result;
 }
 }
@@ -939,7 +1042,7 @@ int main(int argc,char** argv){
    // Hidden EOF/termination preserves the last successful atomic save. It does
    // not promise persistence of RAM-only moves or perform unbounded hidden I/O.
    if(result.saveAllowed)app.persist();
-   if(result.saveAllowed&&!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.5\",\"frames\":"<<result.frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
+   if(result.saveAllowed&&!args.report.empty()){std::ofstream out(args.report);if(!out)throw std::runtime_error("Cannot write report");out<<"{\"version\":\"0.1.6\",\"frames\":"<<result.frames<<",\"plies\":"<<app.game.history.size()<<",\"fen\":\""<<chess::fen(app.game.board)<<"\",\"screen\":"<<int(app.screen)<<",\"result\":\""<<app.game.result<<"\"}\n";}
    return 0;
  }catch(const std::exception& e){std::cerr<<"Tyrell Chess: "<<e.what()<<'\n';return 1;}
 }

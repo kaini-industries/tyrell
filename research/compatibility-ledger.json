@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-25",
-  "reviewed_revision": "2954c7686ee6170a4abdf3c08a485b0444104fb1",
+  "reviewed_revision": "946ff09c20572fdd53bab4ae579d7aa7a644fb43",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -79,7 +79,7 @@
     {
       "id": "a3-lifecycle-source",
       "path": "docs/game-chess-lifecycle.md",
-      "sha256": "3aae0a9261cbbbc46e724d5266194681f53951044133439ce1c3afed952fe555"
+      "sha256": "b4c32d06fe7b74d979da8680d00bab0b16e4faec388682e2582a85772fbbe20b"
     },
     {
       "id": "a3-lifecycle-validation",
@@ -114,12 +114,22 @@
     {
       "id": "chess-lan-terminal-source",
       "path": "docs/chess-lan-terminal.md",
-      "sha256": "1aa4ba83ecaf5a668510dd092df2d9dc18b197b054f73992c60d9c4fd2ca86f6"
+      "sha256": "8b7b6b8b1076f28ba95611d3437873fff999602c66f973b6c9bbd3ef7cc7befa"
     },
     {
       "id": "chess-lan-terminal-validation",
       "path": "research/chess-lan-terminal-validation.json",
       "sha256": "555804571c6a2d25f904097c1e742425b31999d4f30d7d0ce175c23f385fb7ad"
+    },
+    {
+      "id": "chess-lan-loop-source",
+      "path": "docs/chess-lan-loop.md",
+      "sha256": "9206855812ed4d5988bc43ca1e905283578e64b1fd047c0c89fcb309014c4436"
+    },
+    {
+      "id": "chess-lan-loop-validation",
+      "path": "research/chess-lan-loop-validation.json",
+      "sha256": "93fa13030d3542f341cf035218332b67b1047fb7c21db685d7f8a6ead540bdf7"
     }
   ],
   "subjects": [
@@ -158,8 +168,8 @@
       "id": "chess-source",
       "component": "chess",
       "kind": "current-source",
-      "version": "0.1.5",
-      "source_identity": "A3-LAN-1 explicit Chess terminal/controller primitives and reviewed gap/authority policy; production linked LAN and physical acceptance remain pending; digest must match checkout",
+      "version": "0.1.6",
+      "source_identity": "A3-LAN-2 controlled Chess loop/native ownership integration; public linked LAN and physical acceptance remain pending; digest must match checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -169,14 +179,14 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "93ff8a278a4ab1badf80c9ae1e3e8524ac19f387f93b013d8b1c579260b02dc1"
+      "sha256": "bd7190faa53f0499caf9697544979a9c7c79469009e81f7755a08ef6b780d94d"
     },
     {
       "id": "sandline-source",
       "component": "sandline",
       "kind": "current-source",
       "version": "0.1.1",
-      "source_identity": "A3 app/dependency boundary including framework/example 0.1.2 and the isolated Beacon build helper; existing app policy unchanged; digest must match the checkout",
+      "source_identity": "A3 app/dependency boundary including framework/example 0.1.2 and the isolated Beacon build helper; existing app policy unchanged; digest must match the checkout; LAN-2 adds test-only native I/O observers without changing this app policy",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-tanks",
@@ -186,14 +196,14 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "561721900d1f0794327e253087bf65c51c5e51a62673f70bc19d4fb4c9c44d5d"
+      "sha256": "63e03dc1afb6cae68ba53bf0b0112431bcfa1fa37fabdda0f0288a450a604ce8"
     },
     {
       "id": "beacon-source",
       "component": "beacon",
       "kind": "current-source",
       "version": "0.1.2",
-      "source_identity": "A3 Beacon native offline shell lifecycle and app/dependency boundary; default executable disables the pilot; digest must match the checkout",
+      "source_identity": "A3 Beacon native offline shell lifecycle and app/dependency boundary; default executable disables the pilot; digest must match the checkout; LAN-2 adds test-only native I/O observers without changing this app policy",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-game",
@@ -201,7 +211,7 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "c6ee7a84bca7ee2250dd27b1baf2cb72d4a2cf97ea24d6b20c5e5b4653fe26c1"
+      "sha256": "ecab294421b460fcb8bc084e7f35b37580c5994d8345bd08f906fe553e5829f6"
     },
     {
       "id": "status-retained",
@@ -439,12 +449,14 @@
         "a3-lifecycle-source",
         "a3-lifecycle-validation",
         "chess-lan-terminal-source",
-        "chess-lan-terminal-validation"
+        "chess-lan-terminal-validation",
+        "chess-lan-loop-source",
+        "chess-lan-loop-validation"
       ],
       "limitations": [
         "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
         "Host/ARM64 CI results are separate run reports, not device acceptance.",
-        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
+        "A3-LAN-2 validates controlled real-loop/TCP/shell/native-fixture integration; public linked LAN enablement and exact-artifact physical acceptance remain pending."
       ]
     },
     {
@@ -463,12 +475,14 @@
         "a3-lifecycle-source",
         "a3-lifecycle-validation",
         "chess-lan-terminal-source",
-        "chess-lan-terminal-validation"
+        "chess-lan-terminal-validation",
+        "chess-lan-loop-source",
+        "chess-lan-loop-validation"
       ],
       "limitations": [
         "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
         "Host/ARM64 CI results are separate run reports, not device acceptance.",
-        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
+        "A3-LAN-2 validates controlled real-loop/TCP/shell/native-fixture integration; public linked LAN enablement and exact-artifact physical acceptance remain pending."
       ]
     },
     {
@@ -487,13 +501,15 @@
         "a3-lifecycle-source",
         "a3-lifecycle-validation",
         "chess-lan-terminal-source",
-        "chess-lan-terminal-validation"
+        "chess-lan-terminal-validation",
+        "chess-lan-loop-source",
+        "chess-lan-loop-validation"
       ],
       "limitations": [
         "A3 native offline lifecycle is experimental and defaults OFF; linked LAN is gated. No current package has physical M5 or pinned Gh0st acceptance.",
         "Pause defers filesystem saves; hidden termination preserves the last successful save but can lose RAM-only moves. Cooperative engine cancellation does not guarantee wall-clock handoff or shutdown.",
         "Host/ARM64 CI results are separate run reports, not device acceptance.",
-        "A3-LAN-1 validates explicit App/TCP controller primitives only; linked LAN/native loop integration and exact-artifact physical acceptance remain pending."
+        "A3-LAN-2 validates controlled real-loop/TCP/shell/native-fixture integration; public linked LAN enablement and exact-artifact physical acceptance remain pending."
       ]
     },
     {

@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -33,6 +34,8 @@ struct Fixtures {
     bool fail_open=false,fail_resync=false,fail_commit=false;
     std::uint16_t open_failure_color=0;
     int read_signal=0;
+    std::function<void()> read_callback;
+    std::function<void()> close_callback;
     void reset() {*this=Fixtures{};}
     void owner_pixels(std::uint16_t color) {std::fill(pixels.begin(),pixels.end(),color);}
     bool uniform(std::uint16_t color) const {return std::all_of(pixels.begin(),pixels.end(),[&](auto pixel){return pixel==color;});}
@@ -64,7 +67,11 @@ int __wrap_open(const char* path,int flags,...) {
 int __real_close(int);
 int __wrap_close(int fd) {
     if(fd==framebuffer_fd) {++fixture.fb_closes;return 0;}
-    if(fixture.keyboards.erase(fd)) {++fixture.key_closes;fixture.events.clear();return 0;}
+    if(fixture.keyboards.erase(fd)) {
+        auto callback=std::move(fixture.close_callback);fixture.close_callback={};
+        if(callback)callback();
+        ++fixture.key_closes;fixture.events.clear();return 0;
+    }
     return __real_close(fd);
 }
 int __real_fstat(int,struct stat*);
@@ -126,6 +133,9 @@ ssize_t __wrap_read(int fd,void* data,std::size_t count) {
     const int signal=fixture.read_signal;
     fixture.read_signal=0;
     if(signal) std::raise(signal);
+    auto callback=std::move(fixture.read_callback);
+    fixture.read_callback={};
+    if(callback)callback();
     if(fixture.events.empty()) {errno=EAGAIN;return -1;}
     const auto number=std::min(count/sizeof(input_event),fixture.events.size());
     auto* events=static_cast<input_event*>(data);
@@ -157,4 +167,6 @@ void fail_native_keyboard_open(bool fail,std::uint16_t overwrite_color) {fixture
 void fail_native_keyboard_resync(bool fail) {fixture.fail_resync=fail;}
 void fail_native_commit(bool fail) {fixture.fail_commit=fail;}
 void signal_on_native_read(int signal) {fixture.read_signal=signal;}
+void on_next_native_read(std::function<void()> callback) {fixture.read_callback=std::move(callback);}
+void on_next_native_keyboard_close(std::function<void()> callback) {fixture.close_callback=std::move(callback);}
 } // namespace tyrell::game::test

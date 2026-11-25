@@ -11,7 +11,8 @@ those ownership hooks in a separate default-off native pilot. Its controlled
 checks and pending physical acceptance are independent of the Chess evidence
 below. [Beacon's offline policy](beacon-offline-lifecycle.md) is also implemented.
 The [separate LAN design](game-lan-lifecycle-design.md) selects local termination
-on shell suspension; its runtime implementation and qualification remain pending.
+on shell suspension. Its later [controlled loop/native integration](chess-lan-loop.md)
+is implemented separately; public enablement and qualification remain pending.
 All linked-LAN admission gates stay closed.
 
 The interoperability target remains Gh0st source revision

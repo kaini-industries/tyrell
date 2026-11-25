@@ -5,6 +5,7 @@
 // into a controller TU that uses raylib's different key-code values.
 #include "tyrell/game/runtime.hpp"
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace tyrell::game::test {
@@ -27,4 +28,9 @@ void fail_native_keyboard_resync(bool fail);
 void fail_native_commit(bool fail);
 // Raise once on the GUI thread during its next synthetic keyboard read.
 void signal_on_native_read(int signal);
+// Run once on the GUI thread during the next synthetic keyboard read. This
+// lets integrated tests deliver shell traffic while Runtime::poll is active.
+void on_next_native_read(std::function<void()> callback);
+// Observe the next synthetic keyboard close during ownership release.
+void on_next_native_keyboard_close(std::function<void()> callback);
 } // namespace tyrell::game::test

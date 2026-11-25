@@ -297,9 +297,9 @@ def run_chess_native(work, revision):
     command("cmake", "-S", source, "-B", experimental, "-DCMAKE_BUILD_TYPE=Release",
             "-DBUILD_TESTING=ON", *flags, "-DTYRELL_ENABLE_SHELL_LINK=ON")
     command("cmake", "--build", experimental, "--parallel", "4", "--target",
-            "tyrell-chess", "chess-shell-lifecycle-test", "chess-ai-cancellation-test")
-    results.append(ctest(experimental, work, {"chess-shell-lifecycle", "chess-ai-cancellation"},
-                         pattern="^(chess-shell-lifecycle|chess-ai-cancellation)$"))
+            "tyrell-chess", "chess-shell-lifecycle-test", "chess-lan-shell-lifecycle-test", "chess-ai-cancellation-test")
+    results.append(ctest(experimental, work, {"chess-shell-lifecycle", "chess-lan-shell-lifecycle", "chess-ai-cancellation"},
+                         pattern="^(chess-shell-lifecycle|chess-lan-shell-lifecycle|chess-ai-cancellation)$"))
     return results
 
 
