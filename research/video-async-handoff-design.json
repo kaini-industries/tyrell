@@ -1,0 +1,355 @@
+{
+  "schema": 1,
+  "kind": "video-asynchronous-handoff-design",
+  "revision": 1,
+  "reviewed_date": "2026-11-24",
+  "status": "proposed-design",
+  "basis_commit": "51fc43864458b24ab61d54cb11d77a1bb4720246",
+  "source_bindings": {
+    "packages/tyrell-video/src/hdmi_lease.cpp": "88a043af0a89af34eee775147661c8d95035ea699b818bf98e52514b4a13287e",
+    "packages/tyrell-video/src/hdmi_lease.h": "35fb9e6e30d2eb9fafa5af23c80e582c751a450f93c475dfb5a520cfc6afdd72",
+    "packages/tyrell-video/src/hdmi_audio.cpp": "106acc8105bbced0e530524aafd6517b5a6751170266cb085b6e75bab9be4756",
+    "packages/tyrell-video/src/hdmi_audio.h": "309f60e807a589eea981a6880537d65452cb8225214b00b6db257771e37679ad",
+    "packages/tyrell-video/src/outputs.cpp": "ab7d160802ca2f19b938446025f11a0deebe285fc3a48e050221e7f889d5b816",
+    "packages/tyrell-video/src/playback.cpp": "5ef463787157b96cae54aab9262ea7961dd30412be0be31c402050505e9ebcf8",
+    "packages/tyrell-video/src/main.cpp": "5b5f9f356cb0967a142dda24edeaa20e962124efe59d8031c5df659638b62961",
+    "packages/tyrell-video/system/tyrell-video-hdmi-session": "aacc5742a29080838b908c71e81c8d551cb01ebd5bce47deed2e05cfa48a7dfb",
+    "packages/tyrell-video/system/tyrell-video-hdmi@.service": "6f1f8b6cfdc31ae483214bbffb49f3a5d9d2feabc75ad03733810a393f446b32",
+    "packages/tyrell-video/system/tyrell-video-hdmi.socket": "1dfec617d557f24c58e23b386723cdc2acb446c59fcadfeb16f1b36d56db8d80",
+    "packages/tyrell-video/tools/audio-session.cpp": "caf88d294082b9fe02f8352da20e815501e8e07e7e4263d98a91a9473c6d151d",
+    "packages/tyrell-app-common/src/shell_link.cpp": "c8fcbcae788985af0e569e9580d21486d2108befb77db78a1ef42bccad44b6e2",
+    "research/video-lifecycle-timing.json": "35d7f494c280a53ecf20a5a04e6ec074fefd8cb71971e91ae707ee3d65eea370"
+  },
+  "scope": "architecture-and-future-acceptance-cases-only",
+  "runtime_implemented": false,
+  "live_shell_playback_supported": false,
+  "physical_testing": "pending",
+  "grants_release_approval": false,
+  "current_protocol": {
+    "upstream_commit": "a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5",
+    "version": 1,
+    "nominal_pause_ms": 100,
+    "async_release_negotiated": false,
+    "admission_remains_closed": true
+  },
+  "proposed_protocol": {
+    "name": "Tyrell handoff draft 2",
+    "implemented": false,
+    "separate_endpoint": true,
+    "proposed_environment": "TYRELL_VIDEO_HANDOFF_FD",
+    "transport": "AF_UNIX SOCK_SEQPACKET",
+    "encoding": "strict ASCII tab-separated packets",
+    "maximum_packet_bytes": 512,
+    "maximum_packets_per_wake": 64,
+    "negotiation_budget_ms": 1000,
+    "default_handoff_budget_ms": 10000,
+    "maximum_handoff_budget_ms": 30000,
+    "budgets_are_hardware_deadlines": false,
+    "capabilities": [
+      "async-drain",
+      "epoch-barrier",
+      "helper-receipts"
+    ],
+    "identifiers": {
+      "incarnation": "128-bit random lowercase hex",
+      "app_instance": "128-bit registered lowercase hex",
+      "epoch_and_request": "nonzero uint64 decimal, no leading zeroes, wrap or reuse",
+      "lease_and_receipt": "128-bit opaque authority lookup, not credentials"
+    },
+    "messages": [
+      "hello",
+      "welcome",
+      "grant",
+      "ready",
+      "quiesce",
+      "quiescing",
+      "local-done",
+      "released",
+      "commit",
+      "cancel",
+      "failed"
+    ],
+    "expiry_authority": "ownership authority monotonic clock from accepted request; serialized against durable release",
+    "progress_phases": [
+      "local",
+      "graph",
+      "display",
+      "audio",
+      "stop-post"
+    ],
+    "failure_codes": [
+      "unsupported",
+      "malformed",
+      "stale",
+      "busy",
+      "expired",
+      "identity-lost",
+      "backend-failed",
+      "completion-unknown"
+    ],
+    "minimum_handoff_budget_ms": 1
+  },
+  "authority": {
+    "privileged_root_daemon_required": false,
+    "player_and_coordinator": "normal user",
+    "vt_participant": "dedicated nonroot service; scoped CAP_SYS_TTY_CONFIG and manager-opened tty0",
+    "audio_participant": "normal user in target audio session",
+    "receipt_issuer": "authority only, after durable composite release",
+    "resources": [
+      "lcd-input",
+      "hdmi-kms-vt",
+      "owned-hdmi-audio"
+    ],
+    "partial_successor_grants_in_initial_design": false,
+    "external_administrator_writes_serialized": false
+  },
+  "invariants": [
+    {
+      "id": "negotiation-before-acquisition",
+      "requirement": "No managed resource acquisition before bound draft-2 negotiation; protocol 1 remains refused."
+    },
+    {
+      "id": "seal-before-quiesce",
+      "requirement": "Atomically seal acquisitions and actor registry before quiesce; register accepted work before side effects."
+    },
+    {
+      "id": "permit-through-completion",
+      "requirement": "Hold every operation permit through side effect, backend completion and required readback."
+    },
+    {
+      "id": "no-implicit-release",
+      "requirement": "Timeout, EOF, process/service exit, signals and client handle closure never constitute release."
+    },
+    {
+      "id": "durable-release-before-grant",
+      "requirement": "Journal complete composite release before receipt or conflicting successor grant."
+    },
+    {
+      "id": "no-epoch-reuse",
+      "requirement": "Bind authority incarnation, app instance, epoch, lease, request and operation; never reuse or wrap IDs."
+    },
+    {
+      "id": "cancel-drains-first",
+      "requirement": "Cancellation/resume intent drains current epoch before a fresh grant can rebuild."
+    },
+    {
+      "id": "unknown-survives-restart",
+      "requirement": "Reconstruct unresolved accepted intents as unknown after restart; no reset-to-empty barrier."
+    },
+    {
+      "id": "managed-legacy-exclusion",
+      "requirement": "Untracked legacy writers and pending cleanup exclude managed admission; old M5 endpoints retain behavior."
+    },
+    {
+      "id": "no-late-global-restore",
+      "requirement": "New managed restoration requires an authority permit; in-flight permitted effects retain the barrier through quarantine; no old restoration can remain after epoch release."
+    },
+    {
+      "id": "audio-load-finality",
+      "requirement": "Accepted server load remains outstanding until positively resolved; finite scans cannot prove no late load."
+    },
+    {
+      "id": "kernel-and-server-quarantine",
+      "requirement": "Unresolved driver/server work keeps affected domains quarantined; no timing-based escape."
+    },
+    {
+      "id": "no-privacy-success-with-uncertainty",
+      "requirement": "Completed lock/blank/mute claims require qualified effective cutoff, not just signals or missing frames."
+    },
+    {
+      "id": "no-qualification-transfer",
+      "requirement": "Design review and legacy regressions do not qualify future protocol, runtime, package or hardware."
+    }
+  ],
+  "implementation_increments": [
+    {
+      "id": "A2-D1",
+      "deliverable": "Bound draft-2 channel, authenticated bootstrap, durable operation ledger and barrier; inert adapters.",
+      "status": "planned"
+    },
+    {
+      "id": "A2-D2",
+      "deliverable": "Separate observable v2 VT/audio participants and pending-operation reconciliation.",
+      "status": "planned"
+    },
+    {
+      "id": "A2-D3",
+      "deliverable": "Managed KMS/LCD ownership/destructor policy and backend completion evidence.",
+      "status": "planned"
+    },
+    {
+      "id": "A2-D4",
+      "deliverable": "Single-owner media actor, nonblocking control and preserved checkpoint semantics.",
+      "status": "planned"
+    },
+    {
+      "id": "A2-D5",
+      "deliverable": "Qualified asynchronous shell integration, package/device acceptance, then Video idle optimization.",
+      "status": "planned"
+    }
+  ],
+  "future_acceptance_cases": [
+    {
+      "id": "legacy-peer",
+      "trigger": "Protocol 1 or missing capabilities",
+      "expected": "Refuse before resources; no protocol downgrade.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "held-gstreamer",
+      "trigger": "NULL transition remains blocked beyond control deadline",
+      "expected": "Fail request; retain registered graph and resource quarantine.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "late-acquisition",
+      "trigger": "Queued HDMI/audio acquisition reaches authority after sealing",
+      "expected": "Reject unaccepted work; retain already accepted intent in barrier.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "old-ioctl-in-flight",
+      "trigger": "Revocation occurs after an operation permit and before ioctl completion",
+      "expected": "Withhold successor grant through completion/readback; no epoch-check TOCTOU.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "partial-release",
+      "trigger": "App local-done arrives while VT/audio/stop-post still pending",
+      "expected": "No composite receipt, commit or successor grant.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "cancel-acquisition",
+      "trigger": "Cancellation arrives during VT takeover or accepted module load",
+      "expected": "Drain and undo identified work before new grant; preserve intent.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "late-audio-load",
+      "trigger": "Audio owner dies after server accepted load but before callback",
+      "expected": "Keep unknown operation/quarantine; an absence scan is insufficient.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "rollback-conflict",
+      "trigger": "Saved VT or module identity conflicts with current external owner",
+      "expected": "Preserve foreign state; invalidate and require reconciliation.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "stale-receipt",
+      "trigger": "Duplicate or wrong-incarnation/epoch/request receipt arrives",
+      "expected": "Return recorded result or reject; no new side effects or grant.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "cancel-resume",
+      "trigger": "Resume arrives while old epoch is draining",
+      "expected": "Finish release, allocate fresh epoch, then rebuild checkpoint.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "authority-restart",
+      "trigger": "Authority dies with accepted operation and durable intent",
+      "expected": "New incarnation reconstructs unknown barrier; no inferred zero.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "journal-unavailable",
+      "trigger": "Ownership journal is missing/corrupt after uncertain work",
+      "expected": "Disable managed domain pending controlled recovery.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "stop-post-late",
+      "trigger": "ExecStopPost runs after app local release",
+      "expected": "Join authoritative barrier; no independent late VT/module mutation.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "queued-lcd-work",
+      "trigger": "App stops submitting while fbdev/driver update remains queued",
+      "expected": "No LCD release/cutoff claim until qualified completion.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "legacy-coexistence",
+      "trigger": "Legacy helper or APPLaunch writer is still active or cleaning up",
+      "expected": "Reject managed admission; mode switch requires verified empty barrier.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "privacy-lock",
+      "trigger": "Kernel display/audio operation remains unresolved during lock",
+      "expected": "Do not claim completed lock/blank/mute; retain quarantine.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "successful-rebuild",
+      "trigger": "All registered participants drain and release is durably committed",
+      "expected": "Fresh grant required; preserve checkpoint/track/retry state and clear stale input.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "backend-errors",
+      "trigger": "KMS/VT/audio cleanup returns failure or completion cannot be observed",
+      "expected": "Retain failure/unknown; never synthesize a success receipt.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    },
+    {
+      "id": "release-expiry-race",
+      "trigger": "Release completion and timeout contend, or a committed receipt is delivered late",
+      "expected": "One authority orders the durable terminal result; replay release if it won, otherwise quarantine and require a separate recovery transaction.",
+      "status": "not-run",
+      "scope": "future-production-integration-required"
+    }
+  ],
+  "legacy_host_regressions": {
+    "scope": "unchanged legacy implementations; does not test the proposed protocol or authority",
+    "hdmi_helper_fixture_tests": {
+      "status": "passed",
+      "tests": 31,
+      "command": "python3 packages/tyrell-video/tests/hdmi_helper_test.py -v"
+    },
+    "cpp_lease_and_audio_clients": {
+      "status": "passed",
+      "tests": 2,
+      "commands": [
+        "build/ci/a2-design/hdmi-lease-test",
+        "build/ci/a2-design/hdmi-audio-test"
+      ],
+      "backend": "temporary Unix sockets and self-spawned fake launcher; no systemd, VT, DRM or audio server",
+      "limitation": "Confirms unchanged legacy client behavior, not v2 completion or ownership."
+    }
+  },
+  "physical_acceptance": {
+    "status": "not-tested",
+    "requires": [
+      "exact new M5 package launch and return",
+      "playing/paused LCD and HDMI",
+      "preroll/seek/captions/tracks/output transitions",
+      "missing HDMI and audio/VT restoration",
+      "ownership loss, shell/authority/helper crash and SIGTERM",
+      "responsiveness, privacy cutoff and backend completion on exact BSP"
+    ]
+  }
+}

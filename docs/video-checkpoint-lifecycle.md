@@ -141,3 +141,12 @@ device deadline:
 
 The raw record retains separate capture, suspend, resume-call and ready samples.
 `active_shell_supported` remains false.
+
+## Asynchronous handoff design
+
+The follow-up [A2 design](video-async-handoff-design.md) specifies a separate
+negotiated protocol, a shared ownership barrier, observable helper completion
+and conservative quarantine. It requires a future shell implementation; no
+protocol, broker or managed helper is introduced by that design. Its five
+implementation increments and unrun acceptance cases keep the current guard
+and normal M5 behavior intact. Physical testing remains pending.
