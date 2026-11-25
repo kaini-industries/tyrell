@@ -6,10 +6,13 @@ local network session**. It does not pause a shared match or promise background
 hosting. A resumed UI may show the ended session; it cannot continue that session.
 
 The [decision record](../research/game-lan-lifecycle-design.json) binds the
-inspected source and future acceptance cases. This increment implements the
-design record only. Runtime integration, new terminal-state APIs, protocol
-changes and the acceptance cases below are **not implemented or run**. All
-current linked-LAN admission gates stay closed. Physical testing remains pending.
+November 24 inspected source and future acceptance cases. That increment was
+design only. The separate [A3-LAN-1 controller increment](chess-lan-terminal.md)
+now implements Chess terminal-state APIs and controlled App/TCP acceptance
+checks. Production lifecycle-loop/native integration, protocol changes and
+physical acceptance remain pending. The original decision record's future
+cases are historical requirements, not updated runtime qualification. All
+current linked-LAN admission gates stay closed.
 Existing [Chess](game-chess-lifecycle.md), [Sandline](sandline-offline-lifecycle.md)
 and [Beacon](beacon-offline-lifecycle.md) offline policies retain their behavior.
 
@@ -127,13 +130,15 @@ buffered packets or moves are processed. Use a uint64 monotonic observation;
 do not rely solely on uint32 clock subtraction across a full wrap. The host must
 settle authoritative expiry; a client must preserve authority uncertainty.
 
-Per-app service-gap limits and Chess stale-authority/heartbeat behavior remain
-an explicit prerequisite of implementation and enablement. This design assigns
-no arbitrary common timeout and claims no detection of every brief unobserved
-stop. Chess currently has pairing and pending-move timers, without a general
-active-play heartbeat. Its ordinary peer may therefore remain unaware of a
-stopped host until a later transport event. Any protocol/liveness change needs
-separate compatibility review; queued old traffic cannot establish fresh authority.
+Per-app service-gap limits and stale-authority behavior are prerequisites of
+enablement. A3-LAN-1 selects separate inclusive 10-second Chess service-gap and
+joiner-authority limits for explicitly opted-in controllers. Existing 500 ms
+host clock updates provide receipt observations; they are not a negotiated or
+bidirectional heartbeat and carry no wire-age proof. Ordinary unlinked behavior
+is unchanged. Sandline and Beacon limits remain undecided. No common app timeout
+or detection of every brief unobserved stop follows. Protocol/liveness changes
+need separate compatibility review; already-expired authority wins over queued
+old traffic.
 
 Sandline and Beacon already separate wall-time expiry from bounded simulation.
 Keep their existing handshake, stale-input and snapshot boundary semantics in
@@ -144,13 +149,14 @@ to LAN liveness, reset peer clocks or treat a post-stop backlog as fresh input.
 
 | Increment | Deliverable | Required before advancing |
 | --- | --- | --- |
-| A3-LAN-1 | Chess terminal/controller primitives, role-aware clocks and interruption state; decide silent-gap/stale-authority policy | Actual host/join tests for queued moves, expiry, setup, existing results and persistence; linked LAN stays closed |
+| A3-LAN-1 | Implemented: Chess terminal/controller primitives, role-aware clocks and interruption state; reviewed gap/stale-authority policy | Controlled actual App/TCP and read-only render checks; linked LAN stays closed; see the separate validation record |
 | A3-LAN-2 | Chess production loop and optional native adapter | Post-poll admission checks, real TCP peers, backpressure, hidden/lost exits and native I/O fixtures; default M5 regression |
 | A3-LAN-3 | Sandline terminal transport/world policy and loop; decide its service-gap limit | Actual ENet host/client and surviving-player cases, immutable ended view, honest status and native ownership checks |
 | A3-LAN-4 | Independent Beacon terminal Session policy and loop; decide its service-gap limit | Actual TYBC host/client, actor/pulse state, slot reuse and native ownership checks |
 | A3-LAN-5 | Exact-artifact per-app qualification and reviewed enablement | Retained native/default packages as applicable, M5 first then pinned-Gh0st scenario acceptance; physical phase pending |
 
-These are future increments, not implemented features or new runtime options.
+LAN-2 through LAN-5 remain future increments. LAN-1 exposes controller methods
+for controlled callers, without a native adapter or new runtime enable option.
 Do not expose linked LAN simply because a helper or one test exists. Keep
 ordinary unlinked LAN coverage and default-off shell builds throughout. A
 controlled opt-in fixture is separate from permission to advertise live support.

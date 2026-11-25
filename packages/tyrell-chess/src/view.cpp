@@ -143,7 +143,7 @@ void clockRow(const char* side,const std::string& value,int y,bool active,bool b
 void sidebar(const View& v) {
     text(v.title.empty()?"CHESS":v.title,sx,7,blue,10,143);
     right(v.thinking?"...":"",311,7,muted,10);
-    const bool showActive=!v.review && !v.gameOver && (!v.clocksEnabled || v.clocksRunning);
+    const bool showActive=!v.sessionEnded && !v.review && !v.gameOver && (!v.clocksEnabled || v.clocksRunning);
     clockRow("B",v.blackClock,22,showActive && v.board.sideToMove()==PieceColor::Black,true);
     clockRow("W",v.whiteClock,47,showActive && v.board.sideToMove()==PieceColor::White,false);
     if(v.review) text(v.reviewLabel.empty()?"REVIEW":v.reviewLabel,sx,75,blue,10,143);
@@ -151,12 +151,12 @@ void sidebar(const View& v) {
     line(sx,89,143,Color{170,183,180,255});
     const int count=std::min(4,int(v.moveLines.size()));
     for(int i=0;i<count;++i) text(v.moveLines[v.moveLines.size()-count+i],sx,94+i*12,ink,10,143);
-    if(v.moveLines.empty()) {
+    if(v.moveLines.empty()&&!v.sessionEnded) {
         text("Your next good move",sx,96,muted,10,143);
         text("starts here.",sx,108,muted,10,143);
     }
     line(sx,145,143,Color{170,183,180,255});
-    text(v.subtitle,sx,149,muted,10,143);
+    text(v.sessionEnded?v.authorityNotice:v.subtitle,sx,149,muted,10,143);
     if(v.screen==Screen::Board)
         text(v.footer.empty()?"ENTER move  I help":v.footer,sx,160,muted,10,143);
 }
@@ -205,6 +205,7 @@ void setup(const View& v) {
     text(v.subtitle,13,36,muted,10,292);
     line(12,51,296,gold);
     menu(v,17,64,280,5,18);
+    if(v.sessionEnded)text(v.authorityNotice,17,67,muted,10,280);
     text(v.status,13,151,muted,10,294);
     text(v.footer.empty()?"Left / right change   ENTER play   ESC back":v.footer,13,160,muted,10,294);
 }

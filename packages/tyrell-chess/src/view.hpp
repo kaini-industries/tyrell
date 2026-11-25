@@ -14,12 +14,12 @@ struct View {
     MoveList legal;
     std::vector<std::string> moveLines,menu;
     std::string whiteClock="--:--",blackClock="--:--";
-    std::string title="CHESS",subtitle,status,footer,reviewLabel,notice;
+    std::string title="CHESS",subtitle,status,footer,reviewLabel,notice,authorityNotice;
     bool noticeError=false;
     int menuIndex=0;
     std::size_t helpOffset=0;
     bool flipped=false,monochrome=false,thinking=false,review=false;
-    bool gameOver=false,clocksEnabled=false,clocksRunning=false;
+    bool gameOver=false,clocksEnabled=false,clocksRunning=false,sessionEnded=false;
     Piece animatedPiece;
     Square animationFrom=NO_SQUARE,animationTo=NO_SQUARE;
     float animationProgress=1;
