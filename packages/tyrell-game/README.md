@@ -52,6 +52,23 @@ The sample supports `--frames`, `--seconds`, `--autoplay`, `--screenshot`, and
 `--report` for repeatable checks. `--headless` selects memory rendering in a
 memory-renderer build; it cannot switch a desktop build's raylib backend.
 
+Version 0.1.2 adds an optional native offline shell policy. Build and test it on
+Linux with `python3 scripts/game build --backend native --shell-link` and
+`python3 scripts/game test --backend native --shell-link`, after fetching native
+dependencies. The helper uses `build/game-native-shell`, separate from the
+default `build/game-native`; direct CMake builds use
+`-DTYRELL_ENABLE_SHELL_LINK=ON`. The option defaults off and only integrates the
+Beacon runtime example, leaving core/network-only consumers independent.
+
+Linked host, join and server launches are rejected before networking or device
+access. Offline state survives pause/resume in RAM; hidden iterations perform
+no input, update or rendering. Only the first resumed simulation interval is
+discarded; runtime and ordinary LAN elapsed time remain truthful. `--framebuffer`
+and `--input` override the linked shell's device-path environment, including an
+explicit `auto`. Linked screenshots are disabled and hidden/lost exits suppress
+reports. See [policy and controlled-check boundaries](../../docs/beacon-offline-lifecycle.md).
+This adds no package, launcher entry or physical qualification.
+
 ## Backends and smaller builds
 
 The build selects one raylib backend. `Backend::Default` uses that selection:

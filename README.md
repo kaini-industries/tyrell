@@ -143,6 +143,12 @@ Public targets are `Tyrell::GameCore`, `Tyrell::GameRender`,
 `Tyrell::GameRuntime`, and `Tyrell::GameNetwork`. See the
 [architecture and ownership guide](docs/game-framework.md).
 
+Framework/example 0.1.2 adds an optional
+[offline Beacon shell policy](docs/beacon-offline-lifecycle.md). The enabled
+native build preserves its session through pause/resume, clears stale input and
+rejects linked LAN before network or device acquisition. Normal builds keep
+shell support disabled; physical M5/Gh0st acceptance remains pending.
+
 Desktop, headless, native ARM64, real UDP, sanitizer, and native package checks
 passed. The [validation record](docs/game-framework-validation.md) and
 [adversarial review](docs/game-framework-adversarial-review.md) document the
@@ -272,8 +278,9 @@ A3 adds [GameRuntime hooks and an offline Chess lifecycle policy](docs/game-ches
 with native ownership, clock, AI and save-failure checks. The follow-up
 [offline Sandline policy](docs/sandline-offline-lifecycle.md) preserves practice
 state through suspension without simulation catch-up or stale input. Experimental
-shell builds remain separate from normal M5 packages; physical acceptance, live
-LAN policy and Beacon's independent lifecycle policy remain pending.
+shell builds remain separate from normal M5 packages. Beacon now has its own
+[offline lifecycle policy](docs/beacon-offline-lifecycle.md) using the same
+ownership hooks. Physical acceptance and live-LAN policy remain pending.
 R1 adds [immutable candidate packaging and explicit promotion](docs/immutable-candidates.md).
 It seals exact binaries, inputs and evidence; publication requires a separate
 reviewed request and passing checks for those bytes. Missing device acceptance

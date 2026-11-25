@@ -18,8 +18,8 @@ upgrade the device results in this ledger.
 | Status | 0.1.2, event-driven native idle; experimental optional shell link | Retained `0.1.0-1`, SHA `15471a8f…`; historical device `0.1.0-1`, SHA `9f8ad2f3…` | Retained package has automated ARM64 build/install/remove evidence. A **different** same-version package has real LCD, synthetic input and launcher-return evidence. | Zero file image contains retained `15471a8f…`; new Status sources and Gh0st acceptance pending. |
 | Video | 0.1.9, checkpoint gate, media actor and separate D5 software candidate | Retained `0.1.7-1`, SHA `7ddf4ead…` | Specific H.264 HDMI/software-recovery, audio/caption, ten-minute run and launcher-return evidence applies to retained 0.1.7. | Controlled D1–D5 software checks and inactive candidate package need exact device acceptance; live Gh0st media remains unsupported while qualified driver/shell deployment is pending. |
 | Chess | 0.1.4, optional offline lifecycle | Retained `0.1.1-1`, SHA `c14cb5fe…` | Retained 0.1.1 UI/input, Wi-Fi LAN and launcher-return evidence. | New native/default-package and fake-shell checks cover source behavior; device acceptance remains untested. Shell support defaults off and linked LAN is gated; not in the default Zero payload. |
-| Sandline Tanks | 0.1.1, default-off native offline lifecycle with GameRuntime 0.1.1 | Earlier native test package SHA `961beb67…`, available only in ignored local artifacts | Historical pre-extraction package has synthetic input/display and Zero-host LAN evidence; opposite LAN direction did not complete. | Controlled offline lifecycle and default package checks remain separate from physical M5/Gh0st acceptance. Linked LAN stays gated; no default Zero inclusion or inherited device qualification. |
-| Beacon Arena | Framework/example 0.1.1 | No retained qualified device package | Framework/headless/network test history exists; no physical M5 app acceptance. | No default Zero inclusion, app lifecycle policy or Gh0st qualification. |
+| Sandline Tanks | 0.1.1, default-off native offline lifecycle with GameRuntime 0.1.2 | Earlier native test package SHA `961beb67…`, available only in ignored local artifacts | Historical pre-extraction package has synthetic input/display and Zero-host LAN evidence; opposite LAN direction did not complete. | Controlled offline lifecycle and default package checks remain separate from physical M5/Gh0st acceptance. Linked LAN stays gated; no default Zero inclusion or inherited device qualification. |
+| Beacon Arena | Framework/example 0.1.2, default-off native offline lifecycle | CI retains the exact default ARM64 executable; no qualified device package | Framework/headless/network and controlled native ownership checks; physical M5 acceptance pending. | Linked LAN stays gated. No package, launcher integration, default Zero inclusion or Gh0st qualification. |
 | Catalog | 0.1.0, optional signed offline discovery and cache | Development CI packages only; no retained qualified device artifact | Native/headless software checks; physical launch/input/exit acceptance pending | Exact legacy Store approvals remain separate. No install verbs, default image inclusion, live feed or Gh0st lifecycle qualification. |
 
 The ledger has a current-source row for every app on original M5, Zero and
@@ -34,11 +34,11 @@ used by its [separate qualification package](video-qualified-integration.md). Th
 the moving source digest; it does not change retained-package identities or
 mark any current-source device scenario passed.
 
-Sandline's [offline pilot](sandline-offline-lifecycle.md) adds the shared
-commands/shell-link boundary to its source identity. The game build helper also
-changes the declared Chess and Beacon source snapshots; their app policies and
-historical results are unchanged. The current-source runtime rows still require
-new exact-artifact physical acceptance.
+Beacon's [offline pilot](beacon-offline-lifecycle.md) adds the shared
+commands/shell-link boundary to its source identity. The framework and game
+build-helper changes also update the declared Chess and Sandline snapshots;
+their app policies and historical results are unchanged. Current-source runtime
+rows still require new exact-artifact physical acceptance.
 
 References: [Status device report](device-validation.md),
 [retained Status provenance](../dist/tyrell-status/0.1.0/provenance.json),

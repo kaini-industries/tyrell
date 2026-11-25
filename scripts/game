@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Tyrell's shared game framework or its Sandline consumer."""
+"""Build Tyrell's shared framework/Beacon example or its Sandline consumer."""
 import argparse
 import hashlib
 import json
@@ -95,7 +95,8 @@ def configure(project, backend, shell_link=False):
                   f'-DTYRELL_GAME_BUILD_RUNTIME={"ON" if runtime else "OFF"}',
                   f'-DTYRELL_GAME_BUILD_NETWORK={"ON" if network else "OFF"}',
                   '-DTYRELL_GAME_BUILD_TESTS=ON',
-                  f'-DTYRELL_GAME_BUILD_EXAMPLES={"ON" if runtime and network else "OFF"}']
+                  f'-DTYRELL_GAME_BUILD_EXAMPLES={"ON" if runtime and network else "OFF"}',
+                  f'-DTYRELL_ENABLE_SHELL_LINK={"ON" if shell_link else "OFF"}']
     else:
         flags += [f'-DTANKS_BUILD_DESKTOP={"ON" if backend == "desktop" else "OFF"}',
                   f'-DTANKS_BUILD_NATIVE={"ON" if backend == "native" else "OFF"}',
@@ -109,14 +110,14 @@ def main():
     parser.add_argument('action', choices=['deps', 'build', 'test', 'run'])
     parser.add_argument('--backend', choices=['desktop', 'native', 'headless', 'network', 'core'], default='desktop')
     parser.add_argument('--project', choices=['framework', 'tanks'], default='framework')
-    parser.add_argument('--shell-link', action='store_true', help='Experimental native offline Sandline pilot in a separate build directory')
+    parser.add_argument('--shell-link', action='store_true', help='Experimental native offline Beacon or Sandline pilot in a separate build directory')
     args, extra = parser.parse_known_args()
     if extra and extra[0] == '--':
         extra = extra[1:]
     if extra and args.action != 'run':
         parser.error('extra arguments are only supported for run')
-    if args.shell_link and (args.project != 'tanks' or args.backend != 'native'):
-        parser.error('--shell-link is only supported for native Sandline')
+    if args.shell_link and args.backend != 'native':
+        parser.error('--shell-link is only supported for native Beacon or Sandline')
     if args.project == 'tanks' and args.backend in ('network', 'core'):
         parser.error('Sandline requires desktop, native, or headless backend')
     if args.action == 'run' and args.backend in ('network', 'core'):

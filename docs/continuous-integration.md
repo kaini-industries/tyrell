@@ -30,7 +30,7 @@ checkout, records it and rejects source changes during execution. CI passes
 | `docs` | Standard-library Python; validates ledger bindings and local documentation links |
 | `python` | Linux CI; Python, OpenSSL 3, CMake/CTest, FFmpeg/ffprobe and dpkg tools; existing builder/image/script/Zero/app-tool tests plus CI, release and Catalog signature/cache regressions |
 | `game` | C/C++ compiler, CMake/CTest; pinned raylib/ENet; headless framework, native I/O fixtures, Beacon network and Sandline tests; X11/OpenGL development libraries, Xvfb/xauth for desktop lifecycle smoke checks |
-| `game-native` | Disposable Debian 13 ARM64; pinned raylib/ENet; native Sandline regression tests, a separate default shell-disabled package inspection and the enabled offline practice pilot using wrapped native I/O |
+| `game-native` | Disposable Debian 13 ARM64; pinned raylib/ENet; native Sandline/Beacon regression tests, default shell-disabled Sandline package and Beacon executable inspection, separate enabled offline pilots using wrapped native I/O |
 | `chess` | C/C++ compiler, CMake/CTest; pinned raylib; headless chess rules/controller/render/input/LAN tests plus actual desktop app build and Xvfb frame smoke (same desktop prerequisites as `game`) |
 | `chess-native` | Disposable Debian 13 ARM64; pinned raylib; native default Chess CTest and app-only DEB inspection, plus a separate enabled offline shell build and production-loop checks |
 | `status` | Disposable Debian 13 ARM64; pinned LVGL; CTest and app-only DEB construction, no live install |
@@ -89,6 +89,17 @@ JSON reports and the exact default package are retained. Source changes to
 Sandline or the shared framework select this native suite. Full source
 qualification and release provenance now require all nine suites, including
 `game-native`; older eight-suite runs cannot satisfy the new requirement.
+
+The [Beacon offline pilot](beacon-offline-lifecycle.md) adds required
+`tyrell-beacon-shell-lifecycle` checks in separate enabled headless/native builds.
+The default native entry test verifies that the caller's shell endpoint is
+untouched. Default builds also run bounded server and real UDP host/join CLI
+checks; `game` builds the actual default desktop app and renders two Xvfb frames.
+`game-native` retains the exact default 0.1.2 ARM64 executable, verifies its ELF
+architecture and absence of shell-environment adoption, and binds its hash to the
+source revision. Beacon has no package or launcher integration; this artifact
+does not add either. Both lifecycle reports and the executable survive build-tree
+removal in the exported evidence. Device acceptance remains pending.
 
 Zero foundation lifecycle roots use the existing `--force-depends` inspector and
 empty-root harness. They verify inactive package contents and scoped dpkg

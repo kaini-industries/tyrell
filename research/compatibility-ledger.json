@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "compatibility-evidence-ledger",
   "reviewed_date": "2026-11-24",
-  "reviewed_revision": "4712994ced0afbb5b1d937ed6b1a97e1f175d7d0",
+  "reviewed_revision": "17e9f1eb2651f92156c8867b0cf5eba7f0863972",
   "grants_release_approval": false,
   "scope": "Evidence inventory and consistency checks. Historical package/image results do not qualify current sources or another target. No device or release authorization.",
   "evidence": [
@@ -99,7 +99,12 @@
     {
       "id": "a3-sandline-source",
       "path": "docs/sandline-offline-lifecycle.md",
-      "sha256": "1e5b2165b62e91e09a1c1e4965aa425a73a524420624e6de077303614d68f187"
+      "sha256": "87e91f46bae9b485942f4cee61b132f07c29f45fa31740efd19e1172276bd203"
+    },
+    {
+      "id": "a3-beacon-source",
+      "path": "docs/beacon-offline-lifecycle.md",
+      "sha256": "e04ccaea844e576af5441afd6ec4e6bca616042dcdbacd86d1ed4000a68f0454"
     }
   ],
   "subjects": [
@@ -139,7 +144,7 @@
       "component": "chess",
       "kind": "current-source",
       "version": "0.1.4",
-      "source_identity": "A3 app/dependency boundary including the shared build helper with isolated Sandline pilot builds; existing app policy unchanged; digest must match the checkout",
+      "source_identity": "A3 app/dependency boundary including framework/example 0.1.2 and the isolated Beacon build helper; existing app policy unchanged; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-chess",
@@ -149,14 +154,14 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "b51f2b62c75530bcb8bc45139578a183469c2a92c35114f5ad36262f683c4fd0"
+      "sha256": "3b2cd51daa4ce0df640826c97dab61b9184ce2e8ee152ecc27014c1752d468c7"
     },
     {
       "id": "sandline-source",
       "component": "sandline",
       "kind": "current-source",
       "version": "0.1.1",
-      "source_identity": "A3 Sandline offline shell lifecycle and app/dependency boundary; default package disables the pilot; digest must match the checkout",
+      "source_identity": "A3 app/dependency boundary including framework/example 0.1.2 and the isolated Beacon build helper; existing app policy unchanged; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-tanks",
@@ -166,21 +171,22 @@
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "9fe5318c7e0f2a8aa6532e5b5d7ba4a71cd7c6d2cb71a359b6cb3501061b2fb7"
+      "sha256": "561721900d1f0794327e253087bf65c51c5e51a62673f70bc19d4fb4c9c44d5d"
     },
     {
       "id": "beacon-source",
       "component": "beacon",
       "kind": "current-source",
-      "version": "0.1.1",
-      "source_identity": "A3 app/dependency boundary including the shared build helper with isolated Sandline pilot builds; existing app policy unchanged; digest must match the checkout",
+      "version": "0.1.2",
+      "source_identity": "A3 Beacon native offline shell lifecycle and app/dependency boundary; default executable disables the pilot; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-game",
+        "packages/tyrell-app-common",
         "scripts/game",
         "locks/game-build-inputs.json"
       ],
-      "sha256": "c3e6cd94144126cbcc9e21c641cc45813fe03c2b1884b16e5ca236598df72841"
+      "sha256": "c6ee7a84bca7ee2250dd27b1baf2cb72d4a2cf97ea24d6b20c5e5b4653fe26c1"
     },
     {
       "id": "status-retained",
@@ -529,7 +535,8 @@
       "binding": "current-source",
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
-        "game-framework"
+        "game-framework",
+        "a3-beacon-source"
       ],
       "limitations": [
         "Current checkout is not the historical exact device artifact. Fresh package and device qualification must bind new bytes.",
@@ -547,7 +554,8 @@
       "binding": "current-source",
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
-        "game-framework"
+        "game-framework",
+        "a3-beacon-source"
       ],
       "limitations": [
         "No physical Zero image acceptance. Only Status is in the default app payload; other app inclusion needs explicit qualification.",
@@ -559,17 +567,19 @@
       "subject": "beacon-source",
       "target": "gh0st",
       "scenario": "Launch, input, normal exit and app-specific lifecycle for current source",
-      "implementation": "planned",
+      "implementation": "implemented",
       "result": "not-tested",
       "evidence_scope": "not-tested",
       "binding": "current-source",
       "toolchain": "Not run for this current-source compatibility scenario",
       "evidence": [
-        "game-framework"
+        "game-framework",
+        "a3-beacon-source"
       ],
       "limitations": [
-        "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
-        "Host/ARM64 CI results are separate run reports, not device acceptance."
+        "Optional native offline policy is implemented; default builds disable shell support. Controlled Session/Runtime fixtures do not qualify a physical Gh0st handoff or a pause deadline.",
+        "Linked host, join and server modes remain gated. No package, launcher integration, default image inclusion or release approval.",
+        "Physical M5 and pinned-Gh0st launch/input/exit and lifecycle acceptance remain pending for exact new bytes."
       ]
     },
     {

@@ -170,10 +170,17 @@ def run_game(work):
     flags = ["-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DENET_SOURCE_DIR=" + str(deps["enet"])]
     build = work / "game"
     configure_build(ROOT / "packages/tyrell-game", build, *flags, "-DTYRELL_GAME_BACKEND=HEADLESS",
-                    "-DTYRELL_GAME_BUILD_TESTS=ON", "-DTYRELL_GAME_BUILD_EXAMPLES=ON")
+                    "-DTYRELL_GAME_BUILD_TESTS=ON", "-DTYRELL_GAME_BUILD_EXAMPLES=ON", "-DTYRELL_ENABLE_SHELL_LINK=OFF")
     results = [ctest(build, work, {"tyrell-game-core", "tyrell-game-network", "tyrell-game-input",
                                   "tyrell-game-runtime", "tyrell-game-render", "tyrell-game-independent-example",
-                                  "tyrell-game-runtime-lifecycle", "tyrell-game-native-lifecycle"})]
+                                  "tyrell-game-runtime-lifecycle", "tyrell-game-native-lifecycle",
+                                  "tyrell-beacon-cli-help", "tyrell-beacon-headless-render", "tyrell-beacon-cli-session"})]
+    beacon_pilot = work / "beacon-shell"
+    command("cmake", "-S", ROOT / "packages/tyrell-game", "-B", beacon_pilot, "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_TESTING=ON", *flags, "-DTYRELL_GAME_BACKEND=HEADLESS", "-DTYRELL_GAME_BUILD_TESTS=ON",
+            "-DTYRELL_GAME_BUILD_EXAMPLES=ON", "-DTYRELL_ENABLE_SHELL_LINK=ON")
+    command("cmake", "--build", beacon_pilot, "--parallel", "4", "--target", "tyrell-beacon-shell-lifecycle-test")
+    results.append(ctest(beacon_pilot, work, {"tyrell-beacon-shell-lifecycle"}, pattern="^tyrell-beacon-shell-lifecycle$"))
     build = work / "tanks"
     configure_build(ROOT / "packages/tyrell-tanks", build, *flags, "-DTANKS_BUILD_DESKTOP=OFF",
                     "-DTANKS_BUILD_HEADLESS=ON", "-DTANKS_BUILD_BENCHMARK=ON", "-DTYRELL_GAME_BUILD_TESTS=ON",
@@ -196,6 +203,18 @@ def run_game(work):
     results.append(ctest(desktop, work, {"tyrell-game-desktop-lifecycle"},
                          pattern="^tyrell-game-desktop-lifecycle$", launcher=("xvfb-run", "-a"),
                          env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1")))
+    # Reuse the desktop framework build to compile and exercise the real Beacon
+    # app as well as the Runtime fixture, keeping the default shell option off.
+    command("cmake", "-S", ROOT / "packages/tyrell-game", "-B", desktop, *flags,
+            "-DTYRELL_GAME_BUILD_NETWORK=ON", "-DTYRELL_GAME_BUILD_EXAMPLES=ON", "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    command("cmake", "--build", desktop, "--parallel", "4", "--target", "tyrell-beacon-arena")
+    beacon_report = work / "a3-beacon-desktop.json"
+    command("xvfb-run", "-a", desktop / "tyrell-beacon-arena", "--frames", "2", "--report", beacon_report,
+            env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1"))
+    if json.loads(beacon_report.read_text()).get("frames") != 2:
+        raise RuntimeError("Beacon desktop smoke did not render the required frames")
+    results.append({"kind": "beacon-desktop-smoke", "status": "passed", "frames": 2,
+                    "shell_link_enabled": False, "report": str(beacon_report.relative_to(ROOT))})
     tanks_desktop = work / "tanks-desktop"
     command("cmake", "-S", ROOT / "packages/tyrell-tanks", "-B", tanks_desktop,
             "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=OFF", *flags,
@@ -285,7 +304,7 @@ def run_chess_native(work, revision):
 
 
 def run_game_native(work, revision):
-    """Default Sandline package and opt-in native offline loop, no devices."""
+    """Default Sandline/Beacon builds and opt-in offline loops, no devices."""
     native_preflight()
     with (work / "worker-packages.tsv").open("w") as output:
         subprocess.run(["dpkg-query", "-W", "-f=${binary:Package}\t${Version}\t${Architecture}\n"], stdout=output, check=True)
@@ -313,6 +332,37 @@ def run_game_native(work, revision):
             "-DTYRELL_ENABLE_SHELL_LINK=ON")
     command("cmake", "--build", pilot, "--parallel", "4", "--target", "tyrell-tanks", "tanks-shell-lifecycle-test")
     results.append(ctest(pilot, work, {"tanks-shell-lifecycle"}, pattern="^tanks-shell-lifecycle$"))
+    beacon = work / "beacon-native"
+    beacon_flags = ("-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DENET_SOURCE_DIR=" + str(deps["enet"]),
+                    "-DTYRELL_GAME_BACKEND=NATIVE", "-DTYRELL_GAME_BUILD_RUNTIME=ON", "-DTYRELL_GAME_BUILD_NETWORK=ON",
+                    "-DTYRELL_GAME_BUILD_EXAMPLES=ON", "-DTYRELL_GAME_BUILD_TESTS=ON")
+    configure_build(ROOT / "packages/tyrell-game", beacon, *beacon_flags, "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    results.append(ctest(beacon, work, {"tyrell-game-independent-example", "tyrell-game-runtime-lifecycle",
+                                      "tyrell-game-native-lifecycle", "tyrell-beacon-disabled-entry",
+                                      "tyrell-beacon-cli-help", "tyrell-beacon-headless-render", "tyrell-beacon-cli-session"}))
+    executable = beacon / "tyrell-beacon-arena"
+    if not command(executable, "--help", capture=True).stdout.startswith("Tyrell Beacon Arena 0.1.2:"):
+        raise RuntimeError("Default Beacon artifact does not match its declared version")
+    raw = executable.read_bytes()
+    if len(raw) < 20 or raw[:6] != b"\x7fELF\x02\x01" or int.from_bytes(raw[18:20], "little") != 183:
+        raise RuntimeError("Default Beacon artifact is not an ARM64 ELF")
+    if b"GH0ST_SHELL_FD" in raw:
+        raise RuntimeError("Default Beacon artifact includes shell environment adoption")
+    artifacts = work / "native-artifacts"; artifacts.mkdir()
+    retained = artifacts / "tyrell-beacon-arena-0.1.2-arm64"
+    shutil.copyfile(executable, retained)
+    if digest(retained) != digest(executable): raise RuntimeError("Retained Beacon executable changed")
+    artifact = {"kind": "beacon-native-executable", "status": "passed", "version": "0.1.2", "architecture": "arm64",
+                "source_revision": revision, "path": str(retained.relative_to(ROOT)), "sha256": digest(retained),
+                "shell_link_enabled": False, "packaged": False, "installed": False, "hardware_qualified": False,
+                "physical_testing": "pending"}
+    (work / "a3-beacon-native.json").write_text(json.dumps(artifact, indent=2) + "\n")
+    results.append(artifact)
+    beacon_pilot = work / "beacon-native-shell"
+    command("cmake", "-S", ROOT / "packages/tyrell-game", "-B", beacon_pilot, "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_TESTING=ON", *beacon_flags, "-DTYRELL_ENABLE_SHELL_LINK=ON")
+    command("cmake", "--build", beacon_pilot, "--parallel", "4", "--target", "tyrell-beacon-arena", "tyrell-beacon-shell-lifecycle-test")
+    results.append(ctest(beacon_pilot, work, {"tyrell-beacon-shell-lifecycle"}, pattern="^tyrell-beacon-shell-lifecycle$"))
     return results
 
 
@@ -507,7 +557,8 @@ def export_evidence(work, suite):
     destination.mkdir(parents=True, exist_ok=True)
     selected = set(work.glob("*.json")) | set(work.glob("*-ctest.xml"))
     selected.update(work.glob("video*/a2-*.json"))
-    for directory in ("game", "game-desktop", "tanks", "tanks-shell", "tanks-native", "tanks-native-shell",
+    for directory in ("game", "game-desktop", "beacon-shell", "beacon-native", "beacon-native-shell",
+                      "tanks", "tanks-shell", "tanks-native", "tanks-native-shell",
                       "chess", "chess-native", "chess-native-shell"):
         selected.update((work / directory).rglob("a3-*.json"))
     for previews in work.glob("*/u1-previews"):
@@ -520,6 +571,7 @@ def export_evidence(work, suite):
     selected.update(work.glob("*/Testing/Temporary/LastTest.log"))
     selected.update(work.glob("packages/*.deb"))
     selected.update(work.glob("candidate-packages/*.deb"))
+    selected.update(work.glob("native-artifacts/*"))
     foundations = work / "foundations"
     for path in foundations.rglob("*"):
         if path.name in {"native-foundation.json", "build.log", "tests.txt", "session-tests.txt",
