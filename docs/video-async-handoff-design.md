@@ -1,16 +1,19 @@
 # Asynchronous Video handoff and helper ownership
 
-A2 design, revision 1, November 24, 2026. Status: **D1 foundation implemented;
-resource integration and qualification pending**. The
+A2 design, revision 1, November 24, 2026. Status: **D1 foundation and D2 standalone
+participants implemented; live resource integration and qualification pending**. The
 [decision record](../research/video-async-handoff-design.json) binds the inspected
 source, design invariants and future acceptance cases. It is not a runnable
 protocol, a release approval or a claim that those cases passed.
 
 The separate [D1 implementation](video-handoff-foundation.md) supplies the
 channel, trusted-launcher session, authority and durable ledger. Its adapters
-are inert and it is not installed into Video. The historical decision record's
+are inert and it is not installed into Video. The separate
+[D2 implementation](video-handoff-participants.md) adds actual VT/libpulse
+backends and a disposable worker/stop-post harness; it does not admit live
+hardware or install a service. The historical decision record's
 19 full integration cases remain unrun; D1 software coverage is recorded
-separately and does not open live admission.
+separately; D1/D2 software checks do not open live admission.
 
 ## Decision and compatibility boundary
 
@@ -23,8 +26,9 @@ quarantines the affected resources.
 This requires changes to a future shell as well as Tyrell. It cannot be added
 transparently to the [pinned Gh0st protocol 1](shell-link-status.md), whose roughly
 100 ms pause window may end in `SIGSTOP`. Video's existing admission guard stays
-closed. No new verb, inherited descriptor, service or package is implemented by
-this design. Normal M5 launching and current helpers retain their behavior.
+closed. The design record itself installs no service or package. D1/D2's
+separate implementation adds no environment adoption or live launch path.
+Normal M5 launching and current helpers retain their behavior.
 
 Use separate v2 endpoints and units for the managed path. Do not send commands
 on the legacy HDMI socket: it deliberately rejects every client byte. Do not
@@ -161,8 +165,10 @@ looked up on their authenticated authority channel.
 The welcome must arrive before any managed resource acquisition. Missing or
 incomplete negotiation, legacy protocol 1, malformed traffic or an adopted link
 lost during negotiation keeps media admission closed. No automatic downgrade
-is allowed after acquiring a resource. Exact parser and authority-channel
-authentication are the first implementation increment, not supplied here.
+is allowed after acquiring a resource. The exact parser and trusted app-channel
+bootstrap are supplied by [D1](video-handoff-foundation.md); D2 independently
+binds its disposable participant workers. Installed manager/service admission
+still needs D5 qualification.
 
 Progress phases are the fixed values `local`, `graph`, `display`, `audio` and
 `stop-post`. Failure codes are `unsupported`, `malformed`, `stale`, `busy`,
@@ -283,9 +289,12 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
    device adapters inert. The [foundation checks](video-handoff-foundation.md)
    exercise adversarial ordering with real sockets, processes and held inert
    backend work. Actual device completion still requires the following steps.
-2. Implement separate v2 VT and normal-user audio participants. Prove observable
-   completion, pending-load finality, cancellation, stop-post fencing and crash
-   recovery with disposable backends. Preserve legacy endpoints and privileges.
+2. **D2 standalone implementation:** separate v2 VT and normal-user audio
+   backends, write-ahead participant registration and worker/stop-post fencing.
+   [Disposable checks](video-handoff-participants.md) exercise completion,
+   pending-load finality, cancellation and crash uncertainty. Live admission,
+   installed service qualification and physical testing remain pending;
+   legacy endpoints and privileges are preserved.
 3. Add explicit managed KMS/LCD ownership/destructor policies and backend
    completion evidence. No independent old-epoch restoration may remain.
 4. Introduce the single-owner media actor and nonblocking control integration.
@@ -297,8 +306,9 @@ without a qualified cutoff/recovery path cannot advertise this managed mode.
 
 The [decision record](../research/video-async-handoff-design.json) lists concrete
 future integrated cases and expected refusals. They remain **not run for the
-complete design**. D1 tests exercise its actual modules; existing legacy-helper
-checks and inert actors cannot validate the future managed resource paths.
+complete design**. D1/D2 tests exercise their actual modules and disposable
+backends; legacy checks and disposable fixtures cannot validate the future
+integrated managed resource paths.
 
 Before admission, require delayed/blocked graph teardown, input/render drain,
 late helper creation, acquisition cancellation, pending audio load, cleanup
@@ -310,4 +320,4 @@ production call paths; a toy state model is insufficient.
 Physical playing/paused LCD/HDMI, preroll/seek/track/caption/output transitions,
 missing HDMI, audio/VT restoration, native launch/return and responsiveness
 remain pending. Current Video 0.1.9, package approvals, image inputs and their
-historical evidence remain unchanged by the separate D1 foundation.
+historical evidence remain unchanged by the separate D1/D2 implementation.

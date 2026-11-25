@@ -1,4 +1,4 @@
-"""Durable draft-2 ownership authority. All resource adapters are inert in D1.
+"""Durable draft-2 authority for inert and explicitly disposable trials only.
 
 Bootstrap and participant methods are trusted coordinator APIs, not peer verbs.
 The app channel can report only its own local completion. No device, process
@@ -69,10 +69,10 @@ def validate_state(state):
     """Reject corrupt/unsupported snapshots rather than inventing empty state."""
     try:
         require(isinstance(state, dict) and set(state) == {
-            "schema", "kind", "mode", "incarnation", "next_epoch", "next_request", "apps", "leases", "active_lease"},
+            "schema", "kind", "mode", "incarnation", "next_epoch", "next_request", "apps", "leases", "active_lease", "participants"},
             "invalid authority state fields")
-        require(type(state["schema"]) is int and state["schema"] == 1 and
-                state["kind"] == "tyrell-handoff-authority" and state["mode"] == "inert", "unsupported authority state")
+        require(type(state["schema"]) is int and state["schema"] == 2 and
+                state["kind"] == "tyrell-handoff-authority" and state["mode"] in ("inert", "disposable-v2"), "unsupported authority state")
         require(identifier(state["incarnation"]), "invalid authority incarnation")
         require(integer(state["next_epoch"]) and integer(state["next_request"]), "exhausted or invalid authority counters")
         require(isinstance(state["apps"], dict) and len(state["apps"]) <= MAX_APPS, "invalid app registry")
@@ -115,13 +115,15 @@ def validate_state(state):
         require(active is None or (active in state["leases"] and state["leases"][active]["state"] != "RELEASED"), "invalid active lease")
         require(sum(lease["state"] != "RELEASED" for lease in state["leases"].values()) <= 1, "overlapping composite owners")
         require(all(name == active or lease["state"] == "RELEASED" for name, lease in state["leases"].items()), "untracked outstanding lease")
+        from handoff_participant_state import validate_participants
+        validate_participants(state)
     except (KeyError, TypeError) as error:
         raise AuthorityError("malformed authority state") from error
     return state
 
 
 class Authority:
-    """Serialized durable ownership decisions for inert adapters only."""
+    """Serialized durable decisions; no live hardware profile is admitted."""
     live_hardware_admission = False
 
     def __init__(self, ledger, clock=time.monotonic_ns):
@@ -134,10 +136,11 @@ class Authority:
         self._poisoned = False
 
     @classmethod
-    def create(cls, directory, *, clock=time.monotonic_ns):
-        initial = {"schema": 1, "kind": "tyrell-handoff-authority", "mode": "inert",
+    def create(cls, directory, *, clock=time.monotonic_ns, disposable=False):
+        require(type(disposable) is bool, "explicit disposable profile required")
+        initial = {"schema": 2, "kind": "tyrell-handoff-authority", "mode": "disposable-v2" if disposable else "inert",
                    "incarnation": fresh_id(set()), "next_epoch": 1, "next_request": 1,
-                   "apps": {}, "leases": {}, "active_lease": None}
+                   "apps": {}, "leases": {}, "active_lease": None, "participants": {}}
         return cls(Ledger.create(directory, initial), clock)
 
     @classmethod
@@ -148,6 +151,9 @@ class Authority:
             state = copy.deepcopy(authority._state)
             previous = {state["incarnation"], *(lease["incarnation"] for lease in state["leases"].values())}
             state["incarnation"], state["apps"] = fresh_id(previous), {}
+            for participant in state["participants"].values():
+                if participant["phase"] != "fenced":
+                    participant["phase"] = "unknown"
             for lease in state["leases"].values():
                 if lease["state"] == "RELEASED":
                     continue
@@ -257,8 +263,16 @@ class Authority:
 
     def grant_inert(self, app):
         """Issue a control-plane test lease; this cannot authorize hardware."""
+        return self._grant(app, "inert")
+
+    def grant_disposable(self, app):
+        """Explicit D2 disposable backend profile, never live hardware."""
+        return self._grant(app, "disposable-v2")
+
+    def _grant(self, app, mode):
         with self._lock:
             self._expire()
+            require(self._state["mode"] == mode, "grant/profile mismatch")
             record = self._app(app)
             require(record["negotiated"], "negotiate before any grant")
             require(self._state["active_lease"] is None, "ownership barrier is not empty")
@@ -272,7 +286,7 @@ class Authority:
                 "actors": {app.instance: {"kind": "app", "released": False}}, "operations": {},
                 "local_done": False, "checkpoint": None, "quiesce": None, "cancelled": False}
             state["active_lease"] = lease_id
-            self._commit(state, "inert-grant", lease=lease_id)
+            self._commit(state, "inert-grant" if mode == "inert" else "disposable-v2-grant", lease=lease_id)
             return Message("grant", (app.incarnation, app.instance, str(epoch), str(request), lease_id))
 
     def _owned(self, app, lease_id):

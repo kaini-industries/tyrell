@@ -1,11 +1,14 @@
 # Video handoff foundation
 
-A2-D1, November 24, 2026. The separate `TVH2` channel, ownership authority and
+A2-D1, November 24, 2026. This page records the foundation increment. The separate `TVH2` channel, ownership authority and
 durable ledger are implemented in
 [`packages/tyrell-video-handoff`](../packages/tyrell-video-handoff/README.md).
 These are actual reusable Python modules exercised with SQLite, Unix sockets
 and processes. Resource adapters remain inert. Nothing is installed, activated
 or connected to Video by this increment, and physical testing remains pending.
+The later [D2 participant implementation](video-handoff-participants.md) adds
+standalone VT/libpulse backends and a disposable worker harness. Its required
+profile, schema and recovery boundaries are separate from D1's inert grants.
 
 ## Deployment and trust boundary
 
@@ -14,7 +17,8 @@ The foundation follows the
 Gh0st protocol 1 or change `GH0ST_SHELL_FD`. There is no default endpoint,
 environment-based adoption, service unit, daemon, device operation or automatic
 fallback. `Authority.live_hardware_admission` is `False`, and its persisted mode
-is `inert`. Only `grant_inert()` exists. A successful inert handoff is not a
+is `inert` on the D1 control path. D2 adds an explicitly selected
+`disposable-v2` profile and grant for disposable backend validation. A successful inert handoff is not a
 hardware ownership grant or an approval to enable Video playback.
 
 A trusted normal-user coordinator constructs `Session` with an app instance,
@@ -38,7 +42,8 @@ wire field or an environment variable. App IDs, epochs and receipts correlate
 transactions; they are not credentials. `App` and `Actor` objects are opaque
 in-process coordinator capabilities. The app channel cannot register helpers,
 complete their operations or issue an authority release receipt. Service/cgroup
-qualification and real helper authentication remain D2 work. This cooperating
+qualification and installed helper authentication remain D5 work; D2 binds its
+disposable worker identities separately. This cooperating
 client contract does not confine arbitrary same-user code or serialize root
 and administrator device changes.
 
@@ -92,6 +97,11 @@ capabilities, quarantines outstanding leases and changes pending operations to
 poison the running authority, including cached receipt queries; an uncertain
 commit cannot return a new permit or successful release.
 
+Current authority snapshots use schema 2 for D2 participant state. Earlier D1
+schema-1 snapshots are refused without rewriting or automatic upgrade. The D1
+test results below are historical evidence for that source increment, not a
+live migration or approval to discard an old ledger.
+
 There is no D1 reset, migration, pruning or quarantine-clear API. An unresolved
 barrier stays blocked until a later qualified reconciliation design establishes
 backend finality. Deleting the ledger or resetting counters would erase that
@@ -121,7 +131,7 @@ successful cleanup.
 
 ## Validation and remaining work
 
-All 65 foundation tests passed on Linux with zero skips: 7 protocol, 14 channel,
+At D1, all 65 foundation tests passed on Linux with zero skips: 7 protocol, 14 channel,
 16 ledger, 19 authority and 9 session cases. The run used Python 3.11 in the
 cached `node:24.21.0-bookworm` container, running as UID/GID 65534 with networking
 disabled, all capabilities dropped, no-new-privileges, a read-only root and
@@ -147,9 +157,10 @@ pending for full integration. D1 evidence does not qualify real helper cleanup,
 pending audio-load finality, KMS/fbdev completion, graph teardown, privacy cutoff,
 legacy coexistence, shell integration or target storage power loss.
 
-D2 is next: separately versioned VT and normal-user audio participants with
-qualified backend completion, cancellation, stop-post fencing and recovery.
-Managed display policies, the single-owner media actor and shell integration
+D2 now supplies separately versioned VT and normal-user audio backends,
+disposable completion/cancellation checks and durable worker/stop-post fencing;
+see its [implementation boundary](video-handoff-participants.md). D3 managed
+display policies, the single-owner media actor and shell integration
 follow before admission. Current Video, legacy helper privileges/endpoints,
 M5 compatibility, image inputs and package approvals are unchanged. Physical
 playing/paused, LCD/HDMI, audio/VT restoration and launch/return testing remain

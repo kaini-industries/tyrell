@@ -36,16 +36,20 @@ def _supported():
 class Channel:
     """Own one validated FD. Queue acceptance is never peer delivery evidence."""
 
-    def __init__(self, endpoint, expected_uid, expected_pid):
+    def __init__(self, endpoint, expected_uid, expected_pid, *, codec=None):
         self._socket = endpoint
         self._expected_uid = expected_uid
         self._expected_pid = expected_pid
         self._queue = deque()
         self._lost = False
         self._error = None
+        self._encode = encode_packet if codec is None else codec.encode
+        self._parse = parse_packet if codec is None else codec.parse
+        self._maximum = MAX_PACKET_BYTES if codec is None else codec.maximum
 
     @classmethod
-    def adopt(cls, fd: int, *, expected_uid: int, expected_pid: int):
+    def adopt(cls, fd: int, *, expected_uid: int, expected_pid: int,
+              expected_creator_uid=None, codec=None):
         """Transfer an exclusively owned FD only after validation.
 
         Socketpair SO_PEERCRED identifies its creator, possibly not the child
@@ -53,6 +57,12 @@ class Channel:
         Adopt receivers before allowing senders to start: queued packets lacking
         credentials are deliberately rejected rather than retroactively trusted.
         """
+        if expected_creator_uid is None:
+            expected_creator_uid = expected_uid
+        if (type(expected_creator_uid) is not int or not 0 <= expected_creator_uid <= 0xffffffff or
+                (codec is not None and (not callable(codec.encode) or not callable(codec.parse) or
+                 type(codec.maximum) is not int or not 1 <= codec.maximum <= 4096))):
+            raise ChannelError("invalid trusted creator or codec")
         if not _supported():
             raise ChannelUnsupported("TVH2 channels require Linux per-message credentials")
         if socket.getdefaulttimeout() is not None:
@@ -74,7 +84,7 @@ class Channel:
             probe.getpeername()
             credentials = probe.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, _CREDENTIAL.size)
             pid, uid, _gid = _CREDENTIAL.unpack(credentials)
-            if pid <= 0 or uid != expected_uid:
+            if pid <= 0 or uid != expected_creator_uid:
                 raise ChannelError("socket creator credentials do not match the trusted user")
             old_passcred = probe.getsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED)
             old_fdflags = fcntl.fcntl(fd, fcntl.F_GETFD)
@@ -101,7 +111,7 @@ class Channel:
             finally:
                 endpoint.detach()
             raise ChannelError("cannot configure the validated handoff endpoint") from error
-        return cls(endpoint, expected_uid, expected_pid)
+        return cls(endpoint, expected_uid, expected_pid, codec=codec)
 
     @property
     def fd(self):
@@ -141,7 +151,7 @@ class Channel:
     def send(self, message: Message) -> bool:
         if self._lost:
             return False
-        packet = encode_packet(message)
+        packet = self._encode(message)
         if len(self._queue) >= MAX_QUEUED_PACKETS:
             return False
         self._queue.append(packet)
@@ -171,7 +181,7 @@ class Channel:
         ancillary_size = socket.CMSG_SPACE(_CREDENTIAL.size) + socket.CMSG_SPACE(16 * array.array("i").itemsize)
         try:
             data, ancillary, flags, _address = self._socket.recvmsg(
-                MAX_PACKET_BYTES, ancillary_size,
+                self._maximum, ancillary_size,
                 socket.MSG_DONTWAIT | socket.MSG_CMSG_CLOEXEC)
         except (BlockingIOError, InterruptedError):
             return None
@@ -204,8 +214,8 @@ class Channel:
             self._fail("sender-identity-mismatch")
             return None
         try:
-            return parse_packet(data)
-        except ProtocolError:
+            return self._parse(data)
+        except ValueError:
             self._fail("malformed-control-packet")
             return None
 

@@ -76,7 +76,7 @@ def require_tools(*names):
 
 def tool_versions():
     versions = {}
-    for name in ("cmake", "ctest", "c++", "dpkg", "ffmpeg", "gst-inspect-1.0"):
+    for name in ("cmake", "ctest", "c++", "dpkg", "ffmpeg", "gst-inspect-1.0", "pulseaudio"):
         if shutil.which(name):
             result = subprocess.run([name, "--version" if name != "ffmpeg" else "-version"],
                                     capture_output=True, text=True, timeout=10)
