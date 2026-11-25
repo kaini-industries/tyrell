@@ -289,4 +289,6 @@ class Participants:
                 for borrower in state["participants"][capability.actor.identifier]["display"]["borrowers"].values():
                     if borrower["state"] == "PENDING":
                         borrower["state"] = "UNKNOWN"
+                        if borrower.get("media") is not None:
+                            borrower["media"]["phase"] = "unknown"
             owner._commit(state, "v2-worker-lost-unknown", participant=capability.actor.identifier)

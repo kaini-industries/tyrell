@@ -8,6 +8,9 @@ uninstalled and disconnected from Video, its existing helpers and every image
 recipe. Physical testing remains pending.
 The later [D3 display increment](video-managed-display.md) adds separate native
 KMS/LCD ownership APIs and durable dependencies; it does not open live admission.
+The [D4 media increment](video-media-actor.md) adds a single-owner graph actor,
+borrowed UI control pilot and durable media permits. The D2 helper backends
+remain separate from that LCD/fake-audio pilot.
 
 ## Admission and trusted bootstrap
 
@@ -157,8 +160,9 @@ needs qualified backend finality or a separately controlled baseline recovery.
 ## Schema, restart and validation
 
 The D2 snapshot was schema 2, with participant generations, operation
-bindings, evidence and stop-post state. D3 now uses schema 3 for display borrowers
-and exact VT dependencies. Existing schema-1/schema-2 ledgers are refused
+bindings, evidence and stop-post state. D3 introduced schema 3 for display
+borrowers and exact VT dependencies; D4 now uses schema 4 for media-producer
+evidence as well. Existing schema-1 through schema-3 ledgers are refused
 without rewriting or automatic upgrade. They must not be deleted or recreated
 to bypass an outstanding barrier. New disposable tests initialize their own
 private ledger; there is no live migration or quarantine-clear API.
@@ -188,6 +192,8 @@ The 19 full cases in the original
 complete integration. Disposable audio finality and wrapped VT calls do not
 qualify HDMI sound, KMS/fbdev completion, graph teardown, privacy cutoff or
 physical launch/return. D3's [managed display policies](video-managed-display.md)
-now have separate native/authority coverage; D4 media control and D5
-shell/package/device integration remain next. Video's guard remains
+now have separate native/authority coverage. D4's
+[media actor/control pilot](video-media-actor.md) adds actual LCD/fake-audio
+graph and durable producer coverage. D5 qualified shell/package/device
+integration is next. Video's guard remains
 closed and physical testing remains pending.

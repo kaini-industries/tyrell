@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -121,6 +122,26 @@ struct PlaybackResources {
     }
 };
 
+struct ManagedGraphBinding {
+    std::uint64_t epoch = 0;
+    std::string resource, generation;
+};
+
+// Facts from this one graph-owning worker, not an authority release receipt.
+// The backend hook must qualify finality beyond NULL/local object disposal.
+struct GraphDrainEvidence {
+    ManagedGraphBinding binding;
+    std::string operation;
+    std::uint64_t graph_serial = 0;
+    std::uint64_t callbacks_started = 0, callbacks_completed = 0;
+    std::uint64_t active_callbacks = 0, callback_contexts = 0, live_objects = 0;
+    bool pipeline_finalized = false;
+    bool local_handles_released = false;
+    bool legacy_helpers_unused = false;
+    std::string finality_receipt;
+    std::string json() const;
+};
+
 struct PlaybackOptions {
     // Explicit test-only audio output; normal playback always uses PulseAudio.
     bool fake_audio = false;
@@ -131,6 +152,14 @@ struct PlaybackOptions {
     // Override only for an alternate desktop integration or a controlled test
     // lease server. The normal application uses the installed system socket.
     std::string desktop_handoff_socket = "/run/tyrell-video-hdmi.sock";
+    // Explicit disposable graph policy; never inferred from an environment
+    // variable. D4 admits fake-audio LCD graphs only and refuses legacy helper,
+    // HDMI/DRM and user audio-session access. Live integration remains gated.
+    std::optional<ManagedGraphBinding> managed_graph;
+    std::function<std::string(const GraphDrainEvidence&)> graph_finality;
+    // Controlled synchronization inside the actual streaming callback. Tests
+    // use this to hold accepted work; it is absent in normal operation.
+    std::function<void()> managed_sample_hook;
 };
 
 // Call control methods and poll() on the UI thread. GStreamer streaming threads
@@ -167,6 +196,12 @@ public:
     bool suspended() const;
     std::optional<PlaybackCheckpoint> checkpoint() const;
     PlaybackResources resources() const;
+    std::optional<GraphDrainEvidence> drain_graph(const std::string& operation);
+    std::optional<GraphDrainEvidence> graph_drain_evidence() const;
+    // Trusted coordinator only, after a fresh authority grant. Rebind is
+    // accepted only while fully drained/suspended; checkpoint/retry state is
+    // retained and resume() performs the rebuild on the same owner thread.
+    bool rebind_managed_graph(const ManagedGraphBinding& binding);
     void stop();
     std::string diagnostics_json() const;
 

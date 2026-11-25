@@ -140,7 +140,19 @@ temporary root and drops to a normal user. No app package or helper is installed
 The current Video source boundary includes the handoff modules consumed by these
 checks; retained package/device evidence is unchanged. Native facts and the
 display-to-VT dependency results are retained in `a2-d3-managed-display.json`.
-Physical driver finality and GStreamer graph integration remain pending.
+Physical driver finality remains pending.
+
+A2-D4 adds required `video-media-graph`, `video-media-actor`, `video-media-ui`
+and `video-media-authority` groups. The [media actor](video-media-actor.md)
+checks use the production GStreamer graph, actual App/LVGL with a controlled
+backend, and fixed native producers connected to the durable authority. They
+hold real streaming callbacks and independent finality, preserve a parked
+checkpoint across a fresh authority grant, and refuse uncertain release.
+Exact command payloads are checked before native dispatch; event prefixes are
+acknowledged only after journal commits. The native authority trial also drops
+to a normal user when CI builds as root. Source-bound actor, UI and coordinator
+reports are retained as `a2-d4-*.json`. Managed HDMI, live shell/service
+integration, device finality and physical testing remain pending.
 
 ## Workflow selection and evidence
 

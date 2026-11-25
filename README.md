@@ -94,7 +94,11 @@ channel, authority and durable ledger. The separate
 and disposable worker validation. [A2-D3 managed display APIs](docs/video-managed-display.md)
 add explicit KMS/LCD ownership, independent producer barriers and completion
 checks. The normal M5 path keeps its existing policy; the managed launch path
-and existing admission guard remain closed. Physical testing remains pending.
+and existing admission guard remain closed. [A2-D4's media actor](docs/video-media-actor.md)
+now owns the real graph lifecycle, with a borrowed UI control pilot and durable
+media permits. Its LCD/fake-audio software fixtures do not qualify live device
+handoff. Qualified shell/package/device integration is next; physical testing
+remains pending.
 
 ARM64 package snapshots are retained in [`dist/`](dist/README.md), with checksums,
 source provenance and test results. Video 0.1.7 is qualified for the tested
@@ -254,8 +258,9 @@ disabled in normal M5 builds, with fake-shell ownership checks.
 A1 adds [Status's event-driven native idle loop](docs/status-idle-loop.md), with
 separate software measurements and physical acceptance still pending.
 A2 adds [Video checkpoints and lifecycle admission checks](docs/video-checkpoint-lifecycle.md).
-Live media integration remains gated by pipeline teardown and asynchronous
-HDMI/audio/VT ownership completion.
+The [single-owner media actor and control pilot](docs/video-media-actor.md) add
+actual graph-drain accounting. Live media remains gated by qualified shell,
+display/audio/VT finality and package/device acceptance.
 A3 adds [GameRuntime hooks and an offline Chess lifecycle policy](docs/game-chess-lifecycle.md),
 with native ownership, clock, AI and save-failure checks. Its experimental shell
 build is separate from normal M5 packages; physical acceptance and lifecycle

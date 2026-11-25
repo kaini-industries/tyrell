@@ -151,7 +151,10 @@ and conservative quarantine. The separate
 authority and durable ledger with inert resource adapters. The separate
 [D2 participants](video-handoff-participants.md) and
 [D3 managed display APIs](video-managed-display.md) now supply helper and
-display ownership foundations. Actual media and shell integration, qualified
+display ownership foundations. [D4's media actor and control pilot](video-media-actor.md)
+now own actual graph calls, checkpoint capture/drain and fresh-binding rebuild
+for LCD/fake-audio fixtures. Retry and checkpoint fields are preserved; this does
+not qualify HDMI fallback. Qualified D5 shell/package/device integration,
 driver finality and physical acceptance remain pending. These software
 checks do not qualify device completion or live playback; the current guard
 and normal M5 behavior remain intact. Physical testing remains pending.

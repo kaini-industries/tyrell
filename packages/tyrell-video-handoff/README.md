@@ -8,8 +8,11 @@ describe their trust boundary and validation. A2-D2 adds separately versioned
 backends and an explicitly disposable worker harness.
 The [D3 display increment](../../docs/video-managed-display.md) adds native
 managed KMS/LCD APIs and independent durable display borrowers and VT dependencies.
+The [D4 media increment](../../docs/video-media-actor.md) connects the actual
+media actor's graph facts to an independent borrower and durable command permits.
 
-The modules are not installed or connected to Video, a launcher or any helper.
+The modules are not installed into a launcher or helper service. D4's explicitly
+injected Video control pilot uses a trusted coordinator; it is not a live launch path.
 `Authority.live_hardware_admission` remains `False`. An inert `grant` exercises
 only the control contract; it cannot authorize
 LCD, input, DRM, VT, GStreamer or audio access. Video's existing playback guard,
@@ -30,6 +33,7 @@ controlled VT/display fixtures. Production HDMI/manager-console admission stays 
 | `handoff_vt.py` | Fixed manager-console scope, effective VT completion and conservative refusal. |
 | `handoff_audio.py` | Original-context libpulse load completion, exact owned unload and absence readback. |
 | `handoff_display_state.py` | Independent graph/flush borrowers and exact display-to-VT completion dependencies. |
+| `handoff_media_state.py` | Exact media permits, native graph evidence, parked epoch fences and final producer fencing/reaping. |
 
 The trusted coordinator supplies the registered app instance, UID, PID and
 exclusively owned inherited descriptor. A wire packet or environment variable
@@ -38,8 +42,8 @@ capabilities, not peer credentials. Helper registration and completion APIs must
 not be exposed as app commands.
 
 Use `Authority.create(new_directory)` only for explicit first initialization;
-use `Authority.open(existing_directory)` to reopen it. Schema 3 refuses earlier
-schema-1 and schema-2 snapshots without rewriting or automatic upgrade. Reopening creates a new
+use `Authority.open(existing_directory)` to reopen it. Schema 4 refuses earlier
+schema-1 through schema-3 snapshots without rewriting or automatic upgrade. Reopening creates a new
 incarnation and retains unresolved ownership as quarantined, with pending
 operations marked unknown. No API clears quarantine, discards history or
 recreates missing/corrupt state. Do not delete a ledger to resolve a blocked
@@ -65,5 +69,8 @@ D2's Linux group passed 119 tests with zero skips. Current required-suite and
 native display results are retained separately in CI evidence.
 This evidence does not qualify physical resource cleanup, a maximum device teardown
 time or power-cut durability. The 19 full integration cases in the original
-design record remain pending. D3 supplies separate managed display policies;
-D4 media integration and physical testing remain pending.
+design record have not all passed. D3 supplies separate managed display policies;
+D4 adds actual graph/actor/control and native-authority fixtures with LCD frame
+capture and fake audio. Every dispatched media permit remains held until graph
+drain plus a positive parked epoch fence, or final process fencing and reaping.
+Qualified D5 shell/package/device integration and physical testing remain pending.

@@ -6,6 +6,7 @@
 #include "lcd_commit.h"
 #include "outputs.h"
 #include "playback.h"
+#include "player_control.h"
 #include "lvgl.h"
 #if TYRELL_EXPERIMENTAL_SHELL_GUARD && defined(__linux__)
 #include <tyrell/app/shell_link.hpp>
@@ -152,7 +153,8 @@ struct App {
     Browser browser;
     std::function<std::uint32_t()> ui_clock;
     std::uint64_t input_epoch = 1;
-    std::unique_ptr<Playback> playback;
+    std::uint64_t playback_epoch = 0;
+    std::unique_ptr<PlayerControl> playback;
     Status status;
     Page page = Page::Browser, previous_page = Page::Browser;
     bool preview = false, rebuild = true, controls = true;
@@ -185,8 +187,9 @@ struct App {
         if(!playback) return;
         auto file = fs::absolute(path);
         seen_error.clear(); error.clear(); local_notice.clear();
-        const auto subtitles = matching_srt(file);
+        const auto subtitles = playback->asynchronous() ? std::string{} : matching_srt(file);
         if(!playback->load(file.string(), subtitles)) {
+            if(playback->asynchronous()) { notice("Player is busy; try again.");return; }
             const auto first = playback->status();
             if(first.output == Output::Hdmi && playback->set_output(Output::Lcd) && playback->load(file.string(), subtitles)) {
                 notice("HDMI unavailable; playing on LCD");
@@ -195,7 +198,7 @@ struct App {
         status = playback->status(); change_page(Page::Player);
     }
     void back_to_browser() {
-        if(playback) playback->stop();
+        if(playback && !playback->stop()) { notice("Player is busy; try again.");return; }
         frame_image.clear(image);
         status = {}; seen_error.clear(); error.clear(); local_notice.clear();
         change_page(Page::Browser);
@@ -220,7 +223,7 @@ struct App {
     }
     void audio_sinks() {
         std::vector<MenuItem> result = {{"Automatic (match video output)", MenuAction::AudioSink, -1, ""}};
-        for(const auto& sink : inspect_outputs().audio) {
+        for(const auto& sink : playback ? playback->available_audio_sinks() : inspect_outputs().audio) {
             if(sink.available) result.push_back({display_text(sink.description.empty() ? sink.name : sink.description), MenuAction::AudioSink, -1, sink.name});
         }
         show_menu("SOUND OUTPUT", std::move(result));
@@ -244,7 +247,7 @@ struct App {
         const auto item = items[selection];
         bool ok = true;
         if(item.action == MenuAction::Folder) {
-            if(playback) playback->stop();
+            if(playback && !playback->stop()) { notice("Player is busy; try again.");return; }
             if(browser.open_directory(item.value)) change_page(Page::Browser); else show_error(browser.error());
             return;
         }
@@ -258,6 +261,7 @@ struct App {
         if(!ok) notice(status.error.empty() ? "Selection unavailable" : status.error);
     }
     void key(std::uint32_t code, bool repeated = false) {
+        if(playback && !playback->input_allowed()) return;
         const auto available = commands();
         const auto* command = tyrell::app::find_command(available, static_cast<int>(code), repeated);
         if(!command || !command->enabled) {
@@ -380,6 +384,7 @@ struct App {
         lv_obj_move_foreground(top); lv_obj_move_foreground(bottom);
     }
     void render() {
+        if(playback && !playback->render_allowed()) return;
         if(rebuild) { build(); if(preview && page == Page::Player && image) draw_preview_video(); }
         if(page == Page::Browser) {
             set_label(footer, tyrell::app::footer(commands(), {Action::Open, Action::Folders, Action::Help, Action::Quit}));
@@ -428,12 +433,18 @@ struct App {
     void poll() {
         if(playback) {
             playback->poll();
+            if(playback->render_allowed() && playback_epoch != playback->control_epoch()) {
+                playback_epoch = playback->control_epoch(); ++input_epoch;
+                frame_image.clear(image); rebuild = true;
+            }
             const auto fresh = playback->status();
             if(fresh.output != status.output && page == Page::Player) rebuild = true;
             if(fresh.output != status.output || fresh.playing != status.playing) {
                 controls = true; controls_at = ui_clock();
             }
             status = fresh;
+            const auto notice_message = playback->take_notice();
+            if(!notice_message.empty()) notice(notice_message);
             if(!status.error.empty() && status.error != seen_error) show_error(status.error);
         }
         if(!local_notice.empty() && ui_clock() - notice_at > 6000) local_notice.clear();
@@ -713,7 +724,10 @@ int gui(const Options& options) {
         }
         if(options.page == "error") app.show_error("This file needs a video decoder that is not installed, or could not be opened.");
     } else {
-        app.playback = std::make_unique<Playback>(PlaybackOptions{false, !options.simulator, !options.simulator});
+        PlaybackOptions playback_options;
+        playback_options.desktop_handoff = !options.simulator;
+        playback_options.automatic_hdmi_audio = !options.simulator;
+        app.playback = std::make_unique<DirectPlayerControl>(std::move(playback_options));
         if(options.output == "hdmi") app.playback->set_output(Output::Hdmi);
         else if(options.output == "auto" && !options.simulator) {
             const auto inventory = inspect_outputs(false);
