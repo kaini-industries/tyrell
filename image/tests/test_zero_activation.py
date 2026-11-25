@@ -27,8 +27,8 @@ class ActivationTests(unittest.TestCase):
         self.root = self.base / "root"
         self.root.mkdir()
         self.owner = os.getuid()
-        self.packages = {"applaunch": "0.6.105", "greetd": "0.10.3-4",
-                         "tyrell-zero-session": "0.3.0-1", "tyrell-zero-store": "0.1.0-1",
+        self.packages = {"applaunch": "0.6.111", "greetd": "0.10.3-4",
+                         "tyrell-zero-session": "0.3.1-1", "tyrell-zero-store": "0.1.1-1",
                          "tyrell-zero-power-policy": "0.1.0-1", "tyrell-status": "0.1.0-1"}
         self.put("/var/lib/dpkg/status", "fixture Debian database\n")
         self.put("/var/lib/dpkg/diversions", activation.STORE.PUBLIC + "\n" + activation.STORE.ORIGINAL + "\ntyrell-zero-store\n")
@@ -81,6 +81,24 @@ class ActivationTests(unittest.TestCase):
                            source_qualification_sha256=hashlib.sha256(self.source_path.read_bytes()).hexdigest(),
                            qualification={"scope": "disposable-offline-runtime-root", "assembled_image_qualified": False,
                                           "hardware_qualified": False})
+        self.resize_unit = "/usr/lib/systemd/system/rpi-resize.service"
+        self.resize_dropin = "/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf"
+        self.resize_link = "/etc/systemd/system/sysinit.target.wants/rpi-resize.service"
+        self.diskid_link = "/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service"
+        for name, content in {
+                self.resize_unit: "[Unit]\nConditionFirstBoot=yes\n[Service]\nExecStartPost=/usr/bin/systemctl disable %n\n",
+                self.resize_dropin: "[Unit]\nWants=\nWants=first-boot-complete.target\n",
+                "/usr/lib/systemd/system/cardputerzero-diskid.service": "[Unit]\nConditionPathExists=!/var/lib/cardputerzero/diskid-randomized\n",
+                "/usr/lib/cardputerzero/randomize-disk-id": "synthetic disk ID helper\n"}.items():
+            self.put(name, content)
+            self.compat["configuration_files"][name] = self.sha(name)
+        for name, target in {
+                self.resize_link: self.resize_unit,
+                self.diskid_link: "/usr/lib/systemd/system/cardputerzero-diskid.service",
+                "/etc/systemd/system/fstrim.timer": "/dev/null"}.items():
+            link = self.root / name.lstrip("/");link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(target)
+            self.compat["configuration_files"][name] = {"symlink": target}
         self.compat_path = self.base / "compat.json"
         self.save_compat()
         self.metadata = dict(profile_id="tyrell-zero", stages=["stage0", "stage1", "stage2"],
@@ -115,6 +133,17 @@ class ActivationTests(unittest.TestCase):
     def assert_unpublished(self):
         self.assertFalse((self.root / activation.RECEIPT.lstrip("/")).exists())
 
+    def store_invariants(self):
+        # Use the real runtime invariant check with a synthetic package query;
+        # this fixture never runs an APT/dpkg transaction or boots the image.
+        guard_module = sys.modules[activation.STORE.Root.__module__]
+        guard = object.__new__(guard_module.Guard)
+        guard.root = activation.STORE.Root(self.root, self.owner)
+        with patch.object(guard, "installed", side_effect=lambda name: {
+                "installed": name in self.packages, "version": self.packages.get(name)}), \
+                patch.object(guard_module, "VENDOR_SHA", self.source["assets"]["store_original"]["sha256"]):
+            return guard.invariants()
+
     def test_qualified_root_activates_and_store_baseline_precedes_session_receipts(self):
         result = self.activate()
         self.assertTrue(result["complete"])
@@ -122,6 +151,11 @@ class ActivationTests(unittest.TestCase):
         self.assertEqual(result["locks_sha256"], self.metadata["locks_sha256"])
         for unit in (*activation.SYSTEM_MASKS, "lightdm.service", "display-manager.service"):
             self.assertEqual(os.readlink(self.root / "etc/systemd/system" / unit), "/dev/null")
+        self.assertIn("applaunch-apps-updater.service", activation.SYSTEM_MASKS)
+        self.assertNotIn("applaunch-apt-update.service", activation.SYSTEM_MASKS)
+        self.assertEqual((self.root / activation.APPS_UPDATER_STATUS.lstrip('/')).read_text(), 'failed:incompatible\n')
+        self.assertEqual(json.loads((self.root / activation.UPDATE_POLICY.lstrip('/')).read_text())['vendor_app_updater'],
+                         'masked-unqualified')
         baseline = json.loads((self.root / activation.STORE.INVARIANTS.lstrip("/")).read_text())
         self.assertNotIn(activation.STATE.INTEGRATION, baseline["files"])
         self.assertNotIn(activation.STATE.QUALIFICATION, baseline["files"])
@@ -136,6 +170,55 @@ class ActivationTests(unittest.TestCase):
         self.assertIn("video:x:44:_greetd,native", (self.root / "etc/group").read_text())
         self.assertEqual((self.root / "etc/gshadow").stat().st_mode & 0o777, 0o640)
         self.assertEqual(self.activate(), result)
+
+    def test_only_self_removing_resize_link_is_excluded_from_runtime_store_invariants(self):
+        result = self.activate()
+        baseline = json.loads((self.root / activation.STORE.INVARIANTS.lstrip("/")).read_text())
+        self.assertIn(self.resize_link, result["files"])
+        self.assertNotIn(self.resize_link, baseline["files"])
+        self.assertTrue({self.resize_unit, self.resize_dropin, self.diskid_link}.issubset(baseline["files"]))
+        before = self.store_invariants()
+        (self.root / self.resize_link.lstrip("/")).unlink()
+        self.assertEqual(self.store_invariants(), before)
+        for name in (self.resize_unit, self.resize_dropin):
+            original = (self.root / name.lstrip("/")).read_text()
+            self.put(name, original + "tampered\n")
+            with self.assertRaisesRegex(activation.STORE.GuardError, "protected base file"):
+                self.store_invariants()
+            self.put(name, original)
+        link = self.root / self.diskid_link.lstrip("/");link.unlink()
+        link.symlink_to(self.resize_unit)
+        with self.assertRaisesRegex(activation.STORE.GuardError, "protected base link"):
+            self.store_invariants()
+
+    def test_initial_resize_link_remains_required_before_activation(self):
+        (self.root / self.resize_link.lstrip("/")).unlink()
+        with self.assertRaises(FileNotFoundError):self.activate()
+        self.assert_unpublished()
+
+    def test_initial_resize_link_cannot_be_omitted_from_captured_configuration(self):
+        del self.compat["configuration_files"][self.resize_link]
+        self.save_compat()
+        with self.assertRaisesRegex(activation.ActivationError, "initial boot link closure"):
+            self.activate()
+        self.assert_unpublished()
+
+    def test_retained_first_boot_state_is_rejected_without_publication_or_runtime_cleanup(self):
+        static = self.put("/dev/static", "preserve on failed preflight")
+        for name in ("/var/lib/cardputerzero/diskid-state", "/var/lib/cardputerzero/diskid-randomized",
+                     "/var/lib/LaunchWizard/rootfs-expansion-attempted", "/etc/init.d/resize2fs_once",
+                     "/etc/rc3.d/S01resize2fs_once"):
+            with self.subTest(name=name):
+                path = self.put(name, "retained first-boot state\n")
+                with self.assertRaisesRegex(activation.ActivationError, "first-boot state"):
+                    activation.prepare_runtime(self.root, owner=self.owner)
+                self.assertEqual(static.read_text(), "preserve on failed preflight")
+                static.unlink()
+                with self.assertRaisesRegex(activation.ActivationError, "first-boot state"):
+                    self.activate()
+                self.assert_unpublished()
+                path.unlink()
+                static = self.put("/dev/static", "preserve on failed preflight")
 
     def test_mutated_dependency_fails_before_any_activation_write(self):
         self.put("/usr/lib/libfixture.so.1", "tampered")
@@ -317,7 +400,7 @@ class ActivationTests(unittest.TestCase):
 
     def test_vendor_userconfig_is_masked_removed_and_bound_in_final_receipts(self):
         folder = self.root / "etc/systemd/system/multi-user.target.wants"
-        folder.mkdir(parents=True)
+        folder.mkdir(parents=True, exist_ok=True)
         (folder / "userconfig.service").symlink_to("/usr/lib/systemd/system/userconfig.service")
         result = self.activate()
         self.assertFalse(os.path.lexists(folder / "userconfig.service"))

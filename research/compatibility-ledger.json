@@ -89,7 +89,7 @@
     {
       "id": "catalog-design",
       "path": "docs/qualified-catalog.md",
-      "sha256": "6b521861a7d9289be74c0b2f8980222b94738a1a47d614a8e6c04843a80bf27f"
+      "sha256": "1bb144a3450714af26d5948e2e248b17a83c9a93b10e56a21f0b9ff6e225cc48"
     },
     {
       "id": "catalog-validation",
@@ -270,8 +270,8 @@
       "id": "catalog-source",
       "component": "catalog",
       "kind": "current-source",
-      "version": "0.1.0",
-      "source_identity": "C1 discovery-only app/dependency boundary at 4712994ced0afbb5b1d937ed6b1a97e1f175d7d0; digest must match the checkout",
+      "version": "0.1.1",
+      "source_identity": "November 19 baseline refresh: discovery-only Catalog with rotated offline bootstrap seed bound to refreshed Store base; device compatibility remains untested; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-catalog",
@@ -279,7 +279,7 @@
         "packages/tyrell-zero-store/config",
         "locks/build-inputs.json"
       ],
-      "sha256": "ceee2d4dd93d2ca628da34ae1f1b499f934e4340673a1c75ce8327bbed5016a6"
+      "sha256": "533fcbe85c592b6245c0548a58f6966d9489c5c4898ace0a53457bed9c1f24bf"
     }
   ],
   "records": [

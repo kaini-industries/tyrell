@@ -152,6 +152,25 @@ def verify_repository(path):
             expected = packages[identity(entry)]
             if entry.get('Filename') != expected['file'] or entry.get('SHA256') != expected['sha256'] or int(entry.get('Size', -1)) != expected['bytes']:
                 raise ValueError('Frozen stage package index differs from byte lock: ' + stage)
+    if 'installed_stages' in lock:
+        # Candidate indices may retain build-only packages removed by the
+        # recipe. Optional stage0-2 final inventories bind that distinct set.
+        installed = lock['installed_stages']
+        if not isinstance(installed, dict) or not set(installed).issubset(STAGES[:3]):
+            raise ValueError('Invalid frozen installed stage map')
+        for stage, items in installed.items():
+            if not isinstance(items, list):
+                raise ValueError('Invalid frozen installed stage inventory: ' + stage)
+            candidates = {tuple(item) for item in lock['stages'][stage]}
+            names = set()
+            for item in items:
+                if (not isinstance(item, list) or len(item) != 3
+                        or not all(isinstance(value, str) and value for value in item)):
+                    raise ValueError('Invalid frozen installed stage identity: ' + stage)
+                key = tuple(item)
+                if key not in candidates or (key[0], key[2]) in names:
+                    raise ValueError('Ambiguous or missing frozen installed stage package: ' + stage)
+                names.add((key[0], key[2]))
     for stage in (*STAGES, 'trixie'):
         suite = path / 'dists' / stage
         expected_indices = {f'{component}/binary-{arch}/Packages{suffix}'

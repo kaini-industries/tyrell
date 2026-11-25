@@ -168,6 +168,17 @@ class QualifiedGeneratorTests(unittest.TestCase):
     def generate(self, root=ROOT, revision=None):
         return generator.generate_payload(root, revision or self.revision, 1, 1795478400, 1798070400)
 
+    def test_committed_offline_seed_verifies_against_current_reviewed_store(self):
+        config = PACKAGE / "config"
+        trust = metadata.load_json((config / "trust.json").read_bytes())
+        source = metadata.load_json((config / "source.json").read_bytes())
+        expected = metadata.base_identity(ROOT)
+        seed = metadata.verify_envelope((config / "seed.json").read_bytes(), trust, expected)
+        self.assertEqual(hashlib.sha256(metadata.canonical(source["base_binding"])).hexdigest(), expected)
+        self.assertIsNone(source["metadata_url"])
+        self.assertEqual({(p["package"], p["version"], p["architecture"]): p["sha256"]
+                          for p in seed["payload"]["packages"]}, generator.QUALIFIED)
+
     def test_real_qualified_dist_and_store_inputs_produce_only_approved_three(self):
         payload = self.generate()
         self.assertEqual({(p["package"], p["version"], p["architecture"]): p["sha256"] for p in payload["packages"]}, generator.QUALIFIED)

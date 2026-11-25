@@ -1,4 +1,5 @@
 from pathlib import Path
+import configparser
 import hashlib
 import json
 import os
@@ -51,7 +52,7 @@ class SessionFixture(unittest.TestCase):
             file.chmod(0o755 if path.startswith("/usr/libexec/") else 0o644)
             runtime[path] = hashlib.sha256(file.read_bytes()).hexdigest()
         self.integration = {"schema": 1, "profile": state.PROFILE, "workflow": state.WORKFLOW,
-                            "complete": True, "applaunch_version": "0.6.105",
+                            "complete": True, "applaunch_version": "0.6.111",
                             "assets": assets, "runtime_files": runtime}
         self.receipt = {"schema": 1, "profile": state.PROFILE, "workflow": state.WORKFLOW,
                         "scope": "pre-image-integration", "status": "passed",
@@ -313,6 +314,20 @@ class SessionFixture(unittest.TestCase):
             state.greetd_config(state.Account('native"\ncommand="sh', 1000, 1000, "/home/native"))
 
 
+class StartupOrdering(unittest.TestCase):
+    def test_wizard_waits_for_required_disk_identity_before_either_setup_path(self):
+        unit = configparser.ConfigParser(interpolation=None)
+        unit.read(Path(__file__).resolve().parents[1] / "system/tyrell-zero-wizard.service")
+        # Requires with After makes a failed disk-ID job prevent Wizard start;
+        # the vendor service's already-stamped ConditionPathExists skip is not
+        # a failure. This ordering covers both GUI and Imager expansion paths.
+        self.assertIn("cardputerzero-diskid.service", unit["Unit"]["Requires"].split())
+        self.assertIn("cardputerzero-diskid.service", unit["Unit"]["After"].split())
+        self.assertIn("tyrell-zero-boot-state.service", unit["Unit"]["Requires"].split())
+        self.assertEqual(unit["Unit"]["ConditionPathExists"], "/run/tyrell-zero/setup")
+        self.assertEqual(unit["Service"]["ExecStart"], "/usr/libexec/tyrell-zero/LaunchWizard")
+
+
 class SupervisorRules(unittest.TestCase):
     def test_foreground_transfer_resumes_an_owned_stopped_child(self):
         child = subprocess.Popen([sys.executable, "-c", "import os,signal;os.kill(os.getpid(),signal.SIGSTOP)"], process_group=0)
@@ -393,8 +408,8 @@ class SupervisorRules(unittest.TestCase):
         self.assertTrue(budget.allow(62))
 
     def test_original_launcher_pin_is_the_recorded_vendor_binary(self):
-        self.assertEqual(state.LAUNCHER_SHA256, "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c")
-        self.assertEqual(state.STORE_SHA256, "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e")
+        self.assertEqual(state.LAUNCHER_SHA256, "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7")
+        self.assertEqual(state.STORE_SHA256, "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa")
 
 
 if __name__ == "__main__":

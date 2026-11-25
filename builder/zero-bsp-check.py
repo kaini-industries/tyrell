@@ -25,7 +25,7 @@ import uuid
 
 BASE = Path("/var/tmp/tyrell-zero-bsp-checks")
 KERNEL = "6.18.39+rpt-rpi-v8"
-ARCHIVE_SHA = "a541239495b9e1c15d2fe580c2cee4587ba9667e427d5f4d15d45038d8fd93a0"
+ARCHIVE_SHA = "bb671341f2419b2cd20607fb7e00fde4a35a338a8de7036632430375a66514d0"
 MODULES = "/usr/lib/modules/" + KERNEL + "/extra"
 OVERLAYS = "/boot/firmware/overlays"
 BSP_OVERLAYS = ("cardputerzero-v5-overlay", "cardputerzero-v3-overlay", "spk-gpio24-high-overlay",

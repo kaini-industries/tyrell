@@ -1,6 +1,6 @@
 """Qualified, immutable-byte package operations for the pinned M5 Store protocol.
 
-Ported protocol/state semantics from Store b02db122396a7d33c41c66199ab443437975cfee.
+Ported protocol/state semantics from Store 1ceeaed715766d336b1a885f58d03d5e4c33d6fa.
 This is a base-integration guard, not a sandbox for trusted maintainer scripts.
 """
 import argparse
@@ -21,8 +21,8 @@ import tarfile
 import tempfile
 import time
 
-VERSION = "0.1.0"
-STORE_COMMIT = "b02db122396a7d33c41c66199ab443437975cfee"
+VERSION = "0.1.1"
+STORE_COMMIT = "1ceeaed715766d336b1a885f58d03d5e4c33d6fa"
 PUBLIC = "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore"
 ORIGINAL = PUBLIC + ".vendor"
 POLICY = "/usr/share/tyrell-zero/store-policy.json"
@@ -31,7 +31,7 @@ INVARIANTS = "/usr/share/tyrell-zero/base-invariants.json"
 STATE = "/var/lib/tyrell-zero/store"
 HELPER = "/usr/libexec/tyrell-zero/appstore-package-helper"
 MODULE = "/usr/lib/tyrell-zero/store/guard.py"
-VENDOR_SHA = "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e"
+VENDOR_SHA = "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa"
 TRIGGER_PACKAGES = {"man-db", "desktop-file-utils", "hicolor-icon-theme", "shared-mime-info", "mime-support"}
 SCRIPTS = {"preinst", "postinst", "prerm", "postrm", "config", "triggers"}
 PROTECTED_PACKAGES = {"applaunch", "tyrell-zero-session", "tyrell-zero-store",

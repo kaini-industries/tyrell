@@ -41,7 +41,7 @@ def prepare(vendor, assets, metadata_path):
     apps=json.loads((ROOT/'locks/tyrell-zero-apps.json').read_text())
     apt=json.loads((ROOT/'locks/tyrell-zero-apt.json').read_text())
     profile=json.loads((ROOT/'image/profiles/tyrell-zero.json').read_text())
-    subprocess.run([sys.executable,str(ROOT/'image/prepare-vendor.py'),str(vendor),str(assets),str(metadata_path)],check=True)
+    subprocess.run([sys.executable,str(ROOT/'image/prepare-vendor.py'),str(vendor),str(assets),str(metadata_path),'--zero-profile'],check=True)
     configure_native_setup(vendor)
     # Reuse the reviewed vendor patching without exporting a desktop stage.
     shutil.rmtree(vendor/'stage4/99-tyrell')

@@ -1,10 +1,16 @@
 # Tyrell Zero power-policy foundation
 
-This is the revision-3 package foundation, version `0.1.0-1`. It defaults to
+This is the revision-3 package foundation, version `0.1.1-1`. It defaults to
 `baseline`, installs configuration and inactive resources only, and contains
 **no automatic power activation**. Installation must not tune the builder or
 handheld. No systemd unit, active tmpfiles configuration, USB udev rule, timer
 or maintainer script is installed.
+
+Version 0.1.1 retargets read-only image identity inspection to the November 19
+M5 BSP commit `a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4`. It rejects the
+previous BSP identity; this is input consistency, without hardware eligibility,
+activation, recovery or power-savings qualification. The power contract,
+presets and closed activation gate are unchanged.
 
 The four initial selections are `baseline`, `ethernet`, `cpu` and `combined`.
 Every initial selection captures a 2,000 ms leaf delay; the respective Ethernet

@@ -151,7 +151,7 @@ def _tyrell_no_download(*args, **kwargs):
 
 sample_wget = wget_tar_xz = wget_tar_gz = wget_zip = _tyrell_no_download
 wget_github = wget_github_commit = check_wget_down = _tyrell_no_download
-Export_conanenv = _tyrell_no_download
+Export_conanenv = ensure_static_lib_version = _tyrell_no_download
 
 def check_component(component_name):
     import os
@@ -174,6 +174,13 @@ def check_component(component_name):
 '''
 
 
+def offline_helper(upstream: str, lock: dict) -> str:
+    # Components execute this whole helper in their own SCons globals. The
+    # November SDK evaluates a Path annotation before our appended overrides,
+    # so its import must precede the unchanged upstream definitions.
+    return "from pathlib import Path\n" + upstream + offline_guard(lock)
+
+
 def stage(lock: dict, cache: Path, destination: Path) -> dict:
     verify_inputs(lock, cache)
     destination = destination.absolute()
@@ -192,8 +199,7 @@ def stage(lock: dict, cache: Path, destination: Path) -> dict:
         helper = temporary / patch["path"]
         if digest(helper) != patch["upstream_sha256"]:
             raise ValueError("SDK offline patch upstream hash mismatch")
-        with helper.open("a") as stream:
-            stream.write(offline_guard(lock))
+        helper.write_text(offline_helper(helper.read_text(), lock))
         manifest = {
             "schema_version": 1,
             "kind": "verified-offline-native-wizard-source-stage",

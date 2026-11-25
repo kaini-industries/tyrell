@@ -97,6 +97,31 @@ class CaptureTests(unittest.TestCase):
             zero['verify_guest_manifest'](self.root,zero['digest'](path),{'image.img.xz':'b'*64})
 
 
+class VendorCacheTests(unittest.TestCase):
+    def test_zero_cache_is_commit_keyed_and_preserves_legacy_checkout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target=Path(directory);legacy=target/'sources/pi-gen';legacy.mkdir(parents=True)
+            sentinel=legacy/'baseline';sentinel.write_bytes(b'retained September checkout')
+            commit='a'*40;vendor=target/'sources'/('pi-gen-'+commit);vendor.mkdir();(vendor/'.git').mkdir()
+            with patch.dict(zero['vendor_source'].__globals__,subprocess=SimpleNamespace(
+                    check_output=lambda args,**kwargs:commit+'\n' if args[-1]=='HEAD' else '',
+                    run=lambda *_a,**_kw: self.fail('existing cache must not be changed'))):
+                self.assertEqual(zero['vendor_source'](target,commit),vendor)
+            self.assertEqual(sentinel.read_bytes(),b'retained September checkout')
+
+    def test_dirty_wrong_commit_and_redirected_cache_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target=Path(directory);commit='a'*40;vendor=target/'sources'/('pi-gen-'+commit)
+            vendor.mkdir(parents=True);(vendor/'.git').mkdir()
+            for head,dirty in [(commit,' M build.sh\n'),('b'*40,'')]:
+                with self.subTest(head=head,dirty=dirty),patch.dict(zero['vendor_source'].__globals__,
+                        subprocess=SimpleNamespace(check_output=lambda args,**kwargs:head+'\n' if args[-1]=='HEAD' else dirty)):
+                    with self.assertRaisesRegex(ValueError,'pristine'):zero['vendor_source'](target,commit)
+            (vendor/'.git').rmdir();vendor.rmdir();vendor.symlink_to(target/'other')
+            with self.assertRaisesRegex(ValueError,'symlinked'):zero['vendor_source'](target,commit)
+            with self.assertRaisesRegex(ValueError,'full pinned commit'):zero['vendor_source'](target,'main')
+
+
 class NativeSetupTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
@@ -141,9 +166,20 @@ class NativeSetupTests(unittest.TestCase):
         metadata={'profile_id':'tyrell-zero','stages':['stage0','stage1','stage2'],
                   'selected_power_preset':'baseline','output':{},'profile_sha256':'a'*64,'locks_sha256':{}}
         path=self.vendor/'metadata.json';path.write_text(json.dumps(metadata))
+        # This test executes only the generated passwd/audit shell fragment,
+        # not a captured runtime dependency transaction. Keep its synthetic
+        # closure coherent while the real profile/locks are recaptured.
+        recipe=self.vendor.parent/'recipe';(recipe/'locks').mkdir(parents=True)
+        (recipe/'image/profiles').mkdir(parents=True)
+        profile=json.loads((ROOT/'image/profiles/tyrell-zero.json').read_text())
+        (recipe/'image/profiles/tyrell-zero.json').write_text(json.dumps(profile))
+        apt={'installed':[[name,'fixture-version','arm64'] for name in
+                         sorted({name for group in profile['runtime_roots'].values() for name in group})]}
+        (recipe/'locks/tyrell-zero-apt.json').write_text(json.dumps(apt))
+        (recipe/'locks/tyrell-zero-apps.json').write_bytes((ROOT/'locks/tyrell-zero-apps.json').read_bytes())
         dependencies=SimpleNamespace(run_path=lambda name: {'configure_vendor':lambda *_args:None}
             if str(name).endswith('zero-lock.py') else {'digest':zero['digest']})
-        with patch.dict(prepare['prepare'].__globals__,runpy=dependencies,
+        with patch.dict(prepare['prepare'].__globals__,ROOT=recipe,runpy=dependencies,
                         subprocess=SimpleNamespace(run=lambda *_a,**_kw:None)):
             report=prepare['prepare'](self.vendor,self.vendor/'assets',path)
         self.assertEqual(report['prepared_files_sha256']['build.sh'],zero['digest'](self.vendor/'build.sh'))
@@ -311,13 +347,14 @@ class LaunchTests(unittest.TestCase):
 class ExportTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
-        self.root=Path(self.tmp.name)
+        self.root=Path(self.tmp.name).resolve()
         self.job={'job_id':ID,'bundle_sha256':sha(b'captured archive')}
         self.attempt=zero['attempt_record'](self.job,2,'stage2')
         identity={key:self.attempt[key] for key in ('job_id','attempt_id','bundle_sha256')}
         (self.root/'attempt.json').write_text(json.dumps(identity))
         (self.root/'image.img.xz').write_bytes(b'verified image')
-        guest={'verification':{'status':'passed'},'inputs':{'profile_id':'tyrell-zero'},
+        guest={'verification':{'status':'passed'},'inputs':{'profile_id':'tyrell-zero',
+               'build_mode':'zero-native','pi_gen_commit':zero['LEGACY_BASELINE']},
                'sha256':{name:zero['digest'](self.root/name) for name in ['attempt.json','image.img.xz']}}
         (self.root/'guest-image-manifest.json').write_text(json.dumps(guest))
         self.guest_sha=zero['digest'](self.root/'guest-image-manifest.json')
@@ -337,6 +374,58 @@ class ExportTests(unittest.TestCase):
     def test_changed_archived_inputs_rejected_even_with_recomputed_checksums(self):
         (self.root/'image-input.tar').write_bytes(b'changed archive')
         with self.assertRaisesRegex(ValueError,'input archive'):self.validate()
+
+    def publish(self, commit):
+        guest=zero['read_json']((self.root/'guest-image-manifest.json').read_text())
+        guest['inputs']['pi_gen_commit']=commit
+        (self.root/'guest-image-manifest.json').write_text(json.dumps(guest))
+        guest_sha=zero['digest'](self.root/'guest-image-manifest.json')
+        identity={key:self.attempt[key] for key in ('job_id','attempt_id','bundle_sha256')}
+        host=copy.deepcopy(guest)
+        host['provenance']={**identity,'input_archive':'image-input.tar','guest_manifest_sha256':guest_sha}
+        host['sha256']['image-input.tar']=self.job['bundle_sha256']
+        (self.root/'image-manifest.json').write_text(json.dumps(host))
+        workspace=self.root/'workspace';workspace.mkdir()
+        target=self.root/'storage';target.mkdir();(target/'images').mkdir()
+        destination=target/'images'/(ID+'-attempt-0002');destination.mkdir()
+        for item in list(self.root.iterdir()):
+            if item.is_file():item.rename(destination/item.name)
+        retained={}
+        for name in ('image-artifacts-zero','image-artifacts-zero-nov19',
+                     'image-artifacts-control','image-artifacts'):
+            original=workspace/('retained-'+name);original.mkdir()
+            (original/'sentinel').write_text(name)
+            (workspace/name).symlink_to(original,target_is_directory=True)
+            retained[name]=original
+        common={**self.common,'assert_idle':lambda:None}
+        state={'state':'succeeded','result':{'manifest_sha256':guest_sha}}
+        with patch.dict(zero['export'].__globals__,ROOT=workspace,api=lambda:{},
+                        outcome=lambda *_a:state),contextlib.redirect_stdout(io.StringIO()):
+            result=zero['export'](target,self.job,self.attempt,common)
+        self.assertEqual(result,destination)
+        return workspace,destination,retained
+
+    def test_november_publication_preserves_baseline_control_and_stock_pointers(self):
+        workspace,destination,retained=self.publish(zero['NOV19_BASELINE'])
+        self.assertEqual((workspace/'image-artifacts-zero-nov19').resolve(),destination)
+        for name in ('image-artifacts-zero','image-artifacts-control','image-artifacts'):
+            self.assertEqual((workspace/name).resolve(),retained[name])
+            self.assertEqual((retained[name]/'sentinel').read_text(),name)
+
+    def test_legacy_captured_job_keeps_its_original_publication_name(self):
+        workspace,destination,retained=self.publish(zero['LEGACY_BASELINE'])
+        self.assertEqual((workspace/'image-artifacts-zero').resolve(),destination)
+        for name in ('image-artifacts-zero-nov19','image-artifacts-control','image-artifacts'):
+            self.assertEqual((workspace/name).resolve(),retained[name])
+
+    def test_publication_rejects_unknown_or_non_zero_capture_headers(self):
+        for metadata in (None,{}, {'profile_id':'other','build_mode':'zero-native',
+                                  'pi_gen_commit':zero['NOV19_BASELINE']},
+                         {'profile_id':'tyrell-zero','build_mode':'stock-image',
+                          'pi_gen_commit':zero['NOV19_BASELINE']},
+                         {'profile_id':'tyrell-zero','build_mode':'zero-native','pi_gen_commit':'a'*40}):
+            with self.subTest(metadata=metadata),self.assertRaises(ValueError):
+                zero['publication_name'](metadata)
 
 
 class ResumeTests(unittest.TestCase):

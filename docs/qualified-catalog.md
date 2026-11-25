@@ -1,6 +1,6 @@
 # Qualified catalog and cached frontend
 
-C1 adds an optional `tyrell-catalog` 0.1.0 application. It browses signed
+C1 adds an optional `tyrell-catalog` application, currently 0.1.1. It browses signed
 discovery metadata and downloads verified files as the normal user. It does not
 install packages, remove or repair apps, invoke the Store helper, or replace
 the original M5 Store. Existing Store policy, caller restrictions, dispatch and
@@ -40,6 +40,20 @@ private half was destroyed. The public pin and signed bytes are committed.
 There is **no configured live metadata endpoint or deployed continuing signer**.
 Refresh reports that configuration state only when explicitly requested. Signed
 raw-Git URLs do not establish server availability or private-repository access.
+
+The 0.1.1 package rotates that bootstrap key for the November 19 Store base:
+source `1ceeaed715766d336b1a885f58d03d5e4c33d6fa`, vendor executable SHA-256
+`cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa`,
+and compatible-base ID
+`c9bc9175deb1a14c017fe65c8c573183d822cb0779150c168674b690de385ed6`.
+Its new public key ID is
+`03f9c1538b49b6f078370096956a161b81342667b4c8713bb7516947ad09f0da`.
+The new offline seed and protected floor use sequence 2; the prior key is revoked.
+The old private key was not recovered or reused. A new temporary key outside the
+workspace signed the seed and was deleted after signature verification. All three
+approved package/artwork entries, exact URLs and validity timestamps are preserved.
+The former seed and public pin remain in Git history. This binding update adds no
+default-image payload, Store approval, continuing publisher or device acceptance.
 
 Deploying a live feed requires an independently managed signing key, reviewed
 public-key/source configuration and hosted metadata. Rotation is a reviewed
@@ -147,6 +161,8 @@ unknown clocks, redirects, quotas, cancellation, concurrent refresh, interrupted
 sync/replace, policy revocation, worker death and cache links. A cross-module
 test verifies that even a valid discovery signature for a new app/version is
 still rejected by the unchanged root Store catalog.
+The committed offline seed is also verified against the current reviewed Store
+base, so a source/policy/vendor change cannot silently leave stale package pins.
 
 Native/headless checks do not prove physical keyboard/display acceptance, power
 savings, live endpoint deployment or network availability. No original card,

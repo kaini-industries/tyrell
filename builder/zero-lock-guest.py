@@ -31,13 +31,22 @@ def write(path, data):
     Path(path).write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
 
 
+def seed_stage2_inventory(lock):
+    # A stage index is a candidate pool. New derived seeds may also pin the
+    # final installed set after the recipe removes build-only dependencies.
+    stages = lock.get('installed_stages', lock['stages'])
+    if 'stage2' not in stages:
+        raise ValueError('Seed installed_stages requires an explicit stage2 inventory')
+    return {tuple(item) for item in stages['stage2']}
+
+
 def prepare(job, seed, retained):
     api = runpy.run_path(str(job / 'apt-lock.py'))
     expected = json.loads((job / 'seed-lock.json').read_text())
     if sha(seed / 'apt-lock.json') != sha(job / 'seed-lock.json'):
         raise ValueError('Seed repository differs from captured seed lock')
     api['verify_repository'](seed)
-    if api['inventory'](retained) != {tuple(x) for x in expected['stages']['stage2']}:
+    if api['inventory'](retained) != seed_stage2_inventory(expected):
         raise ValueError('Retained stage2 inventory differs from locked seed')
     root = job / 'rootfs'
     if root.exists():
@@ -115,18 +124,9 @@ def install(job):
     with (job / 'apt-check.txt').open('w') as out:
         run(args + ['check'], stdout=out, stderr=subprocess.STDOUT)
     seed = json.loads((job / 'seed-lock.json').read_text())
-    write(job / 'system-qualification.json', dict(schema=1, scope='real-isolated-stage2-system-runtime',
-          seed_apt_lock_sha256=sha(job / 'seed-lock.json'),
-          retained_stage2_installed_count=len(seed['stages']['stage2']), installed_count=len(inventory),
-          installed_sha256=sha(job / 'installed-system.json'),
-          greetd_authentication_sha256=sha(job / 'greetd-authentication.json'),
-          apt_check='passed', dpkg_audit='clean', transaction=tx,
-          logs_sha256={name: sha(job / name) for name in ['apt-update.txt', 'apt-simulation.txt', 'dpkg-install.txt', 'apt-check.txt', 'dpkg-audit.txt']},
-          image_build=False, hardware_qualified=False))
-    seed = json.loads((job / 'seed-lock.json').read_text())
     receipt = dict(schema=1, scope='real-isolated-stage2-system-runtime',
                    seed_apt_lock_sha256=sha(job / 'seed-lock.json'),
-                   retained_stage2_installed_count=len(seed['stages']['stage2']),
+                   retained_stage2_installed_count=len(seed_stage2_inventory(seed)),
                    installed_count=len(inventory), installed_sha256=sha(job / 'installed-system.json'),
                    greetd_authentication_sha256=sha(job / 'greetd-authentication.json'),
                    apt_check='passed', dpkg_audit='clean', transaction=tx,
@@ -181,11 +181,11 @@ def install_custom(job):
     fields = {api['deb_fields'](p)['Package']: api['deb_fields'](p) for p in debs}
     if set(fields) != {'tyrell-status', 'tyrell-zero-session', 'tyrell-zero-store', 'tyrell-zero-power-policy'}:
         raise ValueError('Expected exactly the four captured custom packages')
-    if fields['tyrell-zero-session']['Version'] != '0.3.0-1':
-        raise ValueError('Expected native session 0.3.0')
+    if fields['tyrell-zero-session']['Version'] != '0.3.1-1':
+        raise ValueError('Expected native session 0.3.1')
     public = '/usr/share/APPLaunch/bin/M5CardputerZero-AppStore'
     original = public + '.vendor'
-    if sha(root / public.lstrip('/')) != 'e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e':
+    if sha(root / public.lstrip('/')) != 'cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa':
         raise ValueError('Original vendor Store differs before diversion')
     live = subprocess.check_output(['dpkg-query', '-W', '-f=${binary:Package}\t${Version}\t${Architecture}\n'])
     (job / 'live-builder-packages-before.txt').write_bytes(live)
@@ -296,10 +296,18 @@ def native_snapshot(job, retained):
                 if path.is_symlink() or path.is_file():
                     configuration['/' + str(path.relative_to(root))] = leaf_record(identity(path))
     for name in ['greetd.service', 'LaunchWizard.service', 'applaunch-updater.service',
+                 'cardputerzero-diskid.service', 'rpi-resize.service',
+                 'applaunch-apps-updater.service', 'applaunch-apt-update.service',
                  'NetworkManager.service', 'bluetooth.service', 'polkit.service',
                  'udisks2.service', 'systemd-logind.service', 'dbus.service']:
         path = root / 'usr/lib/systemd/system' / name
         configuration['/' + str(path.relative_to(root))] = leaf_record(identity(path))
+    for name in ['/usr/lib/cardputerzero/randomize-disk-id', '/usr/libexec/applaunch-apps-updater',
+                 '/etc/systemd/system/rpi-resize.service.d/10-cardputerzero-no-growfs-fstrim.conf',
+                 '/etc/systemd/system/fstrim.timer',
+                 '/etc/systemd/system/sysinit.target.wants/rpi-resize.service',
+                 '/etc/systemd/system/multi-user.target.wants/cardputerzero-diskid.service']:
+        configuration[name] = leaf_record(identity(at(root, name)))
     assets = qualification['assets']
     for record in assets.values():
         if sha(at(root, record['path'])) != record['sha256']:

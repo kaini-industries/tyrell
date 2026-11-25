@@ -18,13 +18,13 @@ import stat
 import sys
 import tempfile
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 CONFIG = "etc/tyrell-zero/power-policy.json"
 CONTRACT = "usr/share/tyrell-zero/power-policy/contract.json"
 STATE_DIR = "run/tyrell-zero-power-policy"
 OVERRIDE = "run/tmpfiles.d/raspberrypi-sys-mods-ondemand-governor.conf"
 KERNEL = "6.18.39+rpt-rpi-v8"
-BSP = "75518549a2640486f5d13ea72ca4935b198d7c20"
+BSP = "a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4"
 VENDOR_TMPFILES = "usr/lib/tmpfiles.d/raspberrypi-sys-mods-ondemand-governor.conf"
 VENDOR_UDEV = "usr/lib/udev/rules.d/60-ondemand-governor.rules"
 VENDOR_HASHES = {

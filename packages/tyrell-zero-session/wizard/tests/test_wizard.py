@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import types
@@ -231,9 +232,85 @@ class SourcePatch(unittest.TestCase):
         target.write_text(target.read_text() + "\n// unknown change\n")
         other = self.root / list(patcher.EXPECTED)[1]
         before = other.read_bytes()
-        with self.assertRaisesRegex(ValueError, "exact .105 source"):
+        with self.assertRaisesRegex(ValueError, "exact .111 source"):
             patcher.apply(self.root)
         self.assertEqual(other.read_bytes(), before)
+
+    def test_expansion_keeps_native_readiness_and_reboot_as_single_owner(self):
+        patcher.apply(self.root)
+        service = (self.root / "projects/LaunchWizard/main/ui/wizard_service.cpp").read_text()
+        header = (self.root / "projects/LaunchWizard/main/ui/wizard_service.h").read_text()
+        self.assertNotIn("expand_rootfs_for_skipped_boot", service + header)
+        self.assertNotIn("remove_oobe_markers", service)
+        apply = service[service.index("std::string WizardService::apply("):
+                        service.index("std::string WizardService::reboot()")]
+        self.assertLess(apply.index('native_completion("configure"'), apply.index('apply_root_expansion)'))
+        self.assertLess(apply.index('apply_root_expansion)'), apply.index('native_completion("commit"'))
+        finish = service[service.index("int launch_wizard::WizardService::finish_configured_system()") :]
+        self.assertLess(finish.index("should_expand_rootfs_on_skip"), finish.index('native_completion("complete"'))
+        self.assertNotIn('run_command({"systemctl", "reboot"})', service)
+
+    def test_actual_expansion_attempt_is_recorded_before_command_and_never_retried(self):
+        patcher.apply(self.root)
+        service = (self.root / "projects/LaunchWizard/main/ui/wizard_service.cpp").read_text()
+        functions = service[service.index("bool root_expansion_enabled()"):
+                            service.index("std::string WizardService::connect_wifi(")]
+        # Compile the actual patched vendor functions. Only the command runner,
+        # global sync and marker locations are replaced; no disk or service
+        # command is executed by this host fixture.
+        harness = r'''
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fcntl.h>
+#include <fstream>
+#include <stdexcept>
+#include <string>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
+#define LAUNCH_WIZARD_DRY_RUN 0
+#define sync fixture_sync
+void fixture_sync() {}
+std::string directory = std::getenv("TYRELL_EXPANSION_FIXTURE");
+std::string factory = directory + "/factory", rearm = directory + "/rearm", resize = directory + "/resize";
+const char *kFactoryOobeMarker = factory.c_str(), *kRearmOobeMarker = rearm.c_str();
+const char *kResizeOnceInitScript = resize.c_str(), *kRaspiConfigPath = "/unexecuted/raspi-config";
+bool should_expand_rootfs(bool factory, bool rearm) { return factory || !rearm; }
+struct CommandResult { int code; std::string output; };
+int commands = 0; bool fail = false;
+CommandResult run_command(const std::vector<std::string>& args) {
+    if(args != std::vector<std::string>{kRaspiConfigPath, "--expand-rootfs"} ||
+       access(std::getenv("LAUNCH_WIZARD_EXPANSION_ATTEMPT"), F_OK) != 0)
+        throw std::runtime_error("expansion command preceded attempt marker");
+    ++commands;
+    if(fail) return {1,"held expansion failure"};
+    std::ofstream(resize).put('1'); return {0,{}};
+}
+'''
+        harness += functions + r'''
+int main() {
+    std::ofstream(factory).put('1');
+    const auto attempt = directory + "/attempt";
+    setenv("LAUNCH_WIZARD_EXPANSION_ATTEMPT", attempt.c_str(), 1);
+    if(!apply_root_expansion().empty() || commands != 1 || access(attempt.c_str(),F_OK))return 1;
+    if(!apply_root_expansion().empty() || commands != 1)return 2;
+    unlink(attempt.c_str()); fail = true;
+    if(apply_root_expansion().empty() || commands != 2 || access(attempt.c_str(),F_OK))return 3;
+    fail = false;
+    if(!apply_root_expansion().empty() || commands != 2)return 4;
+    unlink(attempt.c_str()); unlink(factory.c_str()); std::ofstream(rearm).put('1');
+    if(!apply_root_expansion().empty() || commands != 2 || access(attempt.c_str(),F_OK)==0)return 5;
+    return 0;
+}
+'''
+        source = self.root / "expansion.cpp"
+        source.write_text(harness)
+        binary = self.root / "expansion-test"
+        subprocess.run(["c++", "-std=c++17", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
+        env = dict(os.environ, TYRELL_EXPANSION_FIXTURE=str(self.root))
+        subprocess.run([str(binary)], env=env, check=True, timeout=10)
 
 
 if __name__ == "__main__":

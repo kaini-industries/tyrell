@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "pi_gen_commit": "3b0e6f61520afb59598b188c803c1b9e8d63737f",
+  "selection_cutoff": "2026-11-19T09:46:35Z",
+  "selection_policy": "Latest non-prerelease matching application assets released and uploaded before the November 19 official image release. Verified retained asset metadata/bytes; a frozen source build, not a byte-for-byte reproduction of the official image.",
+  "launcher": {
+    "id": "applaunch",
+    "repository": "CardputerZero/launcher",
+    "release": "launcher-v0.6.111",
+    "name": "applaunch_0.6.111-m5stack1_arm64.deb",
+    "url": "https://github.com/CardputerZero/launcher/releases/download/launcher-v0.6.111/applaunch_0.6.111-m5stack1_arm64.deb",
+    "sha256": "8b1097120bd1abb3e264674e5f25a7bc715a2495ecd2cc008002b6dcc277c2b2",
+    "bytes": 47259868,
+    "package_version": "0.6.111"
+  },
+  "drivers": {
+    "repository": "m5stack/m5stack-linux-dtoverlays",
+    "commit": "a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4",
+    "name": "m5stack-linux-dtoverlays-a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4.tar.gz",
+    "url": "https://github.com/m5stack/m5stack-linux-dtoverlays/archive/a3fd3e83c0247e16e194e7e40f7fc1f5be933dd4.tar.gz",
+    "sha256": "bb671341f2419b2cd20607fb7e00fde4a35a338a8de7036632430375a66514d0",
+    "bytes": 14747734
+  },
+  "apps": [
+    {
+      "id": "recorder",
+      "repository": "CardputerZero/Recorder",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T10:15:01Z",
+      "name": "m5cardputerzero-recorder_0.1.8_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Recorder/releases/download/v1.0.0/m5cardputerzero-recorder_0.1.8_m5stack1_arm64.deb",
+      "sha256": "ed3fb90fbf84097138d0d30c11eaa132a4f8695ece4bec48ca2a1f8ea04727e7",
+      "bytes": 1112054
+    },
+    {
+      "id": "compass",
+      "repository": "CardputerZero/Compass",
+      "release": "v1.0.1",
+      "published_at": "2026-11-16T05:38:58Z",
+      "name": "m5cardputerzero-compass_1.0.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Compass/releases/download/v1.0.1/m5cardputerzero-compass_1.0.1_m5stack1_arm64.deb",
+      "sha256": "6ce492bb00b23fff4c61839eb8cd18d968e127966f241a290ad48036d6963b7e",
+      "bytes": 726550
+    },
+    {
+      "id": "camera",
+      "repository": "CardputerZero/Camera",
+      "release": "v1.0.4",
+      "published_at": "2026-11-13T03:08:03Z",
+      "name": "Camera_1.0.4_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Camera/releases/download/v1.0.4/Camera_1.0.4_m5stack1_arm64.deb",
+      "sha256": "9fab11fb9a01a481e301bbe4213ef59bcd53386047ef9208683b1d57cab6b280",
+      "bytes": 1410438
+    },
+    {
+      "id": "factory-test",
+      "repository": "CardputerZero/FactoryTest",
+      "release": "1.0.3",
+      "published_at": "2026-11-13T03:15:15Z",
+      "name": "FactoryTest_1.0.3_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/FactoryTest/releases/download/1.0.3/FactoryTest_1.0.3_m5stack1_arm64.deb",
+      "sha256": "04731e468da5032d52324dcc48d3c727f1cc37185af129d127ebdaaf420bcb62",
+      "bytes": 10500982
+    },
+    {
+      "id": "files",
+      "repository": "CardputerZero/Files",
+      "release": "v1.0.3",
+      "published_at": "2026-11-17T07:58:49Z",
+      "name": "m5cardputerzero-files_1.0.3_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Files/releases/download/v1.0.3/m5cardputerzero-files_1.0.3_m5stack1_arm64.deb",
+      "sha256": "2740052d98c536280d53d26d55c0a4c71a6e996bf75216c236098557a86c9e08",
+      "bytes": 2548734
+    },
+    {
+      "id": "music",
+      "repository": "CardputerZero/Music",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T09:55:19Z",
+      "name": "m5cardputerzero-music_0.1.7_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Music/releases/download/v1.0.0/m5cardputerzero-music_0.1.7_m5stack1_arm64.deb",
+      "sha256": "32f3a9e55ad9b3304d6cd64da0386b9cbc57cd2a318d32cf382e1187329b1146",
+      "bytes": 11964276
+    },
+    {
+      "id": "ir-chat",
+      "repository": "CardputerZero/IR-Chat",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T10:13:53Z",
+      "name": "m5cardputerzero-ir-chat_0.1.3_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/IR-Chat/releases/download/v1.0.0/m5cardputerzero-ir-chat_0.1.3_m5stack1_arm64.deb",
+      "sha256": "aa1ed146b088f6c9bb52c9328614b01e018cb8d9014ee083651ed404c64210cd",
+      "bytes": 770038
+    },
+    {
+      "id": "piano",
+      "repository": "CardputerZero/Piano",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T10:15:16Z",
+      "name": "m5cardputerzero-piano_0.1.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Piano/releases/download/v1.0.0/m5cardputerzero-piano_0.1.1_m5stack1_arm64.deb",
+      "sha256": "5d33167dda81648ca6e6b631fc5584b88e016f7b32dedb107adc1a193cb5f89f",
+      "bytes": 7196320
+    },
+    {
+      "id": "ir-remote",
+      "repository": "CardputerZero/IR-Remote",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T10:14:10Z",
+      "name": "m5cardputerzero-ir-remote_0.1.4_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/IR-Remote/releases/download/v1.0.0/m5cardputerzero-ir-remote_0.1.4_m5stack1_arm64.deb",
+      "sha256": "10be7020d2f2e3cd7cf0c5ede98443f8940efbfffb4aba801b87329409d67137",
+      "bytes": 771128
+    },
+    {
+      "id": "cap-cc1101-subg-chat",
+      "repository": "CardputerZero/Cap-CC1101-SubG-Chat",
+      "release": "v1.0.1",
+      "published_at": "2026-09-23T06:21:24Z",
+      "name": "m5cardputerzero-cap-cc1101-subg-chat_1.0.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Cap-CC1101-SubG-Chat/releases/download/v1.0.1/m5cardputerzero-cap-cc1101-subg-chat_1.0.1_m5stack1_arm64.deb",
+      "sha256": "8ba26d9a513488673b5e8d9c3af5bc1ec6a04a4c3f859d256e420ee425e8c534",
+      "bytes": 813012
+    },
+    {
+      "id": "cap-cc1101-nfc",
+      "repository": "CardputerZero/Cap-CC1101-NFC",
+      "release": "v1.0.1",
+      "published_at": "2026-09-23T06:22:07Z",
+      "name": "m5cardputerzero-cap-cc1101-nfc_1.0.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Cap-CC1101-NFC/releases/download/v1.0.1/m5cardputerzero-cap-cc1101-nfc_1.0.1_m5stack1_arm64.deb",
+      "sha256": "d779d4949741a6fd6d5f005c7e29efd768996ceeb39c187c8008548d9fdd8095",
+      "bytes": 808856
+    },
+    {
+      "id": "cap-lora-1262",
+      "repository": "CardputerZero/Cap-LoRa-1262",
+      "release": "v1.0.1",
+      "published_at": "2026-09-23T07:05:12Z",
+      "name": "m5cardputerzero-cap-lora-1262_1.0.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Cap-LoRa-1262/releases/download/v1.0.1/m5cardputerzero-cap-lora-1262_1.0.1_m5stack1_arm64.deb",
+      "sha256": "5238fa7e20a5c63e8eb4e3ff38d6ee730c797e2afdeebfd18da200584ef84f5c",
+      "bytes": 820524
+    },
+    {
+      "id": "cap-lora-1262-gps",
+      "repository": "CardputerZero/Cap-LoRa-1262-GPS",
+      "release": "v1.0.0",
+      "published_at": "2026-09-18T10:35:22Z",
+      "name": "m5cardputerzero-cap-lora-1262-gps_1.0.0_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Cap-LoRa-1262-GPS/releases/download/v1.0.0/m5cardputerzero-cap-lora-1262-gps_1.0.0_m5stack1_arm64.deb",
+      "sha256": "4da7984c97effa75c36ee6d4fd93e0ee49f251781586d5dc4542b09b0b88eaa7",
+      "bytes": 721892
+    },
+    {
+      "id": "keyboard-guide",
+      "repository": "CardputerZero/Keyboard-Guide",
+      "release": "v1.0.1",
+      "published_at": "2026-09-18T10:26:36Z",
+      "name": "m5cardputerzero-keyboard-guide_1.0.1_m5stack1_arm64.deb",
+      "url": "https://github.com/CardputerZero/Keyboard-Guide/releases/download/v1.0.1/m5cardputerzero-keyboard-guide_1.0.1_m5stack1_arm64.deb",
+      "sha256": "d7fdc0aeb6b3a9b2c7c7450962ca1bf2211790fec488abc97235f052ded43c30",
+      "bytes": 1129196
+    }
+  ]
+}

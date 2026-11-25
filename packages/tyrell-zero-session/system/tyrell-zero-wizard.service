@@ -1,7 +1,7 @@
 [Unit]
 Description=Tyrell Zero private native setup wizard
-Requires=tyrell-zero-boot-state.service
-After=tyrell-zero-boot-state.service systemd-user-sessions.service
+Requires=tyrell-zero-boot-state.service cardputerzero-diskid.service
+After=tyrell-zero-boot-state.service systemd-user-sessions.service cardputerzero-diskid.service
 ConditionPathExists=/run/tyrell-zero/setup
 
 [Service]

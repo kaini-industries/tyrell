@@ -259,6 +259,10 @@ The Zero baseline and matched frozen full-source control now have verified
 file-image exports and measured disk footprints; see the
 [image validation record](docs/tyrell-zero-image-validation.md). Spare-card
 hardware acceptance and runtime/battery measurements remain separate gates.
+The separate [November 19 M5 refresh](docs/tyrell-zero-nov19-refresh.md) selects
+APPLaunch 0.6.111, the official updated BSP and camera stack for Zero, with fresh
+native/runtime qualification. Its image and physical acceptance remain separate
+from the retained baseline/control pair.
 
 The [Gh0st adoption plan](docs/gh0st-adoption-plan.md) sequences shared UI/help,
 optional app lifecycle integration, idle-loop improvements and release tooling

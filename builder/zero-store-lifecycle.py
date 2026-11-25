@@ -22,8 +22,8 @@ import types
 
 PUBLIC = "/usr/share/APPLaunch/bin/M5CardputerZero-AppStore"
 MAIN = "/usr/share/APPLaunch/bin/M5CardputerZero-APPLaunch"
-STORE_SHA = "e5fe24b1dd26cd224c64ef4df2e7a61e0fce3fb63b3b04ac90d38c5092ccc05e"
-MAIN_SHA = "9f26df9329160385c68794d26e0c7153271c6a69bb048938580e1495418c968c"
+STORE_SHA = "cb1a9db6224c90e3b4efdfd6da2936aa4d6e535c40fede64517ba7b09aa661aa"
+MAIN_SHA = "e4e7972155601a65689d86a9bc9cce247a6c0ca204a97e6daee84440f38fe7e7"
 CAPS = "-all,+chown,+dac_override,+fowner,+fsetid,+setgid,+setuid"
 
 
@@ -172,7 +172,7 @@ class Lifecycle:
             files.append(path)
             md5sums.append(hashlib.md5(original.read_bytes()).hexdigest() + "  " + path.lstrip("/"))
         with self.at("var/lib/dpkg/status").open("a") as stream:
-            stream.write("Package: applaunch\nStatus: install ok installed\nPriority: optional\nSection: misc\nInstalled-Size: 1\nMaintainer: Tyrell isolated fixture\nArchitecture: arm64\nVersion: 0.6.105\nDescription: modeled pinned vendor baseline, exact main and Store bytes\n\n")
+            stream.write("Package: applaunch\nStatus: install ok installed\nPriority: optional\nSection: misc\nInstalled-Size: 1\nMaintainer: Tyrell isolated fixture\nArchitecture: arm64\nVersion: 0.6.111\nDescription: modeled pinned vendor baseline, exact main and Store bytes\n\n")
         self.at("var/lib/dpkg/info/applaunch.list").write_text("\n".join(files) + "\n")
         self.at("var/lib/dpkg/info/applaunch.md5sums").write_text("\n".join(md5sums) + "\n")
         home = self.at(self.user.pw_dir)
@@ -246,7 +246,7 @@ class Lifecycle:
             parsed = dict(row.split(": ", 1) for row in fields.splitlines() if ": " in row)
             key = parsed.get("Package")
             if key in {"tyrell-zero-session", "tyrell-zero-store"}:
-                version = {"tyrell-zero-session": "0.3.0-1", "tyrell-zero-store": "0.1.0-1"}[key]
+                version = {"tyrell-zero-session": "0.3.1-1", "tyrell-zero-store": "0.1.1-1"}[key]
                 if key in found or parsed.get("Version") != version or parsed.get("Architecture") != "arm64":
                     raise RuntimeError("ambiguous integration DEB identity")
                 found[key] = path

@@ -36,6 +36,12 @@ built and verified, including actual stage2 recovery. See the
 [image validation record](tyrell-zero-image-validation.md). Spare-card hardware,
 settled-memory and battery acceptance remain later gates.
 
+The separate [November 19 refresh](tyrell-zero-nov19-refresh.md) adopts the
+official updated BSP, APPLaunch 0.6.111 and camera stack for the selected Zero
+profile. It preserves this original baseline/control pair and its historical
+records. Fresh source, native and detached-runtime qualification passed;
+exported-image and physical acceptance are tracked separately.
+
 The separate [Gh0st adoption plan](gh0st-adoption-plan.md) covers proposed UI,
 optional application lifecycle and delivery improvements. Its app changes use
 new package identities and separate comparisons; they do not alter this plan's
@@ -47,7 +53,7 @@ application-optimization exclusion or the accepted Z3 baseline/control pair.
 | --- | --- |
 | Product/profile | Tyrell Zero; new `tyrell-zero` source-build profile with its own work, locks and artifacts |
 | Base | Debian 13/Trixie, ARM64, vendor pi-gen stages0–2; omit stage3/4 desktop roots |
-| M5 interface | Retain the complete pinned APPLaunch 0.6.105 package and original M5 launcher executable |
+| M5 interface | Retain the complete pinned vendor APPLaunch package and original M5 launcher executable; original baseline 0.6.105, November refresh 0.6.111 |
 | Native login | Debian greetd, PAM/logind, and a supervised direct launcher process inside the local session; no desktop server/compositor |
 | First boot | Image-owned native LaunchWizard derivative in a separate package; replace the desktop-specific setup/handoff only |
 | Hardware | Preserve current kernel/BSP, full firmware/module/overlay trees and every native capability |

@@ -4,7 +4,7 @@
   "activation": "image-only-after-complete-integration-qualification",
   "default_target": "multi-user.target",
   "requires_target": "tyrell-zero.target",
-  "mask_system_units": ["greetd.service", "getty@tty1.service", "getty@tty7.service", "LaunchWizard.service", "applaunch-updater.service"],
+  "mask_system_units": ["greetd.service", "getty@tty1.service", "getty@tty7.service", "LaunchWizard.service", "applaunch-updater.service", "applaunch-apps-updater.service", "userconfig.service"],
   "mask_user_units": ["APPLaunch.service"],
   "logind_dropin_source": "/usr/share/tyrell-zero/profile/logind.conf",
   "logind_dropin_destination": "/etc/systemd/logind.conf.d/90-tyrell-zero.conf",

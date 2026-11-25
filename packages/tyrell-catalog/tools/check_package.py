@@ -44,7 +44,7 @@ def inspect(package):
     fields = output("dpkg-deb", "--field", package).decode()
     control = dict(line.split(": ", 1) for line in fields.splitlines()
                    if ": " in line and not line.startswith(" "))
-    require(all(control.get(k) == v for k, v in {"Package": "tyrell-catalog", "Version": "0.1.0-1",
+    require(all(control.get(k) == v for k, v in {"Package": "tyrell-catalog", "Version": "0.1.1-1",
                                                "Architecture": "arm64"}.items()), "Wrong Catalog package identity")
     depends = control.get("Depends", "")
     require(all(name in depends for name in ("python3", "openssl", "ca-certificates", "libc6", "libstdc++6", "libssl3")),
