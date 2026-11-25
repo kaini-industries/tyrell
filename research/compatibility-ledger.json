@@ -117,16 +117,17 @@
       "component": "video",
       "kind": "current-source",
       "version": "0.1.9",
-      "source_identity": "A2-D4 media actor/control app/dependency boundary, including durable native media and display authority checks; digest must match the checkout",
+      "source_identity": "A2-D5 inactive shell/App software candidate and separate qualification package boundary; live and device acceptance remain pending; digest must match the checkout",
       "availability": "checkout",
       "roots": [
         "packages/tyrell-video",
         "packages/tyrell-app-common",
         "packages/tyrell-video-handoff",
         "locks/build-inputs.json",
-        "locks/video-build-inputs.json"
+        "locks/video-build-inputs.json",
+        "LICENSE"
       ],
-      "sha256": "5134e9c21fd3b604596ea3d71091c180daab860b36ce31e8e3cd47d923c52d60"
+      "sha256": "ef31e09785a9ab0542f479ebf4d1845c5c2bb9e7156677847f7422ef421dbb94"
     },
     {
       "id": "chess-source",
@@ -381,7 +382,7 @@
         "video-device"
       ],
       "limitations": [
-        "A2 checkpoints and a fail-closed guard remain. D1-D4 channel, helper, managed display and media actor/control APIs have controlled software fixtures; live media is unsupported until qualified driver and shell/package integration is complete.",
+        "D1-D4 APIs and the D5 authenticated shell/App software candidate remain separate from live support. The inactive qualification package grants no device access; qualified asynchronous shell deployment, legacy-writer exclusion, driver finality and exact device acceptance remain pending.",
         "No Tyrell app build has been device-qualified on Gh0st. Launch conventions alone do not prove pause, input, media or LAN compatibility.",
         "Host/ARM64 CI results are separate run reports, not device acceptance."
       ]

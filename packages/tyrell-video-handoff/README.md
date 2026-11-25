@@ -11,6 +11,10 @@ managed KMS/LCD APIs and independent durable display borrowers and VT dependenci
 The [D4 media increment](../../docs/video-media-actor.md) connects the actual
 media actor's graph facts to an independent borrower and durable command permits.
 
+The [D5 software integration candidate](../../docs/video-qualified-integration.md)
+connects the actual App and asynchronous shell controller. A separate inactive
+ARM64 qualification package contains these modules and a fixed memory-LVGL/
+LCD-fake-audio native peer. It is not a normal device app or a replacement launcher.
 The modules are not installed into a launcher or helper service. D4's explicitly
 injected Video control pilot uses a trusted coordinator; it is not a live launch path.
 `Authority.live_hardware_admission` remains `False`. An inert `grant` exercises
@@ -34,6 +38,8 @@ controlled VT/display fixtures. Production HDMI/manager-console admission stays 
 | `handoff_audio.py` | Original-context libpulse load completion, exact owned unload and absence readback. |
 | `handoff_display_state.py` | Independent graph/flush borrowers and exact display-to-VT completion dependencies. |
 | `handoff_media_state.py` | Exact media permits, native graph evidence, parked epoch fences and final producer fencing/reaping. |
+| `handoff_shell.py` | Credential-bound fixed-profile shell transitions; durable receipt, commit and fresh-grant ordering. |
+| `handoff_candidate.py` | Read-only exact qualification-payload inspection and unconditional live-admission refusal. |
 
 The trusted coordinator supplies the registered app instance, UID, PID and
 exclusively owned inherited descriptor. A wire packet or environment variable
@@ -73,4 +79,13 @@ design record have not all passed. D3 supplies separate managed display policies
 D4 adds actual graph/actor/control and native-authority fixtures with LCD frame
 capture and fake audio. Every dispatched media permit remains held until graph
 drain plus a positive parked epoch fence, or final process fencing and reaping.
-Qualified D5 shell/package/device integration and physical testing remain pending.
+The D5 candidate adds an actual App/`TVH2` shell trial and repeats it using the
+extracted package's peer and modules. `build-package.py` requires `--native-peer`,
+the exact clean checkout's `--source-revision`, captured `SOURCE_DATE_EPOCH` and
+a fresh `--output-dir`; see the [candidate guide](../../docs/video-qualified-integration.md)
+for the disposable ARM64 workflow. The archive has no maintainer scripts,
+services, launcher entries or activation. Its payload/source hashes detect
+drift relative to its manifest; they are not deployment attestation or hardware
+approval. Qualified live D5 shell/service deployment, legacy-writer exclusion,
+driver finality and physical testing remain pending. The pinned Gh0st protocol-1
+shell is not a qualified peer, and Video idle optimization remains gated.

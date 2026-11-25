@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "video-handoff-software-candidate",
+  "protocol": "TVH2",
+  "capabilities": "async-drain,epoch-barrier,helper-receipts",
+  "profile": "disposable-v2",
+  "native_output": "memory-lvgl-lcd-fake-audio",
+  "live_admission": false,
+  "physical_testing": "pending",
+  "default_m5_policy": "direct-player",
+  "automatic_activation": false,
+  "required_device_evidence": [
+    "identified-spare-target-and-image",
+    "exact-player-shell-package-and-dependency-identities",
+    "legacy-writers-and-pending-restoration-excluded",
+    "qualified-kms-lcd-audio-and-vt-finality",
+    "playing-paused-preroll-seek-track-caption-and-output-transitions",
+    "launch-return-input-held-keys-and-responsiveness",
+    "missing-hdmi-rollback-and-external-owner-conflict",
+    "privacy-cutoff-and-crash-sigterm-recovery"
+  ]
+}

@@ -154,6 +154,17 @@ to a normal user when CI builds as root. Source-bound actor, UI and coordinator
 reports are retained as `a2-d4-*.json`. Managed HDMI, live shell/service
 integration, device finality and physical testing remain pending.
 
+A2-D5 adds required `video-draft2-link` and `video-draft2-integration` groups.
+The [software candidate](video-qualified-integration.md) connects authenticated
+TVH2 shell and actual App/actor peers, with queued revocation before UI work,
+two independent composite commits and a fresh checkpoint rebuild. CI then
+builds the separate inactive ARM64 candidate, checks its actual archive and
+reruns the trial from its extracted native peer and Python modules. The tested
+peer hash must match both packaged and extracted bytes; checkout-module fallback
+is refused. Candidate archives and `a2-d5-*.json` reports are exported alongside
+the unchanged default M5 package. This is software-package validation, without
+system installation, service activation or live/device qualification.
+
 ## Workflow selection and evidence
 
 `.github/workflows/checks.yml` runs an always-present planner and one

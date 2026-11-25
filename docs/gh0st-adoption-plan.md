@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented and asynchronous handoff design specified, live media admission gated; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing and D1–D4 source increments implemented, D5 software shell/package candidate added with live/device qualification pending; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -250,9 +250,14 @@ disposable worker validation and durable stop-post fencing. The separate
 policies, independent producer barriers and exact VT dependencies.
 [A2-D4 media actor/control integration](video-media-actor.md) now owns the actual
 graph lifecycle, connects native graph/fence evidence to durable media permits
-and exercises a borrowed UI adapter with LCD/fake-audio fixtures. Live admission
-stays closed. Next is **A2-D5** qualified shell/package/device integration and
-idle work. Physical acceptance stays pending. D1–D4 software checks do not
+and exercises a borrowed UI adapter with LCD/fake-audio fixtures.
+[A2-D5's software integration candidate](video-qualified-integration.md) connects
+the actual App to a credential-bound asynchronous shell controller and builds a
+separate inactive ARM64 qualification package. Live admission stays closed.
+**A2-D5 device qualification remains incomplete:** the deployed asynchronous
+shell, legacy-writer exclusion, qualified driver finality and exact device
+acceptance are still required before idle work. Physical acceptance stays
+pending. D1–D5 software checks do not
 complete the design's integrated acceptance
 cases, which must exercise the eventual production resource paths.
 

@@ -137,8 +137,10 @@ uncertain commits and restart. Required groups and source-bound results are reta
 earlier D1–D3 counts remain historical evidence for those increments.
 
 The actor's polling interval is not an idle-power result or a teardown deadline.
-The original design's 19 complete integrated cases have not all passed. D5 is
-next: qualified shell/service identities, package integration, driver finality,
-legacy-writer exclusion and identified-device acceptance. Physical playing and
+The original design's 19 complete integrated cases have not all passed.
+[D5's software candidate](video-qualified-integration.md) now connects the actual
+App and asynchronous shell controller and builds a separate inactive ARM64 kit.
+Qualified shell/service deployment, driver finality, legacy-writer exclusion
+and identified-device acceptance remain unfinished. Physical playing and
 paused LCD/HDMI, audio/VT restoration, launch/return, privacy and responsiveness
 remain pending. Video idle work follows the ownership and wake-source gates.

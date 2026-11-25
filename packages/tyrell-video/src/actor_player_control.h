@@ -42,6 +42,9 @@ public:
     bool stop() override;
 
     // Trusted lifecycle/coordinator entry points, never user key bindings.
+    // Revoke UI dispatch immediately on lifecycle loss/quiesce. This performs
+    // no backend call; the durable drain permit still precedes seal().
+    void revoke_admission() noexcept;
     bool seal(std::uint64_t request,const std::string& drain_operation);
     bool cancel(std::uint64_t request);
     bool regrant(MediaActorBinding,std::string lifetime_operation,std::uint64_t request,const std::string& resume_operation);
@@ -64,7 +67,7 @@ private:
     std::deque<Pending> awaiting_;
     std::set<std::string> observed_;
     std::uint64_t request_=0,intent_=0,presentation_request_=0;
-    bool frozen_=false,presentation_pending_=false;
+    bool frozen_=false,revoked_=false,presentation_pending_=false;
     Status status_;
     std::shared_ptr<const Frame> frame_;
     std::string notice_,ignored_error_;
