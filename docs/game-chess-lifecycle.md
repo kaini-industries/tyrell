@@ -2,9 +2,14 @@
 
 A3 adds GameRuntime 0.1.1 ownership hooks and an experimental offline Chess
 0.1.4 adapter. The normal M5 build keeps `TYRELL_ENABLE_SHELL_LINK=OFF`.
-This increment does not enable shell integration for Sandline, Beacon Arena,
-LAN Chess or Video, and does not qualify a new package for a physical device,
+This original increment does not enable shell integration for Sandline, Beacon
+Arena, LAN Chess or Video, and does not qualify a new package for a physical device,
 the approved Store catalog or a Zero image.
+
+The later [Sandline 0.1.1 offline policy](sandline-offline-lifecycle.md) reuses
+those ownership hooks in a separate default-off native pilot. Its controlled
+checks and pending physical acceptance are independent of the Chess evidence
+below. Beacon and linked LAN policies remain pending.
 
 The interoperability target remains Gh0st source revision
 [`a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5`](https://github.com/therezor/CardPuterZeroOS/tree/a52c5d78dbeab6dc7fc8e21604b7bbe05d7a35e5),

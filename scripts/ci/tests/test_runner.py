@@ -155,6 +155,20 @@ class RunnerIdentityTests(unittest.TestCase):
         self.assertEqual(exported.read_bytes(), b'{"scope":"cooperative-cancellation-only"}')
         self.assertEqual(runner.digest(exported), bindings[0]["sha256"])
 
+    def test_sandline_pilot_reports_survive_without_native_build_tree(self):
+        work = self.root / "build/ci/example"
+        for name in ("tanks-shell", "tanks-native-shell"):
+            path = work / name / "a3-sandline-lifecycle.json"
+            path.parent.mkdir(parents=True)
+            path.write_text('{"status":"passed","hardware_qualified":false}')
+        with patch.object(runner, "ROOT", self.root):
+            _, bindings = runner.export_evidence(work, "game-native")
+        self.assertEqual(len(bindings), 2)
+        shutil.rmtree(work)
+        for binding in bindings:
+            path = self.root / "build/ci" / binding["artifact_path"]
+            self.assertEqual(runner.digest(path), binding["sha256"])
+
 
 class RequiredCTestTests(unittest.TestCase):
     def test_missing_registered_group_fails_before_execution(self):

@@ -9,7 +9,7 @@ on:
         required: true
         type: string
       checks_run_id:
-        description: Successful full eight-suite checks run for that source
+        description: Successful full source checks run for that source
         required: true
         type: string
       artifact_run_id:

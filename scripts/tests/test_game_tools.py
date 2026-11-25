@@ -65,6 +65,28 @@ class GameToolsTests(unittest.TestCase):
         self.assertIn('-DTYRELL_GAME_BUILD_RUNTIME=OFF',arguments)
         self.assertIn('-DTYRELL_GAME_BUILD_NETWORK=OFF',arguments)
 
+    def test_sandline_default_build_explicitly_disables_cached_shell_option(self):
+        configure=self.api['configure']
+        with tempfile.TemporaryDirectory() as directory:
+            configure.__globals__['DEPS']=Path(directory)
+            for item in self.api['LOCK'].values(): (Path(directory)/item['directory']).mkdir()
+            with mock.patch.dict(configure.__globals__,run=mock.Mock(),verify_source=mock.Mock()) as globals_:
+                configure('tanks','native')
+                args=globals_['run'].call_args.args
+                self.assertIn('-DTYRELL_ENABLE_SHELL_LINK=OFF',args)
+                self.assertNotIn('-DTYRELL_ENABLE_SHELL_LINK=ON',args)
+                configure('tanks','native',True)
+                enabled=globals_['run'].call_args.args
+                self.assertIn('-DTYRELL_ENABLE_SHELL_LINK=ON',enabled)
+                self.assertNotEqual(args[args.index('-B')+1],enabled[enabled.index('-B')+1])
+
+    def test_shell_pilot_flag_cannot_enable_framework_or_desktop(self):
+        main=self.api['main']
+        for args in (['build','--shell-link'],['build','--project','tanks','--backend','headless','--shell-link']):
+            with self.subTest(args=args),mock.patch('sys.argv',['scripts/game',*args]),mock.patch.dict(main.__globals__,configure=mock.Mock()) as globals_:
+                with self.assertRaises(SystemExit):main()
+                globals_['configure'].assert_not_called()
+
     def test_legacy_tanks_entry_preserves_separator_and_game_arguments(self):
         result=mock.Mock(returncode=0)
         with mock.patch('sys.argv',['scripts/tanks','run','--','--host']),mock.patch('subprocess.run',return_value=result) as run:

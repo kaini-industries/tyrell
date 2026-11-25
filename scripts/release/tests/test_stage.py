@@ -57,7 +57,7 @@ class StageTests(unittest.TestCase):
         a,b,c=self.mocks()
         with a as run,b as artifact,c as download:result=self.invoke()
         self.assertEqual(run.call_args.args,(REPO,101,'.github/workflows/checks.yml',SOURCE))
-        self.assertEqual(artifact.call_count,8);self.assertEqual(download.call_count,8)
+        self.assertEqual(artifact.call_count,len(github.SUITES));self.assertEqual(download.call_count,len(github.SUITES))
         self.assertEqual(result['downloaded_suites'],list(github.SUITES));self.assertFalse(result['promotable'])
         self.assertEqual((self.inputs/'release-selection.json').read_bytes(),(self.repo/self.selection_path).read_bytes())
         for document in self.documents:self.assertEqual(github.sha(self.inputs/document['path']),document['sha256'])

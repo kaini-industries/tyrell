@@ -23,13 +23,13 @@ class ScopesTests(unittest.TestCase):
 
     def test_shared_game_covers_chess_and_both_multiplayer_consumers(self):
         selected = scopes.select(["packages/tyrell-game/include/tyrell/game/runtime.hpp"])
-        self.assertEqual(selected, ["docs", "python", "game", "chess", "chess-native"])
+        self.assertEqual(selected, ["docs", "python", "game", "chess", "game-native", "chess-native"])
         self.assertEqual(scopes.select(["locks/game-build-inputs.json"]), selected)
         self.assertEqual(scopes.select(["scripts/game"]), selected)
 
     def test_app_specific_change_does_not_select_every_native_suite(self):
         self.assertEqual(scopes.select(["packages/tyrell-chess/src/main.cpp"]), ["docs", "python", "chess", "chess-native"])
-        self.assertEqual(scopes.select(["packages/tyrell-tanks/src/network.cpp"]), ["docs", "python", "game"])
+        self.assertEqual(scopes.select(["packages/tyrell-tanks/src/network.cpp"]), ["docs", "python", "game", "game-native"])
 
     def test_ci_ledger_and_common_capture_inputs_force_full_coverage(self):
         for path in (".github/workflows/checks.yml", "scripts/ci/scopes.py", "scripts/release/candidate.py", "research/compatibility-ledger.json",

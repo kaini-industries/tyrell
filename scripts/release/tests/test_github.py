@@ -117,7 +117,7 @@ class GithubTests(unittest.TestCase):
             return github.authenticate_selection(REPO, 101, SOURCE, inputs,
                 self.write_selection(inputs, selection), download_root=self.root / "download")
 
-    def test_selection_authenticates_all_eight_exact_hosted_report_bytes(self):
+    def test_selection_authenticates_all_exact_hosted_report_bytes(self):
         inputs, hosted, selection = self.selection_fixture()
         result = self.authenticate(inputs, hosted, selection)
         self.assertEqual(set(result["report_sha256"]), set(github.SUITES))

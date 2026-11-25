@@ -21,7 +21,7 @@ APP_ROOTS = {
               'locks/build-inputs.json', 'locks/video-build-inputs.json', 'LICENSE'],
     'chess': ['packages/tyrell-chess', 'packages/tyrell-app-common', 'packages/tyrell-game', 'scripts/chess',
               'scripts/game', 'locks/game-build-inputs.json'],
-    'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'scripts/tanks',
+    'sandline': ['packages/tyrell-tanks', 'packages/tyrell-game', 'packages/tyrell-app-common', 'scripts/tanks',
                  'scripts/game', 'locks/game-build-inputs.json'],
     'beacon': ['packages/tyrell-game', 'scripts/game', 'locks/game-build-inputs.json'],
     'catalog': ['packages/tyrell-catalog', 'packages/tyrell-app-common',

@@ -161,6 +161,11 @@ The native-LCD game is packaged for ARM64 as **Sandline Tanks** in APPLaunch.
 The [installation validation](docs/tanks-install-validation.md) covers the
 earlier installed test binary. The reviewed framework build passed ARM64
 memory-rendering tests and still needs its own physical hardware acceptance.
+Current Sandline 0.1.1 adds a default-off
+[native offline shell policy](docs/sandline-offline-lifecycle.md) for Driving Range
+and offline menus/demo. Linked LAN is unavailable; ordinary unlinked LAN keeps
+its existing behavior. Controlled headless/native checks do not qualify the
+new package on a physical M5 or Gh0st target.
 
 ## Tyrell Chess
 
@@ -264,9 +269,11 @@ The [single-owner media actor and control pilot](docs/video-media-actor.md) add
 actual graph-drain accounting. Live media remains gated by qualified shell,
 display/audio/VT finality and package/device acceptance.
 A3 adds [GameRuntime hooks and an offline Chess lifecycle policy](docs/game-chess-lifecycle.md),
-with native ownership, clock, AI and save-failure checks. Its experimental shell
-build is separate from normal M5 packages; physical acceptance and lifecycle
-policies for LAN, Sandline and Beacon remain pending.
+with native ownership, clock, AI and save-failure checks. The follow-up
+[offline Sandline policy](docs/sandline-offline-lifecycle.md) preserves practice
+state through suspension without simulation catch-up or stale input. Experimental
+shell builds remain separate from normal M5 packages; physical acceptance, live
+LAN policy and Beacon's independent lifecycle policy remain pending.
 R1 adds [immutable candidate packaging and explicit promotion](docs/immutable-candidates.md).
 It seals exact binaries, inputs and evidence; publication requires a separate
 reviewed request and passing checks for those bytes. Missing device acceptance

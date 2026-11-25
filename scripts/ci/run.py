@@ -17,7 +17,7 @@ import uuid
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[2]
-SUITES = ("docs", "python", "game", "chess", "chess-native", "status", "video", "zero-native")
+SUITES = ("docs", "python", "game", "chess", "game-native", "chess-native", "status", "video", "zero-native")
 SOURCE_ROOTS = {"packages", "scripts", "builder", "image", "locks", "research",
                 "docs", "dist", "store", ".github"}
 PYTHON_GROUPS = (
@@ -176,9 +176,16 @@ def run_game(work):
                                   "tyrell-game-runtime-lifecycle", "tyrell-game-native-lifecycle"})]
     build = work / "tanks"
     configure_build(ROOT / "packages/tyrell-tanks", build, *flags, "-DTANKS_BUILD_DESKTOP=OFF",
-                    "-DTANKS_BUILD_HEADLESS=ON", "-DTANKS_BUILD_BENCHMARK=ON", "-DTYRELL_GAME_BUILD_TESTS=ON")
+                    "-DTANKS_BUILD_HEADLESS=ON", "-DTANKS_BUILD_BENCHMARK=ON", "-DTYRELL_GAME_BUILD_TESTS=ON",
+                    "-DTYRELL_ENABLE_SHELL_LINK=OFF")
     results.append(ctest(build, work, {"tanks-world", "tanks-network", "tanks-cli-help",
                                       "tanks-framework-render", "tanks-cli-session"}))
+    pilot = work / "tanks-shell"
+    command("cmake", "-S", ROOT / "packages/tyrell-tanks", "-B", pilot, "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_TESTING=ON", *flags, "-DTANKS_BUILD_DESKTOP=OFF", "-DTANKS_BUILD_HEADLESS=ON",
+            "-DTANKS_BUILD_BENCHMARK=OFF", "-DTYRELL_ENABLE_SHELL_LINK=ON")
+    command("cmake", "--build", pilot, "--parallel", "4", "--target", "tanks-shell-lifecycle-test")
+    results.append(ctest(pilot, work, {"tanks-shell-lifecycle"}, pattern="^tanks-shell-lifecycle$"))
     require_tools("xvfb-run")
     desktop = work / "game-desktop"
     command("cmake", "-S", ROOT / "packages/tyrell-game", "-B", desktop,
@@ -189,6 +196,19 @@ def run_game(work):
     results.append(ctest(desktop, work, {"tyrell-game-desktop-lifecycle"},
                          pattern="^tyrell-game-desktop-lifecycle$", launcher=("xvfb-run", "-a"),
                          env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1")))
+    tanks_desktop = work / "tanks-desktop"
+    command("cmake", "-S", ROOT / "packages/tyrell-tanks", "-B", tanks_desktop,
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=OFF", *flags,
+            "-DTANKS_BUILD_DESKTOP=ON", "-DTANKS_BUILD_HEADLESS=OFF", "-DTANKS_BUILD_NATIVE=OFF",
+            "-DTANKS_BUILD_BENCHMARK=OFF", "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    command("cmake", "--build", tanks_desktop, "--parallel", "4", "--target", "tyrell-tanks")
+    report = work / "a3-sandline-desktop.json"
+    command("xvfb-run", "-a", tanks_desktop / "tyrell-tanks", "--demo", "--frames", "2", "--report", report,
+            env=dict(os.environ, LIBGL_ALWAYS_SOFTWARE="1"))
+    if json.loads(report.read_text()).get("frames") != 2:
+        raise RuntimeError("Sandline desktop smoke did not render the required frames")
+    results.append({"kind": "sandline-desktop-smoke", "status": "passed", "frames": 2,
+                    "shell_link_enabled": False, "report": str(report.relative_to(ROOT))})
     return results
 
 
@@ -261,6 +281,38 @@ def run_chess_native(work, revision):
             "tyrell-chess", "chess-shell-lifecycle-test", "chess-ai-cancellation-test")
     results.append(ctest(experimental, work, {"chess-shell-lifecycle", "chess-ai-cancellation"},
                          pattern="^(chess-shell-lifecycle|chess-ai-cancellation)$"))
+    return results
+
+
+def run_game_native(work, revision):
+    """Default Sandline package and opt-in native offline loop, no devices."""
+    native_preflight()
+    with (work / "worker-packages.tsv").open("w") as output:
+        subprocess.run(["dpkg-query", "-W", "-f=${binary:Package}\t${Version}\t${Architecture}\n"], stdout=output, check=True)
+    deps = dependencies(work, ("raylib", "enet"))
+    source = ROOT / "packages/tyrell-tanks"
+    flags = ("-DRAYLIB_SOURCE_DIR=" + str(deps["raylib"]), "-DENET_SOURCE_DIR=" + str(deps["enet"]),
+             "-DTANKS_BUILD_NATIVE=ON", "-DTANKS_BUILD_DESKTOP=OFF", "-DTANKS_BUILD_HEADLESS=OFF",
+             "-DTANKS_BUILD_BENCHMARK=OFF", "-DTYRELL_GAME_BUILD_TESTS=ON")
+    build = work / "tanks-native"
+    configure_build(source, build, *flags, "-DTYRELL_ENABLE_SHELL_LINK=OFF")
+    required = {"tanks-world", "tanks-network", "tanks-cli-help", "tanks-framework-render", "tanks-cli-session",
+                "tyrell-game-runtime-lifecycle", "tyrell-game-native-lifecycle"}
+    results = [ctest(build, work, required)]
+    packages = work / "packages"; packages.mkdir()
+    command("cpack", "--config", build / "CPackConfig.cmake", "-G", "DEB", "-B", packages)
+    debs = list(packages.glob("*.deb"))
+    if len(debs) != 1: raise RuntimeError("Expected one default Sandline package")
+    inspection = json.loads(command(sys.executable, source / "assets/check_package.py", debs[0], capture=True).stdout)
+    (work / "a3-sandline-package.json").write_text(json.dumps(inspection, indent=2) + "\n")
+    results.append({"kind": "package-build", "status": "passed", "path": str(debs[0].relative_to(ROOT)),
+                    "sha256": digest(debs[0]), "inspection": inspection, "installed": False, "shell_link_enabled": False,
+                    "source_revision": revision})
+    pilot = work / "tanks-native-shell"
+    command("cmake", "-S", source, "-B", pilot, "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_TESTING=ON", *flags,
+            "-DTYRELL_ENABLE_SHELL_LINK=ON")
+    command("cmake", "--build", pilot, "--parallel", "4", "--target", "tyrell-tanks", "tanks-shell-lifecycle-test")
+    results.append(ctest(pilot, work, {"tanks-shell-lifecycle"}, pattern="^tanks-shell-lifecycle$"))
     return results
 
 
@@ -455,7 +507,8 @@ def export_evidence(work, suite):
     destination.mkdir(parents=True, exist_ok=True)
     selected = set(work.glob("*.json")) | set(work.glob("*-ctest.xml"))
     selected.update(work.glob("video*/a2-*.json"))
-    for directory in ("game", "game-desktop", "tanks", "chess", "chess-native", "chess-native-shell"):
+    for directory in ("game", "game-desktop", "tanks", "tanks-shell", "tanks-native", "tanks-native-shell",
+                      "chess", "chess-native", "chess-native-shell"):
         selected.update((work / directory).rglob("a3-*.json"))
     for previews in work.glob("*/u1-previews"):
         selected.update(path for path in previews.rglob("*")
@@ -520,6 +573,8 @@ def main(argv=None):
             data["results"] = run_game(work)
         elif args.suite == "chess":
             data["results"] = run_chess(work)
+        elif args.suite == "game-native":
+            data["results"] = run_game_native(work, before["commit"])
         elif args.suite == "chess-native":
             data["results"] = run_chess_native(work, before["commit"])
         elif args.suite in {"status", "video"}:
