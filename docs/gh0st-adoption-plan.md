@@ -1,6 +1,6 @@
 # Gh0st ideas adoption plan
 
-Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented, live media admission gated; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
+Plan revision 1, November 24, 2026. Status: **F1/U1/R1/C1 implemented; L1/A1/A3 source increments implemented with physical gates pending; A2 checkpoint/timing implemented and asynchronous handoff design specified, live media admission gated; F2/H1 observation preparation, H2 offline policy rehearsal and H3 source/experiment preparation implemented; physical testing, live power activation and experimental BSP builds pending**.
 
 Adopt Gh0st's useful application, UI and delivery patterns while keeping Tyrell's
 apps, existing renderers, original M5 APPLaunch behavior and protected hardware
@@ -238,6 +238,15 @@ the snapshot/rebuild API and a fail-closed qualification guard. Blocking graph
 teardown and asynchronous HDMI/audio/VT restoration prevent qualifying live
 media against the current 100 ms protocol. Active integration and Video idle
 optimization remain gated by a revised completion/ownership design.
+
+The follow-up [asynchronous handoff design](video-async-handoff-design.md)
+specifies a separate opt-in protocol, shared operation barrier and observable
+helper completion. It preserves the closed guard. Continue its implementation
+in order: **A2-D1** channel/authority/ledger, **A2-D2** v2 VT/audio participants,
+**A2-D3** managed KMS/LCD ownership, **A2-D4** media actor/control integration,
+then **A2-D5** qualified shell/package/device integration and idle work.
+These are future increments, not completed runtime support; physical acceptance
+remains pending. The design's acceptance cases must exercise production paths.
 
 Split this into a Status idle-loop PR, a Video checkpoint/timing PR and a Video
 integration/idle-loop PR. Status waits on keyboard, link, shutdown and its real
